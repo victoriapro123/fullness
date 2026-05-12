@@ -1,7 +1,7 @@
 :root {
   font-family: Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #f7f2ec;
-  background: #080706;
+  background: #080405;
   font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +18,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #080706;
+  background: #080405;
 }
 
 button,
@@ -45,7 +45,7 @@ a {
   align-items: center;
   gap: 32px;
   padding: 26px clamp(20px, 4vw, 64px);
-  background: linear-gradient(180deg, rgba(8, 7, 6, 0.82), rgba(8, 7, 6, 0));
+  background: linear-gradient(180deg, rgba(8, 4, 5, 0.88), rgba(8, 4, 5, 0));
 }
 
 .brand {
@@ -56,10 +56,11 @@ a {
 }
 
 .brand-mark {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
-  filter: drop-shadow(0 0 12px rgba(248, 241, 236, 0.12));
+  border-radius: 4px;
+  filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.28));
 }
 
 .brand-text {
@@ -158,26 +159,31 @@ a {
   display: grid;
   align-items: center;
   padding: 132px clamp(22px, 4vw, 64px) 112px;
-}
-
-.hero > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  opacity: 0.92;
-  animation: slowPush 18s ease-in-out infinite alternate;
+  background:
+    radial-gradient(circle at 72% 46%, rgba(111, 22, 43, 0.94), transparent 32%),
+    radial-gradient(circle at 42% 88%, rgba(118, 40, 56, 0.68), transparent 34%),
+    linear-gradient(112deg, #070405 0%, #140508 29%, #3d0c19 58%, #090506 100%);
 }
 
 .hero-shadow {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 78% 50%, rgba(166, 77, 58, 0.16), transparent 34%),
-    linear-gradient(90deg, rgba(8, 7, 6, 0.99) 0%, rgba(8, 7, 6, 0.88) 30%, rgba(8, 7, 6, 0.34) 72%),
-    linear-gradient(0deg, rgba(8, 7, 6, 0.86) 0%, rgba(8, 7, 6, 0) 48%);
+    linear-gradient(90deg, rgba(8, 4, 5, 0.98) 0%, rgba(8, 4, 5, 0.86) 28%, rgba(8, 4, 5, 0.28) 61%, rgba(8, 4, 5, 0.46) 100%),
+    linear-gradient(0deg, rgba(8, 4, 5, 0.92) 0%, rgba(8, 4, 5, 0.1) 44%, rgba(8, 4, 5, 0.62) 100%);
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 84%, transparent);
+  opacity: 0.35;
 }
 
 .hero-content {
@@ -245,7 +251,7 @@ h3 {
   padding: 0 30px;
   border: 0;
   border-radius: 2px;
-  background: #9f565e;
+  background: #a3485b;
   font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   font-size: 1.02rem;
   font-weight: 700;
@@ -257,7 +263,7 @@ h3 {
 .primary-button:hover,
 .add-button:hover {
   transform: translateY(-2px);
-  background: #bf6d70;
+  background: #c35f73;
 }
 
 .primary-button.full {
@@ -267,16 +273,16 @@ h3 {
 .hero-video-card {
   position: absolute;
   z-index: 2;
-  top: 168px;
-  right: clamp(20px, 4vw, 64px);
-  bottom: 72px;
-  width: clamp(520px, 48vw, 820px);
+  top: 0;
+  right: clamp(-34px, -1.6vw, -10px);
+  bottom: 0;
+  width: clamp(880px, 72vw, 1450px);
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 0;
   background: transparent;
-  box-shadow: -34px 0 70px rgba(8, 7, 6, 0.34);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 100%);
+  box-shadow: -46px 0 90px rgba(8, 4, 5, 0.45);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 84%, transparent 100%);
 }
 
 .hero-video-card::after {
@@ -285,9 +291,9 @@ h3 {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(8, 7, 6, 0.42), transparent 18%, transparent 78%, rgba(8, 7, 6, 0.34)),
-    linear-gradient(90deg, rgba(8, 7, 6, 0.48), rgba(8, 7, 6, 0.04) 36%),
-    radial-gradient(circle at 50% 52%, transparent 42%, rgba(8, 7, 6, 0.18) 100%);
+    linear-gradient(180deg, rgba(8, 4, 5, 0.34), transparent 16%, transparent 76%, rgba(8, 4, 5, 0.46)),
+    linear-gradient(90deg, rgba(58, 9, 23, 0.52), rgba(58, 9, 23, 0.03) 34%),
+    radial-gradient(circle at 48% 52%, transparent 46%, rgba(8, 4, 5, 0.22) 100%);
 }
 
 .hero-video-card video {
@@ -295,7 +301,7 @@ h3 {
   width: 100%;
   height: 118%;
   object-fit: cover;
-  object-position: center 58%;
+  object-position: center 56%;
   transform: translateY(-10%);
 }
 
@@ -761,8 +767,8 @@ footer {
 
   .hero-shadow {
     background:
-      linear-gradient(90deg, rgba(8, 7, 6, 0.96) 0%, rgba(8, 7, 6, 0.68) 54%, rgba(8, 7, 6, 0.24) 100%),
-      linear-gradient(0deg, rgba(8, 7, 6, 0.86) 0%, rgba(8, 7, 6, 0) 52%);
+      linear-gradient(90deg, rgba(8, 4, 5, 0.96) 0%, rgba(8, 4, 5, 0.7) 54%, rgba(8, 4, 5, 0.28) 100%),
+      linear-gradient(0deg, rgba(8, 4, 5, 0.9) 0%, rgba(8, 4, 5, 0.08) 52%);
   }
 
   .hero-features,
@@ -799,8 +805,8 @@ footer {
   }
 
   .brand-mark {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
   }
 
   .brand-text {
@@ -810,10 +816,6 @@ footer {
   .hero {
     min-height: auto;
     padding: 104px 18px 42px;
-  }
-
-  .hero > img {
-    object-position: 64% center;
   }
 
   .hero-content {

@@ -199,7 +199,6 @@ function App() {
       )}
 
       <section className="hero" id="inicio">
-        <img src="/assets/fullness-food-crop.jpeg" alt="Plato Fullness con ingredientes reales" />
         <div className="hero-shadow" />
         <div className="hero-content">
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
