@@ -65,6 +65,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
+  const [cartNotice, setCartNotice] = useState(null);
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace("#", ""));
@@ -110,7 +111,11 @@ function App() {
       }
       return [...items, { ...product, qty: 1 }];
     });
-    setCartOpen(true);
+    setCartNotice({ id: Date.now(), name: product.name });
+    window.clearTimeout(window.fullnessCartNoticeTimer);
+    window.fullnessCartNoticeTimer = window.setTimeout(() => {
+      setCartNotice(null);
+    }, 2200);
   }
 
   function updateQty(id, delta) {
@@ -175,7 +180,7 @@ function App() {
             <User size={18} />
             <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
           </button>
-          <button className="icon-button cart-button" onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
+          <button className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`} onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
             <ShoppingBag size={20} />
             {cartCount > 0 && <span>{cartCount}</span>}
           </button>
@@ -365,6 +370,18 @@ function App() {
             </label>
             <button className="primary-button full" type="submit">Crear cuenta</button>
           </form>
+        </div>
+      )}
+
+      {cartNotice && (
+        <div className="cart-toast" role="status" aria-live="polite" key={cartNotice.id}>
+          <span className="cart-toast-icon">
+            <ShoppingBag size={18} />
+          </span>
+          <div>
+            <strong>Agregado al carrito</strong>
+            <p>{cartNotice.name}</p>
+          </div>
         </div>
       )}
 
