@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
@@ -10,7 +10,6 @@ import {
   Menu,
   Minus,
   Phone,
-  Play,
   Plus,
   ShoppingBag,
   Sparkles,
@@ -49,6 +48,8 @@ const programs = [
   "Plan diario oficina y casa"
 ];
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 function formatPrice(value) {
   return new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -63,6 +64,34 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [member, setMember] = useState(null);
+  const [googleMessage, setGoogleMessage] = useState("");
+
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace("#", ""));
+    const accessToken = hash.get("access_token");
+
+    if (!accessToken) return;
+
+    fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("No se pudo validar Gmail.");
+        return response.json();
+      })
+      .then((profile) => {
+        setMember({
+          name: profile.name || "Miembro Fullness",
+          email: profile.email || "",
+          phone: ""
+        });
+        setAccountOpen(false);
+        window.history.replaceState(null, "", window.location.pathname);
+      })
+      .catch(() => {
+        setGoogleMessage("No pudimos conectar Gmail. Revisa el Client ID de Google.");
+      });
+  }, []);
 
   const cartTotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.qty, 0),
@@ -103,6 +132,23 @@ function App() {
     setAccountOpen(false);
   }
 
+  function startGoogleLogin() {
+    if (!googleClientId) {
+      setGoogleMessage("Para activar Gmail real agrega VITE_GOOGLE_CLIENT_ID en Vercel.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      client_id: googleClientId,
+      redirect_uri: window.location.origin,
+      response_type: "token",
+      scope: "openid email profile",
+      prompt: "select_account"
+    });
+
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
   const nav = (
     <>
       <a href="#programas">Programas</a>
@@ -116,12 +162,9 @@ function App() {
     <main>
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Fullness inicio">
-          <span className="brand-mark">
-            <span />
-          </span>
+          <img className="brand-mark" src="/assets/fullness-beet-logo.svg" alt="" />
           <span className="brand-text">
             Fullness
-            <small>Lab</small>
           </span>
         </a>
 
@@ -162,18 +205,25 @@ function App() {
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
           <h1>Ingredientes reales. Resultados reales.</h1>
           <p className="hero-copy">
-            Comida 100% natural, seleccionada minuciosamente y lista para servir en bolsas al vacío.
+            Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.
           </p>
           <div className="hero-actions">
             <a className="primary-button" href="#productos">
               Comienza tu programa
               <ArrowRight size={19} />
             </a>
-            <a className="video-link" href="#slowmotion">
-              <span><Play size={16} fill="currentColor" /></span>
-              Ver video
-            </a>
           </div>
+        </div>
+        <div className="hero-video-card" aria-label="Video Fullness">
+          <video
+            src="/assets/fullness-food-video.mp4"
+            poster="/assets/fullness-food-crop.jpeg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          />
         </div>
         <div className="hero-features" aria-label="Beneficios Fullness">
           <span><Leaf size={24} /> Ingredientes reales</span>
@@ -255,14 +305,22 @@ function App() {
 
       <section className="slowmotion" id="slowmotion">
         <div className="slowmotion-media">
-          <img src="/assets/fullness-food-crop.jpeg" alt="Comida Fullness en movimiento cinematográfico" />
+          <video
+            src="/assets/fullness-food-video.mp4"
+            poster="/assets/fullness-food-crop.jpeg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          />
         </div>
         <div className="slowmotion-copy">
-          <p className="eyebrow">Video de apertura</p>
-          <h2>Cuando me mandes el video, esta zona queda como portada en slow motion.</h2>
+          <p className="eyebrow">Slow motion</p>
+          <h2>Comida real, lista para servir, con una presencia que abre el apetito.</h2>
           <p>
-            El diseño ya está pensado para recibir un video horizontal de comida: puede reemplazar
-            esta imagen en el hero o vivir aquí como pieza principal de la comunidad.
+            El video refuerza la idea central de Fullness: ingredientes naturales, preparados con
+            intención y listos para una rutina más liviana.
           </p>
         </div>
       </section>
@@ -289,7 +347,7 @@ function App() {
       </section>
 
       <footer>
-        <span>Fullness Lab</span>
+        <span>Fullness</span>
         <span>Comida real lista para servir.</span>
       </footer>
 
@@ -301,10 +359,11 @@ function App() {
             </button>
             <p className="eyebrow">Acceso miembros</p>
             <h2>Crea tu cuenta Fullness</h2>
-            <button className="google-button" type="button">
+            <button className="google-button" type="button" onClick={startGoogleLogin}>
               <Mail size={18} />
               Continuar con Gmail
             </button>
+            {googleMessage && <p className="form-note">{googleMessage}</p>}
             <label>
               Nombre completo
               <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
