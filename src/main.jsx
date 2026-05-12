@@ -162,7 +162,7 @@ function App() {
     <main>
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Fullness inicio">
-          <img className="brand-mark" src="/assets/fullness-beet-logo.svg" alt="" />
+          <img className="brand-mark" src="/assets/logo-oficial-crop.png" alt="" />
           <span className="brand-text">
             Fullness
           </span>
@@ -202,7 +202,10 @@ function App() {
         <div className="hero-shadow" />
         <div className="hero-content">
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
-          <h1>Ingredientes reales. Resultados reales.</h1>
+          <h1>
+            <span>Ingredientes reales.</span>
+            <span>Resultados reales.</span>
+          </h1>
           <p className="hero-copy">
             Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.
           </p>
