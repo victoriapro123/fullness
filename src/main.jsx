@@ -213,17 +213,6 @@ function App() {
             </a>
           </div>
         </div>
-        <div className="hero-video-card" aria-label="Video Fullness">
-          <video
-            src="/assets/fullness-food-video.mp4"
-            poster="/assets/fullness-food-crop.jpeg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
-        </div>
         <div className="hero-features" aria-label="Beneficios Fullness">
           <span><Leaf size={24} /> Ingredientes reales</span>
           <span><Sparkles size={24} /> Nutrición inteligente</span>
@@ -304,22 +293,14 @@ function App() {
 
       <section className="slowmotion" id="slowmotion">
         <div className="slowmotion-media">
-          <video
-            src="/assets/fullness-food-video.mp4"
-            poster="/assets/fullness-food-crop.jpeg"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
+          <img src="/assets/fullness-hero-background.png" alt="Ingredientes Fullness sobre sartén" />
         </div>
         <div className="slowmotion-copy">
-          <p className="eyebrow">Slow motion</p>
-          <h2>Comida real, lista para servir, con una presencia que abre el apetito.</h2>
+          <p className="eyebrow">Comida real</p>
+          <h2>Ingredientes seleccionados para una rutina que se siente mejor.</h2>
           <p>
-            El video refuerza la idea central de Fullness: ingredientes naturales, preparados con
-            intención y listos para una rutina más liviana.
+            Fullness combina preparaciones naturales, bolsas al vacío y porciones listas para
+            servir sin perder sabor ni intención.
           </p>
         </div>
       </section>
