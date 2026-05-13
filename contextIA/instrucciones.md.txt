@@ -1,0 +1,480 @@
+# Instructivo Para Contexto IA Del Proyecto Fullness
+
+Este archivo define como mantener el contexto tecnico y de producto para que cualquier IA pueda retomar el desarrollo de Fullness sin depender de conversaciones anteriores.
+
+Regla base del proyecto: nunca poner contexto interno, notas de IA, razonamientos, bitacoras ni instrucciones de desarrollo dentro de la interfaz visible para usuarios. Todo ese material debe vivir en archivos de documentacion como este o en documentos dentro de `contextIA` y `demo-clienta`.
+
+## Objetivo Del Contexto IA
+
+El contexto IA debe servir para:
+
+- Entender el estado actual de la solucion.
+- Reconocer modulos, ambitos y decisiones ya tomadas.
+- Detectar pendientes reales antes de implementar.
+- Evitar repetir trabajo o contradecir instrucciones de la clienta.
+- Facilitar el traspaso entre distintos usuarios de IA.
+
+El contexto no debe ser solo historico. Cada actualizacion debe ser retroactiva y proactiva:
+
+- Retroactiva: revisar si lo escrito antes sigue siendo correcto, corregir contexto obsoleto, consolidar duplicados y mover informacion al ambito correcto.
+- Proactiva: dejar indicado que impactos puede tener el cambio, que modulos podrian tocarse despues y que riesgos conviene revisar.
+
+## Como Actualizar Este Archivo
+
+Cada vez que se trabaje en el proyecto:
+
+1. Leer este archivo antes de modificar codigo.
+2. Revisar los documentos relacionados en `demo-clienta` si el cambio afecta la demo, decisiones de clienta o pendientes.
+3. Actualizar el contexto del modulo afectado.
+4. Corregir contexto anterior que haya quedado falso, incompleto o ambiguo.
+5. Agregar una nota de impacto si el cambio abre una decision futura.
+6. Mantener lenguaje claro, directo y accionable.
+
+No usar este archivo como diario cronologico infinito. Si una nota antigua ya no aporta, se debe resumir, reemplazar o eliminar.
+
+## Estado General De La Solucion
+
+Fullness es una demo web hecha con React y Vite para una marca de alimentacion consciente, nutricion emocional y meal prep premium.
+
+La solucion actual incluye:
+
+- Portada visual con video principal local y capa de nutrientes animados.
+- Navegacion por secciones.
+- Secciones de plato food porn, filosofia, nutricion funcional, como calentar, productos y nutricion emocional.
+- Carrito funcional en memoria.
+- Notificacion al agregar productos.
+- Modal de acceso para miembros.
+- Preparacion para login con Gmail mediante `VITE_GOOGLE_CLIENT_ID`.
+- Assets nuevos de demo: `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
+
+La app todavia funciona principalmente como demo visual. No hay backend, persistencia de datos, checkout real ni autenticacion productiva completa.
+
+Direccion nueva entregada por la clienta el 2026-05-12:
+
+- El foco conceptual debe moverse desde una web limpia de comida saludable hacia una experiencia mas profunda, editorial y emocional.
+- La frase madre preferida es "Nutrirse desde la raiz".
+- El alma del proyecto esta en nutricion interior, raiz, cuerpo, naturaleza, amor propio y conexion.
+- La clienta no quiere competir por ahorro de tiempo, aunque el producto sea practico. Ese beneficio se entiende solo y no debe presentarse como valor diferencial.
+
+Precision nueva entregada por la clienta el 2026-05-13:
+
+- La portada no debe ser solo un plato rico. Eso se siente como "un plato mas de comida".
+- El hero debe integrar visualmente el ADN del producto: alimentos llenos de nutrientes.
+- Debe aparecer la idea de nutrientes, vitaminas, minerales, grasas saludables e hidratos de carbono complejos entrando o cayendo hacia el plato y luego disolviendose.
+- La diferenciacion debe levantar las tres patas: practico, rico/foodporn y antiinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
+- Frase conceptual clave: es rico y es un privilegio nutrirse bien.
+- Implementacion actual: el hero usa el video local como fondo, logo Fullness Lab, frase `Nutrirse desde la raiz`, leyendas de nutrientes y pilares visuales.
+
+## Ambito: Producto Y Marca
+
+Proposito:
+
+- Comunicar Fullness como una marca elegante, profunda, organica y emocional, enfocada en alimentacion consciente.
+- Reforzar nutricion desde adentro, conexion con la naturaleza, amor propio, cuerpo, raiz y bienestar real.
+- Evitar que la propuesta se reduzca a comida saludable practica o meal prep conveniente.
+
+Contexto actual:
+
+- El tono visual debe ser oscuro, calido, editorial, cinematografico, organico y premium.
+- Las secciones interiores alternan fondos claros y oscuros.
+- Los textos actuales son de demo y pueden requerir reemplazo por contenido final de la marca.
+- Los productos, precios y descripciones son ejemplos.
+- La betarraga es simbolo central: raiz, nutricion interior, humildad, intensidad interna y conexion con la tierra.
+- La certificacion que impulsa la siguiente etapa de la marca es nutricion emocional; el proximo paso probable son sesiones de health coach.
+
+Conceptos centrales aprobados o deseados:
+
+- "Nutrirse desde la raiz."
+- "Lo esencial vive adentro."
+- "Alimentarse es mucho mas que comer."
+- "Vitalidad desde adentro."
+- "Lo invisible tambien nutre."
+- "Tu cuerpo reconoce lo real."
+- "Fullness no es una dieta... es una forma de volver a ti."
+- "No es solo alimentacion... es informacion para tu sistema."
+- "Cuando regulas tu interior... tu cuerpo deja de resistirse."
+- "Como es afuera es adentro."
+- "Como es arriba es abajo."
+- "Es un privilegio nutrirse bien."
+- "Lo bueno hecho simple."
+- "Soy lo que como."
+
+Reglas al modificar:
+
+- No agregar explicaciones internas ni notas de desarrollo en la UI.
+- Preferir frases comerciales con profundidad emocional, no mensajes genericos de conveniencia.
+- No usar ahorro de tiempo como promesa central ni como diferencial.
+- Tocar una fibra emocional: el cuidado personal empieza por dentro.
+- Evitar tono fitness extremo, clinico, wellness cliche, hippie recargado o tecnologico frio.
+- Si se cambia el mensaje de marca, revisar portada, productos, comunidad y documentos de demo para que no queden contradicciones.
+- Mostrar que Fullness Lab une cuatro valores: practico, rico, antiinflamatorio y premium.
+
+Pendientes proactivos:
+
+- Confirmar menu real, precios finales, zonas de despacho e informacion nutricional.
+- Definir si Fullness vendera platos individuales, planes semanales, suscripciones o una combinacion.
+- Definir si la marca publica sera "Fullness" o "Fullness Lab", ya que la clienta menciono logo FULLNESSLAB.
+- Convertir el manifiesto de raiz/betarraga en copy visible para hero, filosofia y posibles franjas editoriales.
+
+## Ambito: Copy, Storytelling Y Manifiesto
+
+Proposito:
+
+- Transformar el concepto profundo de la marca en textos visibles breves, editoriales y comerciales.
+- Integrar raiz, betarraga, naturaleza, cuerpo y nutricion emocional sin volver la web densa.
+
+Manifiesto base:
+
+La betarraga crece bajo tierra, en silencio, sin intentar impresionar. Su exterior es simple, pero su interior guarda intensidad, color y vida. En Fullness, el bienestar funciona igual: la energia, el equilibrio y la vitalidad nacen desde adentro. Alimentarse no es solo comer; es conectar con el cuerpo, con la tierra y con aquello que sostiene la vida.
+
+Lineas editoriales utiles:
+
+- Bajo la tierra ocurre lo esencial.
+- Las raices absorben minerales, agua, memoria y vida.
+- Todo esta conectado.
+- Nutrirse es recordar que tambien somos naturaleza.
+- Lo mas poderoso suele crecer lejos de la superficie.
+
+Reglas al modificar:
+
+- Usar frases profundas como eje, pero en dosis editoriales.
+- Evitar textos largos en hero; reservar manifiesto para una seccion de filosofia.
+- No volver el mensaje demasiado literal ni excesivamente mistico.
+- Si se usa "como es arriba es abajo", conectarlo visualmente con la betarraga: raiz, tierra, nutrientes e interior vibrante.
+
+Pendientes proactivos:
+
+- Crear una jerarquia definitiva de frases: frase madre, subtitulo hero, slogans secundarios, manifiesto y microcopy para packaging/redes.
+- Revisar si se incorporaran frases en ingles como "Rooted in nourishment", "Deep nourishment" o "From soil to self".
+- Crear copy breve para leyendas animadas del hero: vitaminas, minerales, grasas saludables, hidratos de carbono complejos, antioxidantes, proteinas de calidad.
+
+## Ambito: Frontend React
+
+Archivos principales:
+
+- `src/main.jsx`: componentes, estado, datos de demo, carrito, cuenta y login Gmail.
+- `src/styles.css`: estilos globales, layout responsive, modales, carrito y animaciones.
+- `index.html`: punto de entrada Vite y fuentes externas.
+
+Contexto actual:
+
+- La aplicacion esta concentrada en un solo componente `App`.
+- Los arrays `products` y `programs` viven en `src/main.jsx`.
+- El carrito se guarda solo en estado React.
+- La cuenta de miembro tambien se guarda solo en estado React.
+- No hay rutas, store global, backend ni base de datos.
+
+Reglas al modificar:
+
+- Para cambios pequenos, mantener el patron simple actual.
+- Si crecen productos, checkout, cuenta o comunidad, evaluar separar componentes y datos por modulo.
+- Cualquier texto visible debe ser contenido de producto, no contexto IA.
+- Revisar responsive cada vez que se toque header, hero, cards, modales o drawer.
+
+Pendientes proactivos:
+
+- Separar componentes si el archivo `main.jsx` sigue creciendo.
+- Crear una fuente de datos real o configurable para productos.
+- Persistir carrito si se avanza hacia compra real.
+
+## Ambito: Diseno Visual Y Assets
+
+Archivos y recursos:
+
+- `public/assets/logo-oficial-crop.png`
+- `public/assets/fullness-hero-background.png`
+- `public/assets/fullness-food-crop.jpeg`
+- `public/assets/fullness-food-video.mp4`
+- `public/assets/fullness-hero.jpeg`
+- `public/assets/fullness-beet-logo.svg`
+
+Contexto actual:
+
+- El logo oficial se usa en el header.
+- La portada usa `fullness-hero-background.png`.
+- Las tarjetas de productos usan `fullness-food-crop.jpeg`.
+- Hay recursos disponibles que no necesariamente estan usados en la UI actual.
+- La clienta quiere que el color predominante venga principalmente de los platos.
+- Las franjas claras deben ser mas claras que el fondo oscuro, pero no blancas ni clinicas; deben acercarse a tonos de monograma, papel organico, salvia mineral, beige oliva o marfil envejecido.
+- El diseno puede tener mas elementos que antes; ya no debe ser tan minimalista limpio.
+
+Direccion visual nueva:
+
+- Herbolaria contemporanea.
+- Editorial gastronomica.
+- Laboratorio botanico sofisticado.
+- Fine dining, perfumeria botanica, papel texturizado, minerales, raices y tierra humeda.
+- Lujo silencioso y sofisticacion organica.
+
+Paleta recomendada:
+
+- Fondo principal: verde petroleo oscuro, verde grisaceo profundo, oliva ennegrecido, cacao oscuro, burdeo betarraga profundo.
+- Secundarios: verde salvia oscuro, gris mineral calido, beige piedra, marfil envejecido, palo de rosa envejecido.
+- Acentos: cobre envejecido, dorado opaco, burdeo betarraga y verde musgo.
+
+Reglas al modificar:
+
+- Mantener el producto o la comida como senal visual principal.
+- No reemplazar assets oficiales sin dejar nota del cambio.
+- Si se agregan imagenes nuevas, documentar proposito y ubicacion.
+- No usar imagenes solo decorativas cuando el usuario necesita ver producto o marca.
+- Evitar negro puro como fondo dominante.
+- Evitar blanco clinico, fotos fitness, bowls genericos de Instagram, colores chillones y exceso de props.
+- Usar la betarraga como sello editorial, grabado sutil, marca de agua, linea fina o detalle botanico; no gigante de forma repetitiva.
+- Las fotografias deben sentirse editoriales, no stock: luz lateral calida, contraste, vapor, texturas reales, ceramica artesanal y dramatismo gastronomico.
+- El hero necesita una capa visual de nutrientes integrandose al plato: particulas, textos breves, lineas botanicas, minerales o elementos luminosos sutiles. Debe sentirse organico y editorial, no interfaz tecnologica ni grafico medico.
+
+Pendientes proactivos:
+
+- Reemplazar fotos de demo por fotos finales de productos.
+- Definir lineamientos de uso del logo.
+- Revisar peso de imagenes si la web se vuelve lenta.
+- Conseguir o generar imagen de plato en bolsa al vacio con pinzas en agua para la franja "como calentar".
+- Conseguir o generar imagen food porn cinematografica para hero y otra para plato editorial grande.
+- Explorar animacion de entrada donde nutrientes caen o flotan hacia el plato y se disuelven con leyendas breves.
+
+## Ambito: Estructura Home Deseada
+
+Orden pedido por la clienta:
+
+1. Hero.
+2. Plato food porn.
+3. Nuestra filosofia.
+4. Como calentar los platos.
+
+Secciones deseadas:
+
+- Hero: plato protagonista cinematografico, pero no como simple comida rica. Debe mostrar nutrientes/vitaminas/minerales/grasas saludables/hidratos complejos entrando, cayendo o disolviendose en el plato. Logo FULLNESSLAB o identidad final, isotipo de betarraga y frase principal "Nutrirse desde la raiz." Subtexto posible: "Alimentarse es mucho mas que comer." CTAs: "Ver meal prep" y "Explorar planes".
+- Plato food porn: imagen protagonista de plato montado editorial, con vapor, sombras, brillo natural y dramatismo gastronomico. Esta seccion vende emocion.
+- Nuestra filosofia: fondo claro organico tipo papel herbario sofisticado, ilustracion o isotipo de betarraga y manifiesto breve sobre raiz, tierra, cuerpo y energia.
+- Como calentar los platos: franja clara con imagen del plato en bolsa al vacio con pinzas en agua. Explicar pasos de calentado sin vender ahorro de tiempo como atributo principal.
+
+Reglas al modificar:
+
+- La franja de calentado puede explicar uso y ritual, pero no debe cerrar con una promesa de ahorro de tiempo como valor diferencial.
+- Si se menciona funcionalidad del meal prep, conectarla con cuidado, nutricion e intencion.
+- La web debe sentirse contemplativa, fluida, silenciosa y premium.
+- Animaciones permitidas: fades, movimiento lento, hover elegante y microinteracciones suaves.
+- Evitar efectos tecnologicos, animaciones rapidas o exceso de movimiento.
+- La animacion de entrada del hero debe comunicar nutrientes integrandose al plato. Las leyendas pueden aparecer y disolverse, por ejemplo: "vitaminas", "minerales", "grasas saludables", "hidratos complejos", "antioxidantes", "proteinas de calidad".
+- La animacion debe ser organica, sensorial y premium; no debe parecer dashboard, app medica ni visualizacion cientifica dura.
+
+Pendientes proactivos:
+
+- Reordenar la home actual para ajustarse al flujo pedido.
+- Revisar si "Programas" debe seguir arriba o bajar despues de filosofia/calentar.
+- Crear copy especifico para la franja de calentado con tono ritual, no conveniencia.
+- Prototipar hero con plato + overlay de nutrientes animados.
+
+## Ambito: Carrito Y Compra
+
+Ubicacion actual:
+
+- Estado `cart` en `src/main.jsx`.
+- Funciones `addToCart`, `updateQty` y calculos `cartTotal`, `cartCount`.
+- Drawer de carrito en la misma vista.
+
+Contexto actual:
+
+- Agregar producto no abre automaticamente el carrito.
+- Se muestra una notificacion temporal.
+- Se puede sumar y restar cantidad.
+- El total se calcula en CLP.
+- El boton `Continuar pedido` todavia no ejecuta checkout real.
+
+Reglas al modificar:
+
+- Mantener feedback claro al agregar productos.
+- No simular compra real si no existe integracion.
+- Si se conecta un proveedor de pago, documentar proveedor, flujo y variables de entorno.
+- El e-commerce debe sentirse premium, facil y claro, pero sin convertir la marca en una tienda generica de comida de dieta.
+- Los meal prep deben parecer gastronomia funcional premium, cocina consciente y lujo cotidiano.
+
+Pendientes proactivos:
+
+- Definir checkout: Mercado Pago, Webpay, Stripe o backend propio.
+- Definir persistencia de carrito.
+- Agregar datos de despacho y contacto antes del pago real.
+- Definir etiquetas, packs reales y estilo visual de productos al vacio.
+
+## Ambito: Cuenta, Miembros Y Gmail
+
+Ubicacion actual:
+
+- Modal de cuenta en `src/main.jsx`.
+- Variable `VITE_GOOGLE_CLIENT_ID`.
+- Archivo `.env.example` con referencia a configuracion.
+
+Contexto actual:
+
+- El formulario pide nombre, correo, telefono y contrasena.
+- El login Gmail usa OAuth implicit flow en cliente.
+- Si falta `VITE_GOOGLE_CLIENT_ID`, se muestra mensaje de configuracion.
+- La cuenta no se guarda fuera del estado React.
+
+Reglas al modificar:
+
+- No tratar la cuenta como autenticacion segura hasta tener backend o proveedor real.
+- Si se cambia el flujo Gmail, revisar variables de entorno y documentacion de despliegue.
+- Evitar almacenar contrasenas en frontend.
+
+Pendientes proactivos:
+
+- Definir proveedor de autenticacion.
+- Crear backend o servicio de usuarios si habra cuentas reales.
+- Evaluar flujo OAuth mas robusto para produccion.
+
+## Ambito: Comunidad Y Programas
+
+Ubicacion actual:
+
+- Secciones `programas` y `comunidad` en `src/main.jsx`.
+- Estilos asociados en `src/styles.css`.
+
+Contexto actual:
+
+- Los programas actuales son ejemplos:
+  - Reset digestivo de 7 dias.
+  - Energia real para entrenamiento.
+  - Plan diario oficina y casa.
+- Comunidad se presenta como retos, acceso a miembros y pedidos inteligentes.
+- La evolucion probable no es solo comunidad transaccional, sino acompanamiento ligado a nutricion emocional y health coaching.
+
+Reglas al modificar:
+
+- Mantener esta seccion orientada a experiencia de marca y retencion.
+- Si se agregan planes reales, documentar estructura, duracion, precio y condiciones.
+- Revisar coherencia con carrito y cuenta si comunidad pasa a ser funcional.
+- No empujar la marca hacia "reto fitness" si contradice la filosofia emocional.
+- Enfatizar regulacion interior, volver a uno mismo, cuidado desde adentro y conexion cuerpo-naturaleza.
+
+Pendientes proactivos:
+
+- Definir si comunidad sera contenido, membresia, suscripcion o acompanamiento.
+- Definir si los programas se compran como productos o si son planes separados.
+- Definir oferta futura de sesiones health coach y como convivira con meal prep.
+
+## Ambito: Demo Y Documentacion Para Clienta
+
+Archivos relacionados:
+
+- `demo-clienta/README.md`
+- `demo-clienta/guia-demo.md`
+- `demo-clienta/instrucciones-cumplidas.md`
+- `demo-clienta/pendientes.md`
+
+Contexto actual:
+
+- Esta carpeta documenta como mostrar la demo, que instrucciones se cumplieron y que falta para produccion.
+- Sirve como puente entre desarrollo y conversacion con la clienta.
+
+Reglas al modificar:
+
+- Si cambia una funcionalidad visible, actualizar la guia de demo.
+- Si se cumple un pendiente, moverlo o reflejarlo en instrucciones cumplidas.
+- Si aparece una nueva decision de negocio, agregarla a pendientes.
+- No duplicar grandes bloques; resumir y apuntar al archivo correcto.
+
+Pendientes proactivos:
+
+- Mantener una guia de demo corta y actual.
+- Diferenciar claramente demo visual, funcionalidad parcial y funcionalidad productiva.
+- Actualizar documentos de demo cuando se implemente la nueva direccion: hero raiz, food porn, filosofia, calentado, nutricion emocional.
+
+## Ambito: Despliegue Y Entorno
+
+Archivos relacionados:
+
+- `package.json`
+- `package-lock.json`
+- `.env.example`
+- `.gitignore`
+
+Comandos actuales:
+
+```bash
+npm.cmd run dev
+npm.cmd run build
+npm.cmd run preview
+```
+
+Contexto actual:
+
+- El proyecto usa Vite.
+- Esta preparado para despliegue en Vercel.
+- La variable importante conocida es `VITE_GOOGLE_CLIENT_ID`.
+
+Reglas al modificar:
+
+- Documentar toda nueva variable de entorno en `.env.example`.
+- No subir secretos reales.
+- Ejecutar build despues de cambios relevantes.
+
+Pendientes proactivos:
+
+- Confirmar configuracion final de dominio.
+- Confirmar variables en Vercel.
+- Agregar instrucciones de despliegue si el flujo crece.
+
+## Ambito: Calidad, Riesgos Y Mantenimiento
+
+Riesgos actuales:
+
+- Hay textos con caracteres posiblemente mal codificados en `src/main.jsx`.
+- La app concentra mucha logica en un solo archivo.
+- No existen tests automatizados.
+- No hay backend ni persistencia.
+- El login Gmail y el checkout son incompletos para produccion.
+- La UI actual todavia comunica mas "comida real lista para servir" que "nutricion emocional desde la raiz"; hay que alinear copy, secciones y visuales.
+
+Reglas al modificar:
+
+- Si se corrigen caracteres, revisar todo el archivo para evitar mezcla de codificaciones.
+- Si se agregan dependencias, justificar su uso y verificar que sean necesarias.
+- Si se toca una funcionalidad critica, ejecutar al menos `npm.cmd run build`.
+- Registrar aqui cualquier deuda tecnica que afecte continuidad entre IAs.
+
+Pendientes proactivos:
+
+- Corregir codificacion de textos visibles.
+- Evaluar separacion en componentes.
+- Agregar validaciones y persistencia cuando la demo avance a producto.
+- Rehacer copy visible con la nueva estrategia antes de pulir detalles menores.
+- Validar con la clienta la intensidad conceptual para no caer ni en comercial generico ni en misticismo excesivo.
+
+## Formato Recomendado Para Nuevas Notas
+
+Usar este formato dentro del ambito correspondiente:
+
+```md
+### Nota AAAA-MM-DD
+
+Cambio:
+- Que se modifico o decidio.
+
+Impacto retroactivo:
+- Que contexto anterior se corrigio, reemplazo o elimino.
+
+Impacto proactivo:
+- Que modulo podria verse afectado despues.
+- Que pendiente o riesgo conviene revisar.
+```
+
+Si la nota ya fue absorbida por el contexto principal, eliminarla o resumirla. Este archivo debe mantenerse util para retomar, no largo por acumulacion.
+
+## Checklist Para Cada Nueva IA
+
+Antes de trabajar:
+
+- Leer este archivo.
+- Revisar `demo-clienta/pendientes.md`.
+- Revisar el modulo que se va a tocar.
+- Confirmar que el cambio no pone contexto interno en la UI.
+
+Despues de trabajar:
+
+- Actualizar el ambito afectado.
+- Corregir contexto obsoleto.
+- Agregar impactos proactivos si corresponde.
+- Ejecutar build si hubo cambios de codigo.
+- Actualizar documentos de demo si cambio algo visible.

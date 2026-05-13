@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
   ChefHat,
+  Flame,
   Heart,
   Leaf,
   Lock,
@@ -13,39 +14,69 @@ import {
   Plus,
   ShoppingBag,
   Sparkles,
+  Sprout,
   User,
+  Waves,
   X
 } from "lucide-react";
 import "./styles.css";
 
 const products = [
   {
-    id: "salmon-quinoa",
-    name: "Salmón, quinoa y betarraga",
+    id: "trucha-betarraga",
+    name: "Trucha, betarraga y quinoa",
+    tag: "Omega 3 + antioxidantes",
+    price: 8990,
+    description: "Pescado del sur, raices dulces, hojas verdes y granos integrales sin gluten."
+  },
+  {
+    id: "pollo-curcuma",
+    name: "Pollo, curcuma y vegetales",
     tag: "Antiinflamatorio",
     price: 7990,
-    description: "Proteína noble, vegetales vivos y carbohidrato limpio para energía estable."
+    description: "Proteina limpia con jengibre, pimienta y grasas saludables para una nutricion completa."
   },
   {
-    id: "pollo-camote",
-    name: "Pollo de campo con camote",
-    tag: "Alto en proteína",
+    id: "legumbres-granos",
+    name: "Legumbres, arroz integral y oliva",
+    tag: "Proteina vegetal completa",
     price: 6990,
-    description: "Cocinado al vacío para mantener textura, sabor y nutrientes reales."
-  },
-  {
-    id: "lentejas-verdes",
-    name: "Lentejas verdes especiadas",
-    tag: "Plant based",
-    price: 5990,
-    description: "Fibra, minerales y especias suaves para sentirte liviano y satisfecho."
+    description: "Legumbres y granos integrales combinados para equilibrar energia, fibra y saciedad."
   }
 ];
 
-const programs = [
-  "Reset digestivo de 7 días",
-  "Energía real para entrenamiento",
-  "Plan diario oficina y casa"
+const nutrientLabels = [
+  {
+    title: "Vitaminas",
+    text: "Energia que se siente."
+  },
+  {
+    title: "Minerales",
+    text: "Equilibrio que te sostiene."
+  },
+  {
+    title: "Grasas saludables",
+    text: "Nutricion profunda."
+  },
+  {
+    title: "Antioxidantes",
+    text: "Proteccion que se refleja."
+  },
+  {
+    title: "Proteinas de calidad",
+    text: "Fuerza que se construye."
+  },
+  {
+    title: "Hidratos complejos",
+    text: "Energia estable."
+  }
+];
+
+const functionalNotes = [
+  "Curcuma + jengibre + pimienta",
+  "Grasas saludables + vegetales",
+  "Limon + hojas verdes",
+  "Legumbres + granos integrales"
 ];
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -156,35 +187,36 @@ function App() {
 
   const nav = (
     <>
-      <a href="#programas">Programas</a>
-      <a href="#filosofia">Filosofía</a>
-      <a href="#ingredientes">Ingredientes</a>
-      <a href="#comunidad">Comunidad</a>
+      <a href="#plato">Food porn</a>
+      <a href="#filosofia">Filosofia</a>
+      <a href="#calentar">Como calentar</a>
+      <a href="#productos">Tienda</a>
     </>
   );
 
   return (
     <main>
       <header className="site-header">
-        <a className="brand" href="#inicio" aria-label="Fullness inicio">
-          <img className="brand-mark" src="/assets/logo-oficial-crop.png" alt="" />
-          <span className="brand-text">
-            Fullness
+        <a className="brand" href="#inicio" aria-label="Fullness Lab inicio">
+          <span className="lab-logo lab-logo-small">
+            <img src="/assets/fullness-beet-logo.svg" alt="" />
+            <span className="lab-name">Fullness</span>
+            <span className="lab-sub">Lab</span>
           </span>
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
-          <button className="pill-button" onClick={() => setAccountOpen(true)}>
-            <User size={18} />
+          <button className="member-link" onClick={() => setAccountOpen(true)}>
+            <Sprout size={18} />
             <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
           </button>
           <button className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`} onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
             <ShoppingBag size={20} />
             {cartCount > 0 && <span>{cartCount}</span>}
           </button>
-          <button className="icon-button menu-toggle" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
+          <button className="icon-button menu-toggle" onClick={() => setMenuOpen(true)} aria-label="Abrir menu">
             <Menu size={22} />
           </button>
         </div>
@@ -192,74 +224,124 @@ function App() {
 
       {menuOpen && (
         <div className="mobile-menu">
-          <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">
+          <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="Cerrar menu">
             <X size={22} />
           </button>
           {nav}
-          <button className="pill-button" onClick={() => setAccountOpen(true)}>
-            <User size={18} />
+          <button className="member-link" onClick={() => setAccountOpen(true)}>
+            <Sprout size={18} />
             Acceso miembros
           </button>
         </div>
       )}
 
       <section className="hero" id="inicio">
-        <div className="hero-shadow" />
-        <div className="hero-content">
-          <p className="eyebrow">Nutrición inteligente. Energía real.</p>
-          <h1>
-            <span>Ingredientes reales.</span>
-            <span>Resultados reales.</span>
-          </h1>
+        <video className="hero-video" autoPlay muted loop playsInline poster="/assets/fullness-lab-hero-reference.png">
+          <source src="/assets/fullness-lab-hero-video.mp4" type="video/mp4" />
+        </video>
+        <div className="hero-wash" />
+
+        <div className="hero-copy-block">
+          <p className="eyebrow">Nutricion inteligente. Energia real.</p>
+          <h1>Nutrirse desde la raiz.</h1>
           <p className="hero-copy">
-            Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.
+            Comida real, ingredientes funcionales y combinaciones que nutren tu cuerpo, tu mente y tu energia.
           </p>
-          <div className="hero-actions">
-            <a className="primary-button" href="#productos">
-              Comienza tu programa
-              <ArrowRight size={19} />
-            </a>
+          <p className="hero-privilege">Es un privilegio nutrirse bien.</p>
+          <a className="primary-button" href="#productos">
+            Comienza tu programa
+            <ArrowRight size={19} />
+          </a>
+        </div>
+
+        <div className="hero-nutrient-caption" aria-label="Nutrientes Fullness Lab">
+          {nutrientLabels.map((item) => (
+            <span key={item.title}>{item.title}</span>
+          ))}
+        </div>
+
+        <div className="hero-principles" aria-label="Pilares Fullness Lab">
+          <span><Leaf size={22} /> Ingredientes reales</span>
+          <span><Sparkles size={22} /> Nutricion inteligente</span>
+          <span><ChefHat size={22} /> Cocinado con cuidado</span>
+          <span><Heart size={22} /> Bienestar desde adentro</span>
+        </div>
+      </section>
+
+      <section className="food-editorial" id="plato">
+        <div className="editorial-image">
+          <img src="/assets/fullness-lab-hero-reference.png" alt="Plato Fullness Lab con nutrientes" />
+        </div>
+        <div className="editorial-copy">
+          <p className="eyebrow">Food porn funcional</p>
+          <h2>Rico, consciente y lleno de informacion para tu sistema.</h2>
+          <p>
+            Fullness Lab une placer gastronomico, nutricion antiinflamatoria y criterio funcional para que comer bien no se sienta como castigo.
+          </p>
+          <div className="editorial-pills">
+            <span>Sin gluten</span>
+            <span>Sin lacteos</span>
+            <span>Sin azucar refinada</span>
+            <span>Grasas saludables</span>
           </div>
         </div>
-        <div className="hero-features" aria-label="Beneficios Fullness">
-          <span><Leaf size={24} /> Ingredientes reales</span>
-          <span><Sparkles size={24} /> Nutrición inteligente</span>
-          <span><ChefHat size={24} /> Cocinado con cuidado</span>
-          <span><Heart size={24} /> Para que tu cuerpo funcione mejor</span>
-        </div>
       </section>
 
-      <section className="section intro-band" id="filosofia">
+      <section className="philosophy" id="filosofia">
+        <div className="beet-seal">
+          <img src="/assets/fullness-beet-logo.svg" alt="" />
+        </div>
         <div>
-          <p className="eyebrow">Filosofía Fullness</p>
-          <h2>Comida real para una rutina que se siente mejor.</h2>
+          <p className="eyebrow">Nuestra filosofia</p>
+          <h2>Lo esencial vive adentro.</h2>
+          <p>
+            La betarraga crece bajo tierra, absorbiendo minerales, agua y vida. En Fullness Lab entendemos el bienestar igual: lo que te sostiene nace desde adentro.
+          </p>
+          <p>
+            No es dieta. No es restriccion. Es una forma de volver a ti a traves de alimentos reales, ricos y combinados con intencion.
+          </p>
         </div>
-        <p>
-          Cada preparación está pensada para llegar lista, fresca y equilibrada: abrir, calentar,
-          servir y volver a confiar en lo que comes.
-        </p>
       </section>
 
-      <section className="section programs" id="programas">
+      <section className="functional-band">
         <div className="section-heading">
-          <p className="eyebrow">Programas</p>
-          <h2>Planes para ordenar tu semana</h2>
+          <p className="eyebrow">Nutricion con fundamento</p>
+          <h2>Combinaciones que trabajan juntas.</h2>
         </div>
-        <div className="program-grid">
-          {programs.map((program, index) => (
-            <article className="program-card" key={program}>
-              <span>0{index + 1}</span>
-              <h3>{program}</h3>
-              <p>Menús al vacío, porciones claras y combinaciones diseñadas para comer mejor sin cocinar de más.</p>
+        <div className="functional-grid">
+          {functionalNotes.map((note) => (
+            <article key={note}>
+              <Sprout size={24} />
+              <h3>{note}</h3>
+              <p>Ingredientes elegidos para sumar sabor, equilibrio y funcion sin rigidez.</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="section products" id="productos">
+      <section className="heating" id="calentar">
+        <div className="heating-copy">
+          <p className="eyebrow">Como calentar tus platos</p>
+          <h2>Un ritual simple para cuidar lo que comes.</h2>
+          <ol>
+            <li>Calienta agua sin hervir agresivamente.</li>
+            <li>Sumerge la bolsa sellada durante unos minutos.</li>
+            <li>Abre, sirve y termina con hierbas o aceite de oliva.</li>
+          </ol>
+          <p>
+            Lo bueno hecho simple: nosotros cuidamos los ingredientes, las combinaciones y el punto de coccion.
+          </p>
+        </div>
+        <div className="heating-visual">
+          <Waves size={54} />
+          <span>Bolsa al vacio + agua caliente + plato listo</span>
+        </div>
+      </section>
+
+      <section className="products section" id="productos">
         <div className="section-heading">
-          <p className="eyebrow">Listo para servir</p>
-          <h2>Agrega tus favoritos al carrito</h2>
+          <p className="eyebrow">Meal prep premium</p>
+          <h2>Antiinflamatorio, rico y listo para tu rutina.</h2>
         </div>
         <div className="product-grid">
           {products.map((product) => (
@@ -282,61 +364,17 @@ function App() {
         </div>
       </section>
 
-      <section className="section ingredients" id="ingredientes">
-        <div>
-          <p className="eyebrow">Ingredientes</p>
-          <h2>Seleccionados minuciosamente</h2>
-          <p>
-            Sin rellenos innecesarios, sin ultraprocesados y con técnicas de cocción que respetan
-            sabor, textura y nutrientes.
-          </p>
-        </div>
-        <div className="ingredient-list">
-          <span>Proteínas nobles</span>
-          <span>Vegetales de temporada</span>
-          <span>Grasas saludables</span>
-          <span>Especias reales</span>
-        </div>
-      </section>
-
-      <section className="slowmotion" id="slowmotion">
-        <div className="slowmotion-media">
-          <img src="/assets/fullness-hero-background.png" alt="Ingredientes Fullness sobre sartén" />
-        </div>
-        <div className="slowmotion-copy">
-          <p className="eyebrow">Comida real</p>
-          <h2>Ingredientes seleccionados para una rutina que se siente mejor.</h2>
-          <p>
-            Fullness combina preparaciones naturales, bolsas al vacío y porciones listas para
-            servir sin perder sabor ni intención.
-          </p>
-        </div>
-      </section>
-
-      <section className="section community" id="comunidad">
-        <div className="section-heading">
-          <p className="eyebrow">Comunidad</p>
-          <h2>Un lugar para comer real, aprender y acompañarse</h2>
-        </div>
-        <div className="community-grid">
-          <article>
-            <h3>Retos semanales</h3>
-            <p>Hábitos simples, check-ins y objetivos de energía, digestión y constancia.</p>
-          </article>
-          <article>
-            <h3>Acceso a miembros</h3>
-            <p>Cuenta con Gmail, correo, contraseña, teléfono y datos básicos para pedidos.</p>
-          </article>
-          <article>
-            <h3>Pedidos inteligentes</h3>
-            <p>Carrito listo para sumar platos, programas y futuras suscripciones.</p>
-          </article>
-        </div>
+      <section className="membership">
+        <p className="eyebrow">Nutricion emocional</p>
+        <h2>El cuidado personal empieza por dentro.</h2>
+        <p>
+          El siguiente paso de Fullness Lab abre espacio a acompanamiento, sesiones y una comunidad para comer mejor desde el amor propio.
+        </p>
       </section>
 
       <footer>
-        <span>Fullness</span>
-        <span>Comida real lista para servir.</span>
+        <span>Fullness Lab</span>
+        <span>Nutrirse desde la raiz.</span>
       </footer>
 
       {accountOpen && (
@@ -357,16 +395,16 @@ function App() {
               <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
             </label>
             <label>
-              Correo electrónico
+              Correo electronico
               <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
             </label>
             <label>
-              Teléfono
+              Telefono
               <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
             </label>
             <label>
-              Contraseña
-              <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} /></span>
+              Contrasena
+              <span><Lock size={18} /><input required name="password" type="password" placeholder="Minimo 8 caracteres" minLength={8} /></span>
             </label>
             <button className="primary-button full" type="submit">Crear cuenta</button>
           </form>
@@ -393,7 +431,7 @@ function App() {
           <p className="eyebrow">Tu carrito</p>
           <h2>Pedido Fullness</h2>
           {cart.length === 0 ? (
-            <p className="empty-cart">Aún no agregas platos. Elige un favorito para empezar.</p>
+            <p className="empty-cart">Aun no agregas platos. Elige un favorito para empezar.</p>
           ) : (
             <>
               <div className="cart-items">
