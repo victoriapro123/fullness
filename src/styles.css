@@ -589,18 +589,18 @@ h3 {
 
 .food-editorial {
   display: grid;
-  grid-template-columns: minmax(420px, 49vw) minmax(0, 1fr);
-  min-height: 560px;
-  padding: 0 clamp(28px, 5vw, 82px) 0 0;
-  gap: clamp(58px, 6vw, 104px);
-  align-items: center;
+  grid-template-columns: minmax(360px, 560px) minmax(420px, 1fr);
+  min-height: 760px;
+  padding: 0 clamp(22px, 6vw, 100px) 0 0;
+  gap: clamp(36px, 6vw, 88px);
+  align-items: stretch;
   background:
     radial-gradient(circle at 18% 74%, rgba(142, 38, 60, 0.16), transparent 22rem),
     linear-gradient(135deg, #07110d, #10231d 54%, #1b120d);
 }
 
 .editorial-image {
-  min-height: 560px;
+  min-height: 760px;
   overflow: hidden;
   align-self: stretch;
   justify-self: start;
@@ -625,7 +625,7 @@ h3 {
   align-content: center;
   padding: 0;
   background: transparent;
-  max-width: 520px;
+  max-width: 680px;
 }
 
 .editorial-copy h2 {
