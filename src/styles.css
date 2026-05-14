@@ -75,13 +75,13 @@ video {
 }
 
 .brand-reference-logo {
-  width: 84px;
-  height: 96px;
+  width: 88px;
+  height: 100px;
   object-fit: cover;
-  object-position: center 47%;
+  object-position: center 45%;
   mix-blend-mode: screen;
-  filter: contrast(1.18) brightness(1.18) drop-shadow(0 18px 32px rgba(0, 0, 0, 0.44));
-  clip-path: inset(28% 27% 22% 27%);
+  filter: contrast(1.18) brightness(1.2) saturate(1.08) drop-shadow(0 18px 32px rgba(0, 0, 0, 0.44));
+  clip-path: inset(27% 30% 25% 30%);
 }
 
 .lab-logo {
@@ -589,10 +589,10 @@ h3 {
 
 .food-editorial {
   display: grid;
-  grid-template-columns: minmax(320px, 430px) minmax(420px, 0.86fr);
-  min-height: 520px;
-  padding: 0 clamp(22px, 5vw, 86px) 0 0;
-  gap: clamp(32px, 5vw, 82px);
+  grid-template-columns: minmax(420px, 49vw) minmax(0, 1fr);
+  min-height: 560px;
+  padding: 0 clamp(28px, 5vw, 82px) 0 0;
+  gap: clamp(58px, 6vw, 104px);
   align-items: center;
   background:
     radial-gradient(circle at 18% 74%, rgba(142, 38, 60, 0.16), transparent 22rem),
@@ -600,12 +600,13 @@ h3 {
 }
 
 .editorial-image {
-  min-height: auto;
+  min-height: 560px;
   overflow: hidden;
-  align-self: center;
+  align-self: stretch;
   justify-self: start;
-  width: min(430px, 34vw);
-  aspect-ratio: 9 / 16;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
   background: #060806;
   border: 0;
   box-shadow: 0 28px 96px rgba(0, 0, 0, 0.38);
@@ -615,8 +616,8 @@ h3 {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center;
+  object-fit: cover;
+  object-position: center bottom;
 }
 
 .editorial-copy {
@@ -624,6 +625,12 @@ h3 {
   align-content: center;
   padding: 0;
   background: transparent;
+  max-width: 520px;
+}
+
+.editorial-copy h2 {
+  max-width: 100%;
+  font-size: clamp(3.1rem, 4.9vw, 4.9rem);
 }
 
 .editorial-copy p,
@@ -790,12 +797,30 @@ h3 {
 }
 
 .functional-grid article {
-  min-height: 240px;
-  padding: 26px;
+  display: grid;
+  grid-template-rows: 260px 1fr;
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.functional-grid article img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.functional-grid article img.functional-image-limon {
+  object-position: center 38%;
+}
+
+.functional-grid article > div {
+  padding: 24px;
 }
 
 .functional-grid svg {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
   color: var(--gold);
 }
 
@@ -986,6 +1011,16 @@ footer {
   max-height: calc(100svh - 44px);
   overflow-y: auto;
   padding: 38px;
+}
+
+.plans-panel.login-only {
+  width: min(540px, 100%);
+  padding: 0;
+}
+
+.plans-panel.login-only .account-panel.embedded {
+  margin-top: 0;
+  border: 0;
 }
 
 .plans-grid {

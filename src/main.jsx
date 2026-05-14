@@ -21,24 +21,6 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const memberPlans = [
-  {
-    id: "vegetarianos",
-    name: "Vegetarianos",
-    description: "Platos plant based, granos integrales y combinaciones completas."
-  },
-  {
-    id: "perdida-peso",
-    name: "Perdida de peso",
-    description: "Nutricion consciente, saciedad y energia estable sin castigo."
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    description: "Proteinas seleccionadas, pescados del sur y cocina funcional gourmet."
-  }
-];
-
 const products = [
   {
     id: "trucha-betarraga",
@@ -64,10 +46,27 @@ const products = [
 ];
 
 const functionalNotes = [
-  "Curcuma + jengibre + pimienta",
-  "Grasas saludables + vegetales",
-  "Limon + hojas verdes",
-  "Legumbres + granos integrales"
+  {
+    title: "Curcuma + jengibre + pimienta",
+    image: "/assets/combo-curcuma-jengibre.png",
+    description: "Especias elegidas para sumar sabor profundo y acompanar una alimentacion antiinflamatoria."
+  },
+  {
+    title: "Grasas saludables + vegetales",
+    image: "/assets/combo-grasas-saludables.png",
+    description: "Palta, oliva, semillas y hojas verdes ayudan a dar saciedad y equilibrio al plato."
+  },
+  {
+    title: "Limon + hojas verdes",
+    image: "/assets/combo-espinaca-limon.png",
+    imageClass: "functional-image-limon",
+    description: "El acido del limon favorece la absorcion del hierro vegetal presente en hojas verdes."
+  },
+  {
+    title: "Legumbres + granos integrales",
+    image: "/assets/combo-legumbres-granos.png",
+    description: "Se complementan para lograr una proteina vegetal mas completa, con fibra y energia estable."
+  }
 ];
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -85,7 +84,6 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
@@ -158,7 +156,6 @@ function App() {
       phone: data.get("phone")
     });
     setAccountOpen(false);
-    setLoginOpen(false);
   }
 
   function startGoogleLogin() {
@@ -190,13 +187,13 @@ function App() {
     <main>
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Fullness Lab inicio">
-          <img className="brand-reference-logo" src="/assets/fullness-lab-logo-white.png" alt="Fullness Lab" />
+          <img className="brand-reference-logo" src="/assets/fullness-lab-logo-purple.png" alt="Fullness Lab" />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
-          <button className="member-link" onClick={() => { setLoginOpen(false); setAccountOpen(true); }}>
+          <button className="member-link" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} />
             <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
           </button>
@@ -216,7 +213,7 @@ function App() {
             <X size={22} />
           </button>
           {nav}
-          <button className="member-link" onClick={() => { setLoginOpen(false); setAccountOpen(true); }}>
+          <button className="member-link" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} />
             Acceso miembros
           </button>
@@ -255,7 +252,6 @@ function App() {
           <img src="/assets/fullness-lab-food-porn.png" alt="Plato funcional Fullness Lab" />
         </div>
         <div className="editorial-copy">
-          <p className="eyebrow">Food porn funcional</p>
           <h2>Rico, consciente y lleno de informacion para tu sistema.</h2>
           <p>
             Fullness Lab une placer gastronomico, nutricion antiinflamatoria y criterio funcional para que comer bien no se sienta como castigo.
@@ -326,10 +322,13 @@ function App() {
         </div>
         <div className="functional-grid">
           {functionalNotes.map((note) => (
-            <article key={note}>
-              <Sprout size={24} />
-              <h3>{note}</h3>
-              <p>Ingredientes elegidos para sumar sabor, equilibrio y funcion sin rigidez.</p>
+            <article key={note.title}>
+              <img className={note.imageClass || ""} src={note.image} alt={note.title} />
+              <div>
+                <Sprout size={22} />
+                <h3>{note.title}</h3>
+                <p>{note.description}</p>
+              </div>
             </article>
           ))}
         </div>
@@ -340,12 +339,13 @@ function App() {
           <p className="eyebrow">Como calentar tus platos</p>
           <h2>Un ritual simple para cuidar lo que comes.</h2>
           <ol>
-            <li>Calienta agua sin hervir agresivamente.</li>
-            <li>Sumerge la bolsa sellada durante unos minutos.</li>
-            <li>Abre, sirve y termina con hierbas o aceite de oliva.</li>
+            <li>Calienta agua.</li>
+            <li>Sumerge la bolsa sellada.</li>
+            <li>Espera unos minutos.</li>
+            <li>Sirve y disfruta un plato real, nutritivo y listo para ti.</li>
           </ol>
           <p>
-            Lo bueno hecho simple: nosotros cuidamos los ingredientes, las combinaciones y el punto de coccion.
+            Lo bueno hecho simple: en Fullness Lab cuidamos cada preparacion para que alimentarte bien sea una forma de volver a ti.
           </p>
         </div>
         <div className="heating-visual">
@@ -395,52 +395,36 @@ function App() {
 
       {accountOpen && (
         <div className="overlay" role="dialog" aria-modal="true">
-          <section className="plans-panel">
-            <button className="icon-button close" type="button" onClick={() => { setLoginOpen(false); setAccountOpen(false); }} aria-label="Cerrar cuenta">
+          <section className="plans-panel login-only">
+            <button className="icon-button close" type="button" onClick={() => setAccountOpen(false)} aria-label="Cerrar cuenta">
               <X size={22} />
             </button>
-            <p className="eyebrow">Acceso miembros</p>
-            <h2>Elige tu plan Fullness Lab</h2>
-            <div className="plans-grid">
-              {memberPlans.map((plan) => (
-                <article key={plan.id}>
-                  <Leaf size={24} />
-                  <h3>{plan.name}</h3>
-                  <p>{plan.description}</p>
-                  <button className="primary-button full" type="button" onClick={() => setLoginOpen(true)}>
-                    Comprar plan
-                  </button>
-                </article>
-              ))}
-            </div>
-            {loginOpen && (
-              <form className="account-panel embedded" onSubmit={submitAccount}>
-                <p className="eyebrow">Iniciar sesion</p>
-                <h2>Accede para continuar</h2>
-                <button className="google-button" type="button" onClick={startGoogleLogin}>
-                  <Mail size={18} />
-                  Continuar con Gmail
-                </button>
-                {googleMessage && <p className="form-note">{googleMessage}</p>}
-                <label>
-                  Nombre completo
-                  <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
-                </label>
-                <label>
-                  Correo electronico
-                  <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
-                </label>
-                <label>
-                  Telefono
-                  <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
-                </label>
-                <label>
-                  Contrasena
-                  <span><Lock size={18} /><input required name="password" type="password" placeholder="Minimo 8 caracteres" minLength={8} /></span>
-                </label>
-                <button className="primary-button full" type="submit">Iniciar sesion</button>
-              </form>
-            )}
+            <form className="account-panel embedded" onSubmit={submitAccount}>
+              <p className="eyebrow">Acceso miembros</p>
+              <h2>Iniciar sesion</h2>
+              <button className="google-button" type="button" onClick={startGoogleLogin}>
+                <Mail size={18} />
+                Continuar con Gmail
+              </button>
+              {googleMessage && <p className="form-note">{googleMessage}</p>}
+              <label>
+                Nombre completo
+                <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
+              </label>
+              <label>
+                Correo electronico
+                <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
+              </label>
+              <label>
+                Telefono
+                <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
+              </label>
+              <label>
+                Contrasena
+                <span><Lock size={18} /><input required name="password" type="password" placeholder="Minimo 8 caracteres" minLength={8} /></span>
+              </label>
+              <button className="primary-button full" type="submit">Iniciar sesion</button>
+            </form>
           </section>
         </div>
       )}
