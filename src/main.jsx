@@ -21,6 +21,24 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
+const memberPlans = [
+  {
+    id: "vegetarianos",
+    name: "Vegetarianos",
+    description: "Platos plant based, granos integrales y combinaciones completas."
+  },
+  {
+    id: "perdida-peso",
+    name: "Perdida de peso",
+    description: "Nutricion consciente, saciedad y energia estable sin castigo."
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    description: "Proteinas seleccionadas, pescados del sur y cocina funcional gourmet."
+  }
+];
+
 const products = [
   {
     id: "trucha-betarraga",
@@ -67,6 +85,7 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
@@ -139,6 +158,7 @@ function App() {
       phone: data.get("phone")
     });
     setAccountOpen(false);
+    setLoginOpen(false);
   }
 
   function startGoogleLogin() {
@@ -171,17 +191,13 @@ function App() {
     <main>
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Fullness Lab inicio">
-          <span className="lab-logo lab-logo-small">
-            <img src="/assets/fullness-beet-logo.svg" alt="" />
-            <span className="lab-name">Fullness</span>
-            <span className="lab-sub">Lab</span>
-          </span>
+          <img className="brand-reference-logo" src="/assets/fullness-lab-logo.png" alt="Fullness Lab" />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
-          <button className="member-link" onClick={() => setAccountOpen(true)}>
+          <button className="member-link" onClick={() => { setLoginOpen(false); setAccountOpen(true); }}>
             <Sprout size={18} />
             <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
           </button>
@@ -201,7 +217,7 @@ function App() {
             <X size={22} />
           </button>
           {nav}
-          <button className="member-link" onClick={() => setAccountOpen(true)}>
+          <button className="member-link" onClick={() => { setLoginOpen(false); setAccountOpen(true); }}>
             <Sprout size={18} />
             Acceso miembros
           </button>
@@ -346,35 +362,53 @@ function App() {
 
       {accountOpen && (
         <div className="overlay" role="dialog" aria-modal="true">
-          <form className="account-panel" onSubmit={submitAccount}>
-            <button className="icon-button close" type="button" onClick={() => setAccountOpen(false)} aria-label="Cerrar cuenta">
+          <section className="plans-panel">
+            <button className="icon-button close" type="button" onClick={() => { setLoginOpen(false); setAccountOpen(false); }} aria-label="Cerrar cuenta">
               <X size={22} />
             </button>
             <p className="eyebrow">Acceso miembros</p>
-            <h2>Crea tu cuenta Fullness</h2>
-            <button className="google-button" type="button" onClick={startGoogleLogin}>
-              <Mail size={18} />
-              Continuar con Gmail
-            </button>
-            {googleMessage && <p className="form-note">{googleMessage}</p>}
-            <label>
-              Nombre completo
-              <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
-            </label>
-            <label>
-              Correo electronico
-              <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
-            </label>
-            <label>
-              Telefono
-              <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
-            </label>
-            <label>
-              Contrasena
-              <span><Lock size={18} /><input required name="password" type="password" placeholder="Minimo 8 caracteres" minLength={8} /></span>
-            </label>
-            <button className="primary-button full" type="submit">Crear cuenta</button>
-          </form>
+            <h2>Elige tu plan Fullness Lab</h2>
+            <div className="plans-grid">
+              {memberPlans.map((plan) => (
+                <article key={plan.id}>
+                  <Leaf size={24} />
+                  <h3>{plan.name}</h3>
+                  <p>{plan.description}</p>
+                  <button className="primary-button full" type="button" onClick={() => setLoginOpen(true)}>
+                    Comprar plan
+                  </button>
+                </article>
+              ))}
+            </div>
+            {loginOpen && (
+              <form className="account-panel embedded" onSubmit={submitAccount}>
+                <p className="eyebrow">Iniciar sesion</p>
+                <h2>Accede para continuar</h2>
+                <button className="google-button" type="button" onClick={startGoogleLogin}>
+                  <Mail size={18} />
+                  Continuar con Gmail
+                </button>
+                {googleMessage && <p className="form-note">{googleMessage}</p>}
+                <label>
+                  Nombre completo
+                  <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
+                </label>
+                <label>
+                  Correo electronico
+                  <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
+                </label>
+                <label>
+                  Telefono
+                  <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
+                </label>
+                <label>
+                  Contrasena
+                  <span><Lock size={18} /><input required name="password" type="password" placeholder="Minimo 8 caracteres" minLength={8} /></span>
+                </label>
+                <button className="primary-button full" type="submit">Iniciar sesion</button>
+              </form>
+            )}
+          </section>
         </div>
       )}
 

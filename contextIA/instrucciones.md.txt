@@ -46,6 +46,7 @@ La solucion actual incluye:
 - Modal de acceso para miembros.
 - Preparacion para login con Gmail mediante `VITE_GOOGLE_CLIENT_ID`.
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
+- Logo de referencia oficial: `public/assets/fullness-lab-logo.png`, proveniente de `ChatGPT Image 13 may 2026, 15_11_21.png`. La clienta lo identifica como el logo que debe recordarse para la parte superior/derecha y como referencia visual de marca.
 
 La app todavia funciona principalmente como demo visual. No hay backend, persistencia de datos, checkout real ni autenticacion productiva completa.
 
