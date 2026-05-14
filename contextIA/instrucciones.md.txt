@@ -45,7 +45,7 @@ La solucion actual incluye:
 - Notificacion al agregar productos.
 - Modal de acceso para miembros.
 - Preparacion para login con Gmail mediante `VITE_GOOGLE_CLIENT_ID`.
-- Assets nuevos de demo: `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
+- Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
 
 La app todavia funciona principalmente como demo visual. No hay backend, persistencia de datos, checkout real ni autenticacion productiva completa.
 
@@ -63,7 +63,7 @@ Precision nueva entregada por la clienta el 2026-05-13:
 - Debe aparecer la idea de nutrientes, vitaminas, minerales, grasas saludables e hidratos de carbono complejos entrando o cayendo hacia el plato y luego disolviendose.
 - La diferenciacion debe levantar las tres patas: practico, rico/foodporn y antiinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
 - Frase conceptual clave: es rico y es un privilegio nutrirse bien.
-- Implementacion actual: el hero usa el video local como fondo, logo Fullness Lab, frase `Nutrirse desde la raiz`, leyendas de nutrientes y pilares visuales.
+- Implementacion actual: el hero usa el video local `fullness-lab-hero-0513.mp4` como fondo, sin loop, ubicado abajo a la derecha, con logo Fullness Lab, frase `Nutrirse desde la raiz` y pilares visuales. Las etiquetas flotantes de nutrientes se retiraron a pedido de la clienta.
 
 ## Ambito: Producto Y Marca
 

@@ -45,33 +45,6 @@ const products = [
   }
 ];
 
-const nutrientLabels = [
-  {
-    title: "Vitaminas",
-    text: "Energia que se siente."
-  },
-  {
-    title: "Minerales",
-    text: "Equilibrio que te sostiene."
-  },
-  {
-    title: "Grasas saludables",
-    text: "Nutricion profunda."
-  },
-  {
-    title: "Antioxidantes",
-    text: "Proteccion que se refleja."
-  },
-  {
-    title: "Proteinas de calidad",
-    text: "Fuerza que se construye."
-  },
-  {
-    title: "Hidratos complejos",
-    text: "Energia estable."
-  }
-];
-
 const functionalNotes = [
   "Curcuma + jengibre + pimienta",
   "Grasas saludables + vegetales",
@@ -236,8 +209,8 @@ function App() {
       )}
 
       <section className="hero" id="inicio">
-        <video className="hero-video" autoPlay muted loop playsInline poster="/assets/fullness-lab-hero-reference.png">
-          <source src="/assets/fullness-lab-hero-video.mp4" type="video/mp4" />
+        <video className="hero-video" autoPlay muted playsInline preload="auto" poster="/assets/fullness-lab-hero-reference.png">
+          <source src="/assets/fullness-lab-hero-0513.mp4" type="video/mp4" />
         </video>
         <div className="hero-wash" />
 
@@ -254,12 +227,6 @@ function App() {
           </a>
         </div>
 
-        <div className="hero-nutrient-caption" aria-label="Nutrientes Fullness Lab">
-          {nutrientLabels.map((item) => (
-            <span key={item.title}>{item.title}</span>
-          ))}
-        </div>
-
         <div className="hero-principles" aria-label="Pilares Fullness Lab">
           <span><Leaf size={22} /> Ingredientes reales</span>
           <span><Sparkles size={22} /> Nutricion inteligente</span>
@@ -270,7 +237,7 @@ function App() {
 
       <section className="food-editorial" id="plato">
         <div className="editorial-image">
-          <img src="/assets/fullness-lab-hero-reference.png" alt="Plato Fullness Lab con nutrientes" />
+          <img src="/assets/fullness-lab-food-porn.png" alt="Plato funcional Fullness Lab" />
         </div>
         <div className="editorial-copy">
           <p className="eyebrow">Food porn funcional</p>
@@ -288,8 +255,8 @@ function App() {
       </section>
 
       <section className="philosophy" id="filosofia">
-        <div className="beet-seal">
-          <img src="/assets/fullness-beet-logo.svg" alt="" />
+        <div className="philosophy-visual">
+          <img src="/assets/fullness-lab-philosophy.png" alt="Filosofia Fullness Lab" />
         </div>
         <div>
           <p className="eyebrow">Nuestra filosofia</p>

@@ -6,8 +6,8 @@ La clienta redefinio el foco hacia nutricion emocional, raiz, betarraga, cuerpo 
 
 Pendientes:
 
-- Revisar con Cecilia el hero con video y frase madre `Nutrirse desde la raiz`.
-- Ajustar la animacion de nutrientes del hero si Cecilia quiere mas o menos presencia visual.
+- Revisar con Cecilia el hero con video `0513.mp4` y frase madre `Nutrirse desde la raiz`.
+- Las etiquetas flotantes de nutrientes sobre el hero se retiraron a pedido de la clienta.
 - Mover la web desde una estetica limpia/minimal hacia una experiencia mas editorial, organica, botanica y cinematografica.
 - Evitar usar ahorro de tiempo como valor diferencial.
 - Integrar frases profundas de marca sin saturar la interfaz.
