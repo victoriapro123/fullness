@@ -180,7 +180,6 @@ function App() {
 
   const nav = (
     <>
-      <a href="#plato">Food porn</a>
       <a href="#filosofia">Filosofia</a>
       <a href="#calentar">Como calentar</a>
       <a href="#productos">Tienda</a>
@@ -191,7 +190,7 @@ function App() {
     <main>
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Fullness Lab inicio">
-          <img className="brand-reference-logo" src="/assets/fullness-lab-logo.png" alt="Fullness Lab" />
+          <img className="brand-reference-logo" src="/assets/fullness-lab-logo-white.png" alt="Fullness Lab" />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
@@ -272,16 +271,50 @@ function App() {
 
       <section className="philosophy" id="filosofia">
         <div className="philosophy-visual">
-          <img src="/assets/fullness-lab-philosophy.png" alt="Filosofia Fullness Lab" />
+          <img src="/assets/fullness-lab-philosophy-new.png" alt="Filosofia Fullness Lab" />
         </div>
         <div>
           <p className="eyebrow">Nuestra filosofia</p>
-          <h2>Lo esencial vive adentro.</h2>
-          <p>
-            La betarraga crece bajo tierra, absorbiendo minerales, agua y vida. En Fullness Lab entendemos el bienestar igual: lo que te sostiene nace desde adentro.
-          </p>
-          <p>
-            No es dieta. No es restriccion. Es una forma de volver a ti a traves de alimentos reales, ricos y combinados con intencion.
+          <h2>Nutrirse desde la raiz.</h2>
+          <div className="philosophy-list">
+            <article>
+              <Leaf size={28} />
+              <div>
+                <h3>Ingredientes reales</h3>
+                <p>Seleccionamos ingredientes naturales, integrales y llenos de vida.</p>
+              </div>
+            </article>
+            <article>
+              <Sparkles size={28} />
+              <div>
+                <h3>Sin conservantes ni aditivos</h3>
+                <p>Sin quimicos innecesarios. Solo comida real.</p>
+              </div>
+            </article>
+            <article>
+              <ChefHat size={28} />
+              <div>
+                <h3>Cocinado a baja temperatura</h3>
+                <p>Respetamos los nutrientes y potenciamos el sabor.</p>
+              </div>
+            </article>
+            <article>
+              <Sprout size={28} />
+              <div>
+                <h3>Nutricion inteligente</h3>
+                <p>Equilibrio entre macronutrientes, micronutrientes y alimentos funcionales.</p>
+              </div>
+            </article>
+            <article>
+              <Heart size={28} />
+              <div>
+                <h3>Bienestar integral</h3>
+                <p>Comer bien es el primer paso para vivir mejor en cuerpo, mente y energia.</p>
+              </div>
+            </article>
+          </div>
+          <p className="philosophy-close">
+            Comida real para una vida extraordinaria. Cada plato esta disenado para que te sientas bien, con energia estable, claridad mental y conexion contigo.
           </p>
         </div>
       </section>
