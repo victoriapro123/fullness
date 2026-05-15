@@ -85,6 +85,7 @@ function formatPrice(value) {
 
 function App() {
   const appRef = useRef(null);
+  const heroSceneRef = useRef(null);
   const [cart, setCart] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -95,6 +96,112 @@ function App() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      gsap.set(".hero-plate-base, .hero-plate-impact, .hero-plate-final", { autoAlpha: 0 });
+      gsap.set(".hero-plate-stage", { y: 34, scale: 1.02 });
+      gsap.set(".hero-salmon", { autoAlpha: 1, xPercent: -50, yPercent: -50, y: 0, rotate: -4, scale: 1 });
+      gsap.set(".hero-final-kicker, .hero-copy-block, .hero-privilege, .hero-cta, .hero-principles", { autoAlpha: 0, y: 24 });
+
+      const heroTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".hero-scroll",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.05
+        }
+      });
+
+      heroTimeline
+        .to(".hero-title-left", {
+          x: "-18vw",
+          autoAlpha: 0,
+          filter: "blur(8px)",
+          duration: 0.35,
+          ease: "power2.inOut"
+        }, 0.05)
+        .to(".hero-title-right", {
+          x: "18vw",
+          autoAlpha: 0,
+          filter: "blur(8px)",
+          duration: 0.35,
+          ease: "power2.inOut"
+        }, 0.05)
+        .to(".hero-salmon", {
+          y: "0vh",
+          rotate: 1.5,
+          scale: 0.98,
+          duration: 0.2,
+          ease: "power2.inOut"
+        }, 0)
+        .to(".hero-plate-base", {
+          autoAlpha: 1,
+          duration: 0.2,
+          ease: "sine.inOut"
+        }, 0.2)
+        .to(".hero-plate-stage", {
+          y: 0,
+          scale: 1,
+          duration: 0.2,
+          ease: "power3.out"
+        }, 0.2)
+        .to(".hero-salmon", {
+          x: "-1.4vw",
+          y: "4vh",
+          rotate: 8,
+          scale: 0.78,
+          duration: 0.45,
+          ease: "power1.inOut"
+        }, 0.2)
+        .to(".hero-plate-base", {
+          autoAlpha: 0,
+          duration: 0.1,
+          ease: "sine.inOut"
+        }, 0.65)
+        .to(".hero-plate-impact", {
+          autoAlpha: 1,
+          duration: 0.1,
+          ease: "sine.inOut"
+        }, 0.65)
+        .to(".hero-plate-stage", {
+          y: -4,
+          scale: 1.008,
+          duration: 0.05,
+          ease: "sine.out"
+        }, 0.68)
+        .to(".hero-plate-stage", {
+          y: 0,
+          scale: 1,
+          duration: 0.07,
+          ease: "sine.inOut"
+        }, 0.73)
+        .to(".hero-salmon", {
+          y: "4.5vh",
+          rotate: 8,
+          scale: 0.78,
+          duration: 0.15,
+          ease: "sine.out"
+        }, 0.75)
+        .to(".hero-salmon", {
+          autoAlpha: 0,
+          duration: 0.1,
+          ease: "sine.inOut"
+        }, 0.9)
+        .to(".hero-plate-impact", {
+          autoAlpha: 0,
+          duration: 0.1,
+          ease: "sine.inOut"
+        }, 0.9)
+        .to(".hero-plate-final", {
+          autoAlpha: 1,
+          duration: 0.1,
+          ease: "sine.inOut"
+        }, 0.9)
+        .to(".hero-final-kicker, .hero-copy-block, .hero-privilege, .hero-cta, .hero-principles", {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.28,
+          ease: "power3.out"
+        }, 0.86);
+
       const revealItems = gsap.utils.toArray([
         ".food-editorial .editorial-copy > *",
         ".philosophy .eyebrow",
@@ -120,7 +227,8 @@ function App() {
             scrollTrigger: {
               trigger: item,
               start: "top 86%",
-              once: true
+              end: "bottom 14%",
+              toggleActions: "play reverse play reverse"
             }
           }
         );
@@ -144,7 +252,8 @@ function App() {
             scrollTrigger: {
               trigger: image,
               start: "top 88%",
-              once: true
+              end: "bottom 12%",
+              toggleActions: "play reverse play reverse"
             }
           }
         );
@@ -313,30 +422,46 @@ function App() {
         </div>
       )}
 
-      <section className="hero" id="inicio">
-        <video className="hero-video" autoPlay muted playsInline preload="auto" poster="/assets/fullness-lab-hero-reference.png">
-          <source src="/assets/fullness-lab-hero-0513.mp4" type="video/mp4" />
-        </video>
-        <div className="hero-wash" />
+      <section className="hero-scroll" id="inicio">
+        <div className="hero">
+          <div className="hero-plate-scene" ref={heroSceneRef} aria-label="Plato Fullness Lab animado">
+            <div className="hero-plate-stage">
+              <img className="hero-plate-layer hero-plate-base" src="/assets/hero-plate-base.png" alt="" />
+              <img className="hero-plate-layer hero-plate-impact" src="/assets/hero-plate-impact.png" alt="" />
+              <img className="hero-plate-layer hero-plate-final" src="/assets/hero-plate-final.png" alt="Plato Fullness Lab con salmon" />
+              <img className="hero-salmon" src="/assets/hero-salmon-crop.png" alt="" />
+            </div>
+          </div>
+          <div className="hero-wash" />
 
-        <div className="hero-copy-block">
-          <p className="eyebrow">Nutricion inteligente. Energia real.</p>
-          <h1>Nutrirse desde la raiz.</h1>
-          <p className="hero-copy">
-            Comida real, ingredientes funcionales y combinaciones que nutren tu cuerpo, tu mente y tu energia.
-          </p>
+          <div className="hero-split-title" aria-hidden="true">
+            <span className="hero-title-left">Nutrirse desde</span>
+            <span className="hero-title-right">la raiz.</span>
+          </div>
+
+          <p className="eyebrow hero-final-kicker">Nutricion inteligente. Energia real.</p>
+
+          <div className="hero-copy-block">
+            <p className="hero-copy">
+              Comida real, ingredientes funcionales y combinaciones que nutren tu cuerpo, tu mente y tu energia.
+            </p>
+          </div>
+
           <p className="hero-privilege">Es un privilegio nutrirse bien.</p>
-          <a className="primary-button" href="#productos">
-            Comienza tu programa
-            <ArrowRight size={19} />
-          </a>
-        </div>
 
-        <div className="hero-principles" aria-label="Pilares Fullness Lab">
-          <span><Leaf size={22} /> Ingredientes reales</span>
-          <span><Sparkles size={22} /> Nutricion inteligente</span>
-          <span><ChefHat size={22} /> Cocinado con cuidado</span>
-          <span><Heart size={22} /> Bienestar desde adentro</span>
+          <div className="hero-cta">
+            <a className="primary-button" href="#productos">
+              Comienza tu programa
+              <ArrowRight size={19} />
+            </a>
+          </div>
+
+          <div className="hero-principles" aria-label="Pilares Fullness Lab">
+            <span><Leaf size={22} /> Ingredientes reales</span>
+            <span><Sparkles size={22} /> Nutricion inteligente</span>
+            <span><ChefHat size={22} /> Cocinado con cuidado</span>
+            <span><Heart size={22} /> Bienestar desde adentro</span>
+          </div>
         </div>
       </section>
 
