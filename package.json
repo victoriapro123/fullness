@@ -6,7 +6,19 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "remotion:studio": "remotion studio src/remotion/index.jsx",
+    "remotion:render:mobile": "remotion render src/remotion/index.jsx FullnessLabVacuumToPlateMobile public/assets/fullness/exports/fullness-lab-vacuum-to-plate-mobile.mp4 --codec=h264",
+    "remotion:render:desktop": "remotion render src/remotion/index.jsx FullnessLabVacuumToPlateDesktop public/assets/fullness/exports/fullness-lab-vacuum-to-plate-desktop.mp4 --codec=h264",
+    "remotion:render": "npm run remotion:render:mobile && npm run remotion:render:desktop",
+    "remotion:render:falling:mobile": "remotion render src/remotion/index.jsx FullnessLabFallingOnlyMobile public/assets/fullness/exports/fullness-lab-falling-only-mobile.mp4 --codec=h264",
+    "remotion:render:falling:desktop": "remotion render src/remotion/index.jsx FullnessLabFallingOnlyDesktop public/assets/fullness/exports/fullness-lab-falling-only-desktop.mp4 --codec=h264",
+    "remotion:render:falling": "npm run remotion:render:falling:mobile && npm run remotion:render:falling:desktop",
+    "remotion:render:plate:mobile": "remotion render src/remotion/index.jsx FullnessLabPlateAssemblyMobile public/assets/fullness/exports/fullness-lab-plate-assembly-mobile.mp4 --codec=h264",
+    "remotion:render:plate:desktop": "remotion render src/remotion/index.jsx FullnessLabPlateAssemblyDesktop public/assets/fullness/exports/fullness-lab-plate-assembly-desktop.mp4 --codec=h264",
+    "remotion:render:plate": "npm run remotion:render:plate:mobile && npm run remotion:render:plate:desktop",
+    "remotion:frames": "node scripts/export-fullness-frames.mjs",
+    "r2:sync-media": "node scripts/sync-public-media-to-r2.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -15,5 +27,9 @@
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.462",
+    "remotion": "^4.0.462"
   }
 }

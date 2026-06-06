@@ -1,5 +1,9 @@
 node_modules
 dist
 .vercel
+public/assets/
+public/images/
 *.local
 .DS_Store
+
+.vercel
