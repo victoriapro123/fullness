@@ -95,51 +95,32 @@ function IntroScrollSequence() {
   const videoRef = useRef(null);
   const posterFrameRef = useRef(null);
   const finalFrameRef = useRef(null);
-  const targetProgressRef = useRef(0);
-  const smoothProgressRef = useRef(0);
+  const progressRef = useRef(0);
   const playbackRef = useRef(null);
+  const touchStartYRef = useRef(null);
 
   useEffect(() => {
     let animationFrame = 0;
+    const playbackMs = 4000;
+    const finalFrameHold = 0.16;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const scrollBehaviorSnapshot = {
+      root: document.documentElement.style.scrollBehavior,
+      body: document.body.style.scrollBehavior
+    };
 
     const getMetrics = () => {
       if (!sectionRef.current) return;
 
       const sectionTop = sectionRef.current.offsetTop;
-      const scrollDistance = Math.max(1, sectionRef.current.offsetHeight - window.innerHeight);
-      return { sectionTop, scrollDistance };
+      const sectionHeight = Math.max(1, sectionRef.current.offsetHeight);
+      return { sectionTop, sectionHeight };
     };
 
     const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
-    const easeInOutCubic = (progress) =>
-      progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
     const jumpToScroll = (top) => {
-      const root = document.documentElement;
-      const body = document.body;
-      const previousRootBehavior = root.style.scrollBehavior;
-      const previousBodyBehavior = body.style.scrollBehavior;
-
-      root.style.scrollBehavior = "auto";
-      body.style.scrollBehavior = "auto";
       window.scrollTo(0, top);
-      window.requestAnimationFrame(() => {
-        root.style.scrollBehavior = previousRootBehavior;
-        body.style.scrollBehavior = previousBodyBehavior;
-      });
-    };
-
-    const moveScrollToProgress = (progress) => {
-      const metrics = getMetrics();
-      if (!metrics) return;
-
-      jumpToScroll(metrics.sectionTop + progress * metrics.scrollDistance);
-    };
-
-    const moveScrollPastSequence = () => {
-      if (!sectionRef.current) return;
-
-      jumpToScroll(sectionRef.current.offsetTop + sectionRef.current.offsetHeight + 1);
     };
 
     const getVideoDuration = () => {
@@ -159,15 +140,10 @@ function IntroScrollSequence() {
       posterFrameRef.current.style.opacity = visible ? "1" : "0";
     };
 
-    const updateProgress = () => {
-      if (playbackRef.current) return;
-
-      const metrics = getMetrics();
-      if (!metrics) return;
-
-      const { sectionTop, scrollDistance } = metrics;
-      const rawProgress = (window.scrollY - sectionTop) / scrollDistance;
-      targetProgressRef.current = clampProgress(rawProgress);
+    const setScrollLock = (locked) => {
+      document.documentElement.classList.toggle("intro-scroll-playing", locked);
+      document.documentElement.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.root;
+      document.body.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.body;
     };
 
     const syncHeaderVisibility = () => {
@@ -177,87 +153,191 @@ function IntroScrollSequence() {
         return;
       }
 
-      const { sectionTop, scrollDistance } = metrics;
-      const isInsideIntroScroll = window.scrollY > sectionTop + 8 && window.scrollY < sectionTop + scrollDistance - 8;
-      document.documentElement.classList.toggle("intro-scroll-active", isInsideIntroScroll);
+      const isInsideIntro =
+        playbackRef.current ||
+        (window.scrollY >= metrics.sectionTop + 2 &&
+          window.scrollY < metrics.sectionTop + metrics.sectionHeight - 2);
+
+      document.documentElement.classList.toggle("intro-scroll-active", Boolean(isInsideIntro));
+    };
+
+    const getProgressFromScroll = () => {
+      const metrics = getMetrics();
+      if (!metrics) return 0;
+
+      return clampProgress((window.scrollY - metrics.sectionTop) / metrics.sectionHeight);
     };
 
     const isSequenceActive = () => {
       const metrics = getMetrics();
       if (!metrics) return false;
 
-      const { sectionTop, scrollDistance } = metrics;
-      return window.scrollY >= sectionTop - 2 && window.scrollY <= sectionTop + scrollDistance + 2;
+      return window.scrollY >= metrics.sectionTop - 2 && window.scrollY < metrics.sectionTop + metrics.sectionHeight - 2;
+    };
+
+    const setVideoProgress = (progress, scrubVideo = true) => {
+      const nextProgress = clampProgress(progress);
+      const video = videoRef.current;
+      progressRef.current = nextProgress;
+
+      setFinalFrameVisible(nextProgress >= 0.995);
+      setPosterFrameVisible(nextProgress < 0.015);
+
+      if (!video || video.readyState < 1 || !scrubVideo) return;
+
+      const duration = getVideoDuration();
+      const nextTime =
+        nextProgress >= 0.995
+          ? Math.max(0, duration - finalFrameHold)
+          : Math.min(duration - finalFrameHold, Math.max(0, nextProgress * duration));
+
+      if (Math.abs(video.currentTime - nextTime) > 0.02) {
+        video.currentTime = nextTime;
+      }
+    };
+
+    const finishPlayback = () => {
+      const playback = playbackRef.current;
+      const metrics = getMetrics();
+      const video = videoRef.current;
+      if (!playback || !metrics) return;
+
+      const destination = playback.destination;
+      playbackRef.current = null;
+      setVideoProgress(destination);
+
+      if (video) {
+        video.pause();
+        if (destination >= 1 && video.readyState >= 1) {
+          video.currentTime = Math.max(0, getVideoDuration() - finalFrameHold);
+        }
+      }
+
+      jumpToScroll(destination >= 1 ? metrics.sectionTop + metrics.sectionHeight + 1 : metrics.sectionTop);
+      setScrollLock(false);
+      syncHeaderVisibility();
     };
 
     const startPlayback = (direction) => {
       if (!isSequenceActive()) return false;
 
-      const start = clampProgress(smoothProgressRef.current);
+      const start = clampProgress(progressRef.current || getProgressFromScroll());
       const destination = direction > 0 ? 1 : 0;
       const distance = Math.abs(destination - start);
-      if (distance < 0.012) return false;
+      const metrics = getMetrics();
 
-      const playbackDuration = Math.max(4200, Math.min(9500, distance * 9800));
+      if (!metrics) return false;
+
+      if (distance < 0.012 || reducedMotion) {
+        setVideoProgress(destination);
+        jumpToScroll(destination >= 1 ? metrics.sectionTop + metrics.sectionHeight + 1 : metrics.sectionTop);
+        syncHeaderVisibility();
+        return true;
+      }
+
+      const playbackDuration = Math.max(700, playbackMs * distance);
 
       playbackRef.current = {
         start,
         destination,
         startedAt: performance.now(),
-        duration: playbackDuration
+        duration: playbackDuration,
+        nativeVideo: false
       };
 
-      targetProgressRef.current = start;
+      setScrollLock(true);
+      syncHeaderVisibility();
+
+      const video = videoRef.current;
+      if (direction > 0 && video && video.readyState >= 1) {
+        const duration = getVideoDuration();
+        video.pause();
+        video.currentTime = Math.min(duration - finalFrameHold, Math.max(0, start * duration));
+        video.playbackRate = Math.max(0.25, Math.min(4, ((duration - finalFrameHold) * distance) / (playbackDuration / 1000)));
+        video.play()
+          .then(() => {
+            if (playbackRef.current) playbackRef.current.nativeVideo = true;
+          })
+          .catch(() => {
+            if (playbackRef.current) playbackRef.current.nativeVideo = false;
+          });
+      }
+
       return true;
     };
 
     const handleWheel = (event) => {
+      if (playbackRef.current) {
+        event.preventDefault();
+        return;
+      }
+
       if (!isSequenceActive()) return;
 
-      const playback = playbackRef.current;
       const direction = event.deltaY >= 0 ? 1 : -1;
-      const wheelDistance = Math.abs(event.deltaY);
-      const wheelScale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
-      const wheelProgress = (event.deltaY * wheelScale) / 5200;
-
-      if (playback) {
-        event.preventDefault();
-        if ((direction > 0 && playback.destination === 0) || (direction < 0 && playback.destination === 1)) {
-          startPlayback(direction);
-        }
-        return;
-      }
-
-      const isWideFastScroll = wheelDistance > 240;
-      if (isWideFastScroll && startPlayback(direction)) {
-        event.preventDefault();
-        return;
-      }
-
-      const currentProgress = clampProgress(targetProgressRef.current);
-      const isLeavingSequence =
-        (currentProgress <= 0.001 && direction < 0) || (currentProgress >= 0.999 && direction > 0);
-
-      if (isLeavingSequence) {
-        if (currentProgress >= 0.999 && direction > 0) {
-          moveScrollPastSequence();
-        } else {
-          moveScrollToProgress(0);
-        }
-        return;
-      }
+      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
 
       event.preventDefault();
-      const nextProgress = clampProgress(currentProgress + wheelProgress);
-      targetProgressRef.current = nextProgress;
+      startPlayback(direction);
+    };
 
-      if (nextProgress <= 0.001 || nextProgress >= 0.999) {
-        if (nextProgress >= 0.999) {
-          moveScrollPastSequence();
-        } else {
-          moveScrollToProgress(0);
-        }
+    const handleTouchStart = (event) => {
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event) => {
+      if (playbackRef.current) {
+        event.preventDefault();
+        return;
       }
+
+      if (!isSequenceActive() || touchStartYRef.current === null) return;
+
+      const currentY = event.touches[0]?.clientY ?? touchStartYRef.current;
+      const delta = touchStartYRef.current - currentY;
+      if (Math.abs(delta) < 8) return;
+
+      const direction = delta >= 0 ? 1 : -1;
+      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
+
+      event.preventDefault();
+      startPlayback(direction);
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable='true']")) {
+        return;
+      }
+
+      const downKeys = new Set(["ArrowDown", "PageDown", " ", "Spacebar", "End"]);
+      const upKeys = new Set(["ArrowUp", "PageUp", "Home"]);
+      const direction = downKeys.has(event.key) ? 1 : upKeys.has(event.key) ? -1 : 0;
+      if (!direction) return;
+
+      if (playbackRef.current) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!isSequenceActive()) return;
+      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
+
+      event.preventDefault();
+      startPlayback(direction);
+    };
+
+    const handleScroll = () => {
+      if (playbackRef.current) return;
+
+      if (isSequenceActive()) {
+        setVideoProgress(getProgressFromScroll());
+      }
+
+      syncHeaderVisibility();
+    };
+
+    const handleLoadedMetadata = () => {
+      setVideoProgress(progressRef.current);
     };
 
     const renderFrame = () => {
@@ -265,67 +345,51 @@ function IntroScrollSequence() {
       syncHeaderVisibility();
 
       if (playback) {
+        const metrics = getMetrics();
         const elapsed = performance.now() - playback.startedAt;
         const rawProgress = Math.min(1, elapsed / playback.duration);
-        const playbackProgress = playback.start + (playback.destination - playback.start) * easeInOutCubic(rawProgress);
+        const playbackProgress = playback.start + (playback.destination - playback.start) * rawProgress;
 
-        targetProgressRef.current = playbackProgress;
-        smoothProgressRef.current = playbackProgress;
+        setVideoProgress(playbackProgress, !playback.nativeVideo || playback.destination < playback.start);
+
+        if (metrics) {
+          jumpToScroll(metrics.sectionTop + playbackProgress * metrics.sectionHeight);
+        }
 
         if (rawProgress >= 1) {
-          targetProgressRef.current = playback.destination;
-          smoothProgressRef.current = playback.destination;
-          setFinalFrameVisible(playback.destination >= 1);
-          if (playback.destination >= 1) {
-            moveScrollPastSequence();
-          } else {
-            moveScrollToProgress(0);
-          }
-          playbackRef.current = null;
-        }
-      } else {
-        const target = targetProgressRef.current;
-        const current = smoothProgressRef.current;
-        const nextProgress = current + (target - current) * 0.14;
-        smoothProgressRef.current = Math.abs(target - nextProgress) < 0.00035 ? target : nextProgress;
-      }
-
-      const video = videoRef.current;
-      if (video) {
-        const duration = getVideoDuration();
-        const isAtFinalFrame = smoothProgressRef.current >= 0.999;
-        const nextTime = isAtFinalFrame
-          ? Math.max(0, duration - 0.16)
-          : Math.min(duration - 0.16, Math.max(0, smoothProgressRef.current * duration));
-
-        setFinalFrameVisible(isAtFinalFrame);
-        setPosterFrameVisible(smoothProgressRef.current < 0.012 && !isAtFinalFrame);
-
-        if (Math.abs(video.currentTime - nextTime) > 0.006) {
-          video.currentTime = nextTime;
+          finishPlayback();
         }
       }
 
       animationFrame = window.requestAnimationFrame(renderFrame);
     };
 
-    updateProgress();
-    window.addEventListener("scroll", updateProgress, { passive: true });
+    setVideoProgress(getProgressFromScroll());
+    videoRef.current?.addEventListener("loadedmetadata", handleLoadedMetadata);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
-    window.addEventListener("resize", updateProgress);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    window.addEventListener("resize", handleScroll);
     animationFrame = window.requestAnimationFrame(renderFrame);
 
     return () => {
-      window.removeEventListener("scroll", updateProgress);
+      videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("wheel", handleWheel, { capture: true });
-      window.removeEventListener("resize", updateProgress);
+      window.removeEventListener("touchstart", handleTouchStart, { capture: true });
+      window.removeEventListener("touchmove", handleTouchMove, { capture: true });
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      window.removeEventListener("resize", handleScroll);
       window.cancelAnimationFrame(animationFrame);
-      document.documentElement.classList.remove("intro-scroll-active");
+      setScrollLock(false);
+      document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing");
     };
   }, []);
 
   return (
-    <section className="scroll-sequence scroll-sequence-intro" id="inicio" ref={sectionRef} aria-label="Fullness Lab">
+    <section className="scroll-sequence scroll-sequence-intro" id="inicio" ref={sectionRef} aria-label="Video introductorio Fullness Lab">
       <div className="scroll-sequence-stage">
         <video
           ref={videoRef}
@@ -450,22 +514,6 @@ function App() {
         }
       );
 
-      gsap.utils.toArray(".functional-band, .heating, .products, .membership").forEach((section) => {
-        gsap.fromTo(section,
-          { backgroundPosition: "50% 0%" },
-          {
-            backgroundPosition: "50% 100%",
-            ease: "none",
-            scrollTrigger: {
-              trigger: section,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1.8
-            }
-          }
-        );
-      });
-
     }, appRef);
 
     return () => ctx.revert();
@@ -480,7 +528,7 @@ function App() {
       }
 
       const sequenceTop = introSequence.offsetTop;
-      const sequenceEnd = sequenceTop + introSequence.offsetHeight - window.innerHeight;
+      const sequenceEnd = sequenceTop + introSequence.offsetHeight;
       const isInsideIntroScroll = window.scrollY > sequenceTop + 8 && window.scrollY < sequenceEnd - 8;
 
       setHeaderHiddenForHero((current) => (current === isInsideIntroScroll ? current : isInsideIntroScroll));
@@ -521,6 +569,22 @@ function App() {
       .catch(() => {
         setGoogleMessage("No pudimos conectar Gmail. Revisa el Client ID de Google.");
       });
+  }, []);
+
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key !== "Escape") return;
+
+      setAccountOpen(false);
+      setCartOpen(false);
+      setMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+    };
   }, []);
 
   const cartTotal = useMemo(
@@ -583,13 +647,15 @@ function App() {
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
-  const nav = (
-    <>
-      <a href="#filosofia">Filosofía</a>
-      <a href="#calentar">Cómo calentar</a>
-      <a href="#productos">Tienda</a>
-    </>
-  );
+  const navItems = [
+    { href: "#filosofia", label: "Filosofía" },
+    { href: "#calentar", label: "Cómo calentar" },
+    { href: "#productos", label: "Tienda" }
+  ];
+
+  const nav = navItems.map((item) => (
+    <a key={item.href} href={item.href}>{item.label}</a>
+  ));
 
   return (
     <main ref={appRef}>
@@ -601,27 +667,41 @@ function App() {
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
-          <button className="member-link" onClick={() => setAccountOpen(true)}>
+          <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} />
             <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
           </button>
-          <button className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`} onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
+          <button
+            className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`}
+            type="button"
+            onClick={() => setCartOpen(true)}
+            aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
+          >
             <ShoppingBag size={20} />
-            {cartCount > 0 && <span>{cartCount}</span>}
+            {cartCount > 0 && <span aria-hidden="true">{cartCount}</span>}
           </button>
-          <button className="icon-button menu-toggle" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
+          <button className="icon-button menu-toggle" type="button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
             <Menu size={22} />
           </button>
         </div>
       </header>
 
       {menuOpen && (
-        <div className="mobile-menu">
-          <button className="icon-button close" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">
+        <div className="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú principal">
+          <button className="icon-button close" type="button" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">
             <X size={22} />
           </button>
-          {nav}
-          <button className="member-link" onClick={() => setAccountOpen(true)}>
+          {navItems.map((item) => (
+            <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
+          ))}
+          <button
+            className="member-link"
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              setAccountOpen(true);
+            }}
+          >
             <Sprout size={18} />
             Acceso miembros
           </button>
@@ -791,16 +871,16 @@ function App() {
           {products.map((product) => (
             <article className="product-card" key={product.id}>
               <div className="product-art">
-                <img src={mediaSrc("assets/fullness-food-crop.jpeg")} alt="" />
+                <img src={mediaSrc("assets/fullness-food-crop.jpeg")} alt={`Plato ${product.name}`} />
               </div>
               <span>{product.tag}</span>
               <h3>{product.name}</h3>
               <p>{product.description}</p>
               <div className="product-footer">
                 <strong>{formatPrice(product.price)}</strong>
-                <button className="add-button" onClick={() => addToCart(product)}>
+                <button className="add-button" type="button" onClick={() => addToCart(product)}>
                   <Plus size={18} />
-                  Agregar
+                  Agregar al pedido
                 </button>
               </div>
             </article>
@@ -822,14 +902,14 @@ function App() {
       </footer>
 
       {accountOpen && (
-        <div className="overlay" role="dialog" aria-modal="true">
+        <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="account-title">
           <section className="plans-panel login-only">
             <button className="icon-button close" type="button" onClick={() => setAccountOpen(false)} aria-label="Cerrar cuenta">
               <X size={22} />
             </button>
             <form className="account-panel embedded" onSubmit={submitAccount}>
               <p className="eyebrow">Acceso miembros</p>
-              <h2>Iniciar sesión</h2>
+              <h2 id="account-title">Iniciar sesión</h2>
               <button className="google-button" type="button" onClick={startGoogleLogin}>
                 <Mail size={18} />
                 Continuar con Gmail
@@ -837,19 +917,19 @@ function App() {
               {googleMessage && <p className="form-note">{googleMessage}</p>}
               <label>
                 Nombre completo
-                <span><User size={18} /><input required name="name" placeholder="Tu nombre" /></span>
+                <span><User size={18} /><input required name="name" placeholder="Tu nombre" autoComplete="name" /></span>
               </label>
               <label>
                 Correo electrónico
-                <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" /></span>
+                <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" autoComplete="email" /></span>
               </label>
               <label>
                 Teléfono
-                <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" /></span>
+                <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" autoComplete="tel" /></span>
               </label>
               <label>
                 Contraseña
-                <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} /></span>
+                <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} autoComplete="current-password" /></span>
               </label>
               <button className="primary-button full" type="submit">Iniciar sesión</button>
             </form>
@@ -870,12 +950,12 @@ function App() {
       )}
 
       {cartOpen && (
-        <div className="cart-drawer" role="dialog" aria-modal="true">
-          <button className="icon-button close" onClick={() => setCartOpen(false)} aria-label="Cerrar carrito">
+        <div className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+          <button className="icon-button close" type="button" onClick={() => setCartOpen(false)} aria-label="Cerrar carrito">
             <X size={22} />
           </button>
           <p className="eyebrow">Tu carrito</p>
-          <h2>Pedido Fullness</h2>
+          <h2 id="cart-title">Pedido Fullness</h2>
           {cart.length === 0 ? (
             <p className="empty-cart">Aún no agregas platos. Elige un favorito para empezar.</p>
           ) : (
@@ -888,11 +968,11 @@ function App() {
                       <p>{formatPrice(item.price)}</p>
                     </div>
                     <div className="qty">
-                      <button onClick={() => updateQty(item.id, -1)} aria-label="Restar">
+                      <button type="button" onClick={() => updateQty(item.id, -1)} aria-label={`Restar ${item.name}`}>
                         <Minus size={16} />
                       </button>
                       <span>{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} aria-label="Sumar">
+                      <button type="button" onClick={() => updateQty(item.id, 1)} aria-label={`Sumar ${item.name}`}>
                         <Plus size={16} />
                       </button>
                     </div>
@@ -903,7 +983,16 @@ function App() {
                 <span>Total</span>
                 <strong>{formatPrice(cartTotal)}</strong>
               </div>
-              <button className="primary-button full">Continuar pedido</button>
+              <button
+                className="primary-button full"
+                type="button"
+                onClick={() => {
+                  setCartOpen(false);
+                  setAccountOpen(true);
+                }}
+              >
+                Continuar pedido
+              </button>
             </>
           )}
         </div>
@@ -916,5 +1005,3 @@ const rootElement = document.getElementById("root");
 const root = window.fullnessRoot || createRoot(rootElement);
 window.fullnessRoot = root;
 root.render(<App />);
-
-
