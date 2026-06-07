@@ -49,12 +49,23 @@ VITE_GOOGLE_CLIENT_ID=tu-client-id-de-google.apps.googleusercontent.com
 
 ## Checkout Real
 
-El carrito actualmente funciona como demo visual. Para vender realmente se podria integrar:
+El carrito actualmente funciona como demo visual. Ya quedo versionado y aplicado un esquema Supabase para menus, carritos, ordenes, pagos Mercado Pago, clientes y permisos admin simples, pero falta conectar el flujo real.
 
-- Mercado Pago.
-- Webpay.
-- Stripe.
-- Checkout propio con backend.
+Pendientes:
+
+- Cargar el menu real en `menu_items`.
+- Implementar Mercado Pago Bricks con API routes server-side.
+- Registrar pagos en `payments` y webhooks en `payment_events`.
+- Persistir carrito y ordenes en Supabase.
+
+## Backoffice
+
+Pendientes:
+
+- Probar backoffice de menus con un usuario real marcado como admin en `profiles.is_admin`.
+- Cargar menus reales con foto, descripcion, precio, ingredientes, alergenos y descripcion nutricional.
+- Crear backoffice admin para ventas, pagos, clientes y carritos.
+- Crear panel cliente solo para compras historicas y compras por recibir.
 
 ## Contenido Final
 

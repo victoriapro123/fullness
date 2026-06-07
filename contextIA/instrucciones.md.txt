@@ -43,12 +43,14 @@ La solucion actual incluye:
 - Secciones de plato food porn, filosofia, nutricion funcional, como calentar, productos y nutricion emocional.
 - Carrito funcional en memoria.
 - Notificacion al agregar productos.
-- Modal de acceso para miembros.
-- Preparacion para login con Gmail mediante `VITE_GOOGLE_CLIENT_ID`.
+- Modal de acceso para miembros con Supabase Auth por correo y contrasena.
+- Cliente Supabase para cargar menus activos desde `menu_items`; el fallback a productos de demo queda solo para entornos sin Supabase configurado o con error de conexion.
+- Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, alergenos, estado activo y orden.
+- Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
 - Logo de referencia oficial: `public/assets/fullness-lab-logo.png`, proveniente de `ChatGPT Image 13 may 2026, 15_11_21.png`. La clienta lo identifica como el logo que debe recordarse para la parte superior/derecha y como referencia visual de marca.
 
-La app todavia funciona principalmente como demo visual. No hay backend, persistencia de datos, checkout real ni autenticacion productiva completa.
+La app todavia funciona principalmente como demo visual en carrito y checkout. Hay base Supabase versionada y aplicada, cliente de lectura/escritura de menus y backoffice inicial de menus; falta persistir carrito/checkout desde la UI y completar el flujo productivo de compra.
 
 Direccion nueva entregada por la clienta el 2026-05-12:
 
@@ -79,7 +81,7 @@ Contexto actual:
 - El tono visual debe ser oscuro, calido, editorial, cinematografico, organico y premium.
 - Las secciones interiores alternan fondos claros y oscuros.
 - Los textos actuales son de demo y pueden requerir reemplazo por contenido final de la marca.
-- Los productos, precios y descripciones son ejemplos.
+- Los productos, precios y descripciones siguen siendo ejemplos si Supabase no tiene datos; cuando exista `menu_items`, la tienda publica toma los menus activos desde la base.
 - La betarraga es simbolo central: raiz, nutricion interior, humildad, intensidad interna y conexion con la tierra.
 - La certificacion que impulsa la siguiente etapa de la marca es nutricion emocional; el proximo paso probable son sesiones de health coach.
 
@@ -153,17 +155,24 @@ Pendientes proactivos:
 
 Archivos principales:
 
-- `src/main.jsx`: componentes, estado, datos de demo, carrito, cuenta y login Gmail.
-- `src/styles.css`: estilos globales, layout responsive, modales, carrito y animaciones.
+- `src/main.jsx`: componentes, estado, datos de demo, carrito, cuenta con Supabase Auth y backoffice de menus.
+- `src/lib/supabase.js`: cliente publico Supabase para React, usando variables `VITE_SUPABASE_*` o `NEXT_PUBLIC_SUPABASE_*`.
+- `src/lib/menu-items.js`: consulta, normalizacion, CRUD y subida de fotos para menus desde `menu_items` y `menu-photos`.
+- `src/styles.css`: estilos globales, layout responsive, modales, carrito, backoffice y animaciones.
 - `index.html`: punto de entrada Vite y fuentes externas.
+- `vite.config.js`: configura React en Vite, expone prefijos `VITE_`/`NEXT_PUBLIC_` y enruta `/api/media` en desarrollo local para poder probar los assets R2 sin overlay de importacion.
 
 Contexto actual:
 
 - La aplicacion esta concentrada en un solo componente `App`.
-- Los arrays `products` y `programs` viven en `src/main.jsx`.
+- `src/main.jsx` mantiene `demoProducts` como fallback local solo si Supabase no esta configurado o falla la carga; cuando Supabase responde, la tienda publica refleja exactamente los menus activos, incluso si no hay ninguno.
 - El carrito se guarda solo en estado React.
-- La cuenta de miembro tambien se guarda solo en estado React.
-- No hay rutas, store global, backend ni base de datos.
+- La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`.
+- No hay router ni store global: `#backoffice` abre acceso/backoffice dentro de la misma SPA. No hay backend de checkout; la base Supabase ya esta aplicada y la tienda publica lee `menu_items`.
+- El backoffice de menus permite crear, editar, borrar y activar/desactivar menus; edita nombre, slug, SKU, etiqueta, precio, orden, descripcion, foto por URL o subida a `menu-photos`, ingredientes, alergenos, descripcion nutricional y datos nutricionales JSON.
+- El video introductorio anterior al hero no debe depender del scroll continuo: una intencion de scroll hacia abajo, touch hacia abajo, teclado o click en el logo central inicia un recorrido automatico de 4 segundos con efecto de scroll/scrub fluido, bloqueando la entrada y el desplazamiento real del sitio durante ese tramo. El video debe cubrir todo el alto visible, el header/menu debe estar oculto mientras corre la animacion y el sitio solo debe aterrizar en el hero al terminar los 4 segundos. Para cuidar la fluidez, la bajada hacia el hero usa reproduccion nativa del video con velocidad calculada, evitando forzar `currentTime` en cada frame. Al terminar, el intro queda consumido y sale del flujo normal: desde el hero no se puede subir al video ni al tramo negro con scroll. Solo el boton tecnico transparente `Volver a la animacion` reabre el intro y resetea el video.
+- El intro muestra el logo Fullness Lab centrado sobre el video, con proporcion cercana al 20% de pantalla y rol de boton accesible. Al iniciar la animacion, el logo debe desaparecer gradualmente, no de golpe. Los cuadros tecnologicos son cuatro tags simples apilados a la izquierda, mas grandes, sin glass pesado ni blur: fondo totalmente transparente, borde blanco y una sola palabra/frase: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Deben empezar despues del segundo 1 y aparecer uno a uno con efecto de titileo e iluminacion. Al aterrizar en el hero, esos conceptos quedan apilados a la izquierda como bloque estable debajo del boton `Ver mas`, con fondo 100% transparente. El boton `Ver mas` debe compartir el mismo ancho visual de los cuadros tecnologicos y nunca superponerse con ellos.
+- El hero es el primer viewport real despues de consumir el intro y no debe depender de ScrollTrigger para hacerse visible. No ocultar `.plate-hero-copy` ni `.plate-hero-visual` con `autoAlpha: 0`, porque puede quedar invisible cuando el intro sale del flujo.
 
 Reglas al modificar:
 
@@ -171,12 +180,14 @@ Reglas al modificar:
 - Si crecen productos, checkout, cuenta o comunidad, evaluar separar componentes y datos por modulo.
 - Cualquier texto visible debe ser contenido de producto, no contexto IA.
 - Revisar responsive cada vez que se toque header, hero, cards, modales o drawer.
+- Mantener dialogos, drawer y menu movil con nombres accesibles, cierre por Escape y botones con `type="button"` cuando no envian formularios.
 
 Pendientes proactivos:
 
 - Separar componentes si el archivo `main.jsx` sigue creciendo.
-- Crear una fuente de datos real o configurable para productos.
+- Cargar el menu real de la clienta cuando reemplace el seed inicial.
 - Persistir carrito si se avanza hacia compra real.
+- Probar login admin real con un usuario marcado en `profiles.is_admin` antes de entregar a produccion.
 
 ## Ambito: Diseno Visual Y Assets
 
@@ -188,6 +199,7 @@ Archivos y recursos:
 - `public/assets/fullness-food-video.mp4`
 - `public/assets/fullness-hero.jpeg`
 - `public/assets/fullness-beet-logo.svg`
+- R2 `images/fullness-heating-bag-realistic-v2.png`
 
 Contexto actual:
 
@@ -195,6 +207,7 @@ Contexto actual:
 - La portada usa `fullness-hero-background.png`.
 - Las tarjetas de productos usan `fullness-food-crop.jpeg`.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
+- La franja "Como calentar" usa `images/fullness-heating-bag-realistic-v2.png` desde R2: bolsa al vacio mas inflada, con ingredientes picados distribuidos, pinzas y mano. El pequeno splash de ingreso al agua se dibuja en CSS con `.heating-splash`, no como parte del PNG.
 - La clienta quiere que el color predominante venga principalmente de los platos.
 - Las franjas claras deben ser mas claras que el fondo oscuro, pero no blancas ni clinicas; deben acercarse a tonos de monograma, papel organico, salvia mineral, beige oliva o marfil envejecido.
 - El diseno puede tener mas elementos que antes; ya no debe ser tan minimalista limpio.
@@ -224,13 +237,14 @@ Reglas al modificar:
 - Usar la betarraga como sello editorial, grabado sutil, marca de agua, linea fina o detalle botanico; no gigante de forma repetitiva.
 - Las fotografias deben sentirse editoriales, no stock: luz lateral calida, contraste, vapor, texturas reales, ceramica artesanal y dramatismo gastronomico.
 - El hero necesita una capa visual de nutrientes integrandose al plato: particulas, textos breves, lineas botanicas, minerales o elementos luminosos sutiles. Debe sentirse organico y editorial, no interfaz tecnologica ni grafico medico.
+- Las secciones visibles deben separarse con cortes limpios de color o imagen, sin empalmes con degradados, blur, backdrop blur ni superposiciones negativas para ocultar transiciones.
 
 Pendientes proactivos:
 
 - Reemplazar fotos de demo por fotos finales de productos.
 - Definir lineamientos de uso del logo.
 - Revisar peso de imagenes si la web se vuelve lenta.
-- Conseguir o generar imagen de plato en bolsa al vacio con pinzas en agua para la franja "como calentar".
+- Revisar con la clienta si la bolsa al vacio generada para "como calentar" debe mantener trucha/salmon como plato ejemplo o ajustarse al menu real.
 - Conseguir o generar imagen food porn cinematografica para hero y otra para plato editorial grande.
 - Explorar animacion de entrada donde nutrientes caen o flotan hacia el plato y se disuelven con leyendas breves.
 
@@ -267,6 +281,51 @@ Pendientes proactivos:
 - Crear copy especifico para la franja de calentado con tono ritual, no conveniencia.
 - Prototipar hero con plato + overlay de nutrientes animados.
 
+## Ambito: Supabase, Datos Y Backoffice
+
+Archivos relacionados:
+
+- `supabase/migrations/20260606223000_fullness_commerce_schema.sql`
+- `supabase/seed.sql`
+- `supabase/README.md`
+- `src/main.jsx`
+- `src/styles.css`
+- `src/lib/supabase.js`
+- `src/lib/menu-items.js`
+- `.env.example`
+
+Contexto actual:
+
+- El diagnostico remoto inicial del 2026-06-06 encontro `orders` y `order_items` existentes, pero incompletas: `orders` tenia `client_id`, `status`, `total_clp`, `note`, `ordered_at`; `order_items` tenia `order_id`, `product_id`, `quantity`, `unit_price_clp`.
+- La revision posterior del 2026-06-06 confirmo que la migracion quedo aplicada: `profiles`, `menu_items`, `customer_addresses`, `carts`, `cart_items`, `orders`, `order_items`, `payments`, `payment_events`, `customer_order_history` y `customer_orders_to_receive` estan expuestas por PostgREST sin columnas faltantes.
+- La migracion evoluciono tablas existentes sin borrar datos: conserva `orders.client_id` y `order_items.product_id`.
+- `menu_items` es la tabla de menus/productos vendibles: foto, descripcion, precio, ingredientes, descripcion nutricional, datos nutricionales, estado activo y orden.
+- `profiles.is_admin` resuelve permisos de administracion de forma simple: administrador si/no. No hay mas perfiles.
+- Las compras de clientes viven en `orders` y `order_items`; las vistas `customer_order_history` y `customer_orders_to_receive` separan compras historicas y compras por recibir para un panel de cliente simple.
+- Mercado Pago Bricks queda considerado con `payments`, `payment_events`, `mercadopago_preference_id` y `mercadopago_external_reference`.
+- La migracion activa RLS e indices en columnas usadas por cliente, estado, carrito, pedido y pago.
+- `menu-photos` queda como bucket publico de lectura y escritura restringida a administradores.
+- El seed inicial quedo cargado con 3 menus activos; la app local confirmo que los lee desde Supabase y no desde fallback.
+- El backoffice inicial de menus quedo implementado en la SPA. Se accede por `#backoffice` o por el enlace visible para administradores, exige Supabase Auth y valida `profiles.is_admin` antes de listar o escribir.
+- Guardar o borrar menus desde backoffice refresca la lista administrativa y la tienda publica. Si Supabase esta configurado y no hay menus activos, la tienda queda sin productos activos en vez de volver a datos demo.
+- La subida de fotos usa el bucket publico `menu-photos`; tambien se puede pegar una URL externa en el campo de foto.
+
+Reglas al modificar:
+
+- No usar `SUPABASE_SERVICE_ROLE_KEY` en React; solo en backend/API routes.
+- Mantener RLS en tablas con datos de clientes, pedidos, carritos y pagos.
+- Usar `profiles.is_admin` como unico permiso administrativo mientras la clienta no pida perfiles mas finos.
+- Para Mercado Pago, el frontend solo debe usar la public key; el backend debe crear/procesar pagos y registrar webhooks con idempotencia.
+- Si se agregan tablas o variables, actualizar `supabase/README.md`, `.env.example` y este contexto.
+
+Pendientes proactivos:
+
+- Cargar menu real, fotos, precios, ingredientes y descripcion nutricional definitiva.
+- Marcar el primer administrador en `profiles.is_admin` desde SQL Editor despues de crear el usuario en Auth.
+- Crear API routes para crear orden, iniciar/procesar pago Mercado Pago Bricks y recibir webhooks.
+- Ampliar backoffice admin para ventas, pagos, clientes y carritos.
+- Construir backoffice cliente limitado a compras historicas y compras por recibir.
+
 ## Ambito: Carrito Y Compra
 
 Ubicacion actual:
@@ -282,6 +341,7 @@ Contexto actual:
 - Se puede sumar y restar cantidad.
 - El total se calcula en CLP.
 - El boton `Continuar pedido` todavia no ejecuta checkout real.
+- La base contempla persistencia futura con `carts`, `cart_items`, `orders`, `order_items`, `payments` y `payment_events`, pero el flujo UI sigue en memoria.
 
 Reglas al modificar:
 
@@ -293,8 +353,8 @@ Reglas al modificar:
 
 Pendientes proactivos:
 
-- Definir checkout: Mercado Pago, Webpay, Stripe o backend propio.
-- Definir persistencia de carrito.
+- Implementar checkout con Mercado Pago Bricks mediante API routes server-side.
+- Conectar persistencia de carrito a Supabase.
 - Agregar datos de despacho y contacto antes del pago real.
 - Definir etiquetas, packs reales y estilo visual de productos al vacio.
 
@@ -312,6 +372,7 @@ Contexto actual:
 - El login Gmail usa OAuth implicit flow en cliente.
 - Si falta `VITE_GOOGLE_CLIENT_ID`, se muestra mensaje de configuracion.
 - La cuenta no se guarda fuera del estado React.
+- La migracion Supabase crea `profiles` sincronizado con `auth.users` y protege `is_admin`, pero la UI aun no usa Supabase Auth.
 
 Reglas al modificar:
 
@@ -322,7 +383,7 @@ Reglas al modificar:
 Pendientes proactivos:
 
 - Definir proveedor de autenticacion.
-- Crear backend o servicio de usuarios si habra cuentas reales.
+- Conectar la cuenta a Supabase Auth si habra cuentas reales.
 - Evaluar flujo OAuth mas robusto para produccion.
 
 ## Ambito: Comunidad Y Programas
@@ -403,7 +464,10 @@ Contexto actual:
 
 - El proyecto usa Vite.
 - Esta preparado para despliegue en Vercel.
-- La variable importante conocida es `VITE_GOOGLE_CLIENT_ID`.
+- Las variables publicas importantes son `VITE_GOOGLE_CLIENT_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`/`VITE_SUPABASE_ANON_KEY` y `VITE_MERCADOPAGO_PUBLIC_KEY`.
+- `vite.config.js` tambien acepta `NEXT_PUBLIC_SUPABASE_*` para compatibilidad con el `.env.local` actual.
+- Las variables privadas `SUPABASE_SERVICE_ROLE_KEY`, `MERCADOPAGO_ACCESS_TOKEN` y `MERCADOPAGO_WEBHOOK_SECRET` deben vivir solo en backend/Vercel, nunca en codigo cliente.
+- En desarrollo local, `vite.config.js` monta un middleware para `/api/media` que reutiliza `api/media.js`. `server/r2-media.mjs` acepta tanto los nombres nuevos `R2_ACCESS_KEY_ID`/`R2_ENDPOINT_URL` como los nombres legacy presentes en el entorno local.
 
 Reglas al modificar:
 
@@ -415,6 +479,7 @@ Pendientes proactivos:
 
 - Confirmar configuracion final de dominio.
 - Confirmar variables en Vercel.
+- Aplicar migracion Supabase y seed opcional antes de probar menu real.
 - Agregar instrucciones de despliegue si el flujo crece.
 
 ## Ambito: Calidad, Riesgos Y Mantenimiento
@@ -424,7 +489,8 @@ Riesgos actuales:
 - Hay textos con caracteres posiblemente mal codificados en `src/main.jsx`.
 - La app concentra mucha logica en un solo archivo.
 - No existen tests automatizados.
-- No hay backend ni persistencia.
+- No hay backend de checkout ni persistencia conectada para carrito/ordenes desde la UI.
+- La base Supabase esta versionada, pero requiere aplicacion remota; con solo URL + anon/service role no se puede ejecutar DDL desde la app.
 - El login Gmail y el checkout son incompletos para produccion.
 - La UI actual todavia comunica mas "comida real lista para servir" que "nutricion emocional desde la raiz"; hay que alinear copy, secciones y visuales.
 
@@ -439,7 +505,7 @@ Pendientes proactivos:
 
 - Corregir codificacion de textos visibles.
 - Evaluar separacion en componentes.
-- Agregar validaciones y persistencia cuando la demo avance a producto.
+- Agregar validaciones, API routes y persistencia cuando la demo avance a producto.
 - Rehacer copy visible con la nueva estrategia antes de pulir detalles menores.
 - Validar con la clienta la intensidad conceptual para no caer ni en comercial generico ni en misticismo excesivo.
 

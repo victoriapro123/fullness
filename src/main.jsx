@@ -4,51 +4,77 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowRight,
+  CheckCircle2,
   CookingPot,
+  Eye,
+  EyeOff,
   HandPlatter,
   Heart,
   Leaf,
   Lock,
+  LogOut,
   Mail,
   Menu,
   Minus,
   PackageCheck,
-  Phone,
+  Pencil,
   Plus,
+  RefreshCw,
+  Save,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Sprout,
   Timer,
-  User,
+  Trash2,
+  UploadCloud,
+  Video,
   X
 } from "lucide-react";
+import {
+  deleteMenuItem,
+  listActiveMenuItems,
+  listAdminMenuItems,
+  saveMenuItem,
+  uploadMenuPhoto
+} from "./lib/menu-items.js";
+import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
 
-const products = [
+const demoProducts = [
   {
     id: "trucha-betarraga",
     name: "Trucha, betarraga y quinoa",
     tag: "Omega 3 + antioxidantes",
     price: 8990,
-    description: "Pescado del sur, raíces dulces, hojas verdes y granos integrales sin gluten."
+    description: "Pescado del sur, raíces dulces, hojas verdes y granos integrales sin gluten.",
+    image: mediaSrc("assets/fullness-food-crop.jpeg"),
+    ingredients: ["trucha", "betarraga", "quinoa", "hojas verdes"],
+    nutritionDescription: "Proteína de calidad, omega 3, fibra y antioxidantes naturales en un plato completo."
   },
   {
     id: "pollo-curcuma",
     name: "Pollo, cúrcuma y vegetales",
     tag: "Antiinflamatorio",
     price: 7990,
-    description: "Proteína limpia con jengibre, pimienta y grasas saludables para una nutrición completa."
+    description: "Proteína limpia con jengibre, pimienta y grasas saludables para una nutrición completa.",
+    image: mediaSrc("assets/fullness-food-crop.jpeg"),
+    ingredients: ["pollo", "cúrcuma", "jengibre", "pimienta", "vegetales"],
+    nutritionDescription: "Plato alto en proteína con especias asociadas a una alimentación antiinflamatoria."
   },
   {
     id: "legumbres-granos",
     name: "Legumbres, arroz integral y oliva",
     tag: "Proteína vegetal completa",
     price: 6990,
-    description: "Legumbres y granos integrales combinados para equilibrar energía, fibra y saciedad."
+    description: "Legumbres y granos integrales combinados para equilibrar energía, fibra y saciedad.",
+    image: mediaSrc("assets/fullness-food-crop.jpeg"),
+    ingredients: ["legumbres", "arroz integral", "aceite de oliva", "semillas"],
+    nutritionDescription: "Combinación vegetal con fibra, carbohidratos complejos y grasas saludables."
   }
 ];
 
@@ -76,11 +102,28 @@ const functionalNotes = [
   }
 ];
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequence.mp4");
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
 const introScrollFinalFrameSrc = mediaSrc("assets/scroll-intro/fullness-intro-final.jpg");
 const introScrollVideoDuration = 15.04;
+const introTechSignals = [
+  {
+    id: "anti",
+    label: "Antiinflamatorio"
+  },
+  {
+    id: "nutrients",
+    label: "Nutrientes"
+  },
+  {
+    id: "origin",
+    label: "Origen de calidad"
+  },
+  {
+    id: "energy",
+    label: "Energía real"
+  }
+];
 
 function formatPrice(value) {
   return new Intl.NumberFormat("es-CL", {
@@ -90,11 +133,88 @@ function formatPrice(value) {
   }).format(value);
 }
 
+function slugifyMenuName(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 72);
+}
+
+function createMenuForm(displayOrder = 0) {
+  return {
+    id: "",
+    name: "",
+    slug: "",
+    sku: "",
+    tag: "",
+    description: "",
+    photoUrl: "",
+    photoStoragePath: "",
+    priceClp: "",
+    ingredients: "",
+    nutritionDescription: "",
+    nutritionFacts: "{}",
+    allergens: "",
+    displayOrder: String(displayOrder),
+    isActive: true
+  };
+}
+
+function menuItemToForm(item) {
+  return {
+    id: item.id || "",
+    name: item.name || "",
+    slug: item.slug || "",
+    sku: item.sku || "",
+    tag: item.tag || "",
+    description: item.description || "",
+    photoUrl: item.photoUrl || item.image || "",
+    photoStoragePath: item.photoStoragePath || "",
+    priceClp: String(item.price || 0),
+    ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || "",
+    nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
+    allergens: (item.allergens || []).join("\n"),
+    displayOrder: String(item.displayOrder || 0),
+    isActive: Boolean(item.isActive)
+  };
+}
+
+function parseJsonObject(value) {
+  const text = String(value || "").trim();
+  if (!text) return {};
+
+  const parsed = JSON.parse(text);
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new Error("Los datos nutricionales deben ser un objeto JSON.");
+  }
+
+  return parsed;
+}
+
+function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
+  return error?.message || fallback;
+}
+
+function getMemberLabel(user) {
+  return (
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email ||
+    "Cuenta"
+  );
+}
+
 function IntroScrollSequence() {
   const sectionRef = useRef(null);
   const videoRef = useRef(null);
   const posterFrameRef = useRef(null);
   const finalFrameRef = useRef(null);
+  const signalLayerRef = useRef(null);
+  const logoButtonRef = useRef(null);
   const progressRef = useRef(0);
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
@@ -114,13 +234,23 @@ function IntroScrollSequence() {
 
       const sectionTop = sectionRef.current.offsetTop;
       const sectionHeight = Math.max(1, sectionRef.current.offsetHeight);
-      return { sectionTop, sectionHeight };
+      const scrollDistance = Math.max(1, sectionHeight - window.innerHeight);
+      const sectionEnd = sectionTop + sectionHeight;
+      return { sectionTop, sectionHeight, scrollDistance, sectionEnd };
     };
 
     const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
+    const easeInOutCubic = (progress) =>
+      progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
     const jumpToScroll = (top) => {
-      window.scrollTo(0, top);
+      window.scrollTo({ top, left: 0, behavior: "instant" });
+    };
+
+    const requestRenderFrame = () => {
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(renderFrame);
+      }
     };
 
     const getVideoDuration = () => {
@@ -140,6 +270,24 @@ function IntroScrollSequence() {
       posterFrameRef.current.style.opacity = visible ? "1" : "0";
     };
 
+    const setSignalsVisible = (visible) => {
+      const signalLayer = signalLayerRef.current;
+      if (!signalLayer) return;
+
+      signalLayer.dataset.visible = visible ? "true" : "false";
+      signalLayer.querySelectorAll("[data-signal]").forEach((signal) => {
+        signal.classList.toggle("is-visible", visible);
+      });
+    };
+
+    const resetSignals = () => {
+      setSignalsVisible(false);
+    };
+
+    const setIntroConsumed = (consumed) => {
+      document.documentElement.classList.toggle("intro-scroll-consumed", consumed);
+    };
+
     const setScrollLock = (locked) => {
       document.documentElement.classList.toggle("intro-scroll-playing", locked);
       document.documentElement.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.root;
@@ -155,8 +303,8 @@ function IntroScrollSequence() {
 
       const isInsideIntro =
         playbackRef.current ||
-        (window.scrollY >= metrics.sectionTop + 2 &&
-          window.scrollY < metrics.sectionTop + metrics.sectionHeight - 2);
+        (window.scrollY >= metrics.sectionTop - 2 &&
+          window.scrollY < metrics.sectionEnd - 2);
 
       document.documentElement.classList.toggle("intro-scroll-active", Boolean(isInsideIntro));
     };
@@ -165,14 +313,14 @@ function IntroScrollSequence() {
       const metrics = getMetrics();
       if (!metrics) return 0;
 
-      return clampProgress((window.scrollY - metrics.sectionTop) / metrics.sectionHeight);
+      return clampProgress((window.scrollY - metrics.sectionTop) / metrics.scrollDistance);
     };
 
     const isSequenceActive = () => {
       const metrics = getMetrics();
       if (!metrics) return false;
 
-      return window.scrollY >= metrics.sectionTop - 2 && window.scrollY < metrics.sectionTop + metrics.sectionHeight - 2;
+      return window.scrollY >= metrics.sectionTop - 2 && window.scrollY <= metrics.sectionTop + metrics.scrollDistance + 2;
     };
 
     const setVideoProgress = (progress, scrubVideo = true) => {
@@ -194,6 +342,7 @@ function IntroScrollSequence() {
       if (Math.abs(video.currentTime - nextTime) > 0.02) {
         video.currentTime = nextTime;
       }
+
     };
 
     const finishPlayback = () => {
@@ -202,19 +351,26 @@ function IntroScrollSequence() {
       const video = videoRef.current;
       if (!playback || !metrics) return;
 
-      const destination = playback.destination;
       playbackRef.current = null;
-      setVideoProgress(destination);
+      setScrollLock(false);
+      setVideoProgress(playback.destination);
+      resetSignals();
 
       if (video) {
         video.pause();
-        if (destination >= 1 && video.readyState >= 1) {
+        video.playbackRate = 1;
+        if (playback.destination >= 1 && video.readyState >= 1) {
           video.currentTime = Math.max(0, getVideoDuration() - finalFrameHold);
         }
       }
 
-      jumpToScroll(destination >= 1 ? metrics.sectionTop + metrics.sectionHeight + 1 : metrics.sectionTop);
-      setScrollLock(false);
+      if (playback.destination >= 1) {
+        setIntroConsumed(true);
+        jumpToScroll(0);
+      } else {
+        setIntroConsumed(false);
+        jumpToScroll(metrics.sectionTop);
+      }
       syncHeaderVisibility();
     };
 
@@ -225,42 +381,61 @@ function IntroScrollSequence() {
       const destination = direction > 0 ? 1 : 0;
       const distance = Math.abs(destination - start);
       const metrics = getMetrics();
+      const video = videoRef.current;
 
       if (!metrics) return false;
 
       if (distance < 0.012 || reducedMotion) {
         setVideoProgress(destination);
-        jumpToScroll(destination >= 1 ? metrics.sectionTop + metrics.sectionHeight + 1 : metrics.sectionTop);
+        setIntroConsumed(destination >= 1);
+        jumpToScroll(destination >= 1 ? 0 : metrics.sectionTop);
         syncHeaderVisibility();
         return true;
       }
 
-      const playbackDuration = Math.max(700, playbackMs * distance);
-
-      playbackRef.current = {
+      const canUseNativePlayback = destination > start && video && video.readyState >= 1;
+      const duration = getVideoDuration();
+      const nativeStartTime = Math.min(duration - finalFrameHold, Math.max(0, start * duration));
+      const nativeEndTime = Math.max(0, duration - finalFrameHold);
+      const nativePlaybackRate = Math.max(
+        0.25,
+        Math.min(8, (nativeEndTime - nativeStartTime) / (playbackMs / 1000))
+      );
+      const playback = {
         start,
         destination,
         startedAt: performance.now(),
-        duration: playbackDuration,
-        nativeVideo: false
+        duration: playbackMs,
+        nativeVideo: Boolean(canUseNativePlayback),
+        nativeEndTime,
+        lockedScrollTop: Math.min(
+          metrics.sectionTop + metrics.scrollDistance,
+          Math.max(metrics.sectionTop, window.scrollY)
+        )
       };
 
+      playbackRef.current = playback;
       setScrollLock(true);
+      setPosterFrameVisible(false);
+      setFinalFrameVisible(false);
+      setSignalsVisible(true);
       syncHeaderVisibility();
+      requestRenderFrame();
 
-      const video = videoRef.current;
-      if (direction > 0 && video && video.readyState >= 1) {
-        const duration = getVideoDuration();
+      if (canUseNativePlayback) {
         video.pause();
-        video.currentTime = Math.min(duration - finalFrameHold, Math.max(0, start * duration));
-        video.playbackRate = Math.max(0.25, Math.min(4, ((duration - finalFrameHold) * distance) / (playbackDuration / 1000)));
-        video.play()
-          .then(() => {
-            if (playbackRef.current) playbackRef.current.nativeVideo = true;
-          })
-          .catch(() => {
-            if (playbackRef.current) playbackRef.current.nativeVideo = false;
-          });
+        video.playbackRate = nativePlaybackRate;
+        if (Math.abs(video.currentTime - nativeStartTime) > 0.04) {
+          video.currentTime = nativeStartTime;
+        }
+        progressRef.current = start;
+        video.play().catch(() => {
+          if (playbackRef.current === playback) {
+            playback.nativeVideo = false;
+            video.pause();
+            video.playbackRate = 1;
+          }
+        });
       }
 
       return true;
@@ -272,10 +447,10 @@ function IntroScrollSequence() {
         return;
       }
 
+      const direction = event.deltaY >= 0 ? 1 : -1;
       if (!isSequenceActive()) return;
 
-      const direction = event.deltaY >= 0 ? 1 : -1;
-      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
+      if (direction < 0) return;
 
       event.preventDefault();
       startPlayback(direction);
@@ -291,14 +466,15 @@ function IntroScrollSequence() {
         return;
       }
 
-      if (!isSequenceActive() || touchStartYRef.current === null) return;
+      if (touchStartYRef.current === null) return;
 
       const currentY = event.touches[0]?.clientY ?? touchStartYRef.current;
       const delta = touchStartYRef.current - currentY;
       if (Math.abs(delta) < 8) return;
 
       const direction = delta >= 0 ? 1 : -1;
-      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
+      if (!isSequenceActive()) return;
+      if (direction < 0) return;
 
       event.preventDefault();
       startPlayback(direction);
@@ -320,7 +496,7 @@ function IntroScrollSequence() {
       }
 
       if (!isSequenceActive()) return;
-      if (direction < 0 && getProgressFromScroll() <= 0.001) return;
+      if (direction < 0) return;
 
       event.preventDefault();
       startPlayback(direction);
@@ -340,28 +516,65 @@ function IntroScrollSequence() {
       setVideoProgress(progressRef.current);
     };
 
-    const renderFrame = () => {
-      const playback = playbackRef.current;
-      syncHeaderVisibility();
+    const handleIntroReset = () => {
+      const video = videoRef.current;
+      playbackRef.current = null;
+      setScrollLock(false);
+      setIntroConsumed(false);
+      resetSignals();
+      setVideoProgress(0);
+      setPosterFrameVisible(true);
+      setFinalFrameVisible(false);
 
-      if (playback) {
-        const metrics = getMetrics();
-        const elapsed = performance.now() - playback.startedAt;
-        const rawProgress = Math.min(1, elapsed / playback.duration);
-        const playbackProgress = playback.start + (playback.destination - playback.start) * rawProgress;
-
-        setVideoProgress(playbackProgress, !playback.nativeVideo || playback.destination < playback.start);
-
-        if (metrics) {
-          jumpToScroll(metrics.sectionTop + playbackProgress * metrics.sectionHeight);
-        }
-
-        if (rawProgress >= 1) {
-          finishPlayback();
+      if (video) {
+        video.pause();
+        video.playbackRate = 1;
+        if (video.readyState >= 1) {
+          video.currentTime = 0;
         }
       }
 
-      animationFrame = window.requestAnimationFrame(renderFrame);
+      syncHeaderVisibility();
+    };
+
+    const handleStartClick = (event) => {
+      event.preventDefault();
+      startPlayback(1);
+    };
+
+    const renderFrame = () => {
+      animationFrame = 0;
+      const playback = playbackRef.current;
+
+      if (playback) {
+        const video = videoRef.current;
+        const elapsed = performance.now() - playback.startedAt;
+        const rawProgress = Math.min(1, elapsed / playback.duration);
+        let shouldFinish = rawProgress >= 1;
+
+        if (playback.nativeVideo && video && video.readyState >= 1) {
+          const videoProgress = clampProgress(video.currentTime / getVideoDuration());
+          progressRef.current = videoProgress;
+          setFinalFrameVisible(videoProgress >= 0.995);
+          if (video.currentTime >= playback.nativeEndTime - 0.035) {
+            shouldFinish = true;
+          }
+        } else {
+          const playbackProgress = playback.start + (playback.destination - playback.start) * easeInOutCubic(rawProgress);
+          setVideoProgress(playbackProgress);
+        }
+
+        if (Math.abs(window.scrollY - playback.lockedScrollTop) > 1) {
+          jumpToScroll(playback.lockedScrollTop);
+        }
+
+        if (shouldFinish) {
+          finishPlayback();
+          return;
+        }
+
+        requestRenderFrame();
+      }
     };
 
     setVideoProgress(getProgressFromScroll());
@@ -372,24 +585,35 @@ function IntroScrollSequence() {
     window.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     window.addEventListener("resize", handleScroll);
-    animationFrame = window.requestAnimationFrame(renderFrame);
+    window.addEventListener("fullness:intro-reset", handleIntroReset);
+    logoButtonRef.current?.addEventListener("click", handleStartClick);
 
     return () => {
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      logoButtonRef.current?.removeEventListener("click", handleStartClick);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("wheel", handleWheel, { capture: true });
       window.removeEventListener("touchstart", handleTouchStart, { capture: true });
       window.removeEventListener("touchmove", handleTouchMove, { capture: true });
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
       window.removeEventListener("resize", handleScroll);
+      window.removeEventListener("fullness:intro-reset", handleIntroReset);
       window.cancelAnimationFrame(animationFrame);
       setScrollLock(false);
-      document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing");
+      setIntroConsumed(false);
+      resetSignals();
+      document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing", "intro-scroll-consumed");
     };
   }, []);
 
   return (
-    <section className="scroll-sequence scroll-sequence-intro" id="inicio" ref={sectionRef} aria-label="Video introductorio Fullness Lab">
+    <section
+      className="scroll-sequence scroll-sequence-intro"
+      id="inicio"
+      ref={sectionRef}
+      style={{ "--scroll-sequence-final-bg": `url("${introScrollFinalFrameSrc}")` }}
+      aria-label="Video introductorio Fullness Lab"
+    >
       <div className="scroll-sequence-stage">
         <video
           ref={videoRef}
@@ -415,6 +639,16 @@ function IntroScrollSequence() {
           alt=""
           aria-hidden="true"
         />
+        <button className="intro-start-logo" type="button" ref={logoButtonRef} aria-label="Iniciar animación Fullness Lab">
+          <img src={mediaSrc("assets/fullness-lab-logo-official.png")} alt="" aria-hidden="true" />
+        </button>
+        <div className="scroll-sequence-signal-layer" ref={signalLayerRef} aria-hidden="true">
+          {introTechSignals.map((signal) => (
+            <div className={`intro-signal intro-signal-${signal.id}`} data-signal={signal.id} key={signal.id}>
+              <span className="signal-title">{signal.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -426,16 +660,217 @@ function App() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
   const [headerHiddenForHero, setHeaderHiddenForHero] = useState(false);
+  const [products, setProducts] = useState(demoProducts);
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminItems, setAdminItems] = useState([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [adminMessage, setAdminMessage] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
+
+  const returnToIntro = () => {
+    document.documentElement.classList.remove("intro-scroll-consumed");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.dispatchEvent(new Event("fullness:intro-reset"));
+  };
+
+  const memberButtonLabel = authUser
+    ? getMemberLabel(authUser).split(/[ @]/)[0]
+    : member
+      ? member.name.split(" ")[0]
+      : "Acceso miembros";
+
+  function resetMenuForm() {
+    const nextOrder =
+      adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
+    setMenuForm(createMenuForm(nextOrder));
+    setAdminError("");
+    setAdminMessage("");
+  }
+
+  async function refreshPublicProducts() {
+    const result = await listActiveMenuItems();
+    if (result.error || !result.configured) return;
+
+    setProducts(result.data);
+  }
+
+  async function refreshAdminItems({ silent = false } = {}) {
+    if (!isAdmin) return;
+
+    if (!silent) {
+      setAdminLoading(true);
+      setAdminError("");
+      setAdminMessage("");
+    }
+
+    const result = await listAdminMenuItems();
+
+    if (result.error) {
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos cargar los menús."));
+    } else {
+      setAdminItems(result.data);
+      if (!menuForm.id && result.data.length > 0) {
+        const nextOrder =
+          result.data.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
+        setMenuForm((current) => ({
+          ...current,
+          displayOrder: current.displayOrder || String(nextOrder)
+        }));
+      }
+    }
+
+    if (!silent) setAdminLoading(false);
+  }
+
+  async function signOut() {
+    if (!isSupabaseConfigured) return;
+
+    const supabase = await getSupabaseClient();
+    await supabase.auth.signOut();
+    setMember(null);
+    setIsAdmin(false);
+    setAdminOpen(false);
+    setAccountOpen(false);
+    setGoogleMessage("");
+  }
+
+  function openBackoffice() {
+    setAccountOpen(false);
+    setMenuOpen(false);
+    setAdminOpen(true);
+    if (window.location.hash !== "#backoffice") {
+      window.history.replaceState(null, "", "#backoffice");
+    }
+  }
+
+  function closeBackoffice() {
+    setAdminOpen(false);
+    if (window.location.hash === "#backoffice") {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+  }
 
   useEffect(() => {
+    let ignore = false;
+
+    async function loadProducts() {
+      const result = await listActiveMenuItems();
+      if (ignore || result.error || !result.configured) return;
+
+      setProducts(result.data);
+    }
+
+    loadProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let subscription;
+    let ignore = false;
+
+    async function loadSession() {
+      if (!isSupabaseConfigured) {
+        setAuthLoading(false);
+        return;
+      }
+
+      const supabase = await getSupabaseClient();
+      const { data } = await supabase.auth.getSession();
+
+      if (!ignore) {
+        setAuthUser(data.session?.user || null);
+        setAuthLoading(false);
+      }
+
+      const listener = supabase.auth.onAuthStateChange((_event, session) => {
+        setAuthUser(session?.user || null);
+      });
+
+      subscription = listener.data.subscription;
+    }
+
+    loadSession();
+
+    return () => {
+      ignore = true;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadAdminProfile() {
+      if (!authUser || !isSupabaseConfigured) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (ignore) return;
+
+      setIsAdmin(Boolean(data?.is_admin && !error));
+    }
+
+    loadAdminProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, [authUser]);
+
+  useEffect(() => {
+    const syncBackofficeHash = () => {
+      if (window.location.hash !== "#backoffice") return;
+
+      if (isAdmin) {
+        setAdminOpen(true);
+        setAccountOpen(false);
+      } else if (!authLoading) {
+        setAccountOpen(true);
+      }
+    };
+
+    syncBackofficeHash();
+    window.addEventListener("hashchange", syncBackofficeHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncBackofficeHash);
+    };
+  }, [authLoading, isAdmin]);
+
+  useEffect(() => {
+    if (adminOpen && isAdmin) {
+      refreshAdminItems();
+    }
+  }, [adminOpen, isAdmin]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
     const ctx = gsap.context(() => {
+      gsap.set([".plate-hero-copy > *", ".plate-hero-visual"], { clearProps: "all" });
+
       const revealItems = gsap.utils.toArray([
-        ".plate-hero-copy > *",
-        ".plate-hero-feature",
         ".food-editorial .editorial-copy > *",
         ".functional-band .section-heading > *",
         ".functional-grid article",
@@ -464,7 +899,6 @@ function App() {
       });
 
       gsap.utils.toArray([
-        ".plate-hero-visual",
         ".editorial-image img",
         ".heating-visual",
         ".product-art img",
@@ -499,21 +933,6 @@ function App() {
         });
       });
 
-      gsap.fromTo(".plate-hero-visual",
-        { xPercent: -12, scale: 1.18 },
-        {
-          xPercent: 0,
-          scale: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".plate-hero",
-            start: "top bottom",
-            end: "center center",
-            scrub: 1.2
-          }
-        }
-      );
-
     }, appRef);
 
     return () => ctx.revert();
@@ -529,7 +948,7 @@ function App() {
 
       const sequenceTop = introSequence.offsetTop;
       const sequenceEnd = sequenceTop + introSequence.offsetHeight;
-      const isInsideIntroScroll = window.scrollY > sequenceTop + 8 && window.scrollY < sequenceEnd - 8;
+      const isInsideIntroScroll = window.scrollY >= sequenceTop - 2 && window.scrollY < sequenceEnd - 2;
 
       setHeaderHiddenForHero((current) => (current === isInsideIntroScroll ? current : isInsideIntroScroll));
     };
@@ -578,6 +997,7 @@ function App() {
       setAccountOpen(false);
       setCartOpen(false);
       setMenuOpen(false);
+      setAdminOpen(false);
     };
 
     window.addEventListener("keydown", closeOnEscape);
@@ -619,42 +1039,169 @@ function App() {
     );
   }
 
-  function submitAccount(event) {
+  async function submitAccount(event) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    setMember({
-      name: data.get("name"),
-      email: data.get("email"),
-      phone: data.get("phone")
-    });
-    setAccountOpen(false);
-  }
 
-  function startGoogleLogin() {
-    if (!googleClientId) {
-      setGoogleMessage("Para activar Gmail real agrega VITE_GOOGLE_CLIENT_ID en Vercel.");
+    if (!isSupabaseConfigured) {
+      setGoogleMessage("El acceso no está disponible en este entorno.");
       return;
     }
 
-    const params = new URLSearchParams({
-      client_id: googleClientId,
-      redirect_uri: window.location.origin,
-      response_type: "token",
-      scope: "openid email profile",
-      prompt: "select_account"
+    const data = new FormData(event.currentTarget);
+    const email = String(data.get("email") || "").trim();
+    const password = String(data.get("password") || "");
+
+    setAuthLoading(true);
+    setGoogleMessage("");
+
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    setAuthLoading(false);
+
+    if (error) {
+      setGoogleMessage(getSupabaseErrorMessage(error, "No pudimos iniciar sesión."));
+      return;
+    }
+
+    setAccountOpen(false);
+  }
+
+  function updateMenuForm(event) {
+    const { checked, name, type, value } = event.target;
+
+    setMenuForm((current) => {
+      const next = {
+        ...current,
+        [name]: type === "checkbox" ? checked : value
+      };
+
+      if (name === "name" && !current.id && !current.slug) {
+        next.slug = slugifyMenuName(value);
+      }
+
+      return next;
+    });
+  }
+
+  async function handleMenuPhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setPhotoUploading(true);
+    setAdminError("");
+    setAdminMessage("");
+
+    const result = await uploadMenuPhoto(file);
+
+    if (result.error || !result.configured) {
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
+    } else {
+      setMenuForm((current) => ({
+        ...current,
+        photoUrl: result.data.photoUrl,
+        photoStoragePath: result.data.photoStoragePath
+      }));
+      setAdminMessage("Foto cargada.");
+    }
+
+    setPhotoUploading(false);
+    event.target.value = "";
+  }
+
+  async function submitMenuItem(event) {
+    event.preventDefault();
+
+    if (!isAdmin) {
+      setAdminError("Tu cuenta no tiene acceso de administración.");
+      return;
+    }
+
+    setAdminSaving(true);
+    setAdminError("");
+    setAdminMessage("");
+
+    let nutritionFacts = {};
+
+    try {
+      nutritionFacts = parseJsonObject(menuForm.nutritionFacts);
+    } catch (error) {
+      setAdminSaving(false);
+      setAdminError(error.message);
+      return;
+    }
+
+    const result = await saveMenuItem({
+      id: menuForm.id || undefined,
+      name: menuForm.name,
+      slug: menuForm.slug || slugifyMenuName(menuForm.name),
+      sku: menuForm.sku,
+      tag: menuForm.tag,
+      description: menuForm.description,
+      photoUrl: menuForm.photoUrl,
+      photoStoragePath: menuForm.photoStoragePath,
+      priceClp: menuForm.priceClp,
+      ingredients: menuForm.ingredients,
+      nutritionDescription: menuForm.nutritionDescription,
+      nutritionFacts,
+      allergens: menuForm.allergens,
+      displayOrder: menuForm.displayOrder,
+      isActive: menuForm.isActive
     });
 
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    if (result.error || !result.configured) {
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos guardar el menú."));
+    } else {
+      setMenuForm(menuItemToForm(result.data));
+      setAdminMessage("Menú guardado.");
+      await refreshAdminItems({ silent: true });
+      await refreshPublicProducts();
+    }
+
+    setAdminSaving(false);
+  }
+
+  async function removeMenuItem(item) {
+    if (!window.confirm(`¿Eliminar "${item.name}" del menú?`)) return;
+
+    setAdminSaving(true);
+    setAdminError("");
+    setAdminMessage("");
+
+    const result = await deleteMenuItem(item.id);
+
+    if (result.error || !result.configured) {
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el menú."));
+    } else {
+      if (menuForm.id === item.id) resetMenuForm();
+      setAdminMessage("Menú eliminado.");
+      await refreshAdminItems({ silent: true });
+      await refreshPublicProducts();
+    }
+
+    setAdminSaving(false);
   }
 
   const navItems = [
     { href: "#filosofia", label: "Filosofía" },
     { href: "#calentar", label: "Cómo calentar" },
-    { href: "#productos", label: "Tienda" }
+    { href: "#productos", label: "Tienda" },
+    ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
   ];
 
   const nav = navItems.map((item) => (
-    <a key={item.href} href={item.href}>{item.label}</a>
+    <a
+      key={item.href}
+      href={item.href}
+      onClick={(event) => {
+        if (item.href !== "#backoffice") return;
+
+        event.preventDefault();
+        openBackoffice();
+      }}
+    >
+      {item.label}
+    </a>
   ));
 
   return (
@@ -669,7 +1216,7 @@ function App() {
         <div className="header-actions">
           <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} />
-            <span>{member ? member.name.split(" ")[0] : "Acceso miembros"}</span>
+            <span>{memberButtonLabel}</span>
           </button>
           <button
             className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`}
@@ -692,7 +1239,21 @@ function App() {
             <X size={22} />
           </button>
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={(event) => {
+                if (item.href === "#backoffice") {
+                  event.preventDefault();
+                  openBackoffice();
+                  return;
+                }
+
+                setMenuOpen(false);
+              }}
+            >
+              {item.label}
+            </a>
           ))}
           <button
             className="member-link"
@@ -713,41 +1274,38 @@ function App() {
       <section className="plate-hero" id="programa">
         <div className="plate-hero-copy">
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
-          <h1>Ingredientes reales. Resultados reales.</h1>
+          <h1>Ingredientes premium. Resultados exclusivos.</h1>
           <p>Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.</p>
           <a className="primary-button plate-hero-cta" href="#plato">
-            Comienza tu programa
-            <ArrowRight size={20} />
+            Ver más
+            <ArrowRight size={20} aria-hidden="true" />
           </a>
+          <aside className="plate-hero-signals" aria-label="Claves nutricionales Fullness">
+            {introTechSignals.map((signal) => (
+              <article className={`plate-hero-signal plate-hero-signal-${signal.id}`} key={signal.id}>
+                <span className="signal-title">{signal.label}</span>
+              </article>
+            ))}
+          </aside>
         </div>
+        <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
+          <Video size={17} aria-hidden="true" />
+          Volver a la animación
+        </button>
         <img
           className="plate-hero-visual"
           src={introScrollFinalFrameSrc}
           alt=""
           aria-hidden="true"
         />
-        <div className="plate-hero-features" aria-hidden="true">
-          <span className="plate-hero-feature">
-            <Leaf size={26} />
-            <strong>Ingredientes reales</strong>
-          </span>
-          <span className="plate-hero-feature">
-            <PackageCheck size={26} />
-            <strong>Nutrición inteligente</strong>
-          </span>
-          <span className="plate-hero-feature">
-            <CookingPot size={26} />
-            <strong>Cocinado con cuidado</strong>
-          </span>
-          <span className="plate-hero-feature">
-            <Heart size={26} />
-            <strong>Para que tu cuerpo funcione mejor</strong>
-          </span>
-        </div>
       </section>
 
       <div className="philosophy-scene" id="filosofia">
-        <section className="food-editorial" id="plato">
+        <section
+          className="food-editorial"
+          id="plato"
+          style={{ "--food-editorial-bg": `url("${mediaSrc("images/fullness-philosophy-beet-top.png")}")` }}
+        >
           <div className="editorial-copy">
             <h2>Nutrición consciente y lleno de información para tu sistema.</h2>
             <p>
@@ -762,7 +1320,10 @@ function App() {
           </div>
         </section>
 
-        <section className="philosophy">
+        <section
+          className="philosophy"
+          style={{ "--philosophy-bg": `url("${mediaSrc("images/fullness-philosophy-fine-roots-bg.png")}")` }}
+        >
           <div>
             <p className="eyebrow">Nuestra filosofía</p>
             <h2>Nutrir desde la raíz para transformar desde adentro.</h2>
@@ -816,13 +1377,20 @@ function App() {
       </section>
 
       <section className="heating" id="calentar">
-        <div className="heating-water" aria-hidden="true"></div>
-        <img
-          className="heating-bag"
-          src={mediaSrc("images/fullness-heating-bag-hand.png")}
-          alt=""
+        <div
+          className="heating-water"
+          style={{ "--heating-water-bg": `url("${mediaSrc("images/fullness-boiling-water-bg.jpg")}")` }}
           aria-hidden="true"
-        />
+        ></div>
+        <div className="heating-visual" aria-hidden="true">
+          <span className="heating-splash"></span>
+          <span className="heating-splash heating-splash-secondary"></span>
+          <img
+            className="heating-bag"
+            src={mediaSrc("images/fullness-heating-bag-realistic-v2.png")}
+            alt=""
+          />
+        </div>
         <div className="heating-copy">
           <p className="eyebrow">Cómo calentar tus platos</p>
           <h2>Un ritual simple para cuidar lo que comes.</h2>
@@ -867,25 +1435,29 @@ function App() {
           <p className="eyebrow">Meal prep premium</p>
           <h2>Antiinflamatorio, rico y listo para tu rutina.</h2>
         </div>
-        <div className="product-grid">
-          {products.map((product) => (
-            <article className="product-card" key={product.id}>
-              <div className="product-art">
-                <img src={mediaSrc("assets/fullness-food-crop.jpeg")} alt={`Plato ${product.name}`} />
-              </div>
-              <span>{product.tag}</span>
-              <h3>{product.name}</h3>
-              <p>{product.description}</p>
-              <div className="product-footer">
-                <strong>{formatPrice(product.price)}</strong>
-                <button className="add-button" type="button" onClick={() => addToCart(product)}>
-                  <Plus size={18} />
-                  Agregar al pedido
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
+        {products.length > 0 ? (
+          <div className="product-grid">
+            {products.map((product) => (
+              <article className="product-card" key={product.id}>
+                <div className="product-art">
+                  <img src={product.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt={`Plato ${product.name}`} />
+                </div>
+                <span>{product.tag}</span>
+                <h3>{product.name}</h3>
+                <p>{product.description}</p>
+                <div className="product-footer">
+                  <strong>{formatPrice(product.price)}</strong>
+                  <button className="add-button" type="button" onClick={() => addToCart(product)}>
+                    <Plus size={18} />
+                    Agregar al pedido
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="products-empty">Pronto abriremos nuevos platos Fullness Lab.</p>
+        )}
       </section>
 
       <section className="membership">
@@ -907,32 +1479,245 @@ function App() {
             <button className="icon-button close" type="button" onClick={() => setAccountOpen(false)} aria-label="Cerrar cuenta">
               <X size={22} />
             </button>
-            <form className="account-panel embedded" onSubmit={submitAccount}>
-              <p className="eyebrow">Acceso miembros</p>
-              <h2 id="account-title">Iniciar sesión</h2>
-              <button className="google-button" type="button" onClick={startGoogleLogin}>
-                <Mail size={18} />
-                Continuar con Gmail
-              </button>
-              {googleMessage && <p className="form-note">{googleMessage}</p>}
-              <label>
-                Nombre completo
-                <span><User size={18} /><input required name="name" placeholder="Tu nombre" autoComplete="name" /></span>
-              </label>
-              <label>
-                Correo electrónico
-                <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@gmail.com" autoComplete="email" /></span>
-              </label>
-              <label>
-                Teléfono
-                <span><Phone size={18} /><input required name="phone" type="tel" placeholder="+56 9 1234 5678" autoComplete="tel" /></span>
-              </label>
-              <label>
-                Contraseña
-                <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} autoComplete="current-password" /></span>
-              </label>
-              <button className="primary-button full" type="submit">Iniciar sesión</button>
-            </form>
+            {authUser ? (
+              <div className="account-panel embedded">
+                <p className="eyebrow">Cuenta Fullness</p>
+                <h2 id="account-title">{getMemberLabel(authUser)}</h2>
+                <p className="account-email">{authUser.email}</p>
+                {isAdmin && (
+                  <button className="primary-button full" type="button" onClick={openBackoffice}>
+                    <ShieldCheck size={18} />
+                    Abrir backoffice
+                  </button>
+                )}
+                <button className="google-button account-secondary" type="button" onClick={signOut}>
+                  <LogOut size={18} />
+                  Cerrar sesión
+                </button>
+              </div>
+            ) : (
+              <form className="account-panel embedded" onSubmit={submitAccount}>
+                <p className="eyebrow">Acceso miembros</p>
+                <h2 id="account-title">Iniciar sesión</h2>
+                {googleMessage && <p className="form-note">{googleMessage}</p>}
+                <label>
+                  Correo electrónico
+                  <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@email.cl" autoComplete="username" /></span>
+                </label>
+                <label>
+                  Contraseña
+                  <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} autoComplete="current-password" /></span>
+                </label>
+                <button className="primary-button full" type="submit" disabled={authLoading}>
+                  {authLoading ? "Ingresando..." : "Iniciar sesión"}
+                </button>
+              </form>
+            )}
+          </section>
+        </div>
+      )}
+
+      {adminOpen && (
+        <div className="backoffice-overlay" role="dialog" aria-modal="true" aria-labelledby="backoffice-title">
+          <section className="backoffice-panel">
+            <header className="backoffice-header">
+              <div>
+                <p className="eyebrow">Backoffice</p>
+                <h2 id="backoffice-title">Menús</h2>
+              </div>
+              <div className="backoffice-header-actions">
+                {isAdmin && (
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={() => refreshAdminItems()}
+                    aria-label="Actualizar menús"
+                    disabled={adminLoading}
+                  >
+                    <RefreshCw size={20} />
+                  </button>
+                )}
+                <button className="icon-button close-inline" type="button" onClick={closeBackoffice} aria-label="Cerrar backoffice">
+                  <X size={22} />
+                </button>
+              </div>
+            </header>
+
+            {!isAdmin ? (
+              <div className="backoffice-state">
+                <ShieldCheck size={34} />
+                <h3>Acceso administrador</h3>
+                <p>Inicia sesión con una cuenta autorizada para gestionar los menús.</p>
+                <button className="primary-button" type="button" onClick={() => {
+                  setAdminOpen(false);
+                  setAccountOpen(true);
+                }}>
+                  <Lock size={18} />
+                  Iniciar sesión
+                </button>
+              </div>
+            ) : (
+              <>
+                {(adminError || adminMessage) && (
+                  <p className={`backoffice-alert ${adminError ? "is-error" : "is-success"}`} role="status">
+                    {adminError || adminMessage}
+                  </p>
+                )}
+
+                <div className="backoffice-layout">
+                  <aside className="backoffice-list" aria-label="Menús configurados">
+                    <div className="backoffice-list-top">
+                      <h3>Configurados</h3>
+                      <button className="backoffice-command" type="button" onClick={resetMenuForm}>
+                        <Plus size={17} />
+                        Nuevo
+                      </button>
+                    </div>
+
+                    {adminLoading ? (
+                      <p className="backoffice-muted">Cargando menús...</p>
+                    ) : adminItems.length > 0 ? (
+                      <div className="backoffice-menu-stack">
+                        {adminItems.map((item) => (
+                          <article className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
+                            <button className="backoffice-menu-main" type="button" onClick={() => setMenuForm(menuItemToForm(item))}>
+                              <img src={item.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt="" aria-hidden="true" />
+                              <span>
+                                <strong>{item.name}</strong>
+                                <small>{formatPrice(item.price)}</small>
+                              </span>
+                            </button>
+                            <div className="backoffice-card-meta">
+                              <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
+                                {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                {item.isActive ? "Activo" : "Inactivo"}
+                              </span>
+                              <span>Orden {item.displayOrder}</span>
+                            </div>
+                            <div className="backoffice-card-actions">
+                              <button type="button" onClick={() => setMenuForm(menuItemToForm(item))} aria-label={`Editar ${item.name}`}>
+                                <Pencil size={16} />
+                              </button>
+                              <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} disabled={adminSaving}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="backoffice-muted">Sin menús cargados.</p>
+                    )}
+                  </aside>
+
+                  <form className="backoffice-form" onSubmit={submitMenuItem}>
+                    <div className="backoffice-form-head">
+                      <div>
+                        <p className="eyebrow">{menuForm.id ? "Editar" : "Nuevo"}</p>
+                        <h3>{menuForm.name || "Menú Fullness"}</h3>
+                      </div>
+                      <label className="backoffice-switch">
+                        <input
+                          name="isActive"
+                          type="checkbox"
+                          checked={menuForm.isActive}
+                          onChange={updateMenuForm}
+                        />
+                        <span>
+                          {menuForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
+                          {menuForm.isActive ? "Activo" : "Inactivo"}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="backoffice-grid">
+                      <label>
+                        Nombre
+                        <input required name="name" value={menuForm.name} onChange={updateMenuForm} placeholder="Trucha, betarraga y quinoa" />
+                      </label>
+                      <label>
+                        Slug
+                        <input required name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="trucha-betarraga-quinoa" />
+                      </label>
+                      <label>
+                        SKU
+                        <input name="sku" value={menuForm.sku} onChange={updateMenuForm} placeholder="FULL-001" />
+                      </label>
+                      <label>
+                        Etiqueta
+                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="Omega 3 + antioxidantes" />
+                      </label>
+                      <label>
+                        Precio CLP
+                        <input required name="priceClp" type="number" min="0" step="100" value={menuForm.priceClp} onChange={updateMenuForm} placeholder="8990" />
+                      </label>
+                      <label>
+                        Orden
+                        <input name="displayOrder" type="number" step="1" value={menuForm.displayOrder} onChange={updateMenuForm} />
+                      </label>
+                    </div>
+
+                    <label className="backoffice-wide">
+                      Descripción
+                      <textarea required name="description" rows="3" value={menuForm.description} onChange={updateMenuForm} placeholder="Pescado del sur, raíces dulces, hojas verdes y granos integrales." />
+                    </label>
+
+                    <div className="backoffice-photo-row">
+                      <div className="backoffice-photo-preview">
+                        {menuForm.photoUrl ? (
+                          <img src={menuForm.photoUrl} alt="" aria-hidden="true" />
+                        ) : (
+                          <UploadCloud size={30} />
+                        )}
+                      </div>
+                      <div>
+                        <label className="upload-control">
+                          <UploadCloud size={18} />
+                          {photoUploading ? "Subiendo..." : "Subir foto"}
+                          <input type="file" accept="image/*" onChange={handleMenuPhotoChange} disabled={photoUploading || adminSaving} />
+                        </label>
+                        <label className="backoffice-wide">
+                          URL foto
+                          <input name="photoUrl" value={menuForm.photoUrl} onChange={updateMenuForm} placeholder="https://..." />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="backoffice-grid">
+                      <label>
+                        Ingredientes
+                        <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Trucha\nBetarraga\nQuinoa"} />
+                      </label>
+                      <label>
+                        Alérgenos
+                        <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos"} />
+                      </label>
+                    </div>
+
+                    <label className="backoffice-wide">
+                      Descripción nutricional
+                      <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Proteína de calidad, omega 3, fibra y antioxidantes naturales." />
+                    </label>
+
+                    <label className="backoffice-wide">
+                      Datos nutricionales JSON
+                      <textarea name="nutritionFacts" rows="6" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck="false" />
+                    </label>
+
+                    <div className="backoffice-form-actions">
+                      <button className="google-button" type="button" onClick={resetMenuForm} disabled={adminSaving}>
+                        <Plus size={18} />
+                        Nuevo
+                      </button>
+                      <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
+                        {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
+                        {adminSaving ? "Guardando..." : "Guardar menú"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </>
+            )}
           </section>
         </div>
       )}

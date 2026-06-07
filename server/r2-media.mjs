@@ -53,9 +53,9 @@ export function loadEnvFile(filePath) {
 
 export function getR2Config(env = process.env) {
   const config = {
-    accessKeyId: env.R2_ACCESS_KEY_ID,
+    accessKeyId: env.R2_ACCESS_KEY_ID || env.R2_ACCESS_KEY,
     bucket: env.R2_BUCKET_NAME,
-    endpoint: env.R2_ENDPOINT_URL?.replace(/\/+$/, ""),
+    endpoint: (env.R2_ENDPOINT_URL || env.R2_EDPOINT_URL)?.replace(/\/+$/, ""),
     secretAccessKey: env.R2_SECRET_ACCESS_KEY
   };
   const missing = Object.entries(config)
