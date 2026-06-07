@@ -288,6 +288,8 @@ function IntroScrollSequence() {
       document.documentElement.classList.toggle("intro-scroll-consumed", consumed);
     };
 
+    const isIntroConsumed = () => document.documentElement.classList.contains("intro-scroll-consumed");
+
     const setScrollLock = (locked) => {
       document.documentElement.classList.toggle("intro-scroll-playing", locked);
       document.documentElement.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.root;
@@ -295,6 +297,11 @@ function IntroScrollSequence() {
     };
 
     const syncHeaderVisibility = () => {
+      if (isIntroConsumed()) {
+        document.documentElement.classList.remove("intro-scroll-active");
+        return;
+      }
+
       const metrics = getMetrics();
       if (!metrics) {
         document.documentElement.classList.remove("intro-scroll-active");
@@ -310,6 +317,8 @@ function IntroScrollSequence() {
     };
 
     const getProgressFromScroll = () => {
+      if (isIntroConsumed()) return progressRef.current;
+
       const metrics = getMetrics();
       if (!metrics) return 0;
 
@@ -317,6 +326,8 @@ function IntroScrollSequence() {
     };
 
     const isSequenceActive = () => {
+      if (isIntroConsumed()) return false;
+
       const metrics = getMetrics();
       if (!metrics) return false;
 
