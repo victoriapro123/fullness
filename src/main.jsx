@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
-  ArrowRight,
   CheckCircle2,
   CookingPot,
   Eye,
@@ -39,6 +38,7 @@ import {
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
+import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
 import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -106,6 +106,8 @@ const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequenc
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
 const introScrollFinalFrameSrc = mediaSrc("assets/scroll-intro/fullness-intro-final.jpg");
 const introScrollVideoDuration = 15.04;
+const whatsappMessage = encodeURIComponent("Hola Fullness Lab, quiero hacer un pedido.");
+const whatsappUrl = `https://wa.me/56996588199?text=${whatsappMessage}`;
 const introTechSignals = [
   {
     id: "anti",
@@ -124,6 +126,23 @@ const introTechSignals = [
     label: "Energía real"
   }
 ];
+
+function WhatsAppIcon({ size = 24 }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M16.02 3.2c-7.03 0-12.75 5.63-12.75 12.56 0 2.22.59 4.38 1.71 6.29L3.2 28.8l6.94-1.76a12.92 12.92 0 0 0 5.88 1.43c7.03 0 12.75-5.63 12.75-12.56S23.05 3.2 16.02 3.2Zm0 22.95c-1.87 0-3.71-.5-5.31-1.45l-.38-.22-4.12 1.05 1.08-3.98-.25-.41a10.1 10.1 0 0 1-1.46-5.38c0-5.65 4.68-10.24 10.44-10.24s10.44 4.59 10.44 10.24-4.68 10.39-10.44 10.39Zm5.72-7.78c-.31-.15-1.84-.9-2.12-1-.29-.1-.5-.15-.71.15-.21.31-.81 1-.99 1.2-.18.21-.36.23-.67.08-.31-.15-1.31-.48-2.49-1.52-.92-.81-1.54-1.82-1.72-2.13-.18-.31-.02-.47.14-.62.14-.14.31-.36.47-.54.15-.18.21-.31.31-.51.1-.21.05-.39-.03-.54-.08-.15-.71-1.68-.97-2.3-.26-.6-.52-.51-.71-.52h-.6c-.21 0-.54.08-.83.39-.29.31-1.1 1.07-1.1 2.61s1.13 3.03 1.28 3.24c.15.21 2.23 3.36 5.4 4.71.76.33 1.35.52 1.81.67.76.24 1.45.2 1.99.12.61-.09 1.84-.74 2.1-1.46.26-.72.26-1.34.18-1.46-.08-.13-.29-.21-.6-.36Z"
+      />
+    </svg>
+  );
+}
 
 function formatPrice(value) {
   return new Intl.NumberFormat("es-CL", {
@@ -676,6 +695,7 @@ function App() {
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
+  const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [headerHiddenForHero, setHeaderHiddenForHero] = useState(false);
   const [products, setProducts] = useState(demoProducts);
   const [authUser, setAuthUser] = useState(null);
@@ -688,6 +708,15 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
+
+  useLayoutEffect(() => {
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos", "#fundamento", "#comunidad"]);
+
+    if (sectionHashes.has(window.location.hash)) {
+      document.documentElement.classList.add("intro-scroll-consumed");
+      setHeaderHiddenForHero(false);
+    }
+  }, []);
 
   const returnToIntro = () => {
     document.documentElement.classList.remove("intro-scroll-consumed");
@@ -922,6 +951,54 @@ function App() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
+    const revealGroups = [
+      {
+        items: ".food-editorial .editorial-copy > *",
+        trigger: ".food-editorial"
+      },
+      {
+        items: [
+          ".philosophy > div:not(.philosophy-visual) > .eyebrow",
+          ".philosophy > div:not(.philosophy-visual) > h2",
+          ".philosophy > div:not(.philosophy-visual) > .philosophy-lede",
+          ".philosophy-list article"
+        ].join(", "),
+        trigger: ".philosophy"
+      },
+      {
+        items: ".membership > *",
+        trigger: ".membership"
+      }
+    ];
+    const revealElements = [];
+    const revealByTrigger = new Map();
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+
+        const elements = revealByTrigger.get(entry.target) || [];
+        elements.forEach((element) => element.classList.add("is-visible"));
+        observer.unobserve(entry.target);
+      });
+    }, {
+      rootMargin: "0px 0px -10% 0px",
+      threshold: 0.08
+    });
+
+    revealGroups.forEach(({ items, trigger }) => {
+      const triggerElement = appRef.current?.querySelector(trigger);
+      const elements = Array.from(appRef.current?.querySelectorAll(items) || []);
+      if (!triggerElement || elements.length === 0) return;
+
+      elements.forEach((element, index) => {
+        element.classList.add("reveal-on-scroll");
+        element.style.transitionDelay = `${Math.min(index * 80, 320)}ms`;
+        revealElements.push(element);
+      });
+      revealByTrigger.set(triggerElement, elements);
+      revealObserver.observe(triggerElement);
+    });
+
     const ctx = gsap.context(() => {
       gsap.set([
         ".plate-hero-copy > *",
@@ -939,28 +1016,6 @@ function App() {
         ".product-art img",
         ".membership > *"
       ], { clearProps: "all" });
-
-      const revealItems = gsap.utils.toArray([
-        ".food-editorial .editorial-copy > *",
-        ".membership > *"
-      ].join(", "));
-
-      revealItems.forEach((item) => {
-        gsap.fromTo(item,
-          { y: 24 },
-          {
-            y: 0,
-            duration: 0.85,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: item,
-              start: "top 86%",
-              end: "bottom 14%",
-              toggleActions: "play none none none"
-            }
-          }
-        );
-      });
 
       gsap.utils.toArray([
         ".editorial-image img",
@@ -1000,6 +1055,11 @@ function App() {
 
     return () => {
       window.clearTimeout(refreshTimer);
+      revealObserver.disconnect();
+      revealElements.forEach((element) => {
+        element.classList.remove("reveal-on-scroll", "is-visible");
+        element.style.transitionDelay = "";
+      });
       ctx.revert();
     };
   }, []);
@@ -1039,7 +1099,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos", "#fundamento", "#comunidad"]);
 
     const syncSectionHash = () => {
       if (!sectionHashes.has(window.location.hash)) return;
@@ -1128,6 +1188,25 @@ function App() {
         .map((item) => (item.id === id ? { ...item, qty: item.qty + delta } : item))
         .filter((item) => item.qty > 0)
     );
+  }
+
+  function submitSubscription(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const email = String(data.get("subscriptionEmail") || "").trim();
+
+    if (!email) return;
+
+    try {
+      window.localStorage.setItem("fullness_subscription_email", email);
+    } catch {
+      // Local demo persistence is best-effort.
+    }
+
+    setSubscriptionMessage("Gracias. Te avisaremos cuando abramos nuevas experiencias Fullness.");
+    form.reset();
   }
 
   async function submitAccount(event) {
@@ -1303,6 +1382,17 @@ function App() {
 
   return (
     <main ref={appRef}>
+      <a
+        className="whatsapp-float"
+        href={whatsappUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Escribir a Fullness Lab por WhatsApp"
+      >
+        <WhatsAppIcon size={24} />
+        <span>WhatsApp</span>
+      </a>
+
       <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
         <a
           className="brand"
@@ -1383,17 +1473,6 @@ function App() {
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
           <h1>Ingredientes premium. Resultados exclusivos.</h1>
           <p>Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.</p>
-          <a
-            className="primary-button plate-hero-cta"
-            href="#plato"
-            onClick={(event) => {
-              event.preventDefault();
-              navigateToSection("#plato");
-            }}
-          >
-            Ver más
-            <ArrowRight size={20} aria-hidden="true" />
-          </a>
           <aside className="plate-hero-signals" aria-label="Claves nutricionales Fullness">
             {introTechSignals.map((signal) => (
               <article className={`plate-hero-signal plate-hero-signal-${signal.id}`} key={signal.id}>
@@ -1402,6 +1481,17 @@ function App() {
             ))}
           </aside>
         </div>
+        <a
+          className="plate-hero-cta"
+          href="#plato"
+          onClick={(event) => {
+            event.preventDefault();
+            navigateToSection("#plato");
+          }}
+        >
+          <span>Ver más</span>
+          <span className="hero-cta-arrow" aria-hidden="true"></span>
+        </a>
         <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
           <Video size={17} aria-hidden="true" />
           Volver a la animación
@@ -1414,16 +1504,15 @@ function App() {
         />
       </section>
 
-      <div className="philosophy-scene">
-        <section
-          className="food-editorial"
-          id="plato"
-          style={{ "--food-editorial-bg": `url("${mediaSrc("images/fullness-philosophy-beet-top.png")}")` }}
-        >
+      <div
+        className="philosophy-scene"
+        style={{ "--philosophy-scene-bg": `url("${philosophySceneBgSrc}")` }}
+      >
+        <section className="food-editorial" id="plato">
           <div className="editorial-copy">
-            <h2>Nutrición consciente y lleno de información para tu sistema.</h2>
+            <h2>Rico, consciente y lleno de información para tu sistema.</h2>
             <p>
-              Fullness Lab une placer gastronómico, nutrición antiinflamatoria y ciencia funcional para que comer bien no se sienta como castigo.
+              Fullness Lab une placer gastronómico, nutrición antiinflamatoria y criterio funcional para que comer bien no se sienta como castigo.
             </p>
             <div className="editorial-pills">
               <span>Sin gluten</span>
@@ -1434,11 +1523,7 @@ function App() {
           </div>
         </section>
 
-        <section
-          className="philosophy"
-          id="filosofia"
-          style={{ "--philosophy-bg": `url("${mediaSrc("images/fullness-philosophy-fine-roots-bg.png")}")` }}
-        >
+        <section className="philosophy" id="filosofia">
           <div>
             <p className="eyebrow">Nuestra filosofía</p>
             <h2>Nutrir desde la raíz para transformar desde adentro.</h2>
@@ -1471,25 +1556,6 @@ function App() {
           </div>
         </section>
       </div>
-
-      <section className="functional-band">
-        <div className="section-heading">
-          <p className="eyebrow">Nutrición con fundamento</p>
-          <h2>Combinaciones que trabajan juntas.</h2>
-        </div>
-        <div className="functional-grid">
-          {functionalNotes.map((note) => (
-            <article key={note.title}>
-              <img className={note.imageClass || ""} src={note.image} alt={note.title} />
-              <div>
-                <Sprout size={22} />
-                <h3>{note.title}</h3>
-                <p>{note.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section className="heating" id="calentar">
         <div
@@ -1547,8 +1613,8 @@ function App() {
 
       <section className="products section" id="productos">
         <div className="section-heading">
-          <p className="eyebrow">Meal prep premium</p>
-          <h2>Antiinflamatorio, rico y listo para tu rutina.</h2>
+          <p className="eyebrow">Tienda Fullness Lab</p>
+          <h2>Elige tus platos.</h2>
         </div>
         {products.length > 0 ? (
           <div className="product-grid">
@@ -1575,12 +1641,47 @@ function App() {
         )}
       </section>
 
-      <section className="membership">
+      <section className="functional-band" id="fundamento">
+        <div className="section-heading">
+          <p className="eyebrow">Nutrición con fundamento</p>
+          <h2>Combinaciones que trabajan juntas.</h2>
+        </div>
+        <div className="functional-grid">
+          {functionalNotes.map((note) => (
+            <article key={note.title}>
+              <img className={note.imageClass || ""} src={note.image} alt={note.title} />
+              <div>
+                <Sprout size={22} />
+                <h3>{note.title}</h3>
+                <p>{note.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="membership" id="comunidad">
         <p className="eyebrow">Nutrición emocional</p>
         <h2>El cuidado personal empieza por dentro.</h2>
         <p>
           El siguiente paso de Fullness Lab abre espacio a acompañamiento, sesiones y una comunidad para comer mejor desde el amor propio.
         </p>
+        <form className="membership-form" onSubmit={submitSubscription}>
+          <label htmlFor="subscription-email">Recibe novedades Fullness</label>
+          <div>
+            <input
+              id="subscription-email"
+              name="subscriptionEmail"
+              type="email"
+              placeholder="nombre@dominio.cl…"
+              autoComplete="email"
+              spellCheck={false}
+              required
+            />
+            <button type="submit">Suscribirme</button>
+          </div>
+          {subscriptionMessage && <p className="membership-status" role="status">{subscriptionMessage}</p>}
+        </form>
       </section>
 
       <footer>
@@ -1617,11 +1718,11 @@ function App() {
                 {googleMessage && <p className="form-note">{googleMessage}</p>}
                 <label>
                   Correo electrónico
-                  <span><Mail size={18} /><input required name="email" type="email" placeholder="tu@email.cl" autoComplete="username" /></span>
+                  <span><Mail size={18} /><input required name="email" type="email" placeholder="nombre@dominio.cl…" autoComplete="username" /></span>
                 </label>
                 <label>
                   Contraseña
-                  <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} autoComplete="current-password" /></span>
+                  <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres…" minLength={8} autoComplete="current-password" /></span>
                 </label>
                 <button className="primary-button full" type="submit" disabled={authLoading}>
                   {authLoading ? "Ingresando…" : "Iniciar sesión"}
@@ -1748,23 +1849,23 @@ function App() {
                     <div className="backoffice-grid">
                       <label>
                         Nombre
-                        <input required name="name" value={menuForm.name} onChange={updateMenuForm} placeholder="Trucha, betarraga y quinoa" />
+                        <input required name="name" value={menuForm.name} onChange={updateMenuForm} placeholder="Trucha, betarraga y quinoa…" />
                       </label>
                       <label>
                         Slug
-                        <input required name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="trucha-betarraga-quinoa" />
+                        <input required name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="trucha-betarraga-quinoa…" />
                       </label>
                       <label>
                         SKU
-                        <input name="sku" value={menuForm.sku} onChange={updateMenuForm} placeholder="FULL-001" />
+                        <input name="sku" value={menuForm.sku} onChange={updateMenuForm} placeholder="FULL-001…" />
                       </label>
                       <label>
                         Etiqueta
-                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="Omega 3 + antioxidantes" />
+                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="Omega 3 + antioxidantes…" />
                       </label>
                       <label>
                         Precio CLP
-                        <input required name="priceClp" type="number" min="0" step="100" value={menuForm.priceClp} onChange={updateMenuForm} placeholder="8990" />
+                        <input required name="priceClp" type="number" min="0" step="100" value={menuForm.priceClp} onChange={updateMenuForm} placeholder="8990…" />
                       </label>
                       <label>
                         Orden
@@ -1774,7 +1875,7 @@ function App() {
 
                     <label className="backoffice-wide">
                       Descripción
-                      <textarea required name="description" rows="3" value={menuForm.description} onChange={updateMenuForm} placeholder="Pescado del sur, raíces dulces, hojas verdes y granos integrales." />
+                      <textarea required name="description" rows="3" value={menuForm.description} onChange={updateMenuForm} placeholder="Pescado del sur, raíces dulces, hojas verdes y granos integrales…" />
                     </label>
 
                     <div className="backoffice-photo-row">
@@ -1801,22 +1902,22 @@ function App() {
                     <div className="backoffice-grid">
                       <label>
                         Ingredientes
-                        <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Trucha\nBetarraga\nQuinoa"} />
+                        <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Trucha\nBetarraga\nQuinoa…"} />
                       </label>
                       <label>
                         Alérgenos
-                        <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos"} />
+                        <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos…"} />
                       </label>
                     </div>
 
                     <label className="backoffice-wide">
                       Descripción nutricional
-                      <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Proteína de calidad, omega 3, fibra y antioxidantes naturales." />
+                      <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Proteína de calidad, omega 3, fibra y antioxidantes naturales…" />
                     </label>
 
                     <label className="backoffice-wide">
                       Datos nutricionales JSON
-                      <textarea name="nutritionFacts" rows="6" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck="false" />
+                      <textarea name="nutritionFacts" rows="6" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck={false} />
                     </label>
 
                     <div className="backoffice-form-actions">
