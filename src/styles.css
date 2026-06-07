@@ -987,9 +987,9 @@ h3 {
   color: #f4eadb;
   background-color: #2a170b;
   background-image: var(--philosophy-bg, none);
-  background-position: right center;
+  background-position: center center;
   background-repeat: no-repeat;
-  background-size: min(86vw, 1180px) auto;
+  background-size: cover;
   overflow: hidden;
 }
 

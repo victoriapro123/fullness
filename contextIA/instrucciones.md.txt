@@ -218,6 +218,7 @@ Contexto actual:
 - Las tarjetas de productos usan `fullness-food-crop.jpeg`.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
 - La franja "Como calentar" usa `images/fullness-heating-bag-realistic-v2.png` desde R2: bolsa al vacio mas inflada, con ingredientes picados distribuidos, pinzas y mano. El pequeno splash de ingreso al agua se dibuja en CSS con `.heating-splash`, no como parte del PNG.
+- En la seccion de filosofia, la imagen de raices debe funcionar como fondo de seccion completa, con `background-size: cover`, no como bloque parcial o imagen contenida hacia un lado.
 - La clienta quiere que el color predominante venga principalmente de los platos.
 - Las franjas claras deben ser mas claras que el fondo oscuro, pero no blancas ni clinicas; deben acercarse a tonos de monograma, papel organico, salvia mineral, beige oliva o marfil envejecido.
 - El diseno puede tener mas elementos que antes; ya no debe ser tan minimalista limpio.
