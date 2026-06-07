@@ -286,6 +286,7 @@ function IntroScrollSequence() {
 
     const setIntroConsumed = (consumed) => {
       document.documentElement.classList.toggle("intro-scroll-consumed", consumed);
+      window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed } }));
     };
 
     const isIntroConsumed = () => document.documentElement.classList.contains("intro-scroll-consumed");
@@ -690,8 +691,51 @@ function App() {
 
   const returnToIntro = () => {
     document.documentElement.classList.remove("intro-scroll-consumed");
+    if (window.location.hash && window.location.hash !== "#inicio") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     window.dispatchEvent(new Event("fullness:intro-reset"));
+  };
+
+  const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
+    const target = document.querySelector(href);
+    if (!target) return false;
+
+    const getTargetTop = () => {
+      const sectionTop = target.getBoundingClientRect().top + window.pageYOffset;
+      if (href === "#programa" || href === "#plato") return sectionTop;
+
+      const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+      return Math.max(0, sectionTop - headerHeight - 14);
+    };
+
+    document.documentElement.classList.add("intro-scroll-consumed");
+    window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+    setHeaderHiddenForHero(false);
+
+    if (window.location.hash !== href) {
+      if (replace) {
+        window.history.replaceState(null, "", href);
+      } else {
+        window.history.pushState(null, "", href);
+      }
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: getTargetTop(), left: 0, behavior: smooth ? "smooth" : "instant" });
+
+      if (!smooth) {
+        window.setTimeout(() => {
+          window.scrollTo({ top: getTargetTop(), left: 0, behavior: "instant" });
+        }, 80);
+        window.setTimeout(() => {
+          window.scrollTo({ top: getTargetTop(), left: 0, behavior: "instant" });
+        }, 300);
+      }
+    });
+
+    return true;
   };
 
   const memberButtonLabel = authUser
@@ -879,23 +923,32 @@ function App() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     const ctx = gsap.context(() => {
-      gsap.set([".plate-hero-copy > *", ".plate-hero-visual"], { clearProps: "all" });
+      gsap.set([
+        ".plate-hero-copy > *",
+        ".plate-hero-visual",
+        ".food-editorial .editorial-copy > *",
+        ".editorial-image img",
+        ".functional-band .section-heading > *",
+        ".functional-grid article",
+        ".functional-grid article img",
+        ".heating-copy > *",
+        ".heating-visual",
+        ".heating-steps li",
+        ".products .section-heading > *",
+        ".product-card",
+        ".product-art img",
+        ".membership > *"
+      ], { clearProps: "all" });
 
       const revealItems = gsap.utils.toArray([
         ".food-editorial .editorial-copy > *",
-        ".functional-band .section-heading > *",
-        ".functional-grid article",
-        ".heating-copy > *",
-        ".products .section-heading > *",
-        ".product-card",
         ".membership > *"
       ].join(", "));
 
       revealItems.forEach((item) => {
         gsap.fromTo(item,
-          { autoAlpha: 0, y: 28 },
+          { y: 24 },
           {
-            autoAlpha: 1,
             y: 0,
             duration: 0.85,
             ease: "power3.out",
@@ -903,7 +956,7 @@ function App() {
               trigger: item,
               start: "top 86%",
               end: "bottom 14%",
-              toggleActions: "play reverse play reverse"
+              toggleActions: "play none none none"
             }
           }
         );
@@ -911,14 +964,11 @@ function App() {
 
       gsap.utils.toArray([
         ".editorial-image img",
-        ".heating-visual",
-        ".product-art img",
         ".functional-grid article img"
       ].join(", ")).forEach((image) => {
         gsap.fromTo(image,
-          { autoAlpha: 0, y: 22, scale: 1.025 },
+          { y: 18, scale: 1.025 },
           {
-            autoAlpha: 1,
             y: 0,
             scale: 1,
             duration: 1.05,
@@ -927,7 +977,7 @@ function App() {
               trigger: image,
               start: "top 88%",
               end: "bottom 12%",
-              toggleActions: "play reverse play reverse"
+              toggleActions: "play none none none"
             }
           }
         );
@@ -946,11 +996,21 @@ function App() {
 
     }, appRef);
 
-    return () => ctx.revert();
+    const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 250);
+
+    return () => {
+      window.clearTimeout(refreshTimer);
+      ctx.revert();
+    };
   }, []);
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
+      if (document.documentElement.classList.contains("intro-scroll-consumed")) {
+        setHeaderHiddenForHero(false);
+        return;
+      }
+
       const introSequence = document.querySelector(".scroll-sequence-intro");
       if (!introSequence) {
         setHeaderHiddenForHero(false);
@@ -967,10 +1027,30 @@ function App() {
     updateHeaderVisibility();
     window.addEventListener("scroll", updateHeaderVisibility, { passive: true });
     window.addEventListener("resize", updateHeaderVisibility);
+    window.addEventListener("fullness:intro-state-change", updateHeaderVisibility);
+    window.addEventListener("fullness:intro-reset", updateHeaderVisibility);
 
     return () => {
       window.removeEventListener("scroll", updateHeaderVisibility);
       window.removeEventListener("resize", updateHeaderVisibility);
+      window.removeEventListener("fullness:intro-state-change", updateHeaderVisibility);
+      window.removeEventListener("fullness:intro-reset", updateHeaderVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos"]);
+
+    const syncSectionHash = () => {
+      if (!sectionHashes.has(window.location.hash)) return;
+      navigateToSection(window.location.hash, { smooth: false, replace: true });
+    };
+
+    syncSectionHash();
+    window.addEventListener("hashchange", syncSectionHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncSectionHash);
     };
   }, []);
 
@@ -1205,10 +1285,16 @@ function App() {
       key={item.href}
       href={item.href}
       onClick={(event) => {
-        if (item.href !== "#backoffice") return;
+        if (item.href === "#backoffice") {
+          event.preventDefault();
+          openBackoffice();
+          return;
+        }
 
-        event.preventDefault();
-        openBackoffice();
+        if (item.href.startsWith("#")) {
+          event.preventDefault();
+          navigateToSection(item.href);
+        }
       }}
     >
       {item.label}
@@ -1218,7 +1304,15 @@ function App() {
   return (
     <main ref={appRef}>
       <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
-        <a className="brand" href="#inicio" aria-label="Fullness Lab inicio">
+        <a
+          className="brand"
+          href="#programa"
+          aria-label="Fullness Lab inicio"
+          onClick={(event) => {
+            event.preventDefault();
+            navigateToSection("#programa");
+          }}
+        >
           <img className="brand-reference-logo" src={mediaSrc("assets/fullness-lab-logo-official.png")} alt="Fullness Lab" />
         </a>
 
@@ -1260,7 +1354,9 @@ function App() {
                   return;
                 }
 
+                event.preventDefault();
                 setMenuOpen(false);
+                navigateToSection(item.href);
               }}
             >
               {item.label}
@@ -1287,7 +1383,14 @@ function App() {
           <p className="eyebrow">Nutrición inteligente. Energía real.</p>
           <h1>Ingredientes premium. Resultados exclusivos.</h1>
           <p>Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.</p>
-          <a className="primary-button plate-hero-cta" href="#plato">
+          <a
+            className="primary-button plate-hero-cta"
+            href="#plato"
+            onClick={(event) => {
+              event.preventDefault();
+              navigateToSection("#plato");
+            }}
+          >
             Ver más
             <ArrowRight size={20} aria-hidden="true" />
           </a>
@@ -1311,7 +1414,7 @@ function App() {
         />
       </section>
 
-      <div className="philosophy-scene" id="filosofia">
+      <div className="philosophy-scene">
         <section
           className="food-editorial"
           id="plato"
@@ -1333,6 +1436,7 @@ function App() {
 
         <section
           className="philosophy"
+          id="filosofia"
           style={{ "--philosophy-bg": `url("${mediaSrc("images/fullness-philosophy-fine-roots-bg.png")}")` }}
         >
           <div>
@@ -1520,7 +1624,7 @@ function App() {
                   <span><Lock size={18} /><input required name="password" type="password" placeholder="Mínimo 8 caracteres" minLength={8} autoComplete="current-password" /></span>
                 </label>
                 <button className="primary-button full" type="submit" disabled={authLoading}>
-                  {authLoading ? "Ingresando..." : "Iniciar sesión"}
+                  {authLoading ? "Ingresando…" : "Iniciar sesión"}
                 </button>
               </form>
             )}
@@ -1586,7 +1690,7 @@ function App() {
                     </div>
 
                     {adminLoading ? (
-                      <p className="backoffice-muted">Cargando menús...</p>
+                      <p className="backoffice-muted">Cargando menús…</p>
                     ) : adminItems.length > 0 ? (
                       <div className="backoffice-menu-stack">
                         {adminItems.map((item) => (
@@ -1684,12 +1788,12 @@ function App() {
                       <div>
                         <label className="upload-control">
                           <UploadCloud size={18} />
-                          {photoUploading ? "Subiendo..." : "Subir foto"}
+                          {photoUploading ? "Subiendo…" : "Subir foto"}
                           <input type="file" accept="image/*" onChange={handleMenuPhotoChange} disabled={photoUploading || adminSaving} />
                         </label>
                         <label className="backoffice-wide">
                           URL foto
-                          <input name="photoUrl" value={menuForm.photoUrl} onChange={updateMenuForm} placeholder="https://..." />
+                          <input name="photoUrl" value={menuForm.photoUrl} onChange={updateMenuForm} placeholder="https://…" />
                         </label>
                       </div>
                     </div>
@@ -1722,7 +1826,7 @@ function App() {
                       </button>
                       <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                         {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                        {adminSaving ? "Guardando..." : "Guardar menú"}
+                        {adminSaving ? "Guardando…" : "Guardar menú"}
                       </button>
                     </div>
                   </form>
