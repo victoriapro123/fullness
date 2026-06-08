@@ -2,7 +2,9 @@ node_modules
 dist
 .vercel
 public/assets/
-public/images/
+public/images/*
+!public/images/menu-samples/
+!public/images/menu-samples/*.jpeg
 *.local
 .DS_Store
 

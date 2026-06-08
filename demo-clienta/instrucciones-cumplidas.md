@@ -65,8 +65,8 @@ Se implemento un backoffice inicial para menus:
 
 Se dejaron productos de ejemplo alineados con la marca:
 
-- Trucha, betarraga y quinoa.
-- Pollo, curcuma y vegetales.
-- Legumbres, arroz integral y oliva.
+- Salmon, lentejas y hojas verdes.
+- Pollo especiado, camote y hojas verdes.
+- Salmon glaseado, arroz verde y palta.
 
-Cada producto tiene precio, descripcion y boton para agregar al carrito.
+Cada producto tiene foto de muestra, precio, descripcion y boton para agregar al carrito.

@@ -1,5 +1,5 @@
 :root {
-  font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #f4eadb;
   background: #efe7d7;
   color-scheme: dark;
@@ -23,8 +23,8 @@
   --ink: #17110c;
   --section-green: #26382e;
   --tech-frame-width: clamp(220px, 26vw, 390px);
-  --font-display: "Raleway", "Montserrat", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Montserrat", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Satoshi", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -384,8 +384,17 @@ main .reveal-on-scroll.is-visible {
   overflow: hidden;
 }
 
+.intro-mobile-skip .scroll-sequence {
+  display: none;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .intro-scroll-consumed .scroll-sequence::after,
-.intro-scroll-consumed .scroll-sequence-stage {
+.intro-scroll-consumed .scroll-sequence-stage,
+.intro-mobile-skip .scroll-sequence::after,
+.intro-mobile-skip .scroll-sequence-stage {
   display: none;
 }
 
@@ -782,8 +791,9 @@ h3 {
 .plate-hero-cta {
   position: absolute;
   z-index: 5;
-  left: clamp(54%, 60vw, 68%);
-  bottom: clamp(92px, 11svh, 138px);
+  top: clamp(178px, 20svh, 230px);
+  left: 50%;
+  bottom: auto;
   display: inline-grid;
   justify-items: center;
   gap: 16px;
@@ -1039,7 +1049,7 @@ h3 {
   max-width: 780px;
   margin-bottom: clamp(22px, 3vw, 36px);
   color: #f8eedf;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: clamp(3.8rem, 6.5vw, 8.4rem);
   font-weight: 700;
   letter-spacing: 0;
@@ -3093,9 +3103,7 @@ footer {
   }
 
   .plate-hero-cta {
-    left: 64%;
-    bottom: 98px;
-    font-size: clamp(0.96rem, 2.1vw, 1.12rem);
+    display: none;
   }
 
   .hero-cta-arrow {
@@ -3103,8 +3111,7 @@ footer {
   }
 
   .plate-hero-replay {
-    top: 126px;
-    right: 20px;
+    display: none;
   }
 
   .plate-hero-signals {
@@ -3352,9 +3359,7 @@ footer {
   }
 
   .plate-hero-cta {
-    left: 61%;
-    bottom: 78px;
-    font-size: 0.92rem;
+    display: none;
   }
 
   .hero-cta-arrow {

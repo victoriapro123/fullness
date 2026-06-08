@@ -44,37 +44,78 @@ import "./styles.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
+const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
+const sampleProductImages = [
+  "/images/menu-samples/lentejas-hojas.jpeg",
+  "/images/menu-samples/pollo-camote-hojas.jpeg",
+  "/images/menu-samples/salmon-arroz-avocado.jpeg"
+];
+const legacyPlaceholderProductSlugs = new Set([
+  "trucha-betarraga-quinoa",
+  "pollo-curcuma-vegetales",
+  "legumbres-granos-oliva"
+]);
+
+function getProductImage(product, index) {
+  const image = product.image || "";
+  if (!image || image === placeholderProductImage || image.includes("fullness-food-crop.jpeg")) {
+    return sampleProductImages[index % sampleProductImages.length];
+  }
+
+  return image;
+}
+
+function applySampleProduct(product, index) {
+  const image = product.image || "";
+  const isLegacyPlaceholder =
+    legacyPlaceholderProductSlugs.has(product.slug) &&
+    (image === placeholderProductImage || image.includes("fullness-food-crop.jpeg"));
+
+  if (!isLegacyPlaceholder) return product;
+
+  const sample = demoProducts[index % demoProducts.length];
+  return {
+    ...product,
+    name: sample.name,
+    tag: sample.tag,
+    price: sample.price,
+    description: sample.description,
+    image: sample.image,
+    ingredients: sample.ingredients,
+    nutritionDescription: sample.nutritionDescription
+  };
+}
 
 const demoProducts = [
   {
-    id: "trucha-betarraga",
-    name: "Trucha, betarraga y quinoa",
-    tag: "Omega 3 + antioxidantes",
+    id: "salmon-lentejas-hojas",
+    name: "Salmón, lentejas y hojas verdes",
+    tag: "Omega 3 + legumbres",
     price: 8990,
-    description: "Pescado del sur, raíces dulces, hojas verdes y granos integrales sin gluten.",
-    image: mediaSrc("assets/fullness-food-crop.jpeg"),
-    ingredients: ["trucha", "betarraga", "quinoa", "hojas verdes"],
-    nutritionDescription: "Proteína de calidad, omega 3, fibra y antioxidantes naturales en un plato completo."
+    description: "Salmón dorado, lentejas especiadas y hojas frescas con brillo de oliva.",
+    image: sampleProductImages[0],
+    ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
+    nutritionDescription: "Proteína de calidad, omega 3, fibra vegetal y grasas saludables."
   },
   {
-    id: "pollo-curcuma",
-    name: "Pollo, cúrcuma y vegetales",
+    id: "pollo-camote-hojas",
+    name: "Pollo especiado, camote y hojas verdes",
     tag: "Antiinflamatorio",
     price: 7990,
-    description: "Proteína limpia con jengibre, pimienta y grasas saludables para una nutrición completa.",
-    image: mediaSrc("assets/fullness-food-crop.jpeg"),
-    ingredients: ["pollo", "cúrcuma", "jengibre", "pimienta", "vegetales"],
-    nutritionDescription: "Plato alto en proteína con especias asociadas a una alimentación antiinflamatoria."
+    description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
+    image: sampleProductImages[1],
+    ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
+    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales."
   },
   {
-    id: "legumbres-granos",
-    name: "Legumbres, arroz integral y oliva",
-    tag: "Proteína vegetal completa",
-    price: 6990,
-    description: "Legumbres y granos integrales combinados para equilibrar energía, fibra y saciedad.",
-    image: mediaSrc("assets/fullness-food-crop.jpeg"),
-    ingredients: ["legumbres", "arroz integral", "aceite de oliva", "semillas"],
-    nutritionDescription: "Combinación vegetal con fibra, carbohidratos complejos y grasas saludables."
+    id: "salmon-arroz-palta",
+    name: "Salmón glaseado, arroz verde y palta",
+    tag: "Grasas saludables",
+    price: 8990,
+    description: "Salmón glaseado con arroz verde, palta, mango y hierbas frescas.",
+    image: sampleProductImages[2],
+    ingredients: ["salmón", "arroz verde", "palta", "mango", "cilantro"],
+    nutritionDescription: "Proteína, grasas saludables y carbohidratos de energía estable."
   }
 ];
 
@@ -106,6 +147,9 @@ const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequenc
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
 const introScrollFinalFrameSrc = mediaSrc("assets/scroll-intro/fullness-intro-final.jpg");
 const introScrollVideoDuration = 15.04;
+const introMobileQuery = "(max-width: 860px)";
+const isMobileIntroViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
 const whatsappMessage = encodeURIComponent("Hola Fullness Lab, quiero hacer un pedido.");
 const whatsappUrl = `https://wa.me/56996588199?text=${whatsappMessage}`;
 const introTechSignals = [
@@ -243,6 +287,7 @@ function IntroScrollSequence() {
     const playbackMs = 4000;
     const finalFrameHold = 0.16;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobileIntroMedia = window.matchMedia(introMobileQuery);
     const scrollBehaviorSnapshot = {
       root: document.documentElement.style.scrollBehavior,
       body: document.body.style.scrollBehavior
@@ -376,6 +421,30 @@ function IntroScrollSequence() {
 
     };
 
+    const syncMobileIntroMode = () => {
+      const shouldSkipIntro = mobileIntroMedia.matches;
+      document.documentElement.classList.toggle("intro-mobile-skip", shouldSkipIntro);
+
+      if (!shouldSkipIntro) {
+        syncHeaderVisibility();
+        return;
+      }
+
+      playbackRef.current = null;
+      setScrollLock(false);
+      setIntroConsumed(true);
+      resetSignals();
+      setVideoProgress(1, false);
+      setPosterFrameVisible(false);
+      setFinalFrameVisible(false);
+
+      if (!window.location.hash || window.location.hash === "#inicio" || window.location.hash === "#programa") {
+        jumpToScroll(0);
+      }
+
+      syncHeaderVisibility();
+    };
+
     const finishPlayback = () => {
       const playback = playbackRef.current;
       const metrics = getMetrics();
@@ -406,6 +475,7 @@ function IntroScrollSequence() {
     };
 
     const startPlayback = (direction) => {
+      if (mobileIntroMedia.matches) return false;
       if (!isSequenceActive()) return false;
 
       const start = clampProgress(progressRef.current || getProgressFromScroll());
@@ -548,6 +618,11 @@ function IntroScrollSequence() {
     };
 
     const handleIntroReset = () => {
+      if (mobileIntroMedia.matches) {
+        syncMobileIntroMode();
+        return;
+      }
+
       const video = videoRef.current;
       playbackRef.current = null;
       setScrollLock(false);
@@ -571,6 +646,10 @@ function IntroScrollSequence() {
     const handleStartClick = (event) => {
       event.preventDefault();
       startPlayback(1);
+    };
+
+    const handleMobileIntroChange = () => {
+      syncMobileIntroMode();
     };
 
     const renderFrame = () => {
@@ -608,8 +687,17 @@ function IntroScrollSequence() {
       }
     };
 
-    setVideoProgress(getProgressFromScroll());
+    syncMobileIntroMode();
+    if (!mobileIntroMedia.matches) {
+      setVideoProgress(getProgressFromScroll());
+    }
+
     videoRef.current?.addEventListener("loadedmetadata", handleLoadedMetadata);
+    if (mobileIntroMedia.addEventListener) {
+      mobileIntroMedia.addEventListener("change", handleMobileIntroChange);
+    } else {
+      mobileIntroMedia.addListener(handleMobileIntroChange);
+    }
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
     window.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
@@ -622,6 +710,11 @@ function IntroScrollSequence() {
     return () => {
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
       logoButtonRef.current?.removeEventListener("click", handleStartClick);
+      if (mobileIntroMedia.removeEventListener) {
+        mobileIntroMedia.removeEventListener("change", handleMobileIntroChange);
+      } else {
+        mobileIntroMedia.removeListener(handleMobileIntroChange);
+      }
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("wheel", handleWheel, { capture: true });
       window.removeEventListener("touchstart", handleTouchStart, { capture: true });
@@ -631,9 +724,12 @@ function IntroScrollSequence() {
       window.removeEventListener("fullness:intro-reset", handleIntroReset);
       window.cancelAnimationFrame(animationFrame);
       setScrollLock(false);
-      setIntroConsumed(false);
       resetSignals();
-      document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing", "intro-scroll-consumed");
+      document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing");
+      if (!mobileIntroMedia.matches) {
+        setIntroConsumed(false);
+        document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
+      }
     };
   }, []);
 
@@ -712,6 +808,14 @@ function App() {
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos", "#fundamento", "#comunidad"]);
 
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-scroll-consumed", "intro-mobile-skip");
+      setHeaderHiddenForHero(false);
+      return;
+    }
+
+    document.documentElement.classList.remove("intro-mobile-skip");
+
     if (sectionHashes.has(window.location.hash)) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setHeaderHiddenForHero(false);
@@ -719,7 +823,15 @@ function App() {
   }, []);
 
   const returnToIntro = () => {
-    document.documentElement.classList.remove("intro-scroll-consumed");
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-scroll-consumed", "intro-mobile-skip");
+      window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+      setHeaderHiddenForHero(false);
+      navigateToSection("#programa", { smooth: true, replace: true });
+      return;
+    }
+
+    document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
     if (window.location.hash && window.location.hash !== "#inicio") {
       window.history.replaceState(null, "", window.location.pathname);
     }
@@ -740,6 +852,9 @@ function App() {
     };
 
     document.documentElement.classList.add("intro-scroll-consumed");
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-mobile-skip");
+    }
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
@@ -851,7 +966,7 @@ function App() {
       const result = await listActiveMenuItems();
       if (ignore || result.error || !result.configured) return;
 
-      setProducts(result.data);
+      setProducts(result.data.map(applySampleProduct));
     }
 
     loadProducts();
@@ -1618,10 +1733,10 @@ function App() {
         </div>
         {products.length > 0 ? (
           <div className="product-grid">
-            {products.map((product) => (
+            {products.map((product, index) => (
               <article className="product-card" key={product.id}>
                 <div className="product-art">
-                  <img src={product.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt={`Plato ${product.name}`} />
+                  <img src={getProductImage(product, index)} alt={`Plato ${product.name}`} />
                 </div>
                 <span>{product.tag}</span>
                 <h3>{product.name}</h3>
