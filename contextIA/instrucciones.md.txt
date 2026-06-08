@@ -217,13 +217,16 @@ Archivos y recursos:
 - `public/images/menu-samples/pollo-camote-hojas.jpeg`
 - `public/images/menu-samples/salmon-arroz-avocado.jpeg`
 - `src/assets/fullness-beet-roots-continuum.jpg`
+- R2 `images/menu-samples/lentejas-hojas.jpeg`
+- R2 `images/menu-samples/pollo-camote-hojas.jpeg`
+- R2 `images/menu-samples/salmon-arroz-avocado.jpeg`
 - R2 `images/fullness-heating-bag-realistic-v2.png`
 
 Contexto actual:
 
 - El logo oficial se usa en el header.
 - La portada usa `fullness-hero-background.png`.
-- Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden del carrusel.
+- Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden del carrusel.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
 - `src/assets/fullness-beet-roots-continuum.jpg` es un compuesto local versionable usado como fondo unico para `.philosophy-scene`, uniendo betarraga y raices en una sola imagen.
 - La franja "Como calentar" usa `images/fullness-heating-bag-realistic-v2.png` desde R2: bolsa al vacio mas inflada, con ingredientes picados distribuidos, pinzas y mano. El efecto de agua caliente se dibuja en CSS con `.heating-water` y `.heating-splash`; debe sentirse como vapor, neblina y microburbujas sutiles, evitando circulos perfectos o burbujas grandes falsas.

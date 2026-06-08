@@ -69,4 +69,4 @@ Se dejaron productos de ejemplo alineados con la marca:
 - Pollo especiado, camote y hojas verdes.
 - Salmon glaseado, arroz verde y palta.
 
-Cada producto tiene foto de muestra, precio, descripcion y boton para agregar al carrito.
+Cada producto tiene foto de muestra servida desde Cloudflare R2, precio, descripcion y boton para agregar al carrito.

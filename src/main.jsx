@@ -46,9 +46,9 @@ gsap.registerPlugin(ScrollTrigger);
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
-  "/images/menu-samples/lentejas-hojas.jpeg",
-  "/images/menu-samples/pollo-camote-hojas.jpeg",
-  "/images/menu-samples/salmon-arroz-avocado.jpeg"
+  mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
+  mediaSrc("images/menu-samples/pollo-camote-hojas.jpeg"),
+  mediaSrc("images/menu-samples/salmon-arroz-avocado.jpeg")
 ];
 const legacyPlaceholderProductSlugs = new Set([
   "trucha-betarraga-quinoa",
