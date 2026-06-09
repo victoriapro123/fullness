@@ -2047,8 +2047,10 @@ function App() {
         </section>
 
         <section className="philosophy" id="proposito">
+          <div className="section-brand-mark philosophy-brand-mark" aria-hidden="true">
+            <img src={logoVerticalSrc} alt="" />
+          </div>
           <div>
-            <img className="section-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
             <p className="eyebrow">Nuestro propósito</p>
             <h2>Bienestar desde la raíz, todos los días.</h2>
             <p className="philosophy-lede">
@@ -2094,6 +2096,9 @@ function App() {
           style={{ "--heating-water-bg": `url("${mediaSrc("images/fullness-boiling-water-bg.jpg")}")` }}
           aria-hidden="true"
         ></div>
+        <div className="section-brand-mark heating-brand-mark" aria-hidden="true">
+          <img src={logoVerticalSrc} alt="" />
+        </div>
         <div className="heating-visual" aria-hidden="true">
           <span className="heating-splash"></span>
           <span className="heating-splash heating-splash-secondary"></span>
@@ -2143,8 +2148,10 @@ function App() {
       </section>
 
       <section className="fullness-offer" id="oferta">
+        <div className="section-brand-mark offer-brand-mark" aria-hidden="true">
+          <img src={logoVerticalSrc} alt="" />
+        </div>
         <div className="section-heading">
-          <img className="section-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
           <p className="eyebrow">Oferta Fullness Lab</p>
           <h2>Elige cómo quieres nutrirte.</h2>
           <p>

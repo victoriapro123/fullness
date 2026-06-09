@@ -243,6 +243,7 @@ Archivos y recursos:
 Contexto actual:
 
 - El logo oficial horizontal marfil se usa en el header para darle mas protagonismo a la marca. El logo oficial vertical marfil se usa en favicon, intro, hero, separadores, marca de agua suave y footer. El color aprobado es `rgb(244, 234, 219)`.
+- El logo oficial vertical debe aparecer como marca editorial grande en secciones clave: centrado en `#calentar`, a la derecha en `#oferta` y a la derecha en `#proposito`, usando el recorte superior de betarraga/isotipo desde el asset oficial para evitar texto de logo dentro de las secciones. El tamano debe ser cercano al 50% de la columna/espacio asignado. En desktop usa opacidad casi completa (`0.98`); en mobile baja visualmente para no tapar lectura. Si se necesita una version de color sin archivo oficial, usar la silueta oficial como mascara con tonos marca, no volver al isotipo inventado.
 - La portada usa `fullness-hero-background.png`.
 - Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden del carrusel.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
