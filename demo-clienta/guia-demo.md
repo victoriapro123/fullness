@@ -22,12 +22,12 @@ Puntos a destacar:
 
 - Antes del hero aparece una secuencia de video: el logo Fullness Lab queda al centro y al hacer click, scroll, touch o Page Down activa un scrub automatico y fluido de 4 segundos. Durante ese tramo el desplazamiento real del sitio queda bloqueado, el video cubre todo el alto visible, el menu se oculta y recien al terminar aterriza en el hero.
 - Desde el hero no se puede volver al video ni al tramo negro con scroll. Para repetir la secuencia se usa el boton tecnico transparente `Volver a la animacion`, ubicado arriba a la derecha del hero con icono de video.
-- En el intro aparecen cuatro tags tecnologicos simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Empiezan despues del segundo 1 y encienden uno a uno con titileo e iluminacion suave. En el hero quedan apilados a la izquierda, debajo del boton `Ver mas`, con fondo totalmente transparente.
+- En el intro aparecen cuatro tags tecnologicos simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Empiezan despues del segundo 1 y encienden uno a uno con titileo e iluminacion suave.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.
-- Mensaje clave: comida rica, practica, antiinflamatoria y premium.
-- El boton principal del hero dice `Ver mas`, comparte ancho con los cuadros tecnologicos y mantiene separacion vertical para no montarse sobre ellos.
-- Las secciones se separan por cortes limpios, sin degradados ni difuminados de empalme.
+- Mensaje clave: el bienestar comienza desde adentro; no se cuentan calorias, se aprende a nutrirse.
+- El boton principal del hero dice `Explorar Fullness Lab` y baja a `Nuestro proposito`.
+- El logo del header y el isotipo de betarraga aparecen con mas protagonismo y tonos marfil/dorado suave.
 
 ## 3. Mostrar Plato Food Porn
 
@@ -39,25 +39,17 @@ Puntos a destacar:
 - El plato se comunica como rico y sensorial, no comida de dieta.
 - Se refuerzan atributos: sin gluten, sin lacteos, sin azucar refinada y grasas saludables.
 
-## 4. Mostrar Filosofia
+## 4. Mostrar Proposito
 
-Bajar a `Nuestra filosofia`.
+Bajar a `Nuestro proposito`.
 
 Puntos a destacar:
 
 - Se usa la betarraga como simbolo de raiz, nutrientes y vida interior.
 - El texto explica la idea de bienestar desde adentro sin volver la pagina clinica.
+- Se presentan cuatro pilares: nutricion consciente, cocina antiinflamatoria, bienestar integral y ciencia con sabor.
 
-## 5. Mostrar Nutricion Funcional
-
-Bajar a `Nutricion con fundamento`.
-
-Puntos a destacar:
-
-- Se explican combinaciones funcionales de forma simple.
-- La informacion tecnica se presenta con tono editorial y cercano.
-
-## 6. Mostrar Como Calentar
+## 5. Mostrar Como Calentar
 
 Bajar a `Como calentar tus platos`.
 
@@ -66,6 +58,16 @@ Puntos a destacar:
 - Explica el uso de los platos al vacio.
 - No vende ahorro de tiempo como valor diferencial.
 - Mantiene el tono de ritual, cuidado e intencion.
+
+## 6. Mostrar Oferta Fullness Lab
+
+Bajar a `Oferta Fullness Lab`.
+
+Puntos a destacar:
+
+- Menus preparados baja a tienda.
+- Meal Prep abre WhatsApp porque aun no tiene seccion desarrollada.
+- Talleres abre WhatsApp porque aun no tiene seccion desarrollada.
 
 ## 7. Mostrar Productos
 
@@ -96,3 +98,12 @@ Resultado esperado:
 - Se abre el formulario de cuenta.
 - Se muestran campos de usuario, email, telefono y contrasena.
 - El boton de Gmail queda preparado para produccion con variable de entorno.
+
+## 10. Mostrar Nutricion Funcional
+
+Bajar a `Nutricion con fundamento`.
+
+Puntos a destacar:
+
+- Se explican combinaciones funcionales de forma simple.
+- La informacion tecnica se presenta con tono editorial y cercano.

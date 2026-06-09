@@ -7,26 +7,29 @@
 - Se mantuvo el enfoque visual en comida real, ingredientes frescos y energia natural.
 - Se aplico el logo oficial entregado por la clienta.
 - El video introductorio anterior al hero muestra el logo Fullness Lab centrado sobre el video. La animacion avanza de forma autonoma y fluida durante 4 segundos cuando el usuario hace click en el logo o intenta bajar; durante ese tramo se bloquea el desplazamiento real del sitio, el video cubre todo el alto visible y el menu permanece oculto hasta aterrizar en el hero.
-- Los elementos tecnologicos quedaron como cuatro tags simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Encienden uno a uno con titileo e iluminacion suave. Al llegar al hero se apilan a la izquierda, debajo del boton `Ver mas`, con fondo 100% transparente.
+- Los elementos tecnologicos quedaron como cuatro tags simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Encienden uno a uno con titileo e iluminacion suave.
 - Desde el hero no se puede volver al video ni al tramo negro con scroll; se agrego un boton transparente con icono de video para `Volver a la animacion`, que reabre y resetea el intro.
-- El boton principal del hero ahora dice `Ver mas`, comparte ancho con los cuadros tecnologicos y mantiene separacion vertical para no superponerse.
-- Las transiciones entre secciones quedaron separadas por cortes limpios, sin degradados ni difuminados.
+- El logo del header se aumento y se ajusto a una lectura marfil/dorado suave para no verse blanco ni generico.
+- Se agrego isotipo de betarraga como favicon, marca visual de secciones, marca de agua suave y footer.
+- El CTA principal del hero ahora dice `Explorar Fullness Lab` y baja a `Nuestro proposito`.
+- Las transiciones entre secciones usan veladuras organicas cuando ayudan a unir hero, betarraga, tienda y comunidad.
 
 ## Texto principal
 
-- El titular quedo mas aspiracional y premium:
-  - "Ingredientes premium."
-  - "Resultados exclusivos."
-- Ambos textos se ajustaron para verse en lineas mas ordenadas y menos invasivas.
-- El texto secundario quedo como:
-  - "Alimentacion antiinflamatoria disenada para hacerte sentir, rendir y vivir mejor."
+- El titular quedo alineado al manifiesto aprobado:
+  - "El bienestar comienza desde adentro."
+- Se incorporaron frases clave de Cecilia:
+  - "Nutrirse desde la raiz."
+  - "No contamos calorias. Creemos en aprender a nutrirse."
+  - "Como es adentro, es afuera."
 
 ## Navegacion
 
 Se incluyeron las secciones solicitadas:
 
 - Programas.
-- Filosofia.
+- Proposito.
+- Oferta Fullness Lab.
 - Ingredientes.
 - Comunidad.
 - Acceso miembros.
@@ -70,3 +73,12 @@ Se dejaron productos de ejemplo alineados con la marca:
 - Salmon glaseado, arroz verde y palta.
 
 Cada producto tiene foto de muestra servida desde Cloudflare R2, precio, descripcion y boton para agregar al carrito.
+
+## Proposito y oferta
+
+- Se transformo `Nuestra filosofia` en `Nuestro proposito`.
+- Se integraron cuatro pilares: nutricion consciente, cocina antiinflamatoria, bienestar integral y ciencia con sabor.
+- Se agrego una seccion `Oferta Fullness Lab` con tres caminos:
+  - Menus preparados con CTA a tienda.
+  - Meal Prep con CTA directo a WhatsApp.
+  - Talleres con CTA directo a WhatsApp.

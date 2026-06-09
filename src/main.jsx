@@ -44,6 +44,7 @@ import "./styles.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
+const beetIsotypeSrc = "/assets/fullness-beet-isotype.svg";
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -150,8 +151,11 @@ const introScrollVideoDuration = 15.04;
 const introMobileQuery = "(max-width: 860px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
-const whatsappMessage = encodeURIComponent("Hola Fullness Lab, quiero hacer un pedido.");
-const whatsappUrl = `https://wa.me/56996588199?text=${whatsappMessage}`;
+const whatsappBaseUrl = "https://wa.me/56996588199";
+const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
+const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
+const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer el servicio de Meal Prep.");
+const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero información sobre los talleres.");
 const introTechSignals = [
   {
     id: "anti",
@@ -170,6 +174,7 @@ const introTechSignals = [
     label: "Energía real"
   }
 ];
+const heroPrinciples = ["No seguimos modas", "Preparaciones honestas", "Bienestar integral"];
 
 function WhatsAppIcon({ size = 24 }) {
   return (
@@ -806,7 +811,10 @@ function App() {
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
 
   useLayoutEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos", "#fundamento", "#comunidad"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#productos", "#fundamento", "#comunidad"]);
+    if (window.location.hash === "#filosofia") {
+      window.history.replaceState(null, "", "#proposito");
+    }
 
     if (isMobileIntroViewport()) {
       document.documentElement.classList.add("intro-scroll-consumed", "intro-mobile-skip");
@@ -840,12 +848,13 @@ function App() {
   };
 
   const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
-    const target = document.querySelector(href);
+    const resolvedHref = href === "#filosofia" ? "#proposito" : href;
+    const target = document.querySelector(resolvedHref);
     if (!target) return false;
 
     const getTargetTop = () => {
       const sectionTop = target.getBoundingClientRect().top + window.pageYOffset;
-      if (href === "#programa" || href === "#plato") return sectionTop;
+      if (resolvedHref === "#programa" || resolvedHref === "#plato") return sectionTop;
 
       const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
       return Math.max(0, sectionTop - headerHeight - 14);
@@ -858,11 +867,11 @@ function App() {
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
-    if (window.location.hash !== href) {
+    if (window.location.hash !== resolvedHref) {
       if (replace) {
-        window.history.replaceState(null, "", href);
+        window.history.replaceState(null, "", resolvedHref);
       } else {
-        window.history.pushState(null, "", href);
+        window.history.pushState(null, "", resolvedHref);
       }
     }
 
@@ -1214,7 +1223,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#calentar", "#productos", "#fundamento", "#comunidad"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#productos", "#fundamento", "#comunidad"]);
 
     const syncSectionHash = () => {
       if (!sectionHashes.has(window.location.hash)) return;
@@ -1468,7 +1477,7 @@ function App() {
   }
 
   const navItems = [
-    { href: "#filosofia", label: "Filosofía" },
+    { href: "#proposito", label: "Propósito" },
     { href: "#calentar", label: "Cómo calentar" },
     { href: "#productos", label: "Tienda" },
     ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
@@ -1585,28 +1594,35 @@ function App() {
 
       <section className="plate-hero" id="programa">
         <div className="plate-hero-copy">
-          <p className="eyebrow">Nutrición inteligente. Energía real.</p>
-          <h1>Ingredientes premium. Resultados exclusivos.</h1>
-          <p>Alimentación antiinflamatoria diseñada para hacerte sentir, rendir y vivir mejor.</p>
-          <aside className="plate-hero-signals" aria-label="Claves nutricionales Fullness">
-            {introTechSignals.map((signal) => (
-              <article className={`plate-hero-signal plate-hero-signal-${signal.id}`} key={signal.id}>
-                <span className="signal-title">{signal.label}</span>
+          <img className="hero-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+          <p className="eyebrow">Nutrirse desde la raíz</p>
+          <h1>El bienestar comienza desde adentro</h1>
+          <p>
+            En Fullness Lab creemos que la comida puede ser una herramienta de bienestar, energía y conexión con uno mismo.
+          </p>
+          <p>
+            Por eso desarrollamos preparaciones nutritivas, sabrosas y cuidadosamente elaboradas para nutrirte desde la raíz.
+          </p>
+          <strong className="hero-manifesto">No contamos calorías. Creemos en aprender a nutrirse.</strong>
+          <p className="hero-closing">Como es adentro, es afuera.</p>
+          <a
+            className="plate-hero-primary"
+            href="#proposito"
+            onClick={(event) => {
+              event.preventDefault();
+              navigateToSection("#proposito");
+            }}
+          >
+            Explorar Fullness Lab
+          </a>
+          <aside className="plate-hero-signals" aria-label="Principios Fullness">
+            {heroPrinciples.map((principle) => (
+              <article className="plate-hero-signal" key={principle}>
+                <span className="signal-title">{principle}</span>
               </article>
             ))}
           </aside>
         </div>
-        <a
-          className="plate-hero-cta"
-          href="#plato"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateToSection("#plato");
-          }}
-        >
-          <span>Ver más</span>
-          <span className="hero-cta-arrow" aria-hidden="true"></span>
-        </a>
         <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
           <Video size={17} aria-hidden="true" />
           Volver a la animación
@@ -1638,33 +1654,41 @@ function App() {
           </div>
         </section>
 
-        <section className="philosophy" id="filosofia">
+        <section className="philosophy" id="proposito">
           <div>
-            <p className="eyebrow">Nuestra filosofía</p>
-            <h2>Nutrir desde la raíz para transformar desde adentro.</h2>
+            <img className="section-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+            <p className="eyebrow">Nuestro propósito</p>
+            <h2>Bienestar desde la raíz, todos los días.</h2>
             <p className="philosophy-lede">
-              Creemos que la verdadera salud comienza en la raíz. Por eso creamos alimentos que nutren tu cuerpo, respetan la naturaleza y se basan en ciencia real. Ingredientes reales. Procesos conscientes. Resultados que se sienten.
+              Creemos que el bienestar se construye a través de pequeñas decisiones cotidianas. Por eso desarrollamos una propuesta que integra nutrición consciente, cocina antiinflamatoria y educación alimentaria, para ayudarte a sentirte mejor desde la raíz.
             </p>
             <div className="philosophy-list">
               <article>
                 <Leaf size={28} />
                 <div>
-                  <h3>Ingredientes reales</h3>
-                  <p>Seleccionados por su calidad, origen y aporte real.</p>
+                  <h3>Nutrición consciente</h3>
+                  <p>Seleccionamos ingredientes reales y preparaciones equilibradas que nutren más allá de las calorías.</p>
                 </div>
               </article>
               <article>
-                <Sparkles size={28} />
+                <CookingPot size={28} />
                 <div>
-                  <h3>Ciencia que nutre</h3>
-                  <p>Formulaciones basadas en evidencia y procesos conscientes.</p>
+                  <h3>Cocina antiinflamatoria</h3>
+                  <p>Diseñamos recetas ricas en nutrientes, con técnicas culinarias que respetan los ingredientes y potencian su sabor.</p>
                 </div>
               </article>
               <article>
                 <Heart size={28} />
                 <div>
                   <h3>Bienestar integral</h3>
-                  <p>Alimentamos tu cuerpo, tu mente y tu estilo de vida.</p>
+                  <p>Entendemos la alimentación como parte de un sistema más amplio: hábitos, emociones y calidad de vida.</p>
+                </div>
+              </article>
+              <article>
+                <Sparkles size={28} />
+                <div>
+                  <h3>Ciencia y sabor</h3>
+                  <p>Combinamos conocimiento nutricional con cocina de verdad, porque comer saludable también debe ser rico.</p>
                 </div>
               </article>
             </div>
@@ -1724,6 +1748,48 @@ function App() {
             </span>
           </li>
         </ol>
+      </section>
+
+      <section className="fullness-offer" id="oferta">
+        <div className="section-heading">
+          <img className="section-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+          <p className="eyebrow">Oferta Fullness Lab</p>
+          <h2>Elige cómo quieres nutrirte.</h2>
+          <p>
+            Preparaciones y experiencias pensadas para sostener una alimentación práctica, nutritiva y llena de sabor.
+          </p>
+        </div>
+        <div className="offer-grid">
+          <article className="offer-card">
+            <HandPlatter size={30} aria-hidden="true" />
+            <p className="offer-kicker">Menús preparados</p>
+            <h3>Comida real para el día a día</h3>
+            <p>Platos equilibrados, elaborados con ingredientes cuidadosamente seleccionados y listos para disfrutar.</p>
+            <a
+              href="#productos"
+              onClick={(event) => {
+                event.preventDefault();
+                navigateToSection("#productos");
+              }}
+            >
+              Ver Menús
+            </a>
+          </article>
+          <article className="offer-card">
+            <PackageCheck size={30} aria-hidden="true" />
+            <p className="offer-kicker">Meal Prep</p>
+            <h3>Tu semana resuelta</h3>
+            <p>Preparaciones listas para consumir durante la semana, pensadas para una alimentación práctica, nutritiva y llena de sabor.</p>
+            <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Conocer Meal Prep</a>
+          </article>
+          <article className="offer-card">
+            <Sparkles size={30} aria-hidden="true" />
+            <p className="offer-kicker">Talleres</p>
+            <h3>Aprende a nutrirte de forma consciente</h3>
+            <p>Talleres prácticos donde combinamos cocina, nutrición y bienestar para desarrollar una relación más saludable con la alimentación.</p>
+            <a href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">Ver Talleres</a>
+          </article>
+        </div>
       </section>
 
       <section className="products section" id="productos">
@@ -1800,8 +1866,14 @@ function App() {
       </section>
 
       <footer>
-        <span>Fullness Lab</span>
-        <span>Nutrirse desde la raíz.</span>
+        <div className="footer-brand">
+          <img src={beetIsotypeSrc} alt="" aria-hidden="true" />
+          <span>Fullness Lab</span>
+        </div>
+        <p>
+          Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.
+        </p>
+        <strong>Nutrirse desde la raíz.</strong>
       </footer>
 
       {accountOpen && (

@@ -6,13 +6,10 @@ La clienta redefinio el foco hacia nutricion emocional, raiz, betarraga, cuerpo 
 
 Pendientes:
 
-- Revisar con Cecilia el hero con video `0513.mp4` y frase madre `Nutrirse desde la raiz`.
-- Las etiquetas flotantes de nutrientes sobre el hero se retiraron a pedido de la clienta.
-- Mover la web desde una estetica limpia/minimal hacia una experiencia mas editorial, organica, botanica y cinematografica.
-- Evitar usar ahorro de tiempo como valor diferencial.
-- Integrar frases profundas de marca sin saturar la interfaz.
+- Revisar con Cecilia el nuevo hero con `Nutrirse desde la raiz`, `El bienestar comienza desde adentro` y CTA `Explorar Fullness Lab`.
+- Validar que el logo aumentado y el isotipo de betarraga tengan suficiente presencia sin sentirse repetitivos.
 - Definir si la marca visible sera `Fullness` o `Fullness Lab`.
-- Levantar las cuatro patas de la diferenciacion: practico, rico, antiinflamatorio y premium.
+- Confirmar si `No contamos calorias. Creemos en aprender a nutrirse.` queda solo en hero o tambien debe aparecer en redes/packaging.
 
 ## Nueva Estructura Home
 
@@ -20,13 +17,16 @@ Orden deseado por la clienta:
 
 1. Hero.
 2. Plato food porn.
-3. Nuestra filosofia.
+3. Nuestro proposito.
 4. Como calentar los platos.
+5. Oferta Fullness Lab.
+6. Tienda.
+7. Nutricion con fundamento.
+8. Comunidad.
 
 Pendientes:
 
 - Reemplazar la imagen temporal de `Como calentar los platos` por una foto real de plato en bolsa al vacio con pinzas en agua.
-- Revisar si programas/productos actuales deben moverse despues de estas secciones.
 - Mejorar las imagenes de productos con fotos finales reales.
 
 ## Direccion Visual
@@ -36,7 +36,7 @@ Pendientes:
 - Cambiar fondo negro puro por tonos verde petroleo, oliva ennegrecido, cacao oscuro o burdeo betarraga profundo.
 - Usar franjas claras tipo papel organico, salvia mineral, beige oliva o marfil envejecido.
 - Mantener el color dominante desde los platos y no desde fondos chillones.
-- Usar la betarraga como sello editorial o detalle botanico, no como grafica gigante repetida.
+- Mantener la betarraga como sello editorial, favicon, separador, marca de agua suave y footer.
 - Conseguir o generar imagenes mas food porn/editoriales, con vapor, sombra, textura y luz lateral.
 
 ## Gmail Real

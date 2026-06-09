@@ -1,7 +1,9 @@
 node_modules
 dist
 .vercel
-public/assets/
+public/assets/*
+!public/assets/
+!public/assets/fullness-beet-isotype.svg
 public/images/*
 !public/images/menu-samples/
 !public/images/menu-samples/*.jpeg
