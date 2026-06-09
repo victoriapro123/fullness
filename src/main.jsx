@@ -1383,6 +1383,7 @@ function App() {
   }, [adminOpen, isAdmin]);
 
   useEffect(() => {
+    if (currentProductSlug) return undefined;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     const revealGroups = [
@@ -1496,7 +1497,7 @@ function App() {
       });
       ctx.revert();
     };
-  }, []);
+  }, [currentProductSlug]);
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
