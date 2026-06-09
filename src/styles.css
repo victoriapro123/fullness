@@ -855,8 +855,15 @@ h3 {
   width: min(25vw, 430px);
   max-height: 74%;
   opacity: 0.9;
+  background: rgb(244, 234, 219);
+  -webkit-mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
+  mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
   transform: translateY(-50%);
   filter: none;
+}
+
+.philosophy-brand-mark img {
+  display: none;
 }
 
 .heating-brand-mark {
