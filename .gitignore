@@ -16,3 +16,6 @@ public/images/*
 *.env
 *.env.local
 !.env.example
+
+# multimedia
+WhatsApp Chat - María Cecilia Salas Vergara/
