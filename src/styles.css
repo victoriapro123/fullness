@@ -1684,9 +1684,9 @@ h3 {
 .heating-visual {
   position: absolute;
   z-index: 7;
-  top: clamp(138px, 12vw, 210px);
-  right: clamp(42px, 5.8vw, 112px);
-  width: min(42vw, 640px);
+  top: clamp(-52px, -3.4vw, -24px);
+  right: clamp(-96px, -4.8vw, -56px);
+  width: min(46vw, 720px);
   aspect-ratio: 1129 / 1393;
   max-height: min(82svh, 790px);
   isolation: isolate;
@@ -3373,9 +3373,9 @@ footer strong {
   }
 
   .heating-visual {
-    top: clamp(330px, 48vw, 430px);
-    right: clamp(-18px, -2vw, 0px);
-    width: min(45vw, 360px);
+    top: clamp(300px, 43vw, 390px);
+    right: clamp(-56px, -7vw, -28px);
+    width: min(52vw, 390px);
     opacity: 1;
   }
 
@@ -3731,9 +3731,9 @@ footer strong {
   }
 
   .heating-visual {
-    top: 392px;
-    right: -16px;
-    width: min(54vw, 240px);
+    top: 338px;
+    right: -52px;
+    width: min(62vw, 272px);
     opacity: 1;
   }
 
