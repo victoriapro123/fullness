@@ -48,7 +48,7 @@ La solucion actual incluye:
 - Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, caracteristicas nutricionales, receta resumida, pasos de preparacion, alergenos, estado activo y orden.
 - Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
-- Logo de referencia oficial: `public/assets/fullness-lab-logo.png`, proveniente de `ChatGPT Image 13 may 2026, 15_11_21.png`. La clienta lo identifica como el logo que debe recordarse para la parte superior/derecha y como referencia visual de marca.
+- Logos oficiales entregados por Cecilia: `public/assets/fullness-lab-logo-horizontal-marfil.png` y `public/assets/fullness-lab-logo-vertical-marfil.png`, sincronizados a Cloudflare R2 bajo `assets/fullness-lab-logo-horizontal-marfil.png` y `assets/fullness-lab-logo-vertical-marfil.png`. El color del logo es marfil `rgb(244, 234, 219)`; no se debe volver a usar blanco puro ni filtros que lo alteren hacia blanco.
 
 La app todavia funciona principalmente como demo visual en carrito y checkout. Hay base Supabase versionada y aplicada, cliente de lectura/escritura de menus y backoffice inicial de menus; falta persistir carrito/checkout desde la UI y completar el flujo productivo de compra.
 
@@ -72,6 +72,7 @@ Precision nueva entregada por Cecilia el 2026-06-08:
 
 - El logo del header debe tener mas protagonismo, aire y un color menos blanco: marfil calido/dorado suave dentro de la tonalidad de la pagina.
 - El isotipo de betarraga debe aparecer como sistema visual: favicon, separadores, marca de agua suave y footer.
+- Implementacion actual: el header usa el logo horizontal marfil oficial; intro, hero, separadores, marcas de agua, footer y favicon usan la version vertical marfil oficial. No usar el isotipo inventado o logos generados cuando exista el logo entregado por Cecilia.
 - `#filosofia` cambia conceptualmente a `#proposito`; se mantiene compatibilidad de hash antiguo redirigiendo a `#proposito`.
 - Se agrega `#oferta` despues de `#calentar`, con tres caminos: Menus preparados, Meal Prep y Talleres.
 - Meal Prep y Talleres no tienen secciones desarrolladas por ahora; sus CTAs van directo al WhatsApp de Cecilia.
@@ -230,14 +231,18 @@ Archivos y recursos:
 - `public/images/menu-samples/pollo-camote-hojas.jpeg`
 - `public/images/menu-samples/salmon-arroz-avocado.jpeg`
 - `src/assets/fullness-beet-roots-continuum.jpg`
+- `public/assets/fullness-lab-logo-horizontal-marfil.png`
+- `public/assets/fullness-lab-logo-vertical-marfil.png`
 - R2 `images/menu-samples/lentejas-hojas.jpeg`
 - R2 `images/menu-samples/pollo-camote-hojas.jpeg`
 - R2 `images/menu-samples/salmon-arroz-avocado.jpeg`
 - R2 `images/fullness-heating-bag-realistic-v2.png`
+- R2 `assets/fullness-lab-logo-horizontal-marfil.png`
+- R2 `assets/fullness-lab-logo-vertical-marfil.png`
 
 Contexto actual:
 
-- El logo oficial se usa en el header.
+- El logo oficial horizontal marfil se usa en el header para darle mas protagonismo a la marca. El logo oficial vertical marfil se usa en favicon, intro, hero, separadores, marca de agua suave y footer. El color aprobado es `rgb(244, 234, 219)`.
 - La portada usa `fullness-hero-background.png`.
 - Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden del carrusel.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
@@ -283,7 +288,7 @@ Reglas al modificar:
 Pendientes proactivos:
 
 - Reemplazar fotos de demo por fotos finales de productos.
-- Definir lineamientos de uso del logo.
+- Definir lineamientos finales de uso del logo oficial en formatos de marca externos; en la web ya se usa horizontal para header y vertical para sistema visual.
 - Revisar peso de imagenes si la web se vuelve lenta.
 - Revisar con la clienta si la bolsa al vacio generada para "como calentar" debe mantener trucha/salmon como plato ejemplo o ajustarse al menu real.
 - Conseguir o generar imagen food porn cinematografica para hero y otra para plato editorial grande.

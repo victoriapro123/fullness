@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Informe de Aplicación de Mejoras Fullness Lab</title>
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 12mm; }
+    :root {
+      --ink: #17110c;
+      --paper: #f4eadb;
+      --paper-2: #fffaf2;
+      --beet: #7d2e3d;
+      --beet-night: #210814;
+      --gold: #d0ad73;
+      --sage: #d7ddcd;
+      --muted: #6d6258;
+      --line: #d8cdbc;
+      --font-display: "Satoshi", "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #ede2d1;
+      font-family: var(--font-body);
+      font-size: 10.4pt;
+      line-height: 1.52;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: var(--paper);
+      border-left: 1px solid rgba(23, 17, 12, 0.12);
+      border-right: 1px solid rgba(23, 17, 12, 0.12);
+    }
+    section, header, footer { padding: 16mm; }
+    header {
+      min-height: 92mm;
+      color: var(--paper);
+      background:
+        linear-gradient(135deg, rgba(33, 8, 20, 0.98), rgba(18, 35, 29, 0.96)),
+        var(--beet-night);
+      border-bottom: 5mm solid #3a1221;
+    }
+    .brand-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12mm;
+      margin-bottom: 18mm;
+      font-family: var(--font-display);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .brand-line strong { font-size: 15pt; font-weight: 700; color: var(--paper); }
+    .brand-line span { color: rgba(244, 234, 219, 0.72); font-size: 8pt; }
+    .kicker, .eyebrow {
+      margin: 0 0 3mm;
+      color: var(--beet);
+      font-family: var(--font-display);
+      font-size: 8pt;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    header .kicker { color: var(--gold); }
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      letter-spacing: 0;
+      line-height: 1.02;
+    }
+    h1 {
+      max-width: 155mm;
+      color: var(--paper);
+      font-size: 34pt;
+      font-weight: 500;
+    }
+    h2 {
+      margin-bottom: 7mm;
+      color: var(--beet-night);
+      font-size: 24pt;
+      font-weight: 500;
+    }
+    h3 {
+      margin: 0 0 3mm;
+      color: var(--beet);
+      font-size: 12.5pt;
+      font-weight: 900;
+    }
+    p { margin: 0 0 4mm; }
+    .lead {
+      max-width: 150mm;
+      margin-top: 8mm;
+      color: rgba(244, 234, 219, 0.78);
+      font-size: 12pt;
+    }
+    .meta-grid, .grid-2, .grid-3 {
+      display: grid;
+      gap: 5mm;
+    }
+    .meta-grid { grid-template-columns: repeat(4, 1fr); margin-top: 12mm; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .metric, .card, .note, .schema-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 242, 0.56);
+      padding: 5mm;
+    }
+    .metric {
+      color: var(--paper);
+      border-color: rgba(244, 234, 219, 0.22);
+      background: rgba(244, 234, 219, 0.06);
+    }
+    .metric strong {
+      display: block;
+      color: var(--gold);
+      font-family: var(--font-display);
+      font-size: 18pt;
+      line-height: 1;
+    }
+    .metric span {
+      display: block;
+      margin-top: 2mm;
+      color: rgba(244, 234, 219, 0.72);
+      font-size: 7.6pt;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .sheet {
+      border-bottom: 1px solid rgba(23, 17, 12, 0.14);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .sheet.dark {
+      color: var(--paper);
+      background: #231a14;
+    }
+    .sheet.dark h2 { color: var(--paper); }
+    .sheet.dark .card, .sheet.dark .note {
+      border-color: rgba(244, 234, 219, 0.16);
+      background: rgba(244, 234, 219, 0.06);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 8mm;
+      padding: 0 3mm;
+      border: 1px solid rgba(125, 46, 61, 0.24);
+      color: var(--beet);
+      background: #fffaf2;
+      font-family: var(--font-display);
+      font-size: 7.4pt;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4mm;
+      font-size: 8.3pt;
+    }
+    th, td {
+      vertical-align: top;
+      padding: 3mm;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+    th {
+      color: var(--beet);
+      background: rgba(255, 250, 242, 0.68);
+      font-family: var(--font-display);
+      font-size: 7.5pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .shot {
+      margin: 7mm 0 0;
+      border: 1px solid rgba(23, 17, 12, 0.14);
+      background: #120a0c;
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .shot-caption {
+      padding: 3mm 4mm;
+      color: var(--muted);
+      background: #fffaf2;
+      font-size: 8.2pt;
+    }
+    .diagram {
+      margin-top: 8mm;
+      padding: 6mm;
+      border: 1px solid var(--line);
+      background: #fffaf2;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr 10mm 1fr 10mm 1fr;
+      align-items: center;
+      gap: 3mm;
+      margin-top: 4mm;
+    }
+    .flow-box {
+      min-height: 26mm;
+      padding: 4mm;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+    .arrow {
+      color: var(--beet);
+      font-family: var(--font-display);
+      font-size: 18pt;
+      text-align: center;
+    }
+    ul {
+      margin: 0;
+      padding-left: 5mm;
+    }
+    li { margin-bottom: 2mm; }
+    .small { color: var(--muted); font-size: 8.2pt; }
+    .break { break-before: page; page-break-before: always; }
+    footer {
+      color: rgba(244, 234, 219, 0.78);
+      background: var(--beet-night);
+      font-size: 8.2pt;
+    }
+    footer strong {
+      display: block;
+      margin-bottom: 2mm;
+      color: var(--paper);
+      font-family: var(--font-display);
+      font-size: 14pt;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="brand-line">
+        <strong>Fullness Lab</strong>
+        <span>Informe de aplicación de mejoras</span>
+      </div>
+      <p class="kicker">Entrega de ajustes solicitados</p>
+      <h1>Marca más propia, marfil y centrada en la raíz.</h1>
+      <p class="lead">Se aplicaron las mejoras solicitadas por Cecilia para reforzar el carácter premium, saludable y conceptual de Fullness Lab: logo oficial, color marfil, presencia de betarraga, textos aprobados, oferta comercial y ficha nutricional de menús.</p>
+      <div class="meta-grid">
+        <div class="metric"><strong>08-06</strong><span>Correo Mejoras</span></div>
+        <div class="metric"><strong>0,5 UF</strong><span>Infraestructura</span></div>
+        <div class="metric"><strong>8 + 2 UF</strong><span>Alcance contratado</span></div>
+        <div class="metric"><strong>R2 + Supabase</strong><span>Media y datos</span></div>
+      </div>
+    </header>
+
+    <section class="sheet">
+      <p class="eyebrow">Fuentes revisadas</p>
+      <h2>Solicitudes consideradas.</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>Correo “Mejoras”</h3>
+          <p>Correo enviado el lunes 8 de junio de 2026 por Cecilia. Solicita corregir protagonismo del logo, reemplazar blanco por marfil, reescribir hero, incorporar isotipo, usar textos de propósito/oferta/footer y reforzar el concepto “nutrirse desde la raíz”.</p>
+          <span class="status">Aplicado</span>
+        </article>
+        <article class="card">
+          <h3>WhatsApp y adjuntos</h3>
+          <p>Se revisó el chat exportado “WhatsApp Chat - María Cecilia Salas Vergara”. El texto confirma coordinación de últimos ajustes, backoffice, información de producto y cambio de color/logo. Los audios quedan identificados como adjuntos, pero no se transcribieron por falta de motor local de transcripción.</p>
+          <span class="status">Revisado parcialmente</span>
+        </article>
+      </div>
+      <div class="note" style="margin-top: 5mm;">
+        <h3>Nota técnica sobre audios</h3>
+        <p>No hay `ffmpeg`, Whisper ni librerías locales de reconocimiento de voz disponibles en este entorno. Por ese motivo, el informe se basa en el correo, mensajes escritos, archivos adjuntos entregados y lo implementado en el sitio/código.</p>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <p class="eyebrow">Cumplimiento visual</p>
+      <h2>Marca y logo.</h2>
+      <table>
+        <tr><th>Solicitud de Cecilia</th><th>Aplicación realizada</th><th>Estado</th></tr>
+        <tr>
+          <td>El logo estaba pequeño y demasiado blanco.</td>
+          <td>Se reemplazó por los logos oficiales marfil entregados por Cecilia. El header usa versión horizontal, con mayor tamaño, más aire y sin filtros que lo vuelvan blanco.</td>
+          <td><span class="status">Aplicado</span></td>
+        </tr>
+        <tr>
+          <td>El isotipo de betarraga debía aparecer más.</td>
+          <td>La versión vertical marfil se usa en intro, hero, separadores, marcas de agua suaves, footer y favicon.</td>
+          <td><span class="status">Aplicado</span></td>
+        </tr>
+        <tr>
+          <td>No usar blanco puro, sino marfil.</td>
+          <td>Se documentó y aplicó el color marfil `rgb(244, 234, 219)` para logo y sistema visual de marca.</td>
+          <td><span class="status">Aplicado</span></td>
+        </tr>
+        <tr>
+          <td>El hero debía quedar después del header y ser más alto.</td>
+          <td>Se ajustó la reserva de altura del header, se eliminó la franja clara entre header y hero, y el hero conserva altura suficiente para los slugs inferiores.</td>
+          <td><span class="status">Aplicado</span></td>
+        </tr>
+      </table>
+      <div class="shot">
+        <img src="capturas-mejoras/01-header-hero-logo-marfil-desktop.png" alt="Header y hero Fullness Lab con logo marfil en desktop">
+        <div class="shot-caption">Evidencia desktop: logo oficial marfil con mayor presencia, hero pegado al header y sistema visual de raíz.</div>
+      </div>
+      <div class="shot">
+        <img src="capturas-mejoras/02-header-hero-logo-marfil-mobile.png" alt="Header y hero Fullness Lab con logo marfil en mobile">
+        <div class="shot-caption">Evidencia mobile: logo marfil legible sin tapar el hero.</div>
+      </div>
+    </section>
+
+    <section class="sheet break">
+      <p class="eyebrow">Copy aprobado</p>
+      <h2>Mensajes integrados.</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>Hero</h3>
+          <p>Se incorporaron los ejes: “Nutrirse desde la raíz”, “El bienestar comienza desde adentro”, “No contamos calorías. Creemos en aprender a nutrirse.” y “Como es adentro, es afuera.”</p>
+          <p>CTA actualizado: “Explorar Fullness Lab”, dirigido a propósito.</p>
+        </article>
+        <article class="card">
+          <h3>Nuestro propósito</h3>
+          <p>Se estructuró una sección de propósito con los cuatro bloques solicitados: Nutrición consciente, Cocina antiinflamatoria, Bienestar integral, Ciencia y sabor.</p>
+        </article>
+        <article class="card">
+          <h3>Oferta Fullness Lab</h3>
+          <p>Se agregaron tres caminos comerciales: Menús preparados, Meal Prep y Talleres. Menús baja a tienda; Meal Prep y Talleres van a WhatsApp por no estar desarrollados como secciones propias.</p>
+        </article>
+        <article class="card">
+          <h3>Footer</h3>
+          <p>Se reescribió con tono institucional: Fullness Lab nace desde pequeñas decisiones sostenibles y cierra con “Nutrirse desde la raíz.”</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <p class="eyebrow">E-commerce y producto</p>
+      <h2>Información nutricional y recetas.</h2>
+      <table>
+        <tr><th>Solicitud</th><th>Aplicación realizada</th><th>Evidencia técnica</th></tr>
+        <tr>
+          <td>Al hacer click en un menú debe abrirse un lightbox.</td>
+          <td>La tarjeta abre una vista rápida con características nutricionales, receta resumida, agregar al pedido y enlace a detalle.</td>
+          <td>`ProductQuickView` en `src/main.jsx`.</td>
+        </tr>
+        <tr>
+          <td>Cada menú debe tener página propia por slug.</td>
+          <td>Se implementó ruta `/producto/:slug` dentro de la SPA. La página muestra imagen, ingredientes, detalle nutricional, receta/pasos y botón de agregar al carro.</td>
+          <td>`getProductPath`, `getProductSlugFromLocation` y `ProductDetailPage`.</td>
+        </tr>
+        <tr>
+          <td>Ingredientes y contenido nutricional deben cargarse desde backoffice.</td>
+          <td>El backoffice administra ingredientes, descripción nutricional, características, detalle nutricional, datos JSON, receta resumida y pasos.</td>
+          <td>`src/lib/menu-items.js` y formulario de menús.</td>
+        </tr>
+        <tr>
+          <td>Debe quedar registrado en Supabase.</td>
+          <td>Se agregó migración para `nutrition_highlights`, `nutrition_detail`, `recipe_summary` y `recipe_steps`; se conserva `ingredients`, `nutrition_description` y `nutrition_facts`.</td>
+          <td>`supabase/migrations/20260609001000_menu_item_product_detail.sql`.</td>
+        </tr>
+      </table>
+      <div class="diagram">
+        <p class="eyebrow">Flujo de datos</p>
+        <div class="flow">
+          <div class="flow-box"><h3>Backoffice</h3><p>Administra menú, foto, precio, ingredientes, nutrición y receta.</p></div>
+          <div class="arrow">→</div>
+          <div class="flow-box"><h3>Supabase</h3><p>Guarda `menu_items` con campos nutricionales y receta.</p></div>
+          <div class="arrow">→</div>
+          <div class="flow-box"><h3>Sitio público</h3><p>Muestra tienda, lightbox y página individual por slug.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <p class="eyebrow">Base de datos</p>
+      <h2>Campos relevantes de `menu_items`.</h2>
+      <div class="schema-card">
+        <table>
+          <tr><th>Campo</th><th>Tipo</th><th>Uso</th></tr>
+          <tr><td>slug</td><td>text</td><td>URL de producto individual.</td></tr>
+          <tr><td>ingredients</td><td>text[]</td><td>Lista de ingredientes del menú.</td></tr>
+          <tr><td>nutrition_description</td><td>text</td><td>Resumen nutricional editorial.</td></tr>
+          <tr><td>nutrition_highlights</td><td>text[]</td><td>Características nutricionales breves para lightbox.</td></tr>
+          <tr><td>nutrition_detail</td><td>text</td><td>Detalle nutricional para página individual.</td></tr>
+          <tr><td>nutrition_facts</td><td>jsonb</td><td>Macros o datos nutricionales estructurados.</td></tr>
+          <tr><td>recipe_summary</td><td>text</td><td>Receta/preparación resumida para lightbox.</td></tr>
+          <tr><td>recipe_steps</td><td>text[]</td><td>Pasos resumidos para detalle de producto.</td></tr>
+        </table>
+      </div>
+      <p class="small" style="margin-top: 5mm;">El seed de demo ya incluye tres menús con ingredientes, highlights nutricionales, datos JSON y pasos de preparación.</p>
+    </section>
+
+    <section class="sheet dark break">
+      <p class="eyebrow">Alcance contratado</p>
+      <h2>Validación contra propuesta aceptada.</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>Plan 1: Web premium - 8 UF</h3>
+          <ul>
+            <li>Diseño visual premium con identidad propia.</li>
+            <li>Hero, propósito, oferta, tienda, comunidad y formulario.</li>
+            <li>Uso de Satoshi para titulares/branding y Inter para textos largos.</li>
+            <li>Multimedia servida desde Cloudflare R2.</li>
+            <li>Publicación y estructura responsive.</li>
+          </ul>
+          <span class="status">Cubierto</span>
+        </article>
+        <article class="card">
+          <h3>Plan 2: Base e-commerce - 2 UF</h3>
+          <ul>
+            <li>Tienda pública con productos desde Supabase.</li>
+            <li>Carrito funcional en memoria.</li>
+            <li>Backoffice inicial para menús.</li>
+            <li>Detalle de producto por slug.</li>
+            <li>Estructura preparada para pago online.</li>
+          </ul>
+          <span class="status">Cubierto base</span>
+        </article>
+      </div>
+      <div class="note" style="margin-top: 5mm;">
+        <h3>Fuera de esta entrega</h3>
+        <p>El checkout productivo, Mercado Pago real, suscripciones recurrentes, DTE/boletas automáticas y plataforma clínica de seguimiento corresponden a activaciones o etapas posteriores. El pago sigue fuera de integración productiva hasta contar con credenciales y sesión final.</p>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <p class="eyebrow">Infraestructura</p>
+      <h2>Costo mensual corregido.</h2>
+      <div class="grid-2">
+        <article class="card">
+          <h3>Cloudflare R2</h3>
+          <p>Nube multimedia para logos, imágenes y recursos pesados, evitando depender del bundle principal del sitio.</p>
+        </article>
+        <article class="card">
+          <h3>Supabase</h3>
+          <p>Base Postgres, Auth, permisos RLS, backoffice de menús y almacenamiento de fotos de producto.</p>
+        </article>
+      </div>
+      <div class="diagram">
+        <p class="eyebrow">Costo mensual de infraestructura</p>
+        <h2 style="margin-bottom: 2mm;">0,5 UF mensual</h2>
+        <p>Servidor, base de datos, almacenamiento multimedia y continuidad básica de infraestructura. No corresponde a 2 UF; el soporte/mejora continua de 1 UF es opcional según propuesta.</p>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <p class="eyebrow">Estado final</p>
+      <h2>Resumen de aplicación.</h2>
+      <table>
+        <tr><th>Área</th><th>Resultado</th><th>Estado</th></tr>
+        <tr><td>Logo marfil oficial</td><td>Subido a R2, aplicado en header y sistema visual.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Tipografía</td><td>Satoshi + Inter mantenidas en sitio e informe.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Textos de Cecilia</td><td>Hero, propósito, oferta y footer integrados.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Oferta</td><td>Menús, Meal Prep y Talleres con CTAs definidos.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Producto</td><td>Lightbox, detalle por slug y agregar al carro.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Supabase</td><td>Schema versionado para ingredientes, nutrición y receta.</td><td><span class="status">OK</span></td></tr>
+        <tr><td>Pago</td><td>Preparado estructuralmente; integración productiva pendiente.</td><td><span class="status">Pendiente externo</span></td></tr>
+      </table>
+    </section>
+
+    <footer>
+      <strong>Fullness Lab</strong>
+      Informe preparado el 9 de junio de 2026. Documento interno de trazabilidad de mejoras solicitadas por Cecilia y aplicación técnica/visual en el sitio.
+    </footer>
+  </main>
+</body>
+</html>

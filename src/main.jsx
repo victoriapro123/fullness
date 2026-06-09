@@ -46,7 +46,8 @@ import "./styles.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
-const beetIsotypeSrc = "/assets/fullness-beet-isotype.svg";
+const logoHorizontalSrc = mediaSrc("assets/fullness-lab-logo-horizontal-marfil.png");
+const logoVerticalSrc = mediaSrc("assets/fullness-lab-logo-vertical-marfil.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -1034,7 +1035,7 @@ function IntroScrollSequence() {
           aria-hidden="true"
         />
         <button className="intro-start-logo" type="button" ref={logoButtonRef} aria-label="Iniciar animación Fullness Lab">
-          <img src={mediaSrc("assets/fullness-lab-logo-official.png")} alt="" aria-hidden="true" />
+          <img src={logoVerticalSrc} alt="" aria-hidden="true" />
         </button>
         <div className="scroll-sequence-signal-layer" ref={signalLayerRef} aria-hidden="true">
           {introTechSignals.map((signal) => (
@@ -1906,7 +1907,7 @@ function App() {
             navigateToSection("#programa");
           }}
         >
-          <img className="brand-reference-logo" src={mediaSrc("assets/fullness-lab-logo-official.png")} alt="Fullness Lab" />
+          <img className="brand-reference-logo" src={logoHorizontalSrc} alt="Fullness Lab" />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
@@ -1983,7 +1984,7 @@ function App() {
 
           <section className="plate-hero" id="programa">
         <div className="plate-hero-copy">
-          <img className="hero-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+          <img className="hero-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
           <p className="eyebrow">Nutrirse desde la raíz</p>
           <h1>El bienestar comienza desde adentro</h1>
           <p>
@@ -2045,7 +2046,7 @@ function App() {
 
         <section className="philosophy" id="proposito">
           <div>
-            <img className="section-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+            <img className="section-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
             <p className="eyebrow">Nuestro propósito</p>
             <h2>Bienestar desde la raíz, todos los días.</h2>
             <p className="philosophy-lede">
@@ -2141,7 +2142,7 @@ function App() {
 
       <section className="fullness-offer" id="oferta">
         <div className="section-heading">
-          <img className="section-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
+          <img className="section-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
           <p className="eyebrow">Oferta Fullness Lab</p>
           <h2>Elige cómo quieres nutrirte.</h2>
           <p>
@@ -2263,8 +2264,7 @@ function App() {
 
           <footer>
             <div className="footer-brand">
-              <img src={beetIsotypeSrc} alt="" aria-hidden="true" />
-              <span>Fullness Lab</span>
+              <img src={logoVerticalSrc} alt="Fullness Lab" />
             </div>
             <p>
               Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.

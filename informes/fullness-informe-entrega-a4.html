@@ -572,7 +572,7 @@
       <article class="schema-card">
         <h3>menu_items</h3>
         <p>Platos visibles en tienda y administrables desde backoffice.</p>
-        <table><tr><th>Columna</th><th>Tipo</th></tr><tr><td>id</td><td>uuid PK</td></tr><tr><td>slug, sku, name, tag</td><td>text</td></tr><tr><td>description, photo_url</td><td>text</td></tr><tr><td>price_clp, currency</td><td>numeric, text</td></tr><tr><td>ingredients, allergens</td><td>text[]</td></tr><tr><td>nutrition_facts, metadata</td><td>jsonb</td></tr><tr><td>is_active, display_order</td><td>boolean, integer</td></tr></table>
+        <table><tr><th>Columna</th><th>Tipo</th></tr><tr><td>id</td><td>uuid PK</td></tr><tr><td>slug, sku, name, tag</td><td>text</td></tr><tr><td>description, photo_url</td><td>text</td></tr><tr><td>price_clp, currency</td><td>numeric, text</td></tr><tr><td>ingredients, allergens</td><td>text[]</td></tr><tr><td>nutrition_description, nutrition_detail</td><td>text</td></tr><tr><td>nutrition_highlights, recipe_steps</td><td>text[]</td></tr><tr><td>nutrition_facts, metadata</td><td>jsonb</td></tr><tr><td>recipe_summary</td><td>text</td></tr><tr><td>is_active, display_order</td><td>boolean, integer</td></tr></table>
       </article>
       <article class="schema-card">
         <h3>carts / cart_items</h3>
