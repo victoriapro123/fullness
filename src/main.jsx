@@ -854,9 +854,11 @@ function App() {
 
     const getTargetTop = () => {
       const sectionTop = target.getBoundingClientRect().top + window.pageYOffset;
-      if (resolvedHref === "#programa" || resolvedHref === "#plato") return sectionTop;
-
       const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+
+      if (resolvedHref === "#programa") return 0;
+      if (resolvedHref === "#plato") return Math.max(0, sectionTop - headerHeight);
+
       return Math.max(0, sectionTop - headerHeight - 14);
     };
 
