@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
+  ArrowLeft,
+  ArrowUpRight,
   CheckCircle2,
   CookingPot,
   Eye,
@@ -66,6 +68,22 @@ function getProductImage(product, index) {
   return image;
 }
 
+function getProductSlug(product) {
+  return product?.slug || product?.id || "";
+}
+
+function getProductPath(product) {
+  const slug = getProductSlug(product);
+  return slug ? `/producto/${encodeURIComponent(slug)}` : "/#productos";
+}
+
+function getProductSlugFromPath() {
+  if (typeof window === "undefined") return "";
+
+  const match = window.location.pathname.match(/^\/producto\/([^/]+)\/?$/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
 function applySampleProduct(product, index) {
   const image = product.image || "";
   const isLegacyPlaceholder =
@@ -83,40 +101,75 @@ function applySampleProduct(product, index) {
     description: sample.description,
     image: sample.image,
     ingredients: sample.ingredients,
-    nutritionDescription: sample.nutritionDescription
+    nutritionDescription: sample.nutritionDescription,
+    nutritionHighlights: sample.nutritionHighlights,
+    nutritionDetail: sample.nutritionDetail,
+    nutritionFacts: sample.nutritionFacts,
+    recipeSummary: sample.recipeSummary,
+    recipeSteps: sample.recipeSteps
   };
 }
 
 const demoProducts = [
   {
     id: "salmon-lentejas-hojas",
+    slug: "salmon-lentejas-hojas",
     name: "Salmón, lentejas y hojas verdes",
     tag: "Omega 3 + legumbres",
     price: 8990,
     description: "Salmón dorado, lentejas especiadas y hojas frescas con brillo de oliva.",
     image: sampleProductImages[0],
     ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
-    nutritionDescription: "Proteína de calidad, omega 3, fibra vegetal y grasas saludables."
+    nutritionDescription: "Proteína de calidad, omega 3, fibra vegetal y grasas saludables.",
+    nutritionHighlights: ["Omega 3 natural", "Fibra vegetal", "Proteína de calidad", "Energía estable"],
+    nutritionDetail: "Menú pensado para combinar grasas saludables, proteína de alta calidad y fibra de legumbres en una preparación saciante y equilibrada.",
+    nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 18, fiber_g: 9 },
+    recipeSummary: "Salmón dorado al punto, lentejas especiadas y hojas verdes frescas terminadas con aceite de oliva.",
+    recipeSteps: [
+      "Dorar el salmón con calor controlado.",
+      "Calentar las lentejas especiadas hasta que queden cremosas.",
+      "Terminar con hojas verdes frescas y oliva al servir."
+    ]
   },
   {
     id: "pollo-camote-hojas",
+    slug: "pollo-camote-hojas",
     name: "Pollo especiado, camote y hojas verdes",
     tag: "Antiinflamatorio",
     price: 7990,
     description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
     image: sampleProductImages[1],
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
-    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales."
+    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
+    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antiinflamatorias", "Saciedad prolongada"],
+    nutritionDetail: "Preparación equilibrada para sostener energía durante el día, con especias cálidas y vegetales que aportan color, fibra y sabor.",
+    nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
+    recipeSummary: "Pollo especiado con cúrcuma, puré rústico de camote y hojas verdes frescas.",
+    recipeSteps: [
+      "Sellar el pollo con especias cálidas.",
+      "Acompañar con puré de camote de textura suave.",
+      "Agregar hojas verdes al final para mantener frescura."
+    ]
   },
   {
     id: "salmon-arroz-palta",
+    slug: "salmon-arroz-palta",
     name: "Salmón glaseado, arroz verde y palta",
     tag: "Grasas saludables",
     price: 8990,
     description: "Salmón glaseado con arroz verde, palta, mango y hierbas frescas.",
     image: sampleProductImages[2],
     ingredients: ["salmón", "arroz verde", "palta", "mango", "cilantro"],
-    nutritionDescription: "Proteína, grasas saludables y carbohidratos de energía estable."
+    nutritionDescription: "Proteína, grasas saludables y carbohidratos de energía estable.",
+    nutritionHighlights: ["Grasas saludables", "Proteína completa", "Carbohidrato de energía estable", "Hierbas frescas"],
+    nutritionDetail: "Menú diseñado para entregar energía amable y textura fresca, combinando salmón, palta y arroz verde con notas herbales.",
+    nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
+    recipeSummary: "Salmón glaseado, arroz verde, palta, mango y hierbas frescas con terminación brillante.",
+    recipeSteps: [
+      "Glasear el salmón hasta lograr una superficie intensa.",
+      "Servir con arroz verde tibio.",
+      "Terminar con palta, mango y hierbas frescas."
+    ]
   }
 ];
 
@@ -224,7 +277,11 @@ function createMenuForm(displayOrder = 0) {
     priceClp: "",
     ingredients: "",
     nutritionDescription: "",
+    nutritionHighlights: "",
+    nutritionDetail: "",
     nutritionFacts: "{}",
+    recipeSummary: "",
+    recipeSteps: "",
     allergens: "",
     displayOrder: String(displayOrder),
     isActive: true
@@ -244,7 +301,11 @@ function menuItemToForm(item) {
     priceClp: String(item.price || 0),
     ingredients: (item.ingredients || []).join("\n"),
     nutritionDescription: item.nutritionDescription || "",
+    nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
+    nutritionDetail: item.nutritionDetail || "",
     nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
+    recipeSummary: item.recipeSummary || "",
+    recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
     displayOrder: String(item.displayOrder || 0),
     isActive: Boolean(item.isActive)
@@ -273,6 +334,207 @@ function getMemberLabel(user) {
     user?.user_metadata?.name ||
     user?.email ||
     "Cuenta"
+  );
+}
+
+function formatNutritionLabel(key) {
+  const labels = {
+    calories: "Calorías",
+    kcal: "Energía",
+    protein_g: "Proteína",
+    carbs_g: "Carbohidratos",
+    fat_g: "Grasas",
+    fiber_g: "Fibra",
+    sodium_mg: "Sodio"
+  };
+
+  return labels[key] || key.replace(/_/g, " ");
+}
+
+function formatNutritionValue(key, value) {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value === "number") {
+    if (key.endsWith("_g")) return `${value} g`;
+    if (key.endsWith("_mg")) return `${value} mg`;
+    return String(value);
+  }
+
+  return String(value);
+}
+
+function getNutritionEntries(product) {
+  const facts = product?.nutritionFacts || {};
+  if (!facts || Array.isArray(facts) || typeof facts !== "object") return [];
+
+  return Object.entries(facts)
+    .map(([key, value]) => ({
+      key,
+      label: formatNutritionLabel(key),
+      value: formatNutritionValue(key, value)
+    }))
+    .filter((entry) => entry.value);
+}
+
+function ProductNutritionFacts({ product }) {
+  const entries = getNutritionEntries(product);
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="nutrition-facts-grid" aria-label="Datos nutricionales">
+      {entries.map((entry) => (
+        <span key={entry.key}>
+          <small>{entry.label}</small>
+          <strong>{entry.value}</strong>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail }) {
+  const highlights = product?.nutritionHighlights?.length
+    ? product.nutritionHighlights
+    : product?.nutritionDescription
+      ? [product.nutritionDescription]
+      : [];
+
+  return (
+    <div className="overlay product-lightbox" role="dialog" aria-modal="true" aria-labelledby="product-lightbox-title">
+      <section className="product-lightbox-panel">
+        <button className="icon-button close" type="button" onClick={onClose} aria-label="Cerrar detalle rápido">
+          <X size={22} />
+        </button>
+        <div className="product-lightbox-media">
+          <img src={image} alt={`Plato ${product.name}`} />
+        </div>
+        <div className="product-lightbox-copy">
+          <p className="eyebrow">{product.tag}</p>
+          <h2 id="product-lightbox-title">{product.name}</h2>
+          <p>{product.description}</p>
+
+          <div className="product-lightbox-block">
+            <h3>Características nutricionales</h3>
+            {highlights.length > 0 && (
+              <ul className="product-pill-list">
+                {highlights.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            )}
+            <ProductNutritionFacts product={product} />
+          </div>
+
+          <div className="product-lightbox-block">
+            <h3>Receta resumida</h3>
+            <p>{product.recipeSummary || product.description}</p>
+          </div>
+
+          <div className="product-lightbox-actions">
+            <button className="primary-button" type="button" onClick={() => onAdd(product)}>
+              <Plus size={18} />
+              Agregar al pedido
+            </button>
+            <a href={getProductPath(product)} onClick={(event) => onOpenDetail(product, event)}>
+              Ver detalle
+              <ArrowUpRight size={18} />
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
+  if (loading && !product) {
+    return (
+      <section className="product-detail-page product-detail-state">
+        <Sprout size={34} />
+        <h1>Cargando menú Fullness.</h1>
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="product-detail-page product-detail-state">
+        <Sprout size={34} />
+        <h1>No encontramos este menú.</h1>
+        <p>Puede haber cambiado de nombre o ya no estar activo.</p>
+        <button className="primary-button" type="button" onClick={onBackToShop}>
+          <ArrowLeft size={18} />
+          Volver a la tienda
+        </button>
+      </section>
+    );
+  }
+
+  const highlights = product.nutritionHighlights?.length
+    ? product.nutritionHighlights
+    : product.nutritionDescription
+      ? [product.nutritionDescription]
+      : [];
+  const recipeSteps = product.recipeSteps?.length ? product.recipeSteps : [];
+
+  return (
+    <article className="product-detail-page">
+      <button className="product-detail-back" type="button" onClick={onBackToShop}>
+        <ArrowLeft size={18} />
+        Volver a tienda
+      </button>
+
+      <section className="product-detail-hero">
+        <div className="product-detail-media">
+          <img src={image} alt={`Plato ${product.name}`} />
+        </div>
+        <div className="product-detail-copy">
+          <p className="eyebrow">{product.tag}</p>
+          <h1>{product.name}</h1>
+          <p>{product.description}</p>
+          <strong>{formatPrice(product.price)}</strong>
+          <button className="primary-button" type="button" onClick={() => onAdd(product)}>
+            <Plus size={18} />
+            Agregar al pedido
+          </button>
+        </div>
+      </section>
+
+      <section className="product-detail-content" aria-label="Detalle del menú">
+        <div className="product-detail-panel">
+          <h2>Nutrición</h2>
+          {product.nutritionDescription && <p>{product.nutritionDescription}</p>}
+          {highlights.length > 0 && (
+            <ul className="product-pill-list">
+              {highlights.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          )}
+          {product.nutritionDetail && <p>{product.nutritionDetail}</p>}
+          <ProductNutritionFacts product={product} />
+        </div>
+
+        <div className="product-detail-panel">
+          <h2>Receta</h2>
+          <p>{product.recipeSummary || product.description}</p>
+          {recipeSteps.length > 0 && (
+            <ol className="recipe-step-list">
+              {recipeSteps.map((step) => <li key={step}>{step}</li>)}
+            </ol>
+          )}
+        </div>
+
+        <div className="product-detail-panel">
+          <h2>Ingredientes</h2>
+          {product.ingredients?.length ? (
+            <ul className="product-pill-list">
+              {product.ingredients.map((ingredient) => <li key={ingredient}>{ingredient}</li>)}
+            </ul>
+          ) : (
+            <p>Ingredientes por confirmar.</p>
+          )}
+          {product.allergens?.length > 0 && (
+            <p className="product-allergens">Alérgenos: {product.allergens.join(", ")}.</p>
+          )}
+        </div>
+      </section>
+    </article>
   );
 }
 
@@ -799,6 +1061,9 @@ function App() {
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [headerHiddenForHero, setHeaderHiddenForHero] = useState(false);
   const [products, setProducts] = useState(demoProducts);
+  const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
+  const [productPreviewSlug, setProductPreviewSlug] = useState("");
+  const [currentProductSlug, setCurrentProductSlug] = useState(() => getProductSlugFromPath());
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -812,6 +1077,14 @@ function App() {
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#productos", "#fundamento", "#comunidad"]);
+    const productSlug = getProductSlugFromPath();
+
+    if (productSlug) {
+      document.documentElement.classList.add("intro-scroll-consumed");
+      setHeaderHiddenForHero(false);
+      return;
+    }
+
     if (window.location.hash === "#filosofia") {
       window.history.replaceState(null, "", "#proposito");
     }
@@ -849,10 +1122,7 @@ function App() {
 
   const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
     const resolvedHref = href === "#filosofia" ? "#proposito" : href;
-    const target = document.querySelector(resolvedHref);
-    if (!target) return false;
-
-    const getTargetTop = () => {
+    const scrollToTarget = (target) => {
       const sectionTop = target.getBoundingClientRect().top + window.pageYOffset;
       const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
 
@@ -860,6 +1130,38 @@ function App() {
       if (resolvedHref === "#plato") return Math.max(0, sectionTop - headerHeight);
 
       return Math.max(0, sectionTop - headerHeight - 14);
+    };
+
+    if (currentProductSlug) {
+      setCurrentProductSlug("");
+      setProductPreviewSlug("");
+      document.documentElement.classList.add("intro-scroll-consumed");
+      window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+      setHeaderHiddenForHero(false);
+
+      const nextUrl = `/${resolvedHref}`;
+      if (replace) {
+        window.history.replaceState(null, "", nextUrl);
+      } else {
+        window.history.pushState(null, "", nextUrl);
+      }
+
+      window.requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          const target = document.querySelector(resolvedHref);
+          if (!target) return;
+          window.scrollTo({ top: scrollToTarget(target), left: 0, behavior: smooth ? "smooth" : "instant" });
+        }, 0);
+      });
+
+      return true;
+    }
+
+    const target = document.querySelector(resolvedHref);
+    if (!target) return false;
+
+    const getTargetTop = () => {
+      return scrollToTarget(target);
     };
 
     document.documentElement.classList.add("intro-scroll-consumed");
@@ -911,7 +1213,7 @@ function App() {
     const result = await listActiveMenuItems();
     if (result.error || !result.configured) return;
 
-    setProducts(result.data);
+    setProducts(result.data.map(applySampleProduct));
   }
 
   async function refreshAdminItems({ silent = false } = {}) {
@@ -975,9 +1277,15 @@ function App() {
 
     async function loadProducts() {
       const result = await listActiveMenuItems();
-      if (ignore || result.error || !result.configured) return;
+      if (ignore) return;
+
+      if (result.error || !result.configured) {
+        setProductsLoading(false);
+        return;
+      }
 
       setProducts(result.data.map(applySampleProduct));
+      setProductsLoading(false);
     }
 
     loadProducts();
@@ -1241,6 +1549,25 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const syncProductPath = () => {
+      const slug = getProductSlugFromPath();
+      setCurrentProductSlug(slug);
+      if (slug) {
+        setProductPreviewSlug("");
+        document.documentElement.classList.add("intro-scroll-consumed");
+        setHeaderHiddenForHero(false);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+    };
+
+    window.addEventListener("popstate", syncProductPath);
+
+    return () => {
+      window.removeEventListener("popstate", syncProductPath);
+    };
+  }, []);
+
+  useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace("#", ""));
     const accessToken = hash.get("access_token");
 
@@ -1275,6 +1602,7 @@ function App() {
       setCartOpen(false);
       setMenuOpen(false);
       setAdminOpen(false);
+      setProductPreviewSlug("");
     };
 
     window.addEventListener("keydown", closeOnEscape);
@@ -1290,6 +1618,23 @@ function App() {
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+  const productsBySlug = useMemo(() => {
+    const map = new Map();
+    products.forEach((product) => {
+      const slug = getProductSlug(product);
+      if (slug) map.set(slug, product);
+    });
+    return map;
+  }, [products]);
+  const currentProduct = currentProductSlug ? productsBySlug.get(currentProductSlug) : null;
+  const productPreview = productPreviewSlug ? productsBySlug.get(productPreviewSlug) : null;
+  const currentProductIndex = currentProduct
+    ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(currentProduct)))
+    : 0;
+  const productPreviewIndex = productPreview
+    ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(productPreview)))
+    : 0;
+  const isProductPage = Boolean(currentProductSlug);
 
   function addToCart(product) {
     setCart((items) => {
@@ -1306,6 +1651,33 @@ function App() {
     window.fullnessCartNoticeTimer = window.setTimeout(() => {
       setCartNotice(null);
     }, 2200);
+  }
+
+  function openProductQuickView(product) {
+    const slug = getProductSlug(product);
+    if (!slug) return;
+
+    setProductPreviewSlug(slug);
+    setMenuOpen(false);
+  }
+
+  function openProductDetail(product, event) {
+    event?.preventDefault();
+    const slug = getProductSlug(product);
+    if (!slug) return;
+
+    setProductPreviewSlug("");
+    setCurrentProductSlug(slug);
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    document.documentElement.classList.add("intro-scroll-consumed");
+    window.history.pushState(null, "", getProductPath(product));
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  function backToShop() {
+    navigateToSection("#productos", { smooth: false });
   }
 
   function updateQty(id, delta) {
@@ -1439,7 +1811,11 @@ function App() {
       priceClp: menuForm.priceClp,
       ingredients: menuForm.ingredients,
       nutritionDescription: menuForm.nutritionDescription,
+      nutritionHighlights: menuForm.nutritionHighlights,
+      nutritionDetail: menuForm.nutritionDetail,
       nutritionFacts,
+      recipeSummary: menuForm.recipeSummary,
+      recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
       displayOrder: menuForm.displayOrder,
       isActive: menuForm.isActive
@@ -1592,9 +1968,19 @@ function App() {
         </div>
       )}
 
-      <IntroScrollSequence />
+      {isProductPage ? (
+        <ProductDetailPage
+          product={currentProduct}
+          image={currentProduct ? getProductImage(currentProduct, currentProductIndex) : ""}
+          loading={productsLoading}
+          onAdd={addToCart}
+          onBackToShop={backToShop}
+        />
+      ) : (
+        <>
+          <IntroScrollSequence />
 
-      <section className="plate-hero" id="programa">
+          <section className="plate-hero" id="programa">
         <div className="plate-hero-copy">
           <img className="hero-root-mark" src={beetIsotypeSrc} alt="" aria-hidden="true" />
           <p className="eyebrow">Nutrirse desde la raíz</p>
@@ -1803,12 +2189,19 @@ function App() {
           <div className="product-grid">
             {products.map((product, index) => (
               <article className="product-card" key={product.id}>
-                <div className="product-art">
-                  <img src={getProductImage(product, index)} alt={`Plato ${product.name}`} />
-                </div>
-                <span>{product.tag}</span>
-                <h3>{product.name}</h3>
-                <p>{product.description}</p>
+                <button
+                  className="product-card-main"
+                  type="button"
+                  onClick={() => openProductQuickView(product)}
+                  aria-label={`Ver características de ${product.name}`}
+                >
+                  <div className="product-art">
+                    <img src={getProductImage(product, index)} alt={`Plato ${product.name}`} />
+                  </div>
+                  <span>{product.tag}</span>
+                  <h3>{product.name}</h3>
+                  <p>{product.description}</p>
+                </button>
                 <div className="product-footer">
                   <strong>{formatPrice(product.price)}</strong>
                   <button className="add-button" type="button" onClick={() => addToCart(product)}>
@@ -1867,16 +2260,28 @@ function App() {
         </form>
       </section>
 
-      <footer>
-        <div className="footer-brand">
-          <img src={beetIsotypeSrc} alt="" aria-hidden="true" />
-          <span>Fullness Lab</span>
-        </div>
-        <p>
-          Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.
-        </p>
-        <strong>Nutrirse desde la raíz.</strong>
-      </footer>
+          <footer>
+            <div className="footer-brand">
+              <img src={beetIsotypeSrc} alt="" aria-hidden="true" />
+              <span>Fullness Lab</span>
+            </div>
+            <p>
+              Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.
+            </p>
+            <strong>Nutrirse desde la raíz.</strong>
+          </footer>
+        </>
+      )}
+
+      {productPreview && (
+        <ProductQuickView
+          product={productPreview}
+          image={getProductImage(productPreview, productPreviewIndex)}
+          onAdd={addToCart}
+          onClose={() => setProductPreviewSlug("")}
+          onOpenDetail={openProductDetail}
+        />
+      )}
 
       {accountOpen && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="account-title">
@@ -2102,6 +2507,27 @@ function App() {
                     <label className="backoffice-wide">
                       Descripción nutricional
                       <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Proteína de calidad, omega 3, fibra y antioxidantes naturales…" />
+                    </label>
+
+                    <div className="backoffice-grid">
+                      <label>
+                        Características nutricionales
+                        <textarea name="nutritionHighlights" rows="6" value={menuForm.nutritionHighlights} onChange={updateMenuForm} placeholder={"Omega 3 natural\nFibra vegetal\nEnergía estable…"} />
+                      </label>
+                      <label>
+                        Receta resumida
+                        <textarea name="recipeSummary" rows="6" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Salmón dorado al punto, lentejas especiadas y hojas verdes…" />
+                      </label>
+                    </div>
+
+                    <label className="backoffice-wide">
+                      Detalle nutricional
+                      <textarea name="nutritionDetail" rows="4" value={menuForm.nutritionDetail} onChange={updateMenuForm} placeholder="Explica por qué el plato funciona nutricionalmente y qué aporta al bienestar…" />
+                    </label>
+
+                    <label className="backoffice-wide">
+                      Pasos de receta / preparación
+                      <textarea name="recipeSteps" rows="5" value={menuForm.recipeSteps} onChange={updateMenuForm} placeholder={"Dorar el salmón con calor controlado.\nCalentar las lentejas especiadas.\nTerminar con hojas verdes frescas…"} />
                     </label>
 
                     <label className="backoffice-wide">

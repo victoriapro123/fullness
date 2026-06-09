@@ -19,7 +19,7 @@ supabase/migrations/20260606223000_fullness_commerce_schema.sql
 
 Cubre:
 
-- Menus vendibles en `menu_items`: foto, descripcion, precio, ingredientes y descripcion nutricional.
+- Menus vendibles en `menu_items`: foto, descripcion, precio, ingredientes, caracteristicas nutricionales, datos nutricionales y receta/resumen de preparacion para lightbox y pagina individual.
 - Clientes y usuarios en `profiles`, con permiso simple `is_admin`.
 - Carritos en `carts` y `cart_items`.
 - Ventas en `orders` y `order_items`, respetando las columnas existentes `client_id` y `product_id`.
