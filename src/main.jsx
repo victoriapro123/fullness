@@ -1984,7 +1984,6 @@ function App() {
 
           <section className="plate-hero" id="programa">
         <div className="plate-hero-copy">
-          <img className="hero-root-mark" src={logoVerticalSrc} alt="" aria-hidden="true" />
           <p className="eyebrow">Nutrirse desde la raíz</p>
           <h1>El bienestar comienza desde adentro</h1>
           <p>
@@ -2012,6 +2011,9 @@ function App() {
               </article>
             ))}
           </aside>
+        </div>
+        <div className="plate-hero-brandmark" aria-hidden="true">
+          <img src={logoVerticalSrc} alt="" />
         </div>
         <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
           <Video size={17} aria-hidden="true" />
