@@ -732,8 +732,8 @@ h3 {
   position: relative;
   display: grid;
   align-content: start;
-  min-height: 112svh;
-  padding: clamp(142px, 15svh, 184px) clamp(34px, 4vw, 76px) clamp(54px, 7svh, 86px);
+  min-height: 126svh;
+  padding: clamp(142px, 15svh, 184px) clamp(34px, 4vw, 76px) clamp(116px, 15svh, 180px);
   color: #f7efe3;
   background: #101611;
   isolation: isolate;
@@ -3294,8 +3294,8 @@ footer strong {
   }
 
   .plate-hero {
-    min-height: max(110svh, 980px);
-    padding: 150px 20px 44px;
+    min-height: max(126svh, 1120px);
+    padding: 150px 20px 118px;
     align-content: start;
   }
 
@@ -3569,8 +3569,9 @@ footer strong {
   }
 
   .plate-hero {
-    min-height: max(112svh, 940px);
+    min-height: max(128svh, 1080px);
     padding-top: 138px;
+    padding-bottom: 118px;
   }
 
   .plate-hero-copy h1 {
