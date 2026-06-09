@@ -854,8 +854,9 @@ h3 {
   right: clamp(34px, 7vw, 132px);
   width: min(25vw, 430px);
   max-height: 74%;
+  opacity: 0.9;
   transform: translateY(-50%);
-  filter: drop-shadow(0 28px 54px rgba(0, 0, 0, 0.32));
+  filter: none;
 }
 
 .heating-brand-mark {
@@ -2285,13 +2286,15 @@ h3 {
 
 .nutrition-facts-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(138px, 100%), 1fr));
+  align-items: stretch;
   gap: 10px;
 }
 
 .nutrition-facts-grid span {
   display: grid;
   gap: 5px;
+  min-width: 0;
   min-height: 72px;
   padding: 12px;
   border: 1px solid rgba(81, 20, 37, 0.12);
@@ -2300,10 +2303,15 @@ h3 {
 
 .nutrition-facts-grid small {
   color: rgba(23, 17, 12, 0.58);
-  font-size: 0.72rem;
+  max-width: 100%;
+  font-size: clamp(0.62rem, 1vw, 0.72rem);
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.045em;
+  line-height: 1.16;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .nutrition-facts-grid strong {
@@ -3792,24 +3800,16 @@ footer strong {
   }
 
   .philosophy-brand-mark,
-  .offer-brand-mark {
-    right: 20px;
-    width: min(42vw, 230px);
-    opacity: 0.42;
-  }
-
-  .philosophy-brand-mark {
-    top: 36%;
+  .offer-brand-mark,
+  .plate-hero-brandmark {
+    display: none;
   }
 
   .heating-brand-mark {
+    display: block;
     top: 48%;
     width: min(44vw, 240px);
     opacity: 0.34;
-  }
-
-  .offer-brand-mark {
-    top: 72px;
   }
 
   .heating-water {
@@ -4110,25 +4110,20 @@ footer strong {
   }
 
   .philosophy-brand-mark,
-  .heating-brand-mark,
-  .offer-brand-mark {
-    width: min(54vw, 180px);
-    opacity: 0.24;
+  .offer-brand-mark,
+  .plate-hero-brandmark {
+    display: none;
   }
 
-  .philosophy-brand-mark {
-    top: 26%;
-    right: -22px;
+  .heating-brand-mark {
+    display: block;
+    width: min(54vw, 180px);
+    opacity: 0.24;
   }
 
   .heating-brand-mark {
     top: 50%;
     left: 64%;
-  }
-
-  .offer-brand-mark {
-    top: 56px;
-    right: -16px;
   }
 
   .offer-card {
