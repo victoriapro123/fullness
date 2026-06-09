@@ -66,7 +66,7 @@ Precision nueva entregada por la clienta el 2026-05-13:
 - Debe aparecer la idea de nutrientes, vitaminas, minerales, grasas saludables e hidratos de carbono complejos entrando o cayendo hacia el plato y luego disolviendose.
 - La diferenciacion debe levantar las tres patas: practico, rico/foodporn y antiinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
 - Frase conceptual clave: es rico y es un privilegio nutrirse bien.
-- Implementacion actual: despues de la intro, el hero usa el plato protagonista como fondo completo con veladuras organicas. El copy aprobado es `Nutrirse desde la raiz`, `El bienestar comienza desde adentro`, `No contamos calorias. Creemos en aprender a nutrirse.` y `Como es adentro, es afuera.`. El CTA principal dice `Explorar Fullness Lab` y baja a `#proposito`. El logo vertical marfil del hero vive en la columna visual opuesta al texto, a 50% de esa columna y con opacidad casi completa; los principios inferiores no deben verse como cajas o botones, sino como texto editorial de apoyo.
+- Implementacion actual: despues de la intro, el hero usa el plato protagonista como fondo completo con veladuras organicas. El copy aprobado es `Nutrirse desde la raiz`, `El bienestar comienza desde adentro`, `No contamos calorias. Creemos en aprender a nutrirse.` y `Como es adentro, es afuera.`. El CTA principal dice `Explorar Fullness Lab` y baja a `#proposito`. El logo vertical marfil del hero vive en la columna visual opuesta al texto, a 50% de esa columna, pero como marca de agua casi imperceptible: 98% transparente equivale a `opacity: 0.02`. Los principios inferiores no deben verse como cajas o botones, sino como texto editorial de apoyo.
 
 Precision nueva entregada por Cecilia el 2026-06-08:
 
