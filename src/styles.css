@@ -796,7 +796,7 @@ h3 {
   max-width: 430px;
   min-width: 240px;
   margin-top: clamp(62px, 8svh, 130px);
-  opacity: 0.02;
+  opacity: 0.1;
   pointer-events: none;
   user-select: none;
 }
@@ -3729,7 +3729,7 @@ footer strong {
     min-width: 0;
     max-width: 86px;
     margin: 0 0 18px;
-    opacity: 0.02;
+    opacity: 0.1;
   }
 
   .hero-manifesto {
