@@ -232,6 +232,7 @@ Archivos y recursos:
 - `public/images/menu-samples/salmon-arroz-avocado.jpeg`
 - `src/assets/fullness-beet-roots-continuum.jpg`
 - `public/assets/fullness-lab-logo-horizontal-marfil.png`
+- `public/assets/fullness-lab-logo-horizontal-oficial.png`
 - `public/assets/fullness-lab-logo-vertical-marfil.png`
 - R2 `images/menu-samples/lentejas-hojas.jpeg`
 - R2 `images/menu-samples/pollo-camote-hojas.jpeg`
@@ -242,7 +243,7 @@ Archivos y recursos:
 
 Contexto actual:
 
-- El logo oficial horizontal marfil se usa en el header para darle mas protagonismo a la marca. El logo oficial vertical marfil se usa en favicon, intro, hero, separadores, marca de agua suave y footer. El color aprobado es `rgb(244, 234, 219)`. Nunca usar logos blancos puros; segun el fondo, usar marfil oficial o una version color basada en la silueta oficial.
+- El logo horizontal oficial entregado como JPEG y normalizado a PNG transparente (`public/assets/fullness-lab-logo-horizontal-oficial.png`) se usa en header y footer. El logo oficial vertical marfil se usa en favicon, intro, hero, separadores y marcas de agua suaves. El color aprobado base es `rgb(244, 234, 219)`. Nunca usar logos blancos puros; segun el fondo, usar marfil oficial o una version color basada en la silueta oficial.
 - El logo oficial vertical debe aparecer como marca editorial grande en secciones clave: centrado en `#calentar`, a la derecha en `#oferta` y a la derecha en `#proposito`, usando el recorte superior de betarraga/isotipo desde el asset oficial para evitar texto de logo dentro de las secciones. El tamano debe ser cercano al 50% de la columna/espacio asignado. En fondos oscuros usar marfil oficial; en fondos claros, usar color o mezcla que no lea blanco. En `#proposito`, sobre raices oscuras, debe mantenerse marfil al 90% de opacidad, sin filtros que lo aclaren hacia blanco y con color forzado por mascara CSS (`rgb(244, 234, 219)`) para evitar que se perciba o cargue como blanco. En mobile solo deben quedar visibles los logos de header, `#calentar` y footer; ocultar las marcas de hero, `#proposito` y `#oferta` para evitar saturacion.
 - La portada usa `fullness-hero-background.png`.
 - Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden del carrusel.

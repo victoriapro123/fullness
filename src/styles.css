@@ -209,13 +209,13 @@ main .reveal-on-scroll.is-visible {
   align-items: center;
   justify-self: center;
   justify-content: center;
-  min-width: clamp(260px, 22vw, 420px);
+  min-width: clamp(280px, 24vw, 460px);
   padding: 0;
 }
 
 .brand-reference-logo {
-  width: clamp(260px, 22vw, 420px);
-  height: clamp(136px, 10.8vw, 172px);
+  width: clamp(280px, 24vw, 460px);
+  height: clamp(82px, 7.2vw, 116px);
   object-fit: contain;
   object-position: center;
   mix-blend-mode: normal;
@@ -2638,9 +2638,9 @@ footer > * {
 }
 
 .footer-brand img {
-  width: clamp(62px, 5.2vw, 92px);
+  width: clamp(190px, 17vw, 300px);
   height: auto;
-  max-height: 142px;
+  max-height: 124px;
   object-fit: contain;
   opacity: 0.9;
 }
@@ -3707,8 +3707,8 @@ footer strong {
   }
 
   .brand-reference-logo {
-    width: 178px;
-    height: 94px;
+    width: 188px;
+    height: 74px;
   }
   h1 {
     font-size: clamp(3.1rem, 17vw, 5rem);
@@ -4020,8 +4020,8 @@ footer strong {
   }
 
   .brand-reference-logo {
-    width: 142px;
-    height: 76px;
+    width: 156px;
+    height: 62px;
   }
 
   .header-actions {

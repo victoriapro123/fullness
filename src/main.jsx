@@ -46,7 +46,7 @@ import "./styles.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
-const logoHorizontalSrc = mediaSrc("assets/fullness-lab-logo-horizontal-marfil.png");
+const logoHeaderFooterSrc = mediaSrc("assets/fullness-lab-logo-horizontal-oficial.png");
 const logoVerticalSrc = mediaSrc("assets/fullness-lab-logo-vertical-marfil.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
@@ -1907,7 +1907,7 @@ function App() {
             navigateToSection("#programa");
           }}
         >
-          <img className="brand-reference-logo" src={logoHorizontalSrc} alt="Fullness Lab" />
+          <img className="brand-reference-logo" src={logoHeaderFooterSrc} alt="Fullness Lab" />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
@@ -2273,7 +2273,7 @@ function App() {
 
           <footer>
             <div className="footer-brand">
-              <img src={logoVerticalSrc} alt="Fullness Lab" />
+              <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
             </div>
             <p>
               Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.
