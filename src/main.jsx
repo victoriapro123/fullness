@@ -40,6 +40,9 @@ import {
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
+import mealPrepBandSrc from "./assets/fullness-mealprep-band-modern.png";
+import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
+import communitySceneSrc from "./assets/fullness-community-scene.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
 import "./styles.css";
 
@@ -48,6 +51,10 @@ gsap.registerPlugin(ScrollTrigger);
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
 const logoHeaderFooterSrc = mediaSrc("assets/fullness-lab-logo-horizontal-oficial.png");
 const logoVerticalSrc = mediaSrc("assets/fullness-lab-logo-vertical-marfil.png");
+const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
+const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
+const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
+const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -75,7 +82,7 @@ function getProductSlug(product) {
 
 function getProductPath(product) {
   const slug = getProductSlug(product);
-  return slug ? `/producto/${encodeURIComponent(slug)}` : "/#productos";
+  return slug ? `/producto/${encodeURIComponent(slug)}` : "/#oferta";
 }
 
 function getProductSlugFromPath() {
@@ -174,30 +181,6 @@ const demoProducts = [
   }
 ];
 
-const functionalNotes = [
-  {
-    title: "Cúrcuma + jengibre + pimienta",
-    image: mediaSrc("assets/combo-curcuma-jengibre.png"),
-    description: "Especias elegidas para sumar sabor profundo y acompañar una alimentación antiinflamatoria."
-  },
-  {
-    title: "Grasas saludables + vegetales",
-    image: mediaSrc("assets/combo-grasas-saludables.png"),
-    description: "Palta, oliva, semillas y hojas verdes ayudan a dar saciedad y equilibrio al plato."
-  },
-  {
-    title: "Limón + hojas verdes",
-    image: mediaSrc("assets/combo-espinaca-limon.png"),
-    imageClass: "functional-image-limon",
-    description: "El ácido del limón favorece la absorción del hierro vegetal presente en hojas verdes."
-  },
-  {
-    title: "Legumbres + granos integrales",
-    image: mediaSrc("assets/combo-legumbres-granos.png"),
-    description: "Se complementan para lograr una proteína vegetal más completa, con fibra y energía estable."
-  }
-];
-
 const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequence.mp4");
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
 const introScrollFinalFrameSrc = mediaSrc("assets/scroll-intro/fullness-intro-final.jpg");
@@ -229,6 +212,28 @@ const introTechSignals = [
   }
 ];
 const heroPrinciples = ["No seguimos modas", "Preparaciones honestas", "Bienestar integral"];
+const heroBenefitFeatures = [
+  {
+    title: "Ingredientes honestos",
+    text: "Seleccionamos alimentos frescos y funcionales.",
+    icon: Leaf
+  },
+  {
+    title: "Nutrición funcional",
+    text: "Platos balanceados que nutren de verdad.",
+    icon: CookingPot
+  },
+  {
+    title: "Sin ultraprocesados",
+    text: "Comida real, sin ingredientes que no reconoces.",
+    icon: Sprout
+  },
+  {
+    title: "Listo para disfrutar",
+    text: "Recibe tu comida donde estés, sin complicaciones.",
+    icon: PackageCheck
+  }
+];
 
 function WhatsAppIcon({ size = 24 }) {
   return (
@@ -1065,6 +1070,7 @@ function App() {
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
   const [currentProductSlug, setCurrentProductSlug] = useState(() => getProductSlugFromPath());
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -1077,7 +1083,7 @@ function App() {
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
 
   useLayoutEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#productos", "#fundamento", "#comunidad"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad", "#contacto"]);
     const productSlug = getProductSlugFromPath();
 
     if (productSlug) {
@@ -1389,7 +1395,7 @@ function App() {
 
     const revealGroups = [
       {
-        items: ".food-editorial .editorial-copy > *",
+        items: ".food-editorial .editorial-shop-photo",
         trigger: ".food-editorial"
       },
       {
@@ -1428,22 +1434,31 @@ function App() {
 
       elements.forEach((element, index) => {
         element.classList.add("reveal-on-scroll");
-        element.style.transitionDelay = `${Math.min(index * 80, 320)}ms`;
+        const customDelay = Number(element.dataset.revealDelay);
+        element.style.transitionDelay = `${Number.isFinite(customDelay) ? customDelay : Math.min(index * 80, 320)}ms`;
         revealElements.push(element);
       });
       revealByTrigger.set(triggerElement, elements);
+      const triggerRect = triggerElement.getBoundingClientRect();
+      const isAlreadyVisible = triggerRect.top < window.innerHeight * 0.92 && triggerRect.bottom > window.innerHeight * 0.08;
+
+      if (isAlreadyVisible) {
+        window.requestAnimationFrame(() => {
+          elements.forEach((element) => element.classList.add("is-visible"));
+        });
+        return;
+      }
+
       revealObserver.observe(triggerElement);
     });
 
+    const foodMotion = gsap.matchMedia();
     const ctx = gsap.context(() => {
       gsap.set([
         ".plate-hero-copy > *",
         ".plate-hero-visual",
-        ".food-editorial .editorial-copy > *",
+        ".food-editorial .editorial-shop-photo",
         ".editorial-image img",
-        ".functional-band .section-heading > *",
-        ".functional-grid article",
-        ".functional-grid article img",
         ".heating-copy > *",
         ".heating-visual",
         ".heating-steps li",
@@ -1454,8 +1469,7 @@ function App() {
       ], { clearProps: "all" });
 
       gsap.utils.toArray([
-        ".editorial-image img",
-        ".functional-grid article img"
+        ".editorial-image img"
       ].join(", ")).forEach((image) => {
         gsap.fromTo(image,
           { y: 18, scale: 1.025 },
@@ -1485,6 +1499,58 @@ function App() {
         });
       });
 
+      foodMotion.add("(min-width: 861px)", () => {
+        const foodTimeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".food-editorial",
+            start: () => {
+              const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+              return `top top+=${Math.round(headerHeight)}`;
+            },
+            end: () => `+=${Math.round(window.innerHeight * 1.7)}`,
+            scrub: 0.75,
+            pin: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true
+          }
+        });
+
+        foodTimeline
+          .fromTo(".food-editorial .editorial-reveal-left",
+            { xPercent: -120, opacity: 0, filter: "blur(10px)" },
+            { xPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.42, ease: "power3.out" },
+            0.08
+          )
+          .fromTo(".food-editorial .editorial-reveal-right",
+            { xPercent: 120, opacity: 0, filter: "blur(10px)" },
+            { xPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.42, ease: "power3.out" },
+            0.54
+          )
+          .fromTo(".food-editorial .editorial-shop-photo",
+            { y: 44, opacity: 0, scale: 0.96 },
+            { y: 0, opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
+            0.86
+          );
+
+        return () => {
+          foodTimeline.scrollTrigger?.kill();
+          foodTimeline.kill();
+          gsap.set([
+            ".food-editorial .editorial-reveal-left",
+            ".food-editorial .editorial-reveal-right",
+            ".food-editorial .editorial-shop-photo"
+          ], { clearProps: "opacity,transform,filter" });
+        };
+      });
+
+      foodMotion.add("(max-width: 860px)", () => {
+        gsap.set([
+          ".food-editorial .editorial-reveal-left",
+          ".food-editorial .editorial-reveal-right",
+          ".food-editorial .editorial-shop-photo"
+        ], { clearProps: "opacity,transform,filter" });
+      });
+
     }, appRef);
 
     const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 250);
@@ -1496,9 +1562,10 @@ function App() {
         element.classList.remove("reveal-on-scroll", "is-visible");
         element.style.transitionDelay = "";
       });
+      foodMotion.revert();
       ctx.revert();
     };
-  }, [currentProductSlug]);
+  }, [currentPath, currentProductSlug]);
 
   useEffect(() => {
     const updateHeaderVisibility = () => {
@@ -1535,7 +1602,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#productos", "#fundamento", "#comunidad"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad"]);
 
     const syncSectionHash = () => {
       if (!sectionHashes.has(window.location.hash)) return;
@@ -1552,6 +1619,7 @@ function App() {
 
   useEffect(() => {
     const syncProductPath = () => {
+      setCurrentPath(window.location.pathname);
       const slug = getProductSlugFromPath();
       setCurrentProductSlug(slug);
       if (slug) {
@@ -1675,11 +1743,12 @@ function App() {
     setAccountOpen(false);
     document.documentElement.classList.add("intro-scroll-consumed");
     window.history.pushState(null, "", getProductPath(product));
+    setCurrentPath(window.location.pathname);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }
 
   function backToShop() {
-    navigateToSection("#productos", { smooth: false });
+    navigateToSection("#oferta", { smooth: false });
   }
 
   function updateQty(id, delta) {
@@ -1857,15 +1926,16 @@ function App() {
   }
 
   const navItems = [
-    { href: "#proposito", label: "Propósito" },
-    { href: "#calentar", label: "Cómo calentar" },
-    { href: "#productos", label: "Tienda" },
+    { href: "#oferta", label: "Planes" },
+    { href: "#comunidad", label: "Comunidad" },
+    { href: "#proposito", label: "Nosotros" },
+    { href: "#contacto", label: "Contacto" },
     ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
   ];
 
   const nav = navItems.map((item) => (
     <a
-      key={item.href}
+      key={`${item.href}-${item.label}`}
       href={item.href}
       onClick={(event) => {
         if (item.href === "#backoffice") {
@@ -1939,7 +2009,7 @@ function App() {
           </button>
           {navItems.map((item) => (
             <a
-              key={item.href}
+              key={`${item.href}-${item.label}`}
               href={item.href}
               onClick={(event) => {
                 if (item.href === "#backoffice") {
@@ -1983,26 +2053,25 @@ function App() {
           <IntroScrollSequence />
 
           <section className="plate-hero" id="programa">
+        <div className="plate-hero-blackout" aria-hidden="true" />
+        <div className="plate-hero-vectors" aria-hidden="true" />
         <div className="plate-hero-copy">
-          <p className="eyebrow">Nutrirse desde la raíz</p>
-          <h1>El bienestar comienza desde adentro</h1>
+          <p className="eyebrow">Nutrir desde la raíz</p>
+          <h1>Comida consciente para tu bienestar <span>diario.</span></h1>
           <p>
-            En Fullness Lab creemos que la comida puede ser una herramienta de bienestar, energía y conexión con uno mismo.
-          </p>
-          <p>
-            Por eso desarrollamos preparaciones nutritivas, sabrosas y cuidadosamente elaboradas para nutrirte desde la raíz.
+            Ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz.
           </p>
           <strong className="hero-manifesto">No contamos calorías. Creemos en aprender a nutrirse.</strong>
-          <p className="hero-closing">Como es adentro, es afuera.</p>
           <a
             className="plate-hero-primary"
-            href="#proposito"
+            href="#oferta"
             onClick={(event) => {
               event.preventDefault();
-              navigateToSection("#proposito");
+              navigateToSection("#oferta");
             }}
           >
-            Explorar Fullness Lab
+            Ver planes
+            <ArrowUpRight size={17} aria-hidden="true" />
           </a>
           <aside className="plate-hero-signals" aria-label="Principios Fullness">
             {heroPrinciples.map((principle) => (
@@ -2012,139 +2081,127 @@ function App() {
             ))}
           </aside>
         </div>
-        <div className="plate-hero-brandmark" aria-hidden="true">
-          <img src={logoVerticalSrc} alt="" />
-        </div>
         <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
           <Video size={17} aria-hidden="true" />
           Volver a la animación
         </button>
-        <img
-          className="plate-hero-visual"
-          src={introScrollFinalFrameSrc}
-          alt=""
-          aria-hidden="true"
-        />
-      </section>
-
-      <div
-        className="philosophy-scene"
-        style={{ "--philosophy-scene-bg": `url("${philosophySceneBgSrc}")` }}
-      >
-        <section className="food-editorial" id="plato">
-          <div className="editorial-copy">
-            <h2>Rico, consciente y lleno de información para tu sistema.</h2>
-            <p>
-              Fullness Lab une placer gastronómico, nutrición antiinflamatoria y criterio funcional para que comer bien no se sienta como castigo.
-            </p>
-            <div className="editorial-pills">
-              <span>Sin gluten</span>
-              <span>Sin lácteos</span>
-              <span>Sin azúcar refinada</span>
-              <span>Grasas saludables</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="philosophy" id="proposito">
-          <div className="section-brand-mark philosophy-brand-mark" aria-hidden="true">
-            <img src={logoVerticalSrc} alt="" />
-          </div>
-          <div>
-            <p className="eyebrow">Nuestro propósito</p>
-            <h2>Bienestar desde la raíz, todos los días.</h2>
-            <p className="philosophy-lede">
-              Creemos que el bienestar se construye a través de pequeñas decisiones cotidianas. Por eso desarrollamos una propuesta que integra nutrición consciente, cocina antiinflamatoria y educación alimentaria, para ayudarte a sentirte mejor desde la raíz.
-            </p>
-            <div className="philosophy-list">
-              <article>
-                <Leaf size={28} />
-                <div>
-                  <h3>Nutrición consciente</h3>
-                  <p>Seleccionamos ingredientes reales y preparaciones equilibradas que nutren más allá de las calorías.</p>
-                </div>
-              </article>
-              <article>
-                <CookingPot size={28} />
-                <div>
-                  <h3>Cocina antiinflamatoria</h3>
-                  <p>Diseñamos recetas ricas en nutrientes, con técnicas culinarias que respetan los ingredientes y potencian su sabor.</p>
-                </div>
-              </article>
-              <article>
-                <Heart size={28} />
-                <div>
-                  <h3>Bienestar integral</h3>
-                  <p>Entendemos la alimentación como parte de un sistema más amplio: hábitos, emociones y calidad de vida.</p>
-                </div>
-              </article>
-              <article>
-                <Sparkles size={28} />
-                <div>
-                  <h3>Ciencia y sabor</h3>
-                  <p>Combinamos conocimiento nutricional con cocina de verdad, porque comer saludable también debe ser rico.</p>
-                </div>
-              </article>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <section className="heating" id="calentar">
-        <div
-          className="heating-water"
-          style={{ "--heating-water-bg": `url("${mediaSrc("images/fullness-boiling-water-bg.jpg")}")` }}
-          aria-hidden="true"
-        ></div>
-        <div className="section-brand-mark heating-brand-mark" aria-hidden="true">
-          <img src={logoVerticalSrc} alt="" />
-        </div>
-        <div className="heating-visual" aria-hidden="true">
-          <span className="heating-splash"></span>
-          <span className="heating-splash heating-splash-secondary"></span>
+        <div className="plate-hero-visual-stage" aria-hidden="true">
           <img
-            className="heating-bag"
-            src={mediaSrc("images/fullness-heating-bag-realistic-v2.png")}
+            className="plate-hero-visual"
+            src={heroPlateCutoutSrc}
             alt=""
           />
         </div>
-        <div className="heating-copy">
-          <p className="eyebrow">Cómo calentar tus platos</p>
-          <h2>Un ritual simple para cuidar lo que comes.</h2>
+      </section>
+
+      <section className="hero-benefits" aria-label="Beneficios Fullness Lab">
+        {heroBenefitFeatures.map(({ title, text, icon: Icon }) => (
+          <article key={title}>
+            <Icon size={38} aria-hidden="true" />
+            <div>
+              <h2>{title}</h2>
+              <p>{text}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <span id="plato" className="legacy-anchor" aria-hidden="true" />
+      <div
+        className="philosophy-scene"
+        style={{
+          "--philosophy-scene-bg": `url("${philosophySceneBgSrc}")`,
+          "--silhouette-root-one": `url("${silhouetteRootOneSrc}")`,
+          "--silhouette-root-two": `url("${silhouetteRootTwoSrc}")`,
+          "--silhouette-root-three": `url("${silhouetteRootThreeSrc}")`,
+          "--silhouette-botanical": `url("${silhouetteBotanicalSrc}")`
+        }}
+      >
+        <section className="food-editorial" id="proposito">
+          <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
+            <p className="eyebrow">Nuestra filosofía</p>
+            <h2>Así como es por fuera, es por dentro.</h2>
+            <p>
+              Creemos en una alimentación consciente que transforma tu energía, tu salud y tu entorno.
+            </p>
+            <p>
+              Seleccionamos ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz. Porque nutrirte es mucho más que comer.
+            </p>
+            <a
+              className="editorial-cta"
+              href="#calentar"
+              onClick={(event) => {
+                event.preventDefault();
+                navigateToSection("#calentar");
+              }}
+            >
+              Conócenos
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          </div>
+          <img className="food-editorial-beet" src={silhouetteRootTwoSrc} alt="" aria-hidden="true" />
+        </section>
+      </div>
+
+      <section
+        className="food-story-strip"
+        style={{ "--food-story-bg": `url("${sampleProductImages[1]}")` }}
+      >
+        <a
+          href="#oferta"
+          aria-label="Explorar caminos Fullness Lab"
+          onClick={(event) => {
+            event.preventDefault();
+            navigateToSection("#oferta");
+          }}
+        >
+          <span className="eyebrow">Alimentarse es</span>
+          <strong>mucho más que comer.</strong>
+          <span>Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
+        </a>
+      </section>
+
+      <section className="meal-prep-feature" id="calentar">
+        <div className="meal-prep-copy">
+          <p className="eyebrow">Tu semana resuelta</p>
+          <h2>Meal Prep Antiinflamatorio</h2>
           <p>
-            Lo bueno hecho simple: en Fullness Lab cuidamos cada preparación para que alimentarte bien sea una forma de volver a ti.
+            Cinco platos diseñados para nutrirte durante toda la semana, con comida real, funcional y lista para disfrutar.
           </p>
+          <ul>
+            <li>Listos para calentar</li>
+            <li>Sin ultraprocesados</li>
+            <li>Ingredientes funcionales</li>
+            <li>Elaborados por chef y nutricionista</li>
+          </ul>
+          <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Ver planes</a>
         </div>
-        <ol className="heating-steps">
-          <li>
-            <span className="step-icon"><CookingPot size={28} /></span>
-            <span className="step-content">
-              <span className="step-heading"><span className="step-number">1.</span><strong>Calienta agua.</strong></span>
-              <span>Lleva a hervor en una olla grande.</span>
-            </span>
-          </li>
-          <li>
-            <span className="step-icon"><PackageCheck size={28} /></span>
-            <span className="step-content">
-              <span className="step-heading"><span className="step-number">2.</span><strong>Sumerge la bolsa sellada.</strong></span>
-              <span>Baja el fuego para mantener un hervor suave.</span>
-            </span>
-          </li>
-          <li>
-            <span className="step-icon"><Timer size={28} /></span>
-            <span className="step-content">
-              <span className="step-heading"><span className="step-number">3.</span><strong>Espera unos minutos.</strong></span>
-              <span>El tiempo varía según el plato.</span>
-            </span>
-          </li>
-          <li>
-            <span className="step-icon"><HandPlatter size={28} /></span>
-            <span className="step-content">
-              <span className="step-heading"><span className="step-number">4.</span><strong>Sirve y disfruta.</strong></span>
-              <span>Abre la bolsa con cuidado y sirve tu plato real.</span>
-            </span>
-          </li>
-        </ol>
+        <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+      </section>
+
+      <section
+        className="membership"
+        id="comunidad"
+        style={{ "--community-scene-bg": `url("${communitySceneSrc}")` }}
+      >
+        <div>
+          <p className="eyebrow">Comunidad Fullness</p>
+          <h2>Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.</h2>
+          <p>
+            Con tu suscripción mensual accedes a experiencias diseñadas para acompañarte más allá de la comida.
+          </p>
+          <div className="community-benefits" aria-label="Beneficios de comunidad">
+            <span>Clases de cocina antiinflamatoria</span>
+            <span>Charlas de nutrición emocional</span>
+            <span>Talleres de bienestar</span>
+            <span>Contenido exclusivo</span>
+            <span>Encuentros y comunidad</span>
+          </div>
+          <a className="membership-cta" href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">
+            Conoce la comunidad
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        </div>
       </section>
 
       <section className="fullness-offer" id="oferta">
@@ -2152,126 +2209,40 @@ function App() {
           <img src={logoVerticalSrc} alt="" />
         </div>
         <div className="section-heading">
-          <p className="eyebrow">Oferta Fullness Lab</p>
-          <h2>Elige cómo quieres nutrirte.</h2>
-          <p>
-            Preparaciones y experiencias pensadas para sostener una alimentación práctica, nutritiva y llena de sabor.
-          </p>
+          <p className="eyebrow">Explora Fullness</p>
+          <h2>Elige tu camino.</h2>
         </div>
         <div className="offer-grid">
           <article className="offer-card">
+            <Leaf size={30} aria-hidden="true" />
+            <p className="offer-kicker">Meal Prep</p>
+            <h3>Semana resuelta</h3>
+            <p>Tu semana resuelta con comida real y funcional.</p>
+            <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+            <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Conocer Meal Prep</a>
+          </article>
+          <article className="offer-card">
             <HandPlatter size={30} aria-hidden="true" />
-            <p className="offer-kicker">Menús preparados</p>
-            <h3>Comida real para el día a día</h3>
-            <p>Platos equilibrados, elaborados con ingredientes cuidadosamente seleccionados y listos para disfrutar.</p>
-            <a
-              href="#productos"
-              onClick={(event) => {
-                event.preventDefault();
-                navigateToSection("#productos");
-              }}
-            >
+            <p className="offer-kicker">Platos a la carta</p>
+            <h3>Preparados para disfrutar</h3>
+            <p>Platos preparados para disfrutar hoy, hechos con amor.</p>
+            <img src={sampleProductImages[1]} alt="" aria-hidden="true" />
+            <a href={whatsappUrl} target="_blank" rel="noreferrer">
               Ver Menús
             </a>
           </article>
           <article className="offer-card">
-            <PackageCheck size={30} aria-hidden="true" />
-            <p className="offer-kicker">Meal Prep</p>
-            <h3>Tu semana resuelta</h3>
-            <p>Preparaciones listas para consumir durante la semana, pensadas para una alimentación práctica, nutritiva y llena de sabor.</p>
-            <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Conocer Meal Prep</a>
-          </article>
-          <article className="offer-card">
             <Sparkles size={30} aria-hidden="true" />
-            <p className="offer-kicker">Talleres</p>
-            <h3>Aprende a nutrirte de forma consciente</h3>
-            <p>Talleres prácticos donde combinamos cocina, nutrición y bienestar para desarrollar una relación más saludable con la alimentación.</p>
+            <p className="offer-kicker">Talleres y actividades</p>
+            <h3>Aprende y comparte</h3>
+            <p>Aprende, comparte y crece con nuestra comunidad.</p>
+            <img src={communitySceneSrc} alt="" aria-hidden="true" />
             <a href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">Ver Talleres</a>
           </article>
         </div>
       </section>
 
-      <section className="products section" id="productos">
-        <div className="section-heading">
-          <p className="eyebrow">Tienda Fullness Lab</p>
-          <h2>Elige tus platos.</h2>
-        </div>
-        {products.length > 0 ? (
-          <div className="product-grid">
-            {products.map((product, index) => (
-              <article className="product-card" key={product.id}>
-                <button
-                  className="product-card-main"
-                  type="button"
-                  onClick={() => openProductQuickView(product)}
-                  aria-label={`Ver características de ${product.name}`}
-                >
-                  <div className="product-art">
-                    <img src={getProductImage(product, index)} alt={`Plato ${product.name}`} />
-                  </div>
-                  <span>{product.tag}</span>
-                  <h3>{product.name}</h3>
-                  <p>{product.description}</p>
-                </button>
-                <div className="product-footer">
-                  <strong>{formatPrice(product.price)}</strong>
-                  <button className="add-button" type="button" onClick={() => addToCart(product)}>
-                    <Plus size={18} />
-                    Agregar al pedido
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="products-empty">Pronto abriremos nuevos platos Fullness Lab.</p>
-        )}
-      </section>
-
-      <section className="functional-band" id="fundamento">
-        <div className="section-heading">
-          <p className="eyebrow">Nutrición con fundamento</p>
-          <h2>Combinaciones que trabajan juntas.</h2>
-        </div>
-        <div className="functional-grid">
-          {functionalNotes.map((note) => (
-            <article key={note.title}>
-              <img className={note.imageClass || ""} src={note.image} alt={note.title} />
-              <div>
-                <Sprout size={22} />
-                <h3>{note.title}</h3>
-                <p>{note.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="membership" id="comunidad">
-        <p className="eyebrow">Nutrición emocional</p>
-        <h2>El cuidado personal empieza por dentro.</h2>
-        <p>
-          El siguiente paso de Fullness Lab abre espacio a acompañamiento, sesiones y una comunidad para comer mejor desde el amor propio.
-        </p>
-        <form className="membership-form" onSubmit={submitSubscription}>
-          <label htmlFor="subscription-email">Recibe novedades Fullness</label>
-          <div>
-            <input
-              id="subscription-email"
-              name="subscriptionEmail"
-              type="email"
-              placeholder="nombre@dominio.cl…"
-              autoComplete="email"
-              spellCheck={false}
-              required
-            />
-            <button type="submit">Suscribirme</button>
-          </div>
-          {subscriptionMessage && <p className="membership-status" role="status">{subscriptionMessage}</p>}
-        </form>
-      </section>
-
-          <footer>
+          <footer id="contacto">
             <div className="footer-brand">
               <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
             </div>
