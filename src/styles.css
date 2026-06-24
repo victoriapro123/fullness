@@ -35,7 +35,7 @@
   --font-body: "Avenir Next", Avenir, "Inter", ui-sans-serif, system-ui, sans-serif;
   --site-header-space: clamp(94px, 7.4vw, 116px);
   --site-header-height: var(--site-header-space);
-  --editorial-black: rgba(48,32,43);/*#090806;*/
+  --editorial-black: rgb(48,32,43);/*#090806;*/
   --editorial-copper: #b77a54;
   --editorial-line: rgba(183, 122, 84, 0.42);
 }
