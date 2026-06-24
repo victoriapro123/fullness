@@ -374,7 +374,7 @@ Contexto actual:
 - El backoffice inicial de menus quedo implementado en la SPA. Se accede por `#backoffice` o por el enlace visible para administradores, exige Supabase Auth y valida `profiles.is_admin` antes de listar o escribir.
 - Guardar o borrar menus desde backoffice refresca la lista administrativa y la tienda publica. Si Supabase esta configurado y no hay menus activos, la tienda queda sin productos activos en vez de volver a datos demo.
 - La subida de fotos usa el bucket publico `menu-photos`; tambien se puede pegar una URL externa en el campo de foto.
-- `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, logo via `{{ .SiteURL }}/assets/fullness-lab-logo-horizontal-marfil.png` y variables oficiales de Supabase.
+- `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, variables oficiales de Supabase y una marca Fullness Lab hecha con HTML/texto inline, sin `<img>` ni logos remotos, para evitar imagenes rotas o bloqueadas por clientes de correo como Outlook.
 - La URL productiva de Auth es `https://fullness-taupe.vercel.app`. En Supabase Auth URL Configuration, el Site URL debe apuntar a esa URL y Redirect URLs debe permitir la URL productiva y las URLs locales usadas para pruebas.
 
 Reglas al modificar:

@@ -2310,11 +2310,6 @@ function App() {
       <div className="footer-brand">
         <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
         <p>Nutrición consciente para una vida plena y equilibrada.</p>
-        <div className="footer-socials" aria-label="Redes Fullness Lab">
-          <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="WhatsApp Fullness Lab">W</a>
-          <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }} aria-label="Instagram Fullness Lab">I</a>
-          <a href="#oferta" onClick={(event) => { event.preventDefault(); navigateToSection("#oferta"); }} aria-label="Explorar Fullness Lab">F</a>
-        </div>
       </div>
       <nav className="footer-column" aria-label="Navegación de pie de página">
         <h3>Navegación</h3>
