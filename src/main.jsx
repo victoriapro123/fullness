@@ -2120,8 +2120,9 @@ function App() {
           }}
         >
           <span className="eyebrow">Alimentarse es</span>
-          <strong>mucho más que comer.</strong>
-          <span>Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
+          <strong>mucho <em>más</em> que comer.</strong>
+          <span className="story-rule" aria-hidden="true" />
+          <span className="story-copy">Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
         </a>
       </section>
 

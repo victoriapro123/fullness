@@ -8652,3 +8652,209 @@ footer::before {
   transform: none !important;
   filter: none !important;
 }
+
+/* Philosophy background: left 30% stays clean for copy, right 70% carries the botanical art. */
+.food-editorial {
+  background: rgb(12, 11, 7) !important;
+}
+
+.food-editorial::before {
+  inset: 0 !important;
+  background: url("./assets/fullness-philosophy-botanical-vector.png") left center / auto 80% no-repeat !important;
+  opacity: 0.9 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.food-editorial::after {
+  background:
+    linear-gradient(90deg, rgb(12, 11, 7) 0%, rgba(12, 11, 7, 0.98) 30%, rgba(12, 11, 7, 0.28) 43%, rgba(12, 11, 7, 0.04) 70%, rgba(12, 11, 7, 0.1) 100%) !important;
+}
+
+.food-editorial .editorial-copy::before {
+  background: radial-gradient(ellipse at 28% 48%, rgba(12, 11, 7, 0.78) 0%, rgba(12, 11, 7, 0.34) 48%, rgba(12, 11, 7, 0) 76%) !important;
+}
+
+.food-editorial .editorial-copy {
+  width: clamp(260px, 27vw, 430px) !important;
+  max-width: clamp(260px, 27vw, 430px) !important;
+}
+
+@media (max-width: 1040px) {
+  .food-editorial::before {
+    background-position: left center !important;
+    background-size: auto 80% !important;
+    opacity: 0.72 !important;
+  }
+
+  .food-editorial .editorial-copy {
+    width: min(300px, calc(100vw - 76px)) !important;
+    max-width: min(300px, calc(100vw - 76px)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .food-editorial::before {
+    background-position: left center !important;
+    background-size: auto 80% !important;
+    opacity: 0.18 !important;
+  }
+
+  .food-editorial::after {
+    background:
+      linear-gradient(90deg, rgba(12, 11, 7, 0.94) 0%, rgba(12, 11, 7, 0.82) 58%, rgba(12, 11, 7, 0.48) 100%) !important;
+  }
+
+  .food-editorial .editorial-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Fourth section: editorial plate strip inspired by Cecilia's reference. */
+.food-story-strip {
+  min-height: 400px !important;
+  height: 400px !important;
+  background: rgb(8, 8, 7) !important;
+  border-top: 1px solid rgba(244, 234, 219, 0.08) !important;
+  border-bottom: 1px solid rgba(244, 234, 219, 0.12) !important;
+}
+
+.food-story-strip::before {
+  background:
+    var(--food-story-bg, none) right 42% center / auto 118% no-repeat !important;
+  filter: saturate(1.08) contrast(1.18) brightness(0.76) !important;
+  opacity: 0.96 !important;
+}
+
+.food-story-strip::after {
+  background:
+    linear-gradient(90deg, rgb(8, 8, 7) 0%, rgba(8, 8, 7, 0.98) 30%, rgba(8, 8, 7, 0.6) 48%, rgba(8, 8, 7, 0.12) 72%, rgba(8, 8, 7, 0.28) 100%),
+    linear-gradient(180deg, rgba(8, 8, 7, 0.8) 0%, rgba(8, 8, 7, 0) 18%, rgba(8, 8, 7, 0) 74%, rgba(8, 8, 7, 0.88) 100%) !important;
+}
+
+.food-story-strip a {
+  min-height: 400px !important;
+  width: min(33vw, 520px) !important;
+  max-width: 520px !important;
+  margin-left: clamp(42px, 6vw, 118px) !important;
+  text-decoration: none !important;
+}
+
+.food-story-strip .eyebrow {
+  color: rgba(244, 234, 219, 0.9) !important;
+  font-size: clamp(1.2rem, 1.8vw, 2rem) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.24em !important;
+  line-height: 1.45 !important;
+  text-transform: uppercase !important;
+}
+
+.food-story-strip strong {
+  max-width: 520px !important;
+  margin: 0 0 14px !important;
+  color: rgba(244, 234, 219, 0.92) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.45rem, 2.35vw, 2.55rem) !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.2em !important;
+  line-height: 1.42 !important;
+  text-transform: uppercase !important;
+}
+
+.food-story-strip strong em {
+  color: #b87878;
+  font-style: normal;
+}
+
+.food-story-strip .story-rule {
+  position: relative;
+  display: block;
+  width: 118px;
+  height: 12px;
+  margin: 4px 0 24px;
+}
+
+.food-story-strip .story-rule::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(184, 120, 120, 0.78);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.food-story-strip .story-rule::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 92px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(184, 120, 120, 0.78), rgba(184, 120, 120, 0));
+}
+
+.food-story-strip .story-copy {
+  display: block;
+  max-width: 460px !important;
+  color: rgba(244, 234, 219, 0.78) !important;
+  font-size: clamp(0.98rem, 1vw, 1.18rem) !important;
+  font-weight: 500 !important;
+  line-height: 1.62 !important;
+}
+
+@media (max-width: 1040px) {
+  .food-story-strip {
+    min-height: 400px !important;
+    height: 400px !important;
+  }
+
+  .food-story-strip::before {
+    background-position: right 18% center !important;
+    background-size: auto 108% !important;
+  }
+
+  .food-story-strip a {
+    min-height: 400px !important;
+    width: min(42vw, 380px) !important;
+    margin-left: 42px !important;
+  }
+
+  .food-story-strip strong {
+    font-size: clamp(1.28rem, 3.2vw, 2rem) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .food-story-strip {
+    min-height: 420px !important;
+    height: 420px !important;
+  }
+
+  .food-story-strip::before {
+    background-position: 66% center !important;
+    background-size: auto 100% !important;
+    opacity: 0.54 !important;
+  }
+
+  .food-story-strip::after {
+    background:
+      linear-gradient(90deg, rgba(8, 8, 7, 0.98) 0%, rgba(8, 8, 7, 0.9) 52%, rgba(8, 8, 7, 0.44) 100%),
+      linear-gradient(180deg, rgba(8, 8, 7, 0.82) 0%, rgba(8, 8, 7, 0.08) 45%, rgba(8, 8, 7, 0.82) 100%) !important;
+  }
+
+  .food-story-strip a {
+    min-height: 420px !important;
+    width: min(88vw, 420px) !important;
+    margin-left: 24px !important;
+    margin-right: 24px !important;
+  }
+
+  .food-story-strip .eyebrow,
+  .food-story-strip strong {
+    letter-spacing: 0.14em !important;
+  }
+}
