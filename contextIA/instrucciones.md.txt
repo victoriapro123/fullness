@@ -45,7 +45,7 @@ La solucion actual incluye:
 - Carrito funcional en memoria.
 - Notificacion al agregar productos.
 - Modal de acceso para miembros con Supabase Auth por correo y contrasena.
-- Flujo de enlaces Supabase Auth para invitacion y recuperacion de contrasena: al abrir un link `invite` o `recovery`, la app detecta la sesion y muestra un formulario para definir nueva contrasena.
+- Flujo de enlaces Supabase Auth: confirmacion de correo muestra un aviso claro al volver a la app; invitacion y recuperacion de contrasena abren un formulario para definir nueva contrasena.
 - Cliente Supabase para cargar menus activos desde `menu_items`; el fallback a productos de demo queda solo para entornos sin Supabase configurado o con error de conexion.
 - Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, caracteristicas nutricionales, receta resumida, pasos de preparacion, alergenos, estado activo y orden.
 - Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
@@ -181,7 +181,7 @@ Contexto actual:
 - `src/main.jsx` mantiene `demoProducts` como fallback local para rutas de producto, carrito, backoffice y futuras piezas de e-commerce. La vitrina publica `#productos` fue retirada de la home; no reinsertarla salvo nueva instruccion explicita.
 - El carrito se guarda solo en estado React.
 - La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`.
-- La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`. Los enlaces de invitacion y recuperacion de contrasena abren un modal `Cuenta Fullness` para guardar una nueva contrasena mediante `supabase.auth.updateUser({ password })`.
+- Los enlaces de Supabase Auth se resuelven dentro de la SPA: `signup` abre el modal de cuenta con mensaje de correo confirmado; `invite` y `recovery` abren un modal para definir contrasena mediante `supabase.auth.updateUser({ password })`. La app guarda temporalmente un indicio local al pedir reset para reconocer la recuperacion incluso si Supabase vuelve sin `type=recovery`.
 - No hay router ni store global: `#backoffice` abre acceso/backoffice dentro de la misma SPA. No hay backend de checkout; la base Supabase ya esta aplicada y `menu_items` queda disponible para backoffice/rutas de producto, aunque la tienda publica no se muestra en la home.
 - El backoffice de menus permite crear, editar, borrar y activar/desactivar menus; edita nombre, slug, SKU, etiqueta, precio, orden, descripcion, foto por URL o subida a `menu-photos`, ingredientes, alergenos, descripcion nutricional, caracteristicas nutricionales, detalle nutricional, receta resumida, pasos de preparacion y datos nutricionales JSON.
 - El video introductorio anterior al hero no debe depender del scroll continuo: una intencion de scroll hacia abajo, touch hacia abajo, teclado o click en el logo central inicia un recorrido automatico de 4 segundos con efecto de scroll/scrub fluido, bloqueando la entrada y el desplazamiento real del sitio durante ese tramo. El video debe cubrir todo el alto visible, el header/menu debe estar oculto mientras corre la animacion y el sitio solo debe aterrizar en el hero al terminar los 4 segundos. Para cuidar la fluidez, la bajada hacia el hero usa reproduccion nativa del video con velocidad calculada, evitando forzar `currentTime` en cada frame. Al terminar, el intro queda consumido y sale del flujo normal: desde el hero no se puede subir al video ni al tramo negro con scroll. En estado `intro-scroll-consumed`, los listeners de wheel, touch y teclado no deben capturar input, para que el usuario pueda seguir bajando normalmente desde el hero. Solo el boton tecnico transparente `Volver a la animacion` reabre el intro y resetea el video en desktop. En mobile/tablet angosto (`<= 860px`), la intro se anula por completo: la pagina entra con `intro-scroll-consumed` y `intro-mobile-skip`, el tramo del video queda fuera del flujo y la primera pantalla es el hero.
@@ -376,6 +376,7 @@ Contexto actual:
 - La subida de fotos usa el bucket publico `menu-photos`; tambien se puede pegar una URL externa en el campo de foto.
 - `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, variables oficiales de Supabase y una marca Fullness Lab hecha con HTML/texto inline, sin `<img>` ni logos remotos, para evitar imagenes rotas o bloqueadas por clientes de correo como Outlook.
 - La URL productiva de Auth es `https://fullness-taupe.vercel.app`. En Supabase Auth URL Configuration, el Site URL debe apuntar a esa URL y Redirect URLs debe permitir la URL productiva y las URLs locales usadas para pruebas.
+- La SPA captura el estado inicial de redirect de Supabase antes de inicializar el cliente, porque `detectSessionInUrl` puede limpiar el hash o query despues de procesarlo. Luego limpia la URL visible para no dejar tokens en el navegador.
 
 Reglas al modificar:
 
@@ -439,7 +440,8 @@ Contexto actual:
 - El formulario de acceso pide correo y contrasena.
 - El login Gmail anterior fue reemplazado por acceso Supabase Auth con correo y contrasena.
 - El formulario permite solicitar recuperacion de contrasena por correo.
-- Si el usuario abre un enlace de invitacion o recuperacion de Supabase, la app muestra un modal para definir nueva contrasena y luego deja la sesion iniciada.
+- Si el usuario abre un enlace de confirmacion de correo de Supabase, la app muestra un mensaje de exito en el modal de cuenta. Si abre un enlace de invitacion o recuperacion, muestra un modal para definir nueva contrasena y luego deja la sesion iniciada con feedback de exito.
+- El efecto legacy que leia `access_token` de Gmail debe ignorar hashes de Supabase (`type`, `refresh_token`) para no confundir los tokens de Auth con OAuth de Google.
 - La migracion Supabase crea `profiles` sincronizado con `auth.users` y protege `is_admin`; la UI usa Supabase Auth para sesion y permisos de backoffice.
 
 Reglas al modificar:

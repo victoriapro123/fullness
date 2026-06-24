@@ -99,6 +99,97 @@ function getProductSlugFromPath() {
   return match ? decodeURIComponent(match[1]) : "";
 }
 
+function normalizeAuthFlowType(type) {
+  const cleanType = String(type || "").trim().toLowerCase();
+
+  if (["invite", "invitation"].includes(cleanType)) return "invite";
+  if (["recovery", "reset", "password_recovery", "password-recovery"].includes(cleanType)) return "recovery";
+  if (["signup", "confirm", "confirmation", "email"].includes(cleanType)) return "signup";
+
+  return cleanType;
+}
+
+function readAuthRedirectState() {
+  if (typeof window === "undefined") {
+    return { type: "", hasAuthParams: false, error: "" };
+  }
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(window.location.search);
+  const type = normalizeAuthFlowType(
+    hashParams.get("type") ||
+      searchParams.get("type") ||
+      hashParams.get("auth") ||
+      searchParams.get("auth")
+  );
+  const hasAuthParams = Boolean(
+    type ||
+      hashParams.get("access_token") ||
+      hashParams.get("refresh_token") ||
+      searchParams.get("code") ||
+      searchParams.get("token") ||
+      searchParams.get("token_hash") ||
+      hashParams.get("error") ||
+      searchParams.get("error")
+  );
+  const error =
+    hashParams.get("error_description") ||
+    searchParams.get("error_description") ||
+    hashParams.get("error") ||
+    searchParams.get("error") ||
+    "";
+
+  return { type, hasAuthParams, error };
+}
+
+function getStoredAuthFlowType() {
+  if (typeof window === "undefined") return "";
+
+  try {
+    const stored = JSON.parse(window.localStorage.getItem("fullness_pending_auth_flow") || "null");
+    if (!stored?.type || !stored?.createdAt) return "";
+
+    const age = Date.now() - Number(stored.createdAt);
+    if (!Number.isFinite(age) || age > 1000 * 60 * 60) {
+      window.localStorage.removeItem("fullness_pending_auth_flow");
+      return "";
+    }
+
+    return normalizeAuthFlowType(stored.type);
+  } catch {
+    return "";
+  }
+}
+
+function setStoredAuthFlowType(type) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(
+      "fullness_pending_auth_flow",
+      JSON.stringify({ type: normalizeAuthFlowType(type), createdAt: Date.now() })
+    );
+  } catch {
+    // Local auth hints are best-effort.
+  }
+}
+
+function clearStoredAuthFlowType() {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem("fullness_pending_auth_flow");
+  } catch {
+    // Local auth hints are best-effort.
+  }
+}
+
+function cleanAuthRedirectUrl() {
+  if (typeof window === "undefined") return;
+
+  window.history.replaceState(null, "", window.location.pathname || "/");
+}
+
 function applySampleProduct(product, index) {
   const image = product.image || "";
   const isLegacyPlaceholder =
@@ -1253,6 +1344,8 @@ function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [initialAuthRedirect] = useState(() => readAuthRedirectState());
+  const authRedirectHandledRef = useRef(false);
   const [passwordSetupOpen, setPasswordSetupOpen] = useState(false);
   const [passwordSetupMode, setPasswordSetupMode] = useState("recovery");
   const [passwordSetupSaving, setPasswordSetupSaving] = useState(false);
@@ -1470,6 +1563,7 @@ function App() {
 
     const supabase = await getSupabaseClient();
     await supabase.auth.signOut();
+    clearStoredAuthFlowType();
     setMember(null);
     setIsAdmin(false);
     setAdminOpen(false);
@@ -1554,18 +1648,67 @@ function App() {
     let subscription;
     let ignore = false;
 
-    const getAuthFlowType = () => {
-      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-      const searchParams = new URLSearchParams(window.location.search);
-      return hashParams.get("type") || searchParams.get("type") || "";
-    };
-
     const openPasswordSetup = (type) => {
       setPasswordSetupMode(type === "invite" ? "invite" : "recovery");
       setPasswordSetupMessage("");
       setPasswordSetupOpen(true);
       setAccountOpen(false);
-      window.history.replaceState(null, "", window.location.pathname || "/");
+    };
+
+    const getActiveAuthRedirect = () => {
+      const current = readAuthRedirectState();
+      return current.hasAuthParams || current.type ? current : initialAuthRedirect;
+    };
+
+    const finishAuthRedirect = () => {
+      authRedirectHandledRef.current = true;
+      clearStoredAuthFlowType();
+      cleanAuthRedirectUrl();
+    };
+
+    const openAuthNotice = (message) => {
+      setPasswordSetupOpen(false);
+      setGoogleMessage(message);
+      setAccountOpen(true);
+    };
+
+    const handleAuthRedirect = (session, event = "") => {
+      if (authRedirectHandledRef.current) return;
+
+      const redirect = getActiveAuthRedirect();
+      const isPasswordRecoveryEvent = event === "PASSWORD_RECOVERY";
+
+      if (redirect.error) {
+        openAuthNotice("El enlace no se pudo validar. Solicita uno nuevo e inténtalo otra vez.");
+        finishAuthRedirect();
+        return;
+      }
+
+      if (!redirect.hasAuthParams && !isPasswordRecoveryEvent) return;
+
+      const flowType =
+        isPasswordRecoveryEvent ? "recovery" : redirect.type || getStoredAuthFlowType() || "signup";
+
+      if (session?.user && (flowType === "recovery" || flowType === "invite")) {
+        openPasswordSetup(flowType);
+        finishAuthRedirect();
+        return;
+      }
+
+      if (flowType === "signup") {
+        openAuthNotice(
+          session?.user
+            ? "Correo confirmado. Tu sesión quedó iniciada."
+            : "Correo confirmado. Ya puedes iniciar sesión."
+        );
+        finishAuthRedirect();
+        return;
+      }
+
+      if (session?.user && redirect.hasAuthParams) {
+        openAuthNotice("Tu sesión quedó iniciada.");
+        finishAuthRedirect();
+      }
     };
 
     async function loadSession() {
@@ -1576,23 +1719,16 @@ function App() {
 
       const supabase = await getSupabaseClient();
       const { data } = await supabase.auth.getSession();
-      const flowType = getAuthFlowType();
 
       if (!ignore) {
         setAuthUser(data.session?.user || null);
-        if (data.session?.user && (flowType === "recovery" || flowType === "invite")) {
-          openPasswordSetup(flowType);
-        }
+        handleAuthRedirect(data.session);
         setAuthLoading(false);
       }
 
       const listener = supabase.auth.onAuthStateChange((event, session) => {
         setAuthUser(session?.user || null);
-        const type = event === "PASSWORD_RECOVERY" ? "recovery" : getAuthFlowType();
-
-        if (session?.user && (type === "recovery" || type === "invite")) {
-          openPasswordSetup(type);
-        }
+        handleAuthRedirect(session, event);
       });
 
       subscription = listener.data.subscription;
@@ -1874,6 +2010,10 @@ function App() {
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace("#", ""));
+    const isSupabaseAuthHash = Boolean(hash.get("type") || hash.get("refresh_token"));
+
+    if (isSupabaseAuthHash) return;
+
     const accessToken = hash.get("access_token");
 
     if (!accessToken) return;
@@ -2066,6 +2206,7 @@ function App() {
 
     setAuthLoading(true);
     setGoogleMessage("");
+    clearStoredAuthFlowType();
 
     const supabase = await getSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -2097,6 +2238,7 @@ function App() {
 
     setAuthLoading(true);
     setGoogleMessage("");
+    setStoredAuthFlowType("recovery");
 
     const supabase = await getSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -2106,6 +2248,7 @@ function App() {
     setAuthLoading(false);
 
     if (error) {
+      clearStoredAuthFlowType();
       setGoogleMessage(getSupabaseErrorMessage(error, "No pudimos enviar el correo de recuperación."));
       return;
     }
@@ -2149,6 +2292,11 @@ function App() {
     }
 
     setPasswordSetupOpen(false);
+    setGoogleMessage(
+      passwordSetupMode === "invite"
+        ? "Contraseña creada. Tu cuenta Fullness quedó activa."
+        : "Contraseña actualizada. Ya puedes seguir con tu cuenta Fullness."
+    );
     setAccountOpen(true);
   }
 
@@ -2678,6 +2826,7 @@ function App() {
                 <p className="eyebrow">Cuenta Fullness</p>
                 <h2 id="account-title">{getMemberLabel(authUser)}</h2>
                 <p className="account-email">{authUser.email}</p>
+                {googleMessage && <p className="form-note">{googleMessage}</p>}
                 {isAdmin && (
                   <button className="primary-button full" type="button" onClick={openBackoffice}>
                     <ShieldCheck size={18} />

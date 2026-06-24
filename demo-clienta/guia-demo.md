@@ -96,8 +96,9 @@ Presionar `Acceso miembros`.
 Resultado esperado:
 
 - Se abre el formulario de cuenta.
-- Se muestran campos de usuario, email, telefono y contrasena.
-- El boton de Gmail queda preparado para produccion con variable de entorno.
+- Se muestran correo y contrasena para iniciar sesion con Supabase Auth.
+- El enlace `Olvide mi contrasena` envia un correo de recuperacion.
+- Cuando Supabase devuelve a la app desde confirmacion de correo, se muestra un mensaje de exito. Cuando vuelve desde invitacion o recuperacion, se abre el formulario para crear o actualizar la contrasena.
 
 ## 10. Mostrar Nutricion Funcional
 

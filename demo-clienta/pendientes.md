@@ -39,9 +39,9 @@ Pendientes:
 - Mantener la betarraga como sello editorial, favicon, separador, marca de agua suave y footer.
 - Conseguir o generar imagenes mas food porn/editoriales, con vapor, sombra, textura y luz lateral.
 
-## Gmail Real
+## OAuth Opcional
 
-Para que `Continuar con Gmail` funcione completamente en produccion, se debe crear un OAuth Client ID en Google Cloud y configurarlo en Vercel:
+El acceso principal actual usa Supabase Auth por correo y contrasena. Si mas adelante se retoma login con Google, se debe crear un OAuth Client ID en Google Cloud y configurarlo en Vercel:
 
 ```env
 VITE_GOOGLE_CLIENT_ID=tu-client-id-de-google.apps.googleusercontent.com
