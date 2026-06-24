@@ -690,6 +690,303 @@ footer {
   }
 }
 
+/* Preview controls and latest client pass: compare dark backgrounds, organic offer cards and strong community photo. */
+.background-mode-toggle {
+  position: fixed;
+  top: calc(var(--site-header-height) + 14px);
+  right: clamp(18px, 2.4vw, 34px);
+  z-index: 61;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(183, 122, 84, 0.48);
+  border-radius: 999px;
+  color: rgb(244, 234, 219);
+  background: rgba(9, 8, 6, 0.72);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.background-mode-toggle:hover {
+  color: var(--gold);
+  border-color: rgba(208, 173, 115, 0.72);
+  transform: translateY(-1px);
+}
+
+main[data-background-mode="plum"] {
+  --preview-plum-bg: rgb(48, 32, 43);
+}
+
+main[data-background-mode="plum"] .philosophy-scene,
+main[data-background-mode="plum"] .food-editorial,
+main[data-background-mode="plum"] .food-story-strip,
+main[data-background-mode="plum"] .membership,
+main[data-background-mode="plum"] footer {
+  background-color: var(--preview-plum-bg) !important;
+}
+
+main[data-background-mode="plum"] .philosophy-scene {
+  background-image: none !important;
+  background-position: center !important;
+}
+
+main[data-background-mode="plum"] .food-editorial {
+  background: var(--preview-plum-bg) !important;
+}
+
+main[data-background-mode="plum"] .food-editorial::after {
+  background:
+    linear-gradient(90deg, rgba(48, 32, 43, 0.98) 0%, rgba(48, 32, 43, 0.9) 32%, rgba(48, 32, 43, 0.36) 52%, rgba(48, 32, 43, 0.04) 76%, rgba(48, 32, 43, 0.12) 100%),
+    linear-gradient(180deg, rgba(48, 32, 43, 0.74) 0%, rgba(48, 32, 43, 0.08) 24%, rgba(48, 32, 43, 0.18) 76%, rgb(48, 32, 43) 100%) !important;
+}
+
+main[data-background-mode="plum"] .membership::after {
+  background:
+    linear-gradient(90deg, rgba(48, 32, 43, 1) 0%, rgba(48, 32, 43, 0.96) 37%, rgba(48, 32, 43, 0.66) 48%, rgba(48, 32, 43, 0.18) 68%, rgba(48, 32, 43, 0.08) 100%) !important;
+}
+
+.membership {
+  grid-template-columns: minmax(300px, 0.4fr) minmax(0, 0.6fr) !important;
+  min-height: clamp(620px, 78svh, 860px) !important;
+  background: #090806 !important;
+  overflow: hidden;
+}
+
+.membership::before {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 0 0 40% !important;
+  z-index: 0 !important;
+  height: auto !important;
+  pointer-events: none !important;
+  background: var(--community-scene-bg, none) center / cover no-repeat !important;
+  opacity: 1 !important;
+  filter: saturate(0.96) contrast(1.08) brightness(0.88) !important;
+}
+
+.membership::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  height: auto !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(9, 8, 6, 1) 0%, rgba(9, 8, 6, 0.97) 37%, rgba(9, 8, 6, 0.66) 48%, rgba(9, 8, 6, 0.18) 68%, rgba(9, 8, 6, 0.08) 100%) !important;
+}
+
+.membership > div {
+  z-index: 3 !important;
+  max-width: min(560px, 100%) !important;
+}
+
+.community-benefits {
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)) !important;
+}
+
+.community-benefits span {
+  overflow-wrap: anywhere !important;
+  hyphens: auto !important;
+}
+
+.fullness-offer {
+  min-height: clamp(330px, 36vw, 470px) !important;
+  overflow: hidden;
+}
+
+.offer-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+}
+
+.offer-card {
+  position: relative;
+  grid-template-columns: 46px minmax(0, 1fr) minmax(104px, 0.35fr) !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  align-content: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  background: rgba(234, 223, 202, 0.24) !important;
+}
+
+.offer-card > svg {
+  grid-row: 1 / 4 !important;
+  align-self: center !important;
+  justify-self: center !important;
+}
+
+.offer-packshots,
+.offer-organic-image {
+  grid-column: 3 !important;
+  grid-row: 1 / 4 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  background: transparent !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+
+.offer-packshots {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: flex-end !important;
+  gap: clamp(6px, 0.65vw, 10px) !important;
+  min-width: clamp(88px, 8vw, 132px) !important;
+}
+
+.offer-packshots img {
+  width: clamp(42px, 3.8vw, 62px) !important;
+  height: clamp(94px, 8.2vw, 132px) !important;
+  border: 0 !important;
+  background: transparent !important;
+  object-fit: cover !important;
+  filter: saturate(1.04) contrast(1.04) drop-shadow(0 16px 18px rgba(30, 22, 14, 0.2)) !important;
+  mix-blend-mode: multiply;
+  clip-path: inset(4% 34% 4% 34% round 10px);
+}
+
+.offer-packshots img:first-child {
+  object-position: 42% center !important;
+  transform: translateY(4px) rotate(-1.5deg);
+}
+
+.offer-packshots img:last-child {
+  object-position: 56% center !important;
+  transform: translateY(-2px) rotate(1.5deg);
+}
+
+.offer-organic-image {
+  width: clamp(92px, 9vw, 150px) !important;
+  aspect-ratio: 1.22 !important;
+  filter: drop-shadow(0 16px 20px rgba(30, 22, 14, 0.16)) !important;
+}
+
+.offer-organic-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  background: transparent !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.offer-plate-image {
+  clip-path: ellipse(48% 40% at 52% 50%) !important;
+}
+
+.offer-community-image {
+  clip-path: polygon(10% 4%, 100% 0, 92% 96%, 0 100%) !important;
+}
+
+.offer-card a {
+  display: none !important;
+}
+
+@media (max-width: 1180px) {
+  .offer-card {
+    grid-template-columns: 36px minmax(0, 1fr) minmax(86px, 0.3fr) !important;
+    column-gap: 12px !important;
+  }
+
+  .offer-card h3 {
+    font-size: clamp(0.92rem, 1.5vw, 1.18rem) !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .offer-card p:not(.offer-kicker) {
+    font-size: 0.78rem !important;
+  }
+}
+
+@media (max-width: 940px) {
+  .background-mode-toggle {
+    top: auto;
+    right: 16px;
+    bottom: 92px;
+  }
+
+  .membership {
+    grid-template-columns: 1fr !important;
+  }
+
+  .membership::before {
+    inset: 0 0 0 34% !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(90deg, rgba(9, 8, 6, 1) 0%, rgba(9, 8, 6, 0.98) 44%, rgba(9, 8, 6, 0.62) 68%, rgba(9, 8, 6, 0.22) 100%) !important;
+  }
+
+  main[data-background-mode="plum"] .membership::after {
+    background:
+      linear-gradient(90deg, rgba(48, 32, 43, 1) 0%, rgba(48, 32, 43, 0.98) 44%, rgba(48, 32, 43, 0.62) 68%, rgba(48, 32, 43, 0.22) 100%) !important;
+  }
+
+  .offer-grid {
+    grid-template-columns: 1fr !important;
+    max-width: 720px !important;
+  }
+
+  .offer-card {
+    min-height: 150px !important;
+    grid-template-columns: 44px minmax(0, 1fr) minmax(112px, 0.26fr) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .membership {
+    min-height: auto !important;
+  }
+
+  .membership::before {
+    inset: 0 !important;
+    opacity: 0.36 !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(180deg, rgba(9, 8, 6, 0.98) 0%, rgba(9, 8, 6, 0.92) 58%, rgba(9, 8, 6, 0.74) 100%) !important;
+  }
+
+  main[data-background-mode="plum"] .membership::after {
+    background:
+      linear-gradient(180deg, rgba(48, 32, 43, 0.98) 0%, rgba(48, 32, 43, 0.92) 58%, rgba(48, 32, 43, 0.74) 100%) !important;
+  }
+
+  .offer-card {
+    grid-template-columns: 34px minmax(0, 1fr) minmax(78px, 0.26fr) !important;
+    min-height: 142px !important;
+  }
+
+  .offer-packshots {
+    min-width: 76px !important;
+    gap: 3px !important;
+  }
+
+  .offer-packshots img {
+    width: 36px !important;
+    height: 86px !important;
+  }
+
+  .offer-organic-image {
+    width: 82px !important;
+  }
+}
+
 @media (max-width: 860px) {
   :root {
     --site-header-space: 100px;
@@ -10221,5 +10518,130 @@ footer::before {
     text-align: left !important;
     border-right: 0 !important;
     border-bottom: 1px solid rgba(183, 122, 84, 0.16) !important;
+  }
+}
+
+/* Final client pass: these overrides stay at EOF so they win over older accumulated CSS. */
+:root {
+  --fullness-highlight: #b87878;
+  --fullness-highlight-soft: rgba(184, 120, 120, 0.74);
+}
+
+.plate-hero-copy h1 span,
+.plate-hero-copy .hero-manifesto,
+.food-story-strip strong em,
+.meal-prep-copy .eyebrow,
+.membership .eyebrow,
+.section-heading .eyebrow,
+.offer-kicker,
+.footer-column h3,
+.community-page-hero .eyebrow,
+.community-section-title,
+.community-member-form h2 {
+  color: var(--fullness-highlight) !important;
+}
+
+.member-link {
+  color: var(--fullness-highlight) !important;
+  border-color: rgba(184, 120, 120, 0.52) !important;
+}
+
+.member-link svg,
+.member-link span {
+  color: currentColor !important;
+}
+
+.member-link:hover,
+.member-link:focus-visible {
+  color: rgb(244, 234, 219) !important;
+  border-color: rgba(184, 120, 120, 0.8) !important;
+}
+
+.plate-hero-vectors {
+  background:
+    radial-gradient(circle at 70% 42%, rgba(244, 234, 219, 0.035), transparent 34%),
+    var(--hero-beet-line) 44% 44% / auto 83% no-repeat !important;
+  opacity: 0.6 !important;
+  filter: saturate(0.35) contrast(0.78) brightness(0.92) !important;
+}
+
+.food-story-strip {
+  min-height: calc(100svh - var(--site-header-height)) !important;
+  height: auto !important;
+  background: rgb(9, 8, 6) !important;
+}
+
+.food-story-strip::before {
+  inset: 0 !important;
+  background:
+    var(--food-story-bg, none) right center / auto 112% no-repeat !important;
+  filter: saturate(1.12) contrast(1.08) brightness(1.05) !important;
+  opacity: 1 !important;
+}
+
+.food-story-strip::after {
+  background:
+    linear-gradient(90deg, rgba(9, 8, 6, 1) 0%, rgba(9, 8, 6, 0.92) 28%, rgba(9, 8, 6, 0.44) 47%, rgba(9, 8, 6, 0.06) 72%, rgba(9, 8, 6, 0) 100%),
+    linear-gradient(180deg, rgba(9, 8, 6, 0.12) 0%, rgba(9, 8, 6, 0) 48%, rgba(9, 8, 6, 0.18) 100%) !important;
+}
+
+.food-story-strip a {
+  min-height: calc(100svh - var(--site-header-height)) !important;
+  width: min(36vw, 560px) !important;
+  max-width: 560px !important;
+  margin-left: clamp(52px, 6.4vw, 118px) !important;
+}
+
+.food-story-strip strong em,
+.food-story-strip .story-rule::before {
+  color: var(--fullness-highlight) !important;
+  border-color: var(--fullness-highlight-soft) !important;
+}
+
+.food-story-strip .story-rule::after {
+  background: linear-gradient(90deg, var(--fullness-highlight-soft), rgba(184, 120, 120, 0)) !important;
+}
+
+@media (max-width: 1040px) {
+  .food-story-strip::before {
+    background-position: right center !important;
+    background-size: auto 100% !important;
+  }
+
+  .food-story-strip a {
+    width: min(46vw, 430px) !important;
+    margin-left: 42px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .plate-hero-vectors {
+    background:
+      radial-gradient(circle at 70% 34%, rgba(244, 234, 219, 0.03), transparent 30%),
+      var(--hero-beet-line) 68% 38% / auto 54% no-repeat !important;
+    opacity: 0.28 !important;
+  }
+
+  .food-story-strip {
+    min-height: min(760px, 100svh) !important;
+  }
+
+  .food-story-strip::before {
+    background-position: 72% center !important;
+    background-size: auto 100% !important;
+    opacity: 0.68 !important;
+  }
+
+  .food-story-strip::after {
+    background:
+      linear-gradient(90deg, rgba(9, 8, 6, 0.98) 0%, rgba(9, 8, 6, 0.86) 58%, rgba(9, 8, 6, 0.3) 100%),
+      linear-gradient(180deg, rgba(9, 8, 6, 0.34) 0%, rgba(9, 8, 6, 0.04) 46%, rgba(9, 8, 6, 0.44) 100%) !important;
+  }
+
+  .food-story-strip a {
+    min-height: min(760px, 100svh) !important;
+    width: min(88vw, 420px) !important;
+    margin-left: 24px !important;
+    margin-right: 24px !important;
   }
 }

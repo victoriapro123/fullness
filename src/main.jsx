@@ -9,7 +9,6 @@ import {
   CookingPot,
   Eye,
   EyeOff,
-  HandPlatter,
   Heart,
   Leaf,
   Lock,
@@ -42,7 +41,6 @@ import {
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-modern.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
-import communitySceneSrc from "./assets/fullness-community-scene.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
 import "./styles.css";
 
@@ -56,6 +54,7 @@ const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
 const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-line-v2.png");
+const communitySceneSrc = mediaSrc("images/community/comunidad-landing.jpeg");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -241,13 +240,13 @@ const demoProducts = [
     id: "pollo-camote-hojas",
     slug: "pollo-camote-hojas",
     name: "Pollo especiado, camote y hojas verdes",
-    tag: "Antinflamatorio",
+    tag: "Antiinflamatorio",
     price: 7990,
     description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
     image: sampleProductImages[1],
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
     nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
-    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias Antinflamatorias", "Saciedad prolongada"],
+    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antiinflamatorias", "Saciedad prolongada"],
     nutritionDetail: "Preparación equilibrada para sostener energía durante el día, con especias cálidas y vegetales que aportan color, fibra y sabor.",
     nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
     recipeSummary: "Pollo especiado con cúrcuma, puré rústico de camote y hojas verdes frescas.",
@@ -290,11 +289,12 @@ const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
 const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer el servicio de Meal Prep.");
+const familyOptionsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer las opciones familiares.");
 const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero información sobre los talleres.");
 const introTechSignals = [
   {
     id: "anti",
-    label: "Antinflamatorio"
+    label: "Antiinflamatorio"
   },
   {
     id: "nutrients",
@@ -1429,6 +1429,11 @@ function App() {
   const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [communityMemberMessage, setCommunityMemberMessage] = useState("");
+  const [backgroundMode, setBackgroundMode] = useState(() => {
+    if (typeof window === "undefined") return "current";
+
+    return window.localStorage.getItem("fullness_background_mode") || "current";
+  });
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad", "#contacto"]);
@@ -1463,6 +1468,14 @@ function App() {
       setHeaderHiddenForHero(false);
     }
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("fullness_background_mode", backgroundMode);
+  }, [backgroundMode]);
+
+  const toggleBackgroundMode = () => {
+    setBackgroundMode((mode) => (mode === "plum" ? "current" : "plum"));
+  };
 
   const returnToIntro = () => {
     if (isMobileIntroViewport()) {
@@ -2553,7 +2566,7 @@ function App() {
   );
 
   return (
-    <main ref={appRef}>
+    <main ref={appRef} data-background-mode={backgroundMode}>
       <a
         className="whatsapp-float"
         href={whatsappUrl}
@@ -2564,6 +2577,14 @@ function App() {
         <WhatsAppIcon size={24} />
         <span>WhatsApp</span>
       </a>
+      <button
+        className="background-mode-toggle"
+        type="button"
+        onClick={toggleBackgroundMode}
+        aria-pressed={backgroundMode === "plum"}
+      >
+        Fondo: {backgroundMode === "plum" ? "uva" : "actual"}
+      </button>
 
       <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
         <a
@@ -2783,12 +2804,12 @@ function App() {
       <section className="meal-prep-feature" id="calentar">
         <div className="meal-prep-copy">
           <p className="eyebrow">Tu semana resuelta</p>
-          <h2>Meal Prep Antinflamatorio</h2>
+          <h2>Meal Prep Antiinflamatorio</h2>
           <p>
             Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
           </p>
           <ul>
-            <li>Cocina Antinflamatoria</li>
+            <li>Cocina antiinflamatoria</li>
             <li>Ingredientes reales</li>
             <li>Listo para calentar</li>
             <li>Elaborados por chef y nutricionista</li>
@@ -2817,7 +2838,7 @@ function App() {
             Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá del plato.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
-            <span>Cocina Antinflamatoria</span>
+            <span>Cocina antiinflamatoria</span>
             <span>Nutrición funcional</span>
             <span>Talleres de bienestar</span>
             <span>Contenido exclusivo</span>
@@ -2843,18 +2864,23 @@ function App() {
             <Leaf size={30} aria-hidden="true" />
             <p className="offer-kicker">Meal Prep</p>
             <h3>Semana resuelta</h3>
-            <p>Tu semana resuelta con comida real y funcional.</p>
-            <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+            <p>Preparaciones para sostener tu semana con comida real y funcional.</p>
+            <div className="offer-packshots" aria-hidden="true">
+              <img src={mealPrepBandSrc} alt="" />
+              <img src={mealPrepBandSrc} alt="" />
+            </div>
             <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Conocer Meal Prep</a>
           </article>
           <article className="offer-card">
-            <HandPlatter size={30} aria-hidden="true" />
-            <p className="offer-kicker">Platos a la carta</p>
-            <h3>Preparados para disfrutar</h3>
-            <p>Platos preparados para disfrutar hoy, hechos con amor.</p>
-            <img src={sampleProductImages[1]} alt="" aria-hidden="true" />
-            <a href={getProductPath(singleDishProduct)} onClick={(event) => openProductDetail(singleDishProduct, event)}>
-              Ver Menús
+            <Heart size={30} aria-hidden="true" />
+            <p className="offer-kicker">Opciones familiares</p>
+            <h3>Para compartir</h3>
+            <p>Alternativas pensadas para comer mejor en casa y compartir con calma.</p>
+            <div className="offer-organic-image offer-plate-image" aria-hidden="true">
+              <img src={sampleProductImages[2]} alt="" />
+            </div>
+            <a href={familyOptionsWhatsappUrl} target="_blank" rel="noreferrer">
+              Consultar opciones
             </a>
           </article>
           <article className="offer-card">
@@ -2862,7 +2888,9 @@ function App() {
             <p className="offer-kicker">Talleres y actividades</p>
             <h3>Aprende y comparte</h3>
             <p>Aprende, comparte y crece con nuestra comunidad.</p>
-            <img src={communitySceneSrc} alt="" aria-hidden="true" />
+            <div className="offer-organic-image offer-community-image" aria-hidden="true">
+              <img src={communitySceneSrc} alt="" />
+            </div>
             <a href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">Ver Talleres</a>
           </article>
         </div>
