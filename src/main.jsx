@@ -5,15 +5,19 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowLeft,
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
   CookingPot,
   Eye,
   EyeOff,
   Heart,
+  Home,
+  ImagePlus,
   Leaf,
   Lock,
   LogOut,
   Mail,
+  MapPin,
   Menu,
   Minus,
   PackageCheck,
@@ -25,9 +29,14 @@ import {
   ShoppingBag,
   Sparkles,
   Sprout,
+  Store,
+  Tags,
   Timer,
   Trash2,
+  Truck,
   UploadCloud,
+  Users,
+  Utensils,
   Video,
   X
 } from "lucide-react";
@@ -41,6 +50,7 @@ import {
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-modern.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
+import storyPlateCutoutSrc from "./assets/fullness-story-plate-cutout.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
 import "./styles.css";
 
@@ -72,6 +82,7 @@ const legacyPlaceholderProductSlugs = new Set([
   "pollo-curcuma-vegetales",
   "legumbres-granos-oliva"
 ]);
+const shopPath = "/tienda";
 
 function getProductImage(product, index) {
   const image = product.image || "";
@@ -82,13 +93,28 @@ function getProductImage(product, index) {
   return image;
 }
 
+function getProductSecondaryImage(product, index) {
+  const secondaryImage = product.secondaryImage || product.secondaryPhotoUrl || "";
+  if (secondaryImage) return secondaryImage;
+
+  return sampleProductImages[(index + 1) % sampleProductImages.length];
+}
+
+function getMealImage(meal, index) {
+  return meal?.photoUrl || meal?.image || sampleProductImages[index % sampleProductImages.length];
+}
+
+function getMealSecondaryImage(meal, index) {
+  return meal?.secondaryPhotoUrl || meal?.secondaryImage || sampleProductImages[(index + 1) % sampleProductImages.length];
+}
+
 function getProductSlug(product) {
   return product?.slug || product?.id || "";
 }
 
 function getProductPath(product) {
   const slug = getProductSlug(product);
-  return slug ? `/producto/${encodeURIComponent(slug)}` : "/#oferta";
+  return slug ? `/producto/${encodeURIComponent(slug)}` : shopPath;
 }
 
 function getProductSlugFromPath() {
@@ -205,76 +231,191 @@ function applySampleProduct(product, index) {
     price: sample.price,
     description: sample.description,
     image: sample.image,
+    secondaryImage: sample.secondaryImage,
+    productType: sample.productType,
+    planFrequency: sample.planFrequency,
+    benefitTags: sample.benefitTags,
     ingredients: sample.ingredients,
     nutritionDescription: sample.nutritionDescription,
     nutritionHighlights: sample.nutritionHighlights,
     nutritionDetail: sample.nutritionDetail,
     nutritionFacts: sample.nutritionFacts,
     recipeSummary: sample.recipeSummary,
-    recipeSteps: sample.recipeSteps
+    recipeSteps: sample.recipeSteps,
+    includedItems: sample.includedItems,
+    servingLabel: sample.servingLabel,
+    purchaseLabel: sample.purchaseLabel
   };
 }
 
 const demoProducts = [
   {
-    id: "salmon-lentejas-hojas",
-    slug: "salmon-lentejas-hojas",
-    name: "Salmón, lentejas y hojas verdes",
-    tag: "Omega 3 + legumbres",
-    price: 8990,
-    description: "Salmón dorado, lentejas especiadas y hojas frescas con brillo de oliva.",
-    image: sampleProductImages[0],
-    ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
-    nutritionDescription: "Proteína de calidad, omega 3, fibra vegetal y grasas saludables.",
-    nutritionHighlights: ["Omega 3 natural", "Fibra vegetal", "Proteína de calidad", "Energía estable"],
-    nutritionDetail: "Menú pensado para combinar grasas saludables, proteína de alta calidad y fibra de legumbres en una preparación saciante y equilibrada.",
-    nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 18, fiber_g: 9 },
-    recipeSummary: "Salmón dorado al punto, lentejas especiadas y hojas verdes frescas terminadas con aceite de oliva.",
-    recipeSteps: [
-      "Dorar el salmón con calor controlado.",
-      "Calentar las lentejas especiadas hasta que queden cremosas.",
-      "Terminar con hojas verdes frescas y oliva al servir."
-    ]
-  },
-  {
-    id: "pollo-camote-hojas",
-    slug: "pollo-camote-hojas",
-    name: "Pollo especiado, camote y hojas verdes",
-    tag: "Antinflamatorio",
-    price: 7990,
-    description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
+    id: "plan-semanal-antinflamatorio",
+    slug: "plan-semanal-antinflamatorio",
+    name: "Plan semanal antinflamatorio",
+    productType: "plan",
+    planFrequency: "weekly",
+    tag: "5 meal preps / 1 semana",
+    price: 44900,
+    description: "Cinco preparaciones listas para calentar, pensadas para sostener energía, saciedad y una rutina más liviana durante la semana.",
     image: sampleProductImages[1],
-    ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
-    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
-    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antinflamatorias", "Saciedad prolongada"],
-    nutritionDetail: "Preparación equilibrada para sostener energía durante el día, con especias cálidas y vegetales que aportan color, fibra y sabor.",
-    nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
-    recipeSummary: "Pollo especiado con cúrcuma, puré rústico de camote y hojas verdes frescas.",
-    recipeSteps: [
-      "Sellar el pollo con especias cálidas.",
-      "Acompañar con puré de camote de textura suave.",
-      "Agregar hojas verdes al final para mantener frescura."
+    secondaryImage: sampleProductImages[2],
+    benefitTags: ["Antioxidante", "Energético", "Digestivo"],
+    ingredients: ["proteínas magras", "raíces", "legumbres", "hojas verdes", "aceite de oliva"],
+    nutritionDescription: "Plan equilibrado con proteína, fibra vegetal, grasas saludables y carbohidratos de energía estable.",
+    nutritionHighlights: ["Proteína diaria", "Fibra vegetal", "Energía estable", "Cocina antinflamatoria"],
+    nutritionDetail: "Diseñado para resolver almuerzos o cenas de una semana laboral con platos variados y funcionales.",
+    nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 17, fiber_g: 8 },
+    recipeSummary: "Batch cooking Fullness con proteínas, vegetales y granos listos para calentar.",
+    recipeSteps: ["Recibir refrigerado.", "Mantener entre 0 y 5 °C.", "Calentar y terminar con toppings frescos."],
+    servingLabel: "5 porciones individuales",
+    purchaseLabel: "Agregar plan semanal",
+    includedItems: [
+      {
+        id: "pollo-camote-curcuma",
+        name: "Pollo, camote y cúrcuma",
+        tag: "Energético",
+        description: "Pollo especiado, puré rústico de camote y hojas verdes.",
+        photoUrl: sampleProductImages[1],
+        secondaryPhotoUrl: sampleProductImages[0],
+        benefitTags: ["Energético", "Antinflamatorio"],
+        ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes"],
+        nutritionDescription: "Proteína magra con carbohidrato complejo y especias cálidas.",
+        nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Saciedad prolongada"],
+        nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 }
+      },
+      {
+        id: "lentejas-hojas-oliva",
+        name: "Lentejas, hojas y oliva",
+        tag: "Digestivo",
+        description: "Lentejas cremosas, hojas verdes y aceite de oliva.",
+        photoUrl: sampleProductImages[0],
+        secondaryPhotoUrl: sampleProductImages[2],
+        benefitTags: ["Digestivo", "Fibra"],
+        ingredients: ["lentejas", "hojas verdes", "aceite de oliva", "hierbas"],
+        nutritionDescription: "Fibra vegetal y energía amable para la tarde.",
+        nutritionHighlights: ["Fibra vegetal", "Hierro vegetal", "Energía estable"],
+        nutritionFacts: { protein_g: 24, carbs_g: 44, fat_g: 14, fiber_g: 12 }
+      },
+      {
+        id: "salmon-arroz-verde",
+        name: "Salmón y arroz verde",
+        tag: "Omega 3",
+        description: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
+        photoUrl: sampleProductImages[2],
+        secondaryPhotoUrl: sampleProductImages[1],
+        benefitTags: ["Antioxidante", "Omega 3"],
+        ingredients: ["salmón", "arroz verde", "palta", "cilantro"],
+        nutritionDescription: "Grasas saludables, proteína completa y carbohidrato de energía estable.",
+        nutritionHighlights: ["Omega 3 natural", "Proteína completa", "Grasas saludables"],
+        nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 }
+      }
     ]
   },
   {
-    id: "salmon-arroz-palta",
-    slug: "salmon-arroz-palta",
-    name: "Salmón glaseado, arroz verde y palta",
-    tag: "Grasas saludables",
-    price: 8990,
-    description: "Salmón glaseado con arroz verde, palta, mango y hierbas frescas.",
+    id: "plan-mensual-fullness",
+    slug: "plan-mensual-fullness",
+    name: "Plan mensual Fullness",
+    productType: "plan",
+    planFrequency: "monthly",
+    tag: "20 meal preps / 4 semanas",
+    price: 169000,
+    description: "Plan mensual con entregas semanales y rotación de platos para sostener una alimentación funcional sin repetir decisiones cada día.",
     image: sampleProductImages[2],
-    ingredients: ["salmón", "arroz verde", "palta", "mango", "cilantro"],
-    nutritionDescription: "Proteína, grasas saludables y carbohidratos de energía estable.",
-    nutritionHighlights: ["Grasas saludables", "Proteína completa", "Carbohidrato de energía estable", "Hierbas frescas"],
-    nutritionDetail: "Menú diseñado para entregar energía amable y textura fresca, combinando salmón, palta y arroz verde con notas herbales.",
-    nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
-    recipeSummary: "Salmón glaseado, arroz verde, palta, mango y hierbas frescas con terminación brillante.",
-    recipeSteps: [
-      "Glasear el salmón hasta lograr una superficie intensa.",
-      "Servir con arroz verde tibio.",
-      "Terminar con palta, mango y hierbas frescas."
+    secondaryImage: sampleProductImages[0],
+    benefitTags: ["Balance", "Detox", "Energético"],
+    ingredients: ["pescados", "pollo", "legumbres", "granos integrales", "vegetales de estación"],
+    nutritionDescription: "Rotación funcional para cubrir proteína, fibra, grasas saludables y micronutrientes durante el mes.",
+    nutritionHighlights: ["Rotación semanal", "Micronutrientes", "Saciedad", "Preparaciones listas"],
+    nutritionDetail: "Plan diseñado para mantener variedad, adherencia y bienestar a lo largo de cuatro semanas.",
+    nutritionFacts: { protein_g: 32, carbs_g: 40, fat_g: 18, fiber_g: 9 },
+    recipeSummary: "Cuatro semanas de batch cooking Fullness con platos refrigerados y porcionados.",
+    recipeSteps: ["Recibir una entrega semanal.", "Refrigerar cada porción.", "Calentar según el plato y servir."],
+    servingLabel: "20 porciones individuales",
+    purchaseLabel: "Agregar plan mensual",
+    includedItems: [
+      {
+        id: "salmon-lentejas-verdes",
+        name: "Salmón, lentejas y verdes",
+        tag: "Omega 3",
+        description: "Salmón dorado, lentejas especiadas y hojas frescas.",
+        photoUrl: sampleProductImages[0],
+        secondaryPhotoUrl: sampleProductImages[2],
+        benefitTags: ["Omega 3", "Fibra"],
+        ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
+        nutritionDescription: "Proteína de calidad, omega 3 y fibra vegetal.",
+        nutritionHighlights: ["Omega 3 natural", "Fibra vegetal", "Proteína de calidad"],
+        nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 18, fiber_g: 9 }
+      },
+      {
+        id: "pollo-raices",
+        name: "Pollo y raíces dulces",
+        tag: "Antinflamatorio",
+        description: "Pollo especiado, raíces asadas y hojas verdes.",
+        photoUrl: sampleProductImages[1],
+        secondaryPhotoUrl: sampleProductImages[0],
+        benefitTags: ["Antinflamatorio", "Energético"],
+        ingredients: ["pollo", "betarraga", "camote", "hojas verdes"],
+        nutritionDescription: "Proteína magra y vegetales de alta densidad nutricional.",
+        nutritionHighlights: ["Alto en proteína", "Antioxidantes", "Energía estable"],
+        nutritionFacts: { protein_g: 36, carbs_g: 36, fat_g: 15, fiber_g: 8 }
+      },
+      {
+        id: "bowl-verde-quinoa",
+        name: "Bowl verde de quinoa",
+        tag: "Detox",
+        description: "Quinoa, hojas verdes, palta y vegetales de estación.",
+        photoUrl: sampleProductImages[2],
+        secondaryPhotoUrl: sampleProductImages[1],
+        benefitTags: ["Detox", "Antioxidante"],
+        ingredients: ["quinoa", "palta", "hojas verdes", "vegetales"],
+        nutritionDescription: "Fibra, grasas saludables y energía vegetal.",
+        nutritionHighlights: ["Fibra vegetal", "Grasas saludables", "Micronutrientes"],
+        nutritionFacts: { protein_g: 22, carbs_g: 48, fat_g: 18, fiber_g: 11 }
+      }
     ]
+  },
+  {
+    id: "familiar-salmon-arroz-verde",
+    slug: "familiar-salmon-arroz-verde",
+    name: "Salmón familiar y arroz verde",
+    productType: "family",
+    tag: "Formato familiar",
+    price: 32900,
+    description: "Fuente familiar de salmón glaseado, arroz verde, palta y hierbas frescas para compartir en casa.",
+    image: sampleProductImages[2],
+    secondaryImage: sampleProductImages[1],
+    benefitTags: ["Omega 3", "Antioxidante"],
+    ingredients: ["salmón", "arroz verde", "palta", "hierbas frescas"],
+    nutritionDescription: "Proteína completa, grasas saludables y carbohidratos de energía estable.",
+    nutritionHighlights: ["Grasas saludables", "Proteína completa", "Energía estable"],
+    nutritionDetail: "Preparación familiar pensada para compartir sin perder balance nutricional.",
+    nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
+    recipeSummary: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
+    recipeSteps: ["Calentar la base.", "Agregar palta y hierbas al servir.", "Compartir al centro de la mesa."],
+    servingLabel: "3 a 4 personas",
+    purchaseLabel: "Agregar familiar"
+  },
+  {
+    id: "familiar-pollo-camote-curcuma",
+    slug: "familiar-pollo-camote-curcuma",
+    name: "Pollo familiar, camote y cúrcuma",
+    productType: "family",
+    tag: "Formato familiar",
+    price: 28900,
+    description: "Pollo especiado con cúrcuma, camote rústico y hojas verdes en formato familiar.",
+    image: sampleProductImages[1],
+    secondaryImage: sampleProductImages[0],
+    benefitTags: ["Energético", "Antinflamatorio"],
+    ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "aceite de oliva"],
+    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
+    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Saciedad prolongada"],
+    nutritionDetail: "Preparación abundante para resolver una comida familiar con ingredientes reales.",
+    nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
+    recipeSummary: "Pollo especiado, camote rústico y hojas verdes frescas.",
+    recipeSteps: ["Calentar el pollo y camote.", "Terminar con hojas verdes.", "Servir en fuente familiar."],
+    servingLabel: "3 a 4 personas",
+    purchaseLabel: "Agregar familiar"
   }
 ];
 
@@ -291,6 +432,24 @@ const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido
 const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer el servicio de Meal Prep.");
 const familyOptionsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer las opciones familiares.");
 const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero información sobre los talleres.");
+const instagramUrl = "https://www.instagram.com/fullnesslab";
+
+function InstagramGlyph({ size = 16 }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
 const introTechSignals = [
   {
     id: "anti",
@@ -454,17 +613,65 @@ function slugifyMenuName(value) {
     .slice(0, 72);
 }
 
+function createIncludedMealForm(index = 0) {
+  const id =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `meal-${Date.now()}-${index}`;
+
+  return {
+    id,
+    name: "",
+    tag: "",
+    description: "",
+    photoUrl: "",
+    photoStoragePath: "",
+    secondaryPhotoUrl: "",
+    secondaryPhotoStoragePath: "",
+    benefitTags: "",
+    ingredients: "",
+    nutritionDescription: "",
+    nutritionHighlights: "",
+    nutritionFacts: "{}",
+    allergens: ""
+  };
+}
+
+function includedMealToForm(item, index = 0) {
+  return {
+    id: item.id || `meal-${index + 1}`,
+    name: item.name || "",
+    tag: item.tag || "",
+    description: item.description || "",
+    photoUrl: item.photoUrl || item.image || "",
+    photoStoragePath: item.photoStoragePath || "",
+    secondaryPhotoUrl: item.secondaryPhotoUrl || item.secondaryImage || "",
+    secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
+    benefitTags: (item.benefitTags || item.benefit_tags || []).join("\n"),
+    ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || item.nutrition_description || "",
+    nutritionHighlights: (item.nutritionHighlights || item.nutrition_highlights || []).join("\n"),
+    nutritionFacts: JSON.stringify(item.nutritionFacts || item.nutrition_facts || {}, null, 2),
+    allergens: (item.allergens || []).join("\n")
+  };
+}
+
 function createMenuForm(displayOrder = 0) {
   return {
     id: "",
     name: "",
     slug: "",
     sku: "",
+    productType: "plan",
+    planFrequency: "weekly",
     tag: "",
     description: "",
     photoUrl: "",
     photoStoragePath: "",
+    secondaryPhotoUrl: "",
+    secondaryPhotoStoragePath: "",
     priceClp: "",
+    benefitTags: "",
     ingredients: "",
     nutritionDescription: "",
     nutritionHighlights: "",
@@ -473,6 +680,9 @@ function createMenuForm(displayOrder = 0) {
     recipeSummary: "",
     recipeSteps: "",
     allergens: "",
+    includedItems: [createIncludedMealForm(0)],
+    servingLabel: "",
+    purchaseLabel: "",
     displayOrder: String(displayOrder),
     isActive: true
   };
@@ -484,11 +694,16 @@ function menuItemToForm(item) {
     name: item.name || "",
     slug: item.slug || "",
     sku: item.sku || "",
+    productType: item.productType || "family",
+    planFrequency: item.planFrequency || "weekly",
     tag: item.tag || "",
     description: item.description || "",
     photoUrl: item.photoUrl || item.image || "",
     photoStoragePath: item.photoStoragePath || "",
+    secondaryPhotoUrl: item.secondaryPhotoUrl || item.secondaryImage || "",
+    secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     priceClp: String(item.price || 0),
+    benefitTags: (item.benefitTags || []).join("\n"),
     ingredients: (item.ingredients || []).join("\n"),
     nutritionDescription: item.nutritionDescription || "",
     nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
@@ -497,6 +712,9 @@ function menuItemToForm(item) {
     recipeSummary: item.recipeSummary || "",
     recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
+    includedItems: (item.includedItems || []).map(includedMealToForm),
+    servingLabel: item.servingLabel || "",
+    purchaseLabel: item.purchaseLabel || "",
     displayOrder: String(item.displayOrder || 0),
     isActive: Boolean(item.isActive)
   };
@@ -512,6 +730,45 @@ function parseJsonObject(value) {
   }
 
   return parsed;
+}
+
+function parseIncludedMealsFromForm(items) {
+  return items
+    .map((item, index) => {
+      const hasContent =
+        item.name.trim() ||
+        item.description.trim() ||
+        item.photoUrl.trim() ||
+        item.secondaryPhotoUrl.trim();
+
+      if (!hasContent) return null;
+
+      let nutritionFacts = {};
+
+      try {
+        nutritionFacts = parseJsonObject(item.nutritionFacts);
+      } catch (error) {
+        throw new Error(`Plato ${index + 1}: ${error.message}`);
+      }
+
+      return {
+        id: item.id || `meal-${index + 1}`,
+        name: item.name,
+        tag: item.tag,
+        description: item.description,
+        photoUrl: item.photoUrl,
+        photoStoragePath: item.photoStoragePath,
+        secondaryPhotoUrl: item.secondaryPhotoUrl,
+        secondaryPhotoStoragePath: item.secondaryPhotoStoragePath,
+        benefitTags: item.benefitTags,
+        ingredients: item.ingredients,
+        nutritionDescription: item.nutritionDescription,
+        nutritionHighlights: item.nutritionHighlights,
+        nutritionFacts,
+        allergens: item.allergens
+      };
+    })
+    .filter(Boolean);
 }
 
 function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
@@ -565,6 +822,78 @@ function getNutritionEntries(product) {
     .filter((entry) => entry.value);
 }
 
+function getProductType(product) {
+  return product?.productType === "plan" ? "plan" : "family";
+}
+
+function getProductTypeLabel(product) {
+  if (getProductType(product) === "plan") {
+    return product.planFrequency === "monthly" ? "Plan mensual" : "Plan semanal";
+  }
+
+  return "Familiar";
+}
+
+function getBenefitTags(product) {
+  if (product?.benefitTags?.length) return product.benefitTags;
+  if (product?.nutritionHighlights?.length) return product.nutritionHighlights;
+  if (product?.tag) return [product.tag];
+  return [];
+}
+
+function createDefaultCheckoutForm() {
+  return {
+    mode: "delivery",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    comuna: "",
+    instructions: ""
+  };
+}
+
+function loadStoredCheckoutForm() {
+  if (typeof window === "undefined") return createDefaultCheckoutForm();
+
+  try {
+    const stored = JSON.parse(window.localStorage.getItem("fullness_checkout_form") || "null");
+    return {
+      ...createDefaultCheckoutForm(),
+      ...(stored && typeof stored === "object" ? stored : {})
+    };
+  } catch {
+    return createDefaultCheckoutForm();
+  }
+}
+
+function buildOrderMessage(cart, total, checkoutForm) {
+  const lines = [
+    "Hola Fullness Lab, quiero continuar este pedido:",
+    "",
+    ...cart.map((item) => `- ${item.qty} x ${item.name} (${formatPrice(item.price * item.qty)})`),
+    "",
+    `Total: ${formatPrice(total)}`,
+    "",
+    checkoutForm.mode === "pickup"
+      ? "Modalidad: retiro en local"
+      : "Modalidad: despacho",
+    `Nombre: ${checkoutForm.name}`,
+    `Correo: ${checkoutForm.email}`,
+    `Teléfono: ${checkoutForm.phone}`
+  ];
+
+  if (checkoutForm.mode === "delivery") {
+    lines.push(`Dirección: ${checkoutForm.address}`, `Comuna: ${checkoutForm.comuna}`);
+  }
+
+  if (checkoutForm.instructions) {
+    lines.push(`Notas: ${checkoutForm.instructions}`);
+  }
+
+  return lines.join("\n");
+}
+
 function ProductNutritionFacts({ product }) {
   const entries = getNutritionEntries(product);
   if (entries.length === 0) return null;
@@ -581,12 +910,149 @@ function ProductNutritionFacts({ product }) {
   );
 }
 
-function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail }) {
+function HoverImage({ alt, primary, secondary }) {
+  return (
+    <span className="hover-image-frame">
+      <img className="hover-image-primary" src={primary} alt={alt} />
+      <img className="hover-image-secondary" src={secondary || primary} alt="" aria-hidden="true" />
+    </span>
+  );
+}
+
+function ProductCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
+  const includedItems = product.includedItems || [];
+  const benefitTags = getBenefitTags(product);
+  const primaryImage = getProductImage(product, index);
+  const secondaryImage = getProductSecondaryImage(product, index);
+
+  return (
+    <article className={`meal-product-card is-${getProductType(product)}`}>
+      <button className="meal-product-main" type="button" onClick={() => onOpenProduct(product)}>
+        <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
+        <span className="meal-product-kicker">{getProductTypeLabel(product)}</span>
+        <h3>{product.name}</h3>
+        <p>{product.description}</p>
+      </button>
+
+      {benefitTags.length > 0 && (
+        <ul className="meal-benefit-tags" aria-label="Beneficios">
+          {benefitTags.slice(0, 4).map((tag) => <li key={tag}>{tag}</li>)}
+        </ul>
+      )}
+
+      {includedItems.length > 0 && (
+        <div className="meal-product-included" aria-label={`Platos incluidos en ${product.name}`}>
+          {includedItems.slice(0, 4).map((meal, mealIndex) => (
+            <button
+              key={meal.id || meal.name}
+              type="button"
+              onClick={(event) => onOpenMeal(product, meal, event)}
+            >
+              <HoverImage
+                primary={getMealImage(meal, mealIndex)}
+                secondary={getMealSecondaryImage(meal, mealIndex)}
+                alt={meal.name}
+              />
+              <span>{meal.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="meal-product-footer">
+        <span>{product.servingLabel || product.tag}</span>
+        <strong>{formatPrice(product.price)}</strong>
+        <button className="add-button" type="button" onClick={() => onAdd(product)}>
+          <Plus size={17} />
+          {product.purchaseLabel || "Agregar"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans }) {
+  return (
+    <section className="meal-prep-shop" id="oferta">
+      <div className="section-brand-mark offer-brand-mark" aria-hidden="true">
+        <img src={logoVerticalSrc} alt="" />
+      </div>
+      <div className="section-heading">
+        <p className="eyebrow">Meal prep Fullness</p>
+        <h2>Planes y familiares <span>listos.</span></h2>
+        <span className="section-rule" aria-hidden="true" />
+        <p>Elige planes semanales o mensuales, o suma preparaciones familiares para compartir.</p>
+      </div>
+
+      {loading ? (
+        <p className="products-empty">Cargando meal preps…</p>
+      ) : (
+        <>
+          <div className="catalog-block">
+            <div className="catalog-block-heading">
+              <CalendarDays size={24} aria-hidden="true" />
+              <div>
+                <p className="eyebrow">Planes</p>
+                <h3>Semanal y mensual</h3>
+              </div>
+            </div>
+            {plans.length > 0 ? (
+              <div className="meal-product-grid">
+                {plans.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    index={index}
+                    onAdd={onAdd}
+                    onOpenMeal={onOpenMeal}
+                    onOpenProduct={onOpenProduct}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="products-empty">Aún no hay planes activos.</p>
+            )}
+          </div>
+
+          <div className="catalog-block">
+            <div className="catalog-block-heading">
+              <Users size={24} aria-hidden="true" />
+              <div>
+                <p className="eyebrow">Formato familiar</p>
+                <h3>Meal preps únicos</h3>
+              </div>
+            </div>
+            {familyProducts.length > 0 ? (
+              <div className="meal-product-grid family-grid">
+                {familyProducts.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    index={index + plans.length}
+                    onAdd={onAdd}
+                    onOpenMeal={onOpenMeal}
+                    onOpenProduct={onOpenProduct}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="products-empty">Aún no hay opciones familiares activas.</p>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpenMeal }) {
   const highlights = product?.nutritionHighlights?.length
     ? product.nutritionHighlights
     : product?.nutritionDescription
       ? [product.nutritionDescription]
       : [];
+  const benefitTags = getBenefitTags(product);
+  const includedItems = product?.includedItems || [];
 
   return (
     <div className="overlay product-lightbox" role="dialog" aria-modal="true" aria-labelledby="product-lightbox-title">
@@ -598,9 +1064,16 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail }) {
           <img src={image} alt={`Plato ${product.name}`} />
         </div>
         <div className="product-lightbox-copy">
-          <p className="eyebrow">{product.tag}</p>
+          <p className="eyebrow">{getProductTypeLabel(product)}</p>
           <h2 id="product-lightbox-title">{product.name}</h2>
           <p>{product.description}</p>
+          <strong className="product-lightbox-price">{formatPrice(product.price)}</strong>
+
+          {benefitTags.length > 0 && (
+            <ul className="product-pill-list">
+              {benefitTags.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          )}
 
           <div className="product-lightbox-block">
             <h3>Características nutricionales</h3>
@@ -617,10 +1090,33 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail }) {
             <p>{product.recipeSummary || product.description}</p>
           </div>
 
+          {includedItems.length > 0 && (
+            <div className="product-lightbox-block">
+              <h3>Meal preps incluidos</h3>
+              <div className="included-meals-grid">
+                {includedItems.map((meal, mealIndex) => (
+                  <button
+                    key={meal.id || meal.name}
+                    type="button"
+                    onClick={(event) => onOpenMeal(product, meal, event)}
+                  >
+                    <HoverImage
+                      primary={getMealImage(meal, mealIndex)}
+                      secondary={getMealSecondaryImage(meal, mealIndex)}
+                      alt={meal.name}
+                    />
+                    <span>{meal.tag}</span>
+                    <strong>{meal.name}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="product-lightbox-actions">
             <button className="primary-button" type="button" onClick={() => onAdd(product)}>
               <Plus size={18} />
-              Agregar al pedido
+              {product.purchaseLabel || "Agregar al pedido"}
             </button>
             <a href={getProductPath(product)} onClick={(event) => onOpenDetail(product, event)}>
               Ver detalle
@@ -633,12 +1129,69 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail }) {
   );
 }
 
-function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
+function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
+  const benefitTags = getBenefitTags(meal);
+
+  return (
+    <div className="overlay meal-lightbox" role="dialog" aria-modal="true" aria-labelledby="meal-lightbox-title">
+      <section className="product-lightbox-panel meal-lightbox-panel">
+        <button className="icon-button close" type="button" onClick={onClose} aria-label="Cerrar detalle del meal prep">
+          <X size={22} />
+        </button>
+        <div className="product-lightbox-media">
+          <img src={getMealImage(meal, 0)} alt={meal.name} />
+        </div>
+        <div className="product-lightbox-copy">
+          <p className="eyebrow">{meal.tag || parentProduct?.name}</p>
+          <h2 id="meal-lightbox-title">{meal.name}</h2>
+          <p>{meal.description}</p>
+
+          {benefitTags.length > 0 && (
+            <ul className="product-pill-list">
+              {benefitTags.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          )}
+
+          <div className="product-lightbox-block">
+            <h3>Información nutricional</h3>
+            {meal.nutritionDescription && <p>{meal.nutritionDescription}</p>}
+            {meal.nutritionHighlights?.length > 0 && (
+              <ul className="product-pill-list">
+                {meal.nutritionHighlights.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            )}
+            <ProductNutritionFacts product={meal} />
+          </div>
+
+          {meal.ingredients?.length > 0 && (
+            <div className="product-lightbox-block">
+              <h3>Ingredientes</h3>
+              <ul className="product-pill-list">
+                {meal.ingredients.map((ingredient) => <li key={ingredient}>{ingredient}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {parentProduct && (
+            <div className="product-lightbox-actions single-action">
+              <button className="primary-button" type="button" onClick={() => onAddParent(parentProduct)}>
+                <Plus size={18} />
+                {parentProduct.purchaseLabel || "Agregar plan completo"}
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpenMeal }) {
   if (loading && !product) {
     return (
       <section className="product-detail-page product-detail-state">
         <Sprout size={34} />
-        <h1>Cargando menú Fullness.</h1>
+        <h1>Cargando meal prep Fullness.</h1>
       </section>
     );
   }
@@ -647,7 +1200,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
     return (
       <section className="product-detail-page product-detail-state">
         <Sprout size={34} />
-        <h1>No encontramos este menú.</h1>
+        <h1>No encontramos este meal prep.</h1>
         <p>Puede haber cambiado de nombre o ya no estar activo.</p>
         <button className="primary-button" type="button" onClick={onBackToShop}>
           <ArrowLeft size={18} />
@@ -663,6 +1216,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
       ? [product.nutritionDescription]
       : [];
   const recipeSteps = product.recipeSteps?.length ? product.recipeSteps : [];
+  const includedItems = product.includedItems || [];
 
   return (
     <article className="product-detail-page">
@@ -682,12 +1236,12 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
           <strong>{formatPrice(product.price)}</strong>
           <button className="primary-button" type="button" onClick={() => onAdd(product)}>
             <Plus size={18} />
-            Agregar al pedido
+            {product.purchaseLabel || "Agregar al pedido"}
           </button>
         </div>
       </section>
 
-      <section className="product-detail-content" aria-label="Detalle del menú">
+      <section className="product-detail-content" aria-label="Detalle del meal prep">
         <div className="product-detail-panel">
           <h2>Nutrición</h2>
           {product.nutritionDescription && <p>{product.nutritionDescription}</p>}
@@ -723,6 +1277,29 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop }) {
             <p className="product-allergens">Alérgenos: {product.allergens.join(", ")}.</p>
           )}
         </div>
+
+        {includedItems.length > 0 && (
+          <div className="product-detail-panel product-detail-included">
+            <h2>Meal preps</h2>
+            <div className="included-meals-grid">
+              {includedItems.map((meal, mealIndex) => (
+                <button
+                  key={meal.id || meal.name}
+                  type="button"
+                  onClick={(event) => onOpenMeal(product, meal, event)}
+                >
+                  <HoverImage
+                    primary={getMealImage(meal, mealIndex)}
+                    secondary={getMealSecondaryImage(meal, mealIndex)}
+                    alt={meal.name}
+                  />
+                  <span>{meal.tag}</span>
+                  <strong>{meal.name}</strong>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
     </article>
   );
@@ -1429,8 +2006,11 @@ function App() {
   const [products, setProducts] = useState(demoProducts);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
+  const [mealPreview, setMealPreview] = useState(null);
   const [currentProductSlug, setCurrentProductSlug] = useState(() => getProductSlugFromPath());
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+  const [checkoutForm, setCheckoutForm] = useState(loadStoredCheckoutForm);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [initialAuthRedirect] = useState(() => readAuthRedirectState());
@@ -1458,7 +2038,7 @@ function App() {
   });
 
   useLayoutEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad", "#contacto"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#comunidad", "#contacto"]);
     const productSlug = getProductSlugFromPath();
 
     if (productSlug) {
@@ -1467,7 +2047,15 @@ function App() {
       return;
     }
 
-    if (window.location.pathname === "/comunidad") {
+    if (window.location.hash === "#oferta") {
+      window.history.replaceState(null, "", shopPath);
+      setCurrentPath(shopPath);
+      document.documentElement.classList.add("intro-scroll-consumed");
+      setHeaderHiddenForHero(false);
+      return;
+    }
+
+    if (window.location.pathname === "/comunidad" || window.location.pathname === shopPath) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setHeaderHiddenForHero(false);
       return;
@@ -1495,6 +2083,14 @@ function App() {
     window.localStorage.setItem("fullness_background_mode", backgroundMode);
   }, [backgroundMode]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("fullness_checkout_form", JSON.stringify(checkoutForm));
+    } catch {
+      // Local checkout persistence is best-effort.
+    }
+  }, [checkoutForm]);
+
   const toggleBackgroundMode = () => {
     setBackgroundMode((mode) => (mode === "plum" ? "current" : "plum"));
   };
@@ -1518,6 +2114,11 @@ function App() {
 
   const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
     const resolvedHref = href === "#filosofia" ? "#proposito" : href;
+    if (resolvedHref === "#oferta") {
+      openShopPage(null, { replace });
+      return true;
+    }
+
     const scrollToTarget = (target) => {
       const sectionTop = target.getBoundingClientRect().top + window.pageYOffset;
       const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
@@ -1528,9 +2129,10 @@ function App() {
       return Math.max(0, sectionTop - headerHeight - 14);
     };
 
-    if (currentProductSlug || window.location.pathname === "/comunidad") {
+    if (currentProductSlug || window.location.pathname === "/comunidad" || window.location.pathname === shopPath) {
       setCurrentProductSlug("");
       setProductPreviewSlug("");
+      setMealPreview(null);
       setCurrentPath("/");
       document.documentElement.classList.add("intro-scroll-consumed");
       window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
@@ -1596,6 +2198,7 @@ function App() {
     event?.preventDefault();
     setCurrentProductSlug("");
     setProductPreviewSlug("");
+    setMealPreview(null);
     setMenuOpen(false);
     setCartOpen(false);
     setAccountOpen(false);
@@ -1608,6 +2211,33 @@ function App() {
     }
 
     setCurrentPath("/comunidad");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  function openShopPage(event, { replace = false } = {}) {
+    event?.preventDefault();
+    setCurrentProductSlug("");
+    setProductPreviewSlug("");
+    setMealPreview(null);
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    document.documentElement.classList.add("intro-scroll-consumed");
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-mobile-skip");
+    }
+    window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+    setHeaderHiddenForHero(false);
+
+    if (window.location.pathname !== shopPath || window.location.hash) {
+      if (replace) {
+        window.history.replaceState(null, "", shopPath);
+      } else {
+        window.history.pushState(null, "", shopPath);
+      }
+    }
+
+    setCurrentPath(shopPath);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }
 
@@ -1629,7 +2259,7 @@ function App() {
     const result = await listActiveMenuItems();
     if (result.error || !result.configured) return;
 
-    setProducts(result.data.map(applySampleProduct));
+    setProducts(result.data.length > 0 ? result.data.map(applySampleProduct) : demoProducts);
   }
 
   async function refreshAdminItems({ silent = false } = {}) {
@@ -1644,7 +2274,7 @@ function App() {
     const result = await listAdminMenuItems();
 
     if (result.error) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos cargar los menús."));
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos cargar los meal preps."));
     } else {
       setAdminItems(result.data);
       if (!menuForm.id && result.data.length > 0) {
@@ -2075,9 +2705,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad"]);
+    const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#comunidad"]);
 
     const syncSectionHash = () => {
+      if (window.location.hash === "#oferta") {
+        openShopPage(null, { replace: true });
+        return;
+      }
+
       if (!sectionHashes.has(window.location.hash)) return;
       navigateToSection(window.location.hash, { smooth: false, replace: true });
     };
@@ -2149,6 +2784,7 @@ function App() {
       setCartOpen(false);
       setMenuOpen(false);
       setAdminOpen(false);
+      setMealPreview(null);
       setProductPreviewSlug("");
     };
 
@@ -2175,14 +2811,27 @@ function App() {
   }, [products]);
   const currentProduct = currentProductSlug ? productsBySlug.get(currentProductSlug) : null;
   const productPreview = productPreviewSlug ? productsBySlug.get(productPreviewSlug) : null;
+  const planProducts = useMemo(
+    () => products.filter((product) => getProductType(product) === "plan"),
+    [products]
+  );
+  const familyProducts = useMemo(
+    () => products.filter((product) => getProductType(product) === "family"),
+    [products]
+  );
+  const mealPreviewParent = mealPreview?.parentSlug ? productsBySlug.get(mealPreview.parentSlug) : null;
+  const mealPreviewItem = mealPreviewParent?.includedItems?.find((meal) =>
+    (meal.id || meal.name) === mealPreview?.mealId
+  );
   const currentProductIndex = currentProduct
     ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(currentProduct)))
     : 0;
   const productPreviewIndex = productPreview
     ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(productPreview)))
     : 0;
-  const singleDishProduct = products[0] || demoProducts[0];
+  const singleDishProduct = familyProducts[0] || products[0] || demoProducts[0];
   const isCommunityPage = currentPath === "/comunidad" && !currentProductSlug;
+  const isShopPage = currentPath === shopPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
 
   function addToCart(product) {
@@ -2202,10 +2851,22 @@ function App() {
     }, 2200);
   }
 
+  function openMealQuickView(parentProduct, meal, event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const parentSlug = getProductSlug(parentProduct);
+    const mealId = meal?.id || meal?.name;
+    if (!parentSlug || !mealId) return;
+
+    setMealPreview({ parentSlug, mealId });
+    setMenuOpen(false);
+  }
+
   function openProductQuickView(product) {
     const slug = getProductSlug(product);
     if (!slug) return;
 
+    setMealPreview(null);
     setProductPreviewSlug(slug);
     setMenuOpen(false);
   }
@@ -2216,6 +2877,7 @@ function App() {
     if (!slug) return;
 
     setProductPreviewSlug("");
+    setMealPreview(null);
     setCurrentProductSlug(slug);
     setMenuOpen(false);
     setCartOpen(false);
@@ -2227,7 +2889,7 @@ function App() {
   }
 
   function backToShop() {
-    navigateToSection("#oferta", { smooth: false });
+    openShopPage(null, { replace: true });
   }
 
   function updateQty(id, delta) {
@@ -2236,6 +2898,37 @@ function App() {
         .map((item) => (item.id === id ? { ...item, qty: item.qty + delta } : item))
         .filter((item) => item.qty > 0)
     );
+  }
+
+  function updateCheckoutForm(event) {
+    const { name, value } = event.target;
+
+    setCheckoutForm((current) => ({
+      ...current,
+      [name]: value
+    }));
+    setCheckoutMessage("");
+  }
+
+  function submitCheckout(event) {
+    event.preventDefault();
+    if (cart.length === 0) return;
+
+    const order = {
+      items: cart,
+      total: cartTotal,
+      fulfillment: checkoutForm,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      window.localStorage.setItem("fullness_last_order", JSON.stringify(order));
+    } catch {
+      // Local order persistence is best-effort.
+    }
+
+    setCheckoutMessage("Pedido preparado. Te abrimos WhatsApp para coordinar el pago y la entrega.");
+    window.open(createWhatsappUrl(buildOrderMessage(cart, cartTotal, checkoutForm)), "_blank", "noopener,noreferrer");
   }
 
   function submitSubscription(event) {
@@ -2415,11 +3108,41 @@ function App() {
         next.slug = slugifyMenuName(value);
       }
 
+      if (name === "productType") {
+        next.planFrequency = value === "plan" ? current.planFrequency || "weekly" : "";
+        next.includedItems = value === "plan" && current.includedItems.length === 0
+          ? [createIncludedMealForm(0)]
+          : current.includedItems;
+      }
+
       return next;
     });
   }
 
-  async function handleMenuPhotoChange(event) {
+  function updateIncludedMealForm(index, field, value) {
+    setMenuForm((current) => ({
+      ...current,
+      includedItems: current.includedItems.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    }));
+  }
+
+  function addIncludedMeal() {
+    setMenuForm((current) => ({
+      ...current,
+      includedItems: [...current.includedItems, createIncludedMealForm(current.includedItems.length)]
+    }));
+  }
+
+  function removeIncludedMeal(indexToRemove) {
+    setMenuForm((current) => ({
+      ...current,
+      includedItems: current.includedItems.filter((_, index) => index !== indexToRemove)
+    }));
+  }
+
+  async function handleMenuPhotoChange(event, target = "primary", mealIndex = null) {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -2432,11 +3155,44 @@ function App() {
     if (result.error || !result.configured) {
       setAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
     } else {
-      setMenuForm((current) => ({
-        ...current,
-        photoUrl: result.data.photoUrl,
-        photoStoragePath: result.data.photoStoragePath
-      }));
+      setMenuForm((current) => {
+        if (mealIndex !== null) {
+          return {
+            ...current,
+            includedItems: current.includedItems.map((item, index) => {
+              if (index !== mealIndex) return item;
+
+              if (target === "mealSecondary") {
+                return {
+                  ...item,
+                  secondaryPhotoUrl: result.data.photoUrl,
+                  secondaryPhotoStoragePath: result.data.photoStoragePath
+                };
+              }
+
+              return {
+                ...item,
+                photoUrl: result.data.photoUrl,
+                photoStoragePath: result.data.photoStoragePath
+              };
+            })
+          };
+        }
+
+        if (target === "secondary") {
+          return {
+            ...current,
+            secondaryPhotoUrl: result.data.photoUrl,
+            secondaryPhotoStoragePath: result.data.photoStoragePath
+          };
+        }
+
+        return {
+          ...current,
+          photoUrl: result.data.photoUrl,
+          photoStoragePath: result.data.photoStoragePath
+        };
+      });
       setAdminMessage("Foto cargada.");
     }
 
@@ -2457,9 +3213,13 @@ function App() {
     setAdminMessage("");
 
     let nutritionFacts = {};
+    let includedItems = [];
 
     try {
       nutritionFacts = parseJsonObject(menuForm.nutritionFacts);
+      includedItems = menuForm.productType === "plan"
+        ? parseIncludedMealsFromForm(menuForm.includedItems)
+        : [];
     } catch (error) {
       setAdminSaving(false);
       setAdminError(error.message);
@@ -2471,11 +3231,16 @@ function App() {
       name: menuForm.name,
       slug: menuForm.slug || slugifyMenuName(menuForm.name),
       sku: menuForm.sku,
+      productType: menuForm.productType,
+      planFrequency: menuForm.planFrequency,
       tag: menuForm.tag,
       description: menuForm.description,
       photoUrl: menuForm.photoUrl,
       photoStoragePath: menuForm.photoStoragePath,
+      secondaryPhotoUrl: menuForm.secondaryPhotoUrl,
+      secondaryPhotoStoragePath: menuForm.secondaryPhotoStoragePath,
       priceClp: menuForm.priceClp,
+      benefitTags: menuForm.benefitTags,
       ingredients: menuForm.ingredients,
       nutritionDescription: menuForm.nutritionDescription,
       nutritionHighlights: menuForm.nutritionHighlights,
@@ -2484,15 +3249,18 @@ function App() {
       recipeSummary: menuForm.recipeSummary,
       recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
+      includedItems,
+      servingLabel: menuForm.servingLabel,
+      purchaseLabel: menuForm.purchaseLabel,
       displayOrder: menuForm.displayOrder,
       isActive: menuForm.isActive
     });
 
     if (result.error || !result.configured) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos guardar el menú."));
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos guardar el meal prep."));
     } else {
       setMenuForm(menuItemToForm(result.data));
-      setAdminMessage("Menú guardado.");
+      setAdminMessage("Meal prep guardado.");
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
     }
@@ -2501,7 +3269,7 @@ function App() {
   }
 
   async function removeMenuItem(item) {
-    if (!window.confirm(`¿Eliminar "${item.name}" del menú?`)) return;
+    if (!window.confirm(`¿Eliminar "${item.name}" del catálogo?`)) return;
 
     setAdminSaving(true);
     setAdminError("");
@@ -2510,10 +3278,10 @@ function App() {
     const result = await deleteMenuItem(item.id);
 
     if (result.error || !result.configured) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el menú."));
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el meal prep."));
     } else {
       if (menuForm.id === item.id) resetMenuForm();
-      setAdminMessage("Menú eliminado.");
+      setAdminMessage("Meal prep eliminado.");
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
     }
@@ -2522,7 +3290,7 @@ function App() {
   }
 
   const navItems = [
-    { href: "#oferta", label: "Planes" },
+    { href: shopPath, label: "Planes" },
     { href: "/comunidad", label: "Comunidad" },
     { href: "#proposito", label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
@@ -2545,6 +3313,11 @@ function App() {
           return;
         }
 
+        if (item.href === shopPath) {
+          openShopPage(event);
+          return;
+        }
+
         if (item.href.startsWith("#")) {
           event.preventDefault();
           navigateToSection(item.href);
@@ -2554,18 +3327,31 @@ function App() {
       {item.label}
     </a>
   ));
+  const floatingActionsHidden =
+    cartOpen ||
+    accountOpen ||
+    adminOpen ||
+    menuOpen ||
+    passwordSetupOpen ||
+    Boolean(productPreview) ||
+    Boolean(mealPreviewItem);
 
   const renderSiteFooter = () => (
     <footer id="contacto">
       <div className="footer-brand">
         <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
         <p>Nutrición consciente para una vida plena y equilibrada.</p>
+        <div className="footer-socials" aria-label="Redes Fullness Lab">
+          <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram Fullness Lab">
+            <InstagramGlyph />
+          </a>
+        </div>
       </div>
       <nav className="footer-column" aria-label="Navegación de pie de página">
         <h3>Navegación</h3>
         <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }}>Menú</a>
-        <a href="#oferta" onClick={(event) => { event.preventDefault(); navigateToSection("#oferta"); }}>Planes</a>
-        <a href={getProductPath(singleDishProduct)} onClick={(event) => openProductDetail(singleDishProduct, event)}>Tienda</a>
+        <a href={shopPath} onClick={openShopPage}>Planes</a>
+        <a href={shopPath} onClick={openShopPage}>Tienda</a>
         <a href="/comunidad" onClick={openCommunityPage}>Comunidad</a>
         <a href="#proposito" onClick={(event) => { event.preventDefault(); navigateToSection("#proposito"); }}>Nosotros</a>
         <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Contacto</a>
@@ -2589,24 +3375,28 @@ function App() {
 
   return (
     <main ref={appRef} data-background-mode={backgroundMode}>
-      <a
-        className="whatsapp-float"
-        href={whatsappUrl}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Escribir a Fullness Lab por WhatsApp"
-      >
-        <WhatsAppIcon size={24} />
-        <span>WhatsApp</span>
-      </a>
-      <button
-        className="background-mode-toggle"
-        type="button"
-        onClick={toggleBackgroundMode}
-        aria-pressed={backgroundMode === "plum"}
-      >
-        Fondo: {backgroundMode === "plum" ? "uva" : "actual"}
-      </button>
+      {!floatingActionsHidden && (
+        <>
+          <a
+            className="whatsapp-float"
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Escribir a Fullness Lab por WhatsApp"
+          >
+            <WhatsAppIcon size={24} />
+            <span>WhatsApp</span>
+          </a>
+          <button
+            className="background-mode-toggle"
+            type="button"
+            onClick={toggleBackgroundMode}
+            aria-pressed={backgroundMode === "plum"}
+          >
+            Fondo: {backgroundMode === "plum" ? "uva" : "actual"}
+          </button>
+        </>
+      )}
 
       <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
         <a
@@ -2664,6 +3454,11 @@ function App() {
                   return;
                 }
 
+                if (item.href === shopPath) {
+                  openShopPage(event);
+                  return;
+                }
+
                 event.preventDefault();
                 setMenuOpen(false);
                 navigateToSection(item.href);
@@ -2693,6 +3488,7 @@ function App() {
           loading={productsLoading}
           onAdd={addToCart}
           onBackToShop={backToShop}
+          onOpenMeal={openMealQuickView}
         />
       ) : isCommunityPage ? (
         <>
@@ -2703,6 +3499,20 @@ function App() {
             onCommunityMemberSubmit={submitCommunityMember}
             onToggleActivities={() => setActivitiesExpanded((current) => !current)}
           />
+          {renderSiteFooter()}
+        </>
+      ) : isShopPage ? (
+        <>
+          <div className="shop-page-shell">
+            <MealPrepCatalog
+              plans={planProducts}
+              familyProducts={familyProducts}
+              loading={productsLoading}
+              onAdd={addToCart}
+              onOpenMeal={openMealQuickView}
+              onOpenProduct={openProductQuickView}
+            />
+          </div>
           {renderSiteFooter()}
         </>
       ) : (
@@ -2726,11 +3536,8 @@ function App() {
           <strong className="hero-manifesto">No contamos calorías. Creemos en aprender a nutrirse.</strong>
           <a
             className="plate-hero-primary"
-            href="#oferta"
-            onClick={(event) => {
-              event.preventDefault();
-              navigateToSection("#oferta");
-            }}
+            href={shopPath}
+            onClick={openShopPage}
           >
             Ver planes
             <ArrowUpRight size={17} aria-hidden="true" />
@@ -2770,7 +3577,7 @@ function App() {
 
       <span id="plato" className="legacy-anchor" aria-hidden="true" />
       <div
-        className="philosophy-scene"
+        className="philosophy-scene philosophy-story-combo"
         style={{
           "--philosophy-scene-bg": `url("${philosophySceneBgSrc}")`,
           "--silhouette-root-one": `url("${silhouetteRootOneSrc}")`,
@@ -2802,30 +3609,25 @@ function App() {
           </div>
           <img className="food-editorial-beet" src={silhouetteRootTwoSrc} alt="" aria-hidden="true" />
         </section>
-      </div>
 
-      <section
-        className="food-story-strip"
-        style={{ "--food-story-bg": `url("${sampleProductImages[1]}")` }}
-      >
-        <a
-          href="#oferta"
-          aria-label="Explorar caminos Fullness Lab"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateToSection("#oferta");
-          }}
-        >
-          <span className="eyebrow">Alimentarse es</span>
-          <strong>mucho <em>más</em> que comer.</strong>
-          <span className="story-rule" aria-hidden="true" />
-          <span className="story-copy">Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
-          <span className="section-cta">
-            Explorar Fullness
-            <ArrowUpRight size={16} aria-hidden="true" />
-          </span>
-        </a>
-      </section>
+        <section className="food-story-strip">
+          <a
+            href={shopPath}
+            aria-label="Explorar caminos Fullness Lab"
+            onClick={openShopPage}
+          >
+            <span className="eyebrow">Alimentarse es</span>
+            <strong>mucho <em>más</em> que comer.</strong>
+            <span className="story-rule" aria-hidden="true" />
+            <span className="story-copy">Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
+            <span className="section-cta">
+              Explorar Fullness
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </span>
+          </a>
+          <img className="philosophy-story-plate" src={storyPlateCutoutSrc} alt="" aria-hidden="true" />
+        </section>
+      </div>
 
       <section className="meal-prep-feature" id="calentar">
         <div className="meal-prep-copy">
@@ -2841,13 +3643,18 @@ function App() {
             <li>Listo para calentar</li>
             <li>Elaborados por chef y nutricionista</li>
           </ul>
-          <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Ver planes</a>
+          <a
+            href={shopPath}
+            onClick={openShopPage}
+          >
+            Ver planes
+          </a>
         </div>
         <a
           className="meal-prep-visual-link"
-          href={getProductPath(singleDishProduct)}
-          aria-label="Ir a la tienda de platos únicos"
-          onClick={(event) => openProductDetail(singleDishProduct, event)}
+          href={shopPath}
+          aria-label="Ir a la tienda de meal preps"
+          onClick={openShopPage}
         >
           <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
         </a>
@@ -2880,53 +3687,6 @@ function App() {
         </div>
       </section>
 
-      <section className="fullness-offer" id="oferta">
-        <div className="section-brand-mark offer-brand-mark" aria-hidden="true">
-          <img src={logoVerticalSrc} alt="" />
-        </div>
-        <div className="section-heading">
-          <p className="eyebrow">Explora Fullness</p>
-          <h2>Elige tu <span>camino.</span></h2>
-          <span className="section-rule" aria-hidden="true" />
-          <p>Meal prep, opciones familiares y actividades para nutrirte desde la raíz.</p>
-        </div>
-        <div className="offer-grid">
-          <article className="offer-card">
-            <Leaf size={30} aria-hidden="true" />
-            <p className="offer-kicker">Meal Prep</p>
-            <h3>Semana resuelta</h3>
-            <p>Preparaciones para sostener tu semana con comida real y funcional.</p>
-            <div className="offer-packshots" aria-hidden="true">
-              <img src={mealPrepBandSrc} alt="" />
-              <img src={mealPrepBandSrc} alt="" />
-            </div>
-            <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Conocer Meal Prep</a>
-          </article>
-          <article className="offer-card">
-            <Heart size={30} aria-hidden="true" />
-            <p className="offer-kicker">Opciones familiares</p>
-            <h3>Para compartir</h3>
-            <p>Alternativas pensadas para comer mejor en casa y compartir con calma.</p>
-            <div className="offer-organic-image offer-plate-image" aria-hidden="true">
-              <img src={sampleProductImages[2]} alt="" />
-            </div>
-            <a href={familyOptionsWhatsappUrl} target="_blank" rel="noreferrer">
-              Consultar opciones
-            </a>
-          </article>
-          <article className="offer-card">
-            <Sparkles size={30} aria-hidden="true" />
-            <p className="offer-kicker">Talleres y actividades</p>
-            <h3>Aprende y comparte</h3>
-            <p>Aprende, comparte y crece con nuestra comunidad.</p>
-            <div className="offer-organic-image offer-community-image" aria-hidden="true">
-              <img src={communitySceneSrc} alt="" />
-            </div>
-            <a href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">Ver Talleres</a>
-          </article>
-        </div>
-      </section>
-
           {renderSiteFooter()}
         </>
       )}
@@ -2936,8 +3696,21 @@ function App() {
           product={productPreview}
           image={getProductImage(productPreview, productPreviewIndex)}
           onAdd={addToCart}
-          onClose={() => setProductPreviewSlug("")}
+          onClose={() => {
+            setProductPreviewSlug("");
+            setMealPreview(null);
+          }}
           onOpenDetail={openProductDetail}
+          onOpenMeal={openMealQuickView}
+        />
+      )}
+
+      {mealPreviewItem && (
+        <MealPrepQuickView
+          meal={mealPreviewItem}
+          parentProduct={mealPreviewParent}
+          onAddParent={addToCart}
+          onClose={() => setMealPreview(null)}
         />
       )}
 
@@ -3025,7 +3798,7 @@ function App() {
             <header className="backoffice-header">
               <div>
                 <p className="eyebrow">Backoffice</p>
-                <h2 id="backoffice-title">Menús</h2>
+                <h2 id="backoffice-title">Meal preps</h2>
               </div>
               <div className="backoffice-header-actions">
                 {isAdmin && (
@@ -3033,7 +3806,7 @@ function App() {
                     className="icon-button"
                     type="button"
                     onClick={() => refreshAdminItems()}
-                    aria-label="Actualizar menús"
+                    aria-label="Actualizar meal preps"
                     disabled={adminLoading}
                   >
                     <RefreshCw size={20} />
@@ -3049,7 +3822,7 @@ function App() {
               <div className="backoffice-state">
                 <ShieldCheck size={34} />
                 <h3>Acceso administrador</h3>
-                <p>Inicia sesión con una cuenta autorizada para gestionar los menús.</p>
+                <p>Inicia sesión con una cuenta autorizada para gestionar los meal preps.</p>
                 <button className="primary-button" type="button" onClick={() => {
                   setAdminOpen(false);
                   setAccountOpen(true);
@@ -3067,7 +3840,7 @@ function App() {
                 )}
 
                 <div className="backoffice-layout backoffice-layout-with-community">
-                  <aside className="backoffice-list" aria-label="Menús configurados">
+                  <aside className="backoffice-list" aria-label="Meal preps configurados">
                     <div className="backoffice-list-top">
                       <h3>Configurados</h3>
                       <button className="backoffice-command" type="button" onClick={resetMenuForm}>
@@ -3077,7 +3850,7 @@ function App() {
                     </div>
 
                     {adminLoading ? (
-                      <p className="backoffice-muted">Cargando menús…</p>
+                      <p className="backoffice-muted">Cargando meal preps…</p>
                     ) : adminItems.length > 0 ? (
                       <div className="backoffice-menu-stack">
                         {adminItems.map((item) => (
@@ -3086,7 +3859,7 @@ function App() {
                               <img src={item.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt="" aria-hidden="true" />
                               <span>
                                 <strong>{item.name}</strong>
-                                <small>{formatPrice(item.price)}</small>
+                                <small>{getProductTypeLabel(item)} · {formatPrice(item.price)}</small>
                               </span>
                             </button>
                             <div className="backoffice-card-meta">
@@ -3108,7 +3881,7 @@ function App() {
                         ))}
                       </div>
                     ) : (
-                      <p className="backoffice-muted">Sin menús cargados.</p>
+                      <p className="backoffice-muted">Sin meal preps cargados.</p>
                     )}
                   </aside>
 
@@ -3116,7 +3889,7 @@ function App() {
                     <div className="backoffice-form-head">
                       <div>
                         <p className="eyebrow">{menuForm.id ? "Editar" : "Nuevo"}</p>
-                        <h3>{menuForm.name || "Menú Fullness"}</h3>
+                        <h3>{menuForm.name || "Meal prep Fullness"}</h3>
                       </div>
                       <label className="backoffice-switch">
                         <input
@@ -3134,20 +3907,34 @@ function App() {
 
                     <div className="backoffice-grid">
                       <label>
+                        Tipo
+                        <select name="productType" value={menuForm.productType} onChange={updateMenuForm}>
+                          <option value="plan">Plan</option>
+                          <option value="family">Familiar</option>
+                        </select>
+                      </label>
+                      <label>
+                        Frecuencia
+                        <select name="planFrequency" value={menuForm.planFrequency} onChange={updateMenuForm} disabled={menuForm.productType !== "plan"}>
+                          <option value="weekly">Semanal</option>
+                          <option value="monthly">Mensual</option>
+                        </select>
+                      </label>
+                      <label>
                         Nombre
-                        <input required name="name" value={menuForm.name} onChange={updateMenuForm} placeholder="Trucha, betarraga y quinoa…" />
+                        <input required name="name" value={menuForm.name} onChange={updateMenuForm} placeholder="Plan semanal antinflamatorio…" />
                       </label>
                       <label>
                         Slug
-                        <input required name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="trucha-betarraga-quinoa…" />
+                        <input required name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="plan-semanal-antinflamatorio…" />
                       </label>
                       <label>
                         SKU
-                        <input name="sku" value={menuForm.sku} onChange={updateMenuForm} placeholder="FULL-001…" />
+                        <input name="sku" value={menuForm.sku} onChange={updateMenuForm} placeholder="FULL-PLAN-001…" />
                       </label>
                       <label>
                         Etiqueta
-                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="Omega 3 + antioxidantes…" />
+                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="5 meal preps / 1 semana…" />
                       </label>
                       <label>
                         Precio CLP
@@ -3157,6 +3944,14 @@ function App() {
                         Orden
                         <input name="displayOrder" type="number" step="1" value={menuForm.displayOrder} onChange={updateMenuForm} />
                       </label>
+                      <label>
+                        Porciones / duración
+                        <input name="servingLabel" value={menuForm.servingLabel} onChange={updateMenuForm} placeholder="5 porciones individuales…" />
+                      </label>
+                      <label>
+                        Botón
+                        <input name="purchaseLabel" value={menuForm.purchaseLabel} onChange={updateMenuForm} placeholder="Agregar plan semanal…" />
+                      </label>
                     </div>
 
                     <label className="backoffice-wide">
@@ -3164,23 +3959,47 @@ function App() {
                       <textarea required name="description" rows="3" value={menuForm.description} onChange={updateMenuForm} placeholder="Pescado del sur, raíces dulces, hojas verdes y granos integrales…" />
                     </label>
 
-                    <div className="backoffice-photo-row">
-                      <div className="backoffice-photo-preview">
-                        {menuForm.photoUrl ? (
-                          <img src={menuForm.photoUrl} alt="" aria-hidden="true" />
-                        ) : (
-                          <UploadCloud size={30} />
-                        )}
-                      </div>
-                      <div>
+                    <label className="backoffice-wide">
+                      Tags de beneficios
+                      <textarea name="benefitTags" rows="3" value={menuForm.benefitTags} onChange={updateMenuForm} placeholder={"Antioxidante\nEnergético\nDetox…"} />
+                    </label>
+
+                    <div className="backoffice-photo-row backoffice-photo-row-double">
+                      <div className="backoffice-photo-block">
+                        <div className="backoffice-photo-preview">
+                          {menuForm.photoUrl ? (
+                            <img src={menuForm.photoUrl} alt="" aria-hidden="true" />
+                          ) : (
+                            <UploadCloud size={30} />
+                          )}
+                        </div>
                         <label className="upload-control">
                           <UploadCloud size={18} />
-                          {photoUploading ? "Subiendo…" : "Subir foto"}
-                          <input type="file" accept="image/*" onChange={handleMenuPhotoChange} disabled={photoUploading || adminSaving} />
+                          {photoUploading ? "Subiendo…" : "Subir principal"}
+                          <input type="file" accept="image/*" onChange={(event) => handleMenuPhotoChange(event, "primary")} disabled={photoUploading || adminSaving} />
                         </label>
                         <label className="backoffice-wide">
-                          URL foto
-                          <input name="photoUrl" value={menuForm.photoUrl} onChange={updateMenuForm} placeholder="https://…" />
+                          URL principal
+                          <input name="photoUrl" value={menuForm.photoUrl} onChange={updateMenuForm} placeholder="/api/media?key=images/meal-preps/…" />
+                        </label>
+                      </div>
+
+                      <div className="backoffice-photo-block">
+                        <div className="backoffice-photo-preview">
+                          {menuForm.secondaryPhotoUrl ? (
+                            <img src={menuForm.secondaryPhotoUrl} alt="" aria-hidden="true" />
+                          ) : (
+                            <ImagePlus size={30} />
+                          )}
+                        </div>
+                        <label className="upload-control">
+                          <ImagePlus size={18} />
+                          {photoUploading ? "Subiendo…" : "Subir hover"}
+                          <input type="file" accept="image/*" onChange={(event) => handleMenuPhotoChange(event, "secondary")} disabled={photoUploading || adminSaving} />
+                        </label>
+                        <label className="backoffice-wide">
+                          URL hover
+                          <input name="secondaryPhotoUrl" value={menuForm.secondaryPhotoUrl} onChange={updateMenuForm} placeholder="/api/media?key=images/meal-preps/…" />
                         </label>
                       </div>
                     </div>
@@ -3227,6 +4046,130 @@ function App() {
                       <textarea name="nutritionFacts" rows="6" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck={false} />
                     </label>
 
+                    {menuForm.productType === "plan" && (
+                      <section className="backoffice-included-editor">
+                        <div className="backoffice-list-top">
+                          <h3>Platos del plan</h3>
+                          <button className="backoffice-command" type="button" onClick={addIncludedMeal}>
+                            <Plus size={17} />
+                            Agregar plato
+                          </button>
+                        </div>
+
+                        {menuForm.includedItems.length === 0 ? (
+                          <p className="backoffice-muted">Agrega al menos un meal prep para mostrar el detalle del plan.</p>
+                        ) : (
+                          <div className="included-editor-stack">
+                            {menuForm.includedItems.map((meal, mealIndex) => (
+                              <article className="included-editor-card" key={meal.id || mealIndex}>
+                                <header>
+                                  <div>
+                                    <p className="eyebrow">Plato {mealIndex + 1}</p>
+                                    <h4>{meal.name || "Meal prep incluido"}</h4>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeIncludedMeal(mealIndex)}
+                                    aria-label={`Eliminar plato ${mealIndex + 1}`}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </header>
+
+                                <div className="backoffice-grid">
+                                  <label>
+                                    Nombre
+                                    <input value={meal.name} onChange={(event) => updateIncludedMealForm(mealIndex, "name", event.target.value)} placeholder="Pollo, camote y cúrcuma…" />
+                                  </label>
+                                  <label>
+                                    Etiqueta
+                                    <input value={meal.tag} onChange={(event) => updateIncludedMealForm(mealIndex, "tag", event.target.value)} placeholder="Energético…" />
+                                  </label>
+                                </div>
+
+                                <label className="backoffice-wide">
+                                  Descripción
+                                  <textarea rows="3" value={meal.description} onChange={(event) => updateIncludedMealForm(mealIndex, "description", event.target.value)} placeholder="Describe el plato incluido…" />
+                                </label>
+
+                                <div className="backoffice-photo-row backoffice-photo-row-double">
+                                  <div className="backoffice-photo-block">
+                                    <div className="backoffice-photo-preview">
+                                      {meal.photoUrl ? (
+                                        <img src={meal.photoUrl} alt="" aria-hidden="true" />
+                                      ) : (
+                                        <UploadCloud size={28} />
+                                      )}
+                                    </div>
+                                    <label className="upload-control">
+                                      <UploadCloud size={18} />
+                                      Principal
+                                      <input type="file" accept="image/*" onChange={(event) => handleMenuPhotoChange(event, "mealPrimary", mealIndex)} disabled={photoUploading || adminSaving} />
+                                    </label>
+                                    <label className="backoffice-wide">
+                                      URL principal
+                                      <input value={meal.photoUrl} onChange={(event) => updateIncludedMealForm(mealIndex, "photoUrl", event.target.value)} placeholder="/api/media?key=images/meal-preps/…" />
+                                    </label>
+                                  </div>
+
+                                  <div className="backoffice-photo-block">
+                                    <div className="backoffice-photo-preview">
+                                      {meal.secondaryPhotoUrl ? (
+                                        <img src={meal.secondaryPhotoUrl} alt="" aria-hidden="true" />
+                                      ) : (
+                                        <ImagePlus size={28} />
+                                      )}
+                                    </div>
+                                    <label className="upload-control">
+                                      <ImagePlus size={18} />
+                                      Hover
+                                      <input type="file" accept="image/*" onChange={(event) => handleMenuPhotoChange(event, "mealSecondary", mealIndex)} disabled={photoUploading || adminSaving} />
+                                    </label>
+                                    <label className="backoffice-wide">
+                                      URL hover
+                                      <input value={meal.secondaryPhotoUrl} onChange={(event) => updateIncludedMealForm(mealIndex, "secondaryPhotoUrl", event.target.value)} placeholder="/api/media?key=images/meal-preps/…" />
+                                    </label>
+                                  </div>
+                                </div>
+
+                                <div className="backoffice-grid">
+                                  <label>
+                                    Tags de beneficios
+                                    <textarea rows="4" value={meal.benefitTags} onChange={(event) => updateIncludedMealForm(mealIndex, "benefitTags", event.target.value)} placeholder={"Antioxidante\nEnergético…"} />
+                                  </label>
+                                  <label>
+                                    Ingredientes
+                                    <textarea rows="4" value={meal.ingredients} onChange={(event) => updateIncludedMealForm(mealIndex, "ingredients", event.target.value)} placeholder={"Pollo\nCamote\nCúrcuma…"} />
+                                  </label>
+                                </div>
+
+                                <label className="backoffice-wide">
+                                  Descripción nutricional
+                                  <textarea rows="3" value={meal.nutritionDescription} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionDescription", event.target.value)} placeholder="Proteína magra, carbohidrato complejo y especias funcionales…" />
+                                </label>
+
+                                <div className="backoffice-grid">
+                                  <label>
+                                    Características nutricionales
+                                    <textarea rows="4" value={meal.nutritionHighlights} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionHighlights", event.target.value)} placeholder={"Alto en proteína\nFibra vegetal…"} />
+                                  </label>
+                                  <label>
+                                    Datos nutricionales JSON
+                                    <textarea rows="4" value={meal.nutritionFacts} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionFacts", event.target.value)} spellCheck={false} />
+                                  </label>
+                                </div>
+
+                                <label className="backoffice-wide">
+                                  Alérgenos
+                                  <textarea rows="3" value={meal.allergens} onChange={(event) => updateIncludedMealForm(mealIndex, "allergens", event.target.value)} placeholder={"Pescado\nFrutos secos…"} />
+                                </label>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+                    )}
+
                     <div className="backoffice-form-actions">
                       <button className="google-button" type="button" onClick={resetMenuForm} disabled={adminSaving}>
                         <Plus size={18} />
@@ -3234,7 +4177,7 @@ function App() {
                       </button>
                       <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                         {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                        {adminSaving ? "Guardando…" : "Guardar menú"}
+                        {adminSaving ? "Guardando…" : "Guardar meal prep"}
                       </button>
                     </div>
                   </form>
@@ -3341,16 +4284,68 @@ function App() {
                 <span>Total</span>
                 <strong>{formatPrice(cartTotal)}</strong>
               </div>
-              <button
-                className="primary-button full"
-                type="button"
-                onClick={() => {
-                  setCartOpen(false);
-                  setAccountOpen(true);
-                }}
-              >
-                Continuar pedido
-              </button>
+              <form className="checkout-form" onSubmit={submitCheckout}>
+                <fieldset className="checkout-mode">
+                  <legend>Modalidad</legend>
+                  <label>
+                    <input
+                      type="radio"
+                      name="mode"
+                      value="delivery"
+                      checked={checkoutForm.mode === "delivery"}
+                      onChange={updateCheckoutForm}
+                    />
+                    <span><Truck size={17} /> Despacho</span>
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="mode"
+                      value="pickup"
+                      checked={checkoutForm.mode === "pickup"}
+                      onChange={updateCheckoutForm}
+                    />
+                    <span><Store size={17} /> Retiro</span>
+                  </label>
+                </fieldset>
+
+                <div className="checkout-grid">
+                  <label>
+                    Nombre
+                    <input required name="name" value={checkoutForm.name} onChange={updateCheckoutForm} autoComplete="name" />
+                  </label>
+                  <label>
+                    Teléfono
+                    <input required name="phone" value={checkoutForm.phone} onChange={updateCheckoutForm} autoComplete="tel" />
+                  </label>
+                  <label className="checkout-wide">
+                    Correo
+                    <input required name="email" type="email" value={checkoutForm.email} onChange={updateCheckoutForm} autoComplete="email" />
+                  </label>
+                  {checkoutForm.mode === "delivery" && (
+                    <>
+                      <label className="checkout-wide">
+                        Dirección de despacho
+                        <span><MapPin size={17} /><input required name="address" value={checkoutForm.address} onChange={updateCheckoutForm} autoComplete="street-address" /></span>
+                      </label>
+                      <label className="checkout-wide">
+                        Comuna
+                        <span><Home size={17} /><input required name="comuna" value={checkoutForm.comuna} onChange={updateCheckoutForm} autoComplete="address-level2" /></span>
+                      </label>
+                    </>
+                  )}
+                  <label className="checkout-wide">
+                    Notas
+                    <textarea name="instructions" rows="3" value={checkoutForm.instructions} onChange={updateCheckoutForm} placeholder={checkoutForm.mode === "delivery" ? "Departamento, referencia o ventana horaria…" : "Nombre de quien retira o comentario…"} />
+                  </label>
+                </div>
+
+                {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
+
+                <button className="primary-button full" type="submit">
+                  Continuar pedido
+                </button>
+              </form>
             </>
           )}
         </div>
