@@ -7,6 +7,11 @@ public/assets/*
 public/images/*
 !public/images/menu-samples/
 !public/images/menu-samples/*.jpeg
+!public/images/community/
+!public/images/community/*.jpeg
+!public/images/hero/
+public/images/hero/*
+!public/images/hero/fullness-hero-betarraga-line-v2.png
 *.local
 .DS_Store
 

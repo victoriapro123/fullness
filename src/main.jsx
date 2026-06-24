@@ -55,11 +55,18 @@ const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
+const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-line-v2.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
   mediaSrc("images/menu-samples/pollo-camote-hojas.jpeg"),
   mediaSrc("images/menu-samples/salmon-arroz-avocado.jpeg")
+];
+const communityGalleryImages = [
+  mediaSrc("images/community/comunidad-1.jpeg"),
+  mediaSrc("images/community/comunidad-2.jpeg"),
+  mediaSrc("images/community/comunidad-3.jpeg"),
+  mediaSrc("images/community/comunidad-4.jpeg")
 ];
 const legacyPlaceholderProductSlugs = new Set([
   "trucha-betarraga-quinoa",
@@ -234,6 +241,35 @@ const heroBenefitFeatures = [
     icon: PackageCheck
   }
 ];
+const communityFeatures = [
+  {
+    title: "Clases de cocina",
+    text: "Aprende recetas y técnicas para nutrirte mejor de forma simple y real.",
+    icon: CookingPot
+  },
+  {
+    title: "Nutrición funcional",
+    text: "Charlas y contenidos prácticos para entender cómo los alimentos impactan tu energía y bienestar.",
+    icon: Sprout
+  },
+  {
+    title: "Talleres de bienestar",
+    text: "Herramientas para gestionar el estrés, crear hábitos sostenibles y crecer desde adentro.",
+    icon: Sparkles
+  },
+  {
+    title: "Encuentros Fullness",
+    text: "Experiencias presenciales para conectar, compartir y formar parte de una comunidad que te inspira.",
+    icon: Heart
+  }
+];
+const defaultCommunityActivities = [
+  { date: "2026-07-08", description: "Clase de Cocina Antiinflamatoria" },
+  { date: "2026-07-17", description: "Taller de Batch Cooking" },
+  { date: "2026-07-29", description: "Charla Nutrición Funcional" },
+  { date: "2026-08-05", description: "Encuentro Fullness" },
+  { date: "2026-08-19", description: "Taller de Bienestar" }
+];
 
 function WhatsAppIcon({ size = 24 }) {
   return (
@@ -258,6 +294,41 @@ function formatPrice(value) {
     currency: "CLP",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+function loadStoredCommunityActivities() {
+  if (typeof window === "undefined") return defaultCommunityActivities;
+
+  try {
+    const stored = window.localStorage.getItem("fullness_community_activities");
+    const parsed = stored ? JSON.parse(stored) : null;
+    if (!Array.isArray(parsed)) return defaultCommunityActivities;
+
+    const clean = parsed
+      .map((item) => ({
+        date: String(item?.date || "").trim(),
+        description: String(item?.description || "").trim()
+      }))
+      .filter((item) => item.date && item.description);
+
+    return clean.length > 0 ? clean : defaultCommunityActivities;
+  } catch {
+    return defaultCommunityActivities;
+  }
+}
+
+function formatCommunityActivityDate(value) {
+  const [year, month, day] = String(value || "").split("-").map(Number);
+  const monthLabels = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+  if (!year || !month || !day) {
+    return { day: "--", month: "" };
+  }
+
+  return {
+    day: String(day).padStart(2, "0"),
+    month: monthLabels[month - 1] || ""
+  };
 }
 
 function slugifyMenuName(value) {
@@ -1054,6 +1125,115 @@ function IntroScrollSequence() {
   );
 }
 
+function CommunityPage({
+  activities,
+  activitiesExpanded,
+  memberMessage,
+  onCommunityMemberSubmit,
+  onToggleActivities
+}) {
+  const visibleActivities = activitiesExpanded ? activities : activities.slice(0, 3);
+
+  return (
+    <div className="community-page">
+      <section
+        className="community-page-hero"
+        style={{ "--community-page-hero": `url("${communitySceneSrc}")` }}
+      >
+        <div className="community-page-hero-copy">
+          <p className="eyebrow">Comunidad Fullness</p>
+          <h1>Crecer en comunidad.</h1>
+          <span className="community-page-rule" aria-hidden="true" />
+          <p>
+            Un espacio para aprender, compartir y construir bienestar a través de la alimentación consciente.
+          </p>
+          <a className="community-page-cta" href="#comunidad-inscripcion">
+            Únete a la comunidad
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </a>
+        </div>
+      </section>
+
+      <section className="community-page-features" aria-labelledby="community-features-title">
+        <div className="community-section-title">
+          <h2 id="community-features-title">¿Qué encontrarás?</h2>
+          <span aria-hidden="true" />
+        </div>
+        <div className="community-feature-grid">
+          {communityFeatures.map(({ title, text, icon: Icon }) => (
+            <article key={title}>
+              <Icon size={42} aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="community-gallery" aria-label="Momentos Comunidad Fullness">
+        {communityGalleryImages.map((image, index) => (
+          <img src={image} alt={`Comunidad Fullness ${index + 1}`} key={image} />
+        ))}
+      </section>
+
+      <section className="community-page-panel" id="comunidad-inscripcion">
+        <div className="community-activities">
+          <p className="eyebrow">Próximas actividades</p>
+          <div className="community-activity-list">
+            {visibleActivities.map((activity, index) => {
+              const date = formatCommunityActivityDate(activity.date);
+
+              return (
+                <article className="community-activity" key={`${activity.date}-${activity.description}-${index}`}>
+                  <time dateTime={activity.date}>
+                    <strong>{date.day}</strong>
+                    <span>{date.month}</span>
+                  </time>
+                  <p>{activity.description}</p>
+                </article>
+              );
+            })}
+          </div>
+          {activities.length > 3 && (
+            <button className="community-expand-button" type="button" onClick={onToggleActivities}>
+              {activitiesExpanded ? "Ver menos actividades" : "Ver todas las actividades"}
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        <form className="community-member-form" onSubmit={onCommunityMemberSubmit}>
+          <p className="eyebrow">Membresía Fullness</p>
+          <h2>Inscríbete como miembro.</h2>
+          <ul>
+            <li><CheckCircle2 size={18} /> Acceso a actividades exclusivas</li>
+            <li><CheckCircle2 size={18} /> Contenido y recursos mensuales</li>
+            <li><CheckCircle2 size={18} /> Beneficios especiales en Fullness Lab</li>
+            <li><CheckCircle2 size={18} /> Prioridad en talleres y encuentros</li>
+          </ul>
+          <label>
+            Nombre
+            <input name="communityName" type="text" placeholder="Tu nombre" autoComplete="name" />
+          </label>
+          <label>
+            Correo electrónico
+            <input required name="communityEmail" type="email" placeholder="nombre@dominio.cl" autoComplete="email" />
+          </label>
+          <label className="community-consent">
+            <input required name="communityConsent" type="checkbox" />
+            <span>Acepto ser parte de la lista de distribución de Comunidad Fullness.</span>
+          </label>
+          {memberMessage && <p className="community-member-message" role="status">{memberMessage}</p>}
+          <button className="primary-button" type="submit">
+            Únete a la comunidad
+            <ArrowUpRight size={17} aria-hidden="true" />
+          </button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
 function App() {
   const appRef = useRef(null);
   const [cart, setCart] = useState([]);
@@ -1073,6 +1253,10 @@ function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
+  const [passwordSetupOpen, setPasswordSetupOpen] = useState(false);
+  const [passwordSetupMode, setPasswordSetupMode] = useState("recovery");
+  const [passwordSetupSaving, setPasswordSetupSaving] = useState(false);
+  const [passwordSetupMessage, setPasswordSetupMessage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -1081,12 +1265,22 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
+  const [communityActivities, setCommunityActivities] = useState(loadStoredCommunityActivities);
+  const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
+  const [activitiesExpanded, setActivitiesExpanded] = useState(false);
+  const [communityMemberMessage, setCommunityMemberMessage] = useState("");
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#oferta", "#comunidad", "#contacto"]);
     const productSlug = getProductSlugFromPath();
 
     if (productSlug) {
+      document.documentElement.classList.add("intro-scroll-consumed");
+      setHeaderHiddenForHero(false);
+      return;
+    }
+
+    if (window.location.pathname === "/comunidad") {
       document.documentElement.classList.add("intro-scroll-consumed");
       setHeaderHiddenForHero(false);
       return;
@@ -1139,9 +1333,10 @@ function App() {
       return Math.max(0, sectionTop - headerHeight - 14);
     };
 
-    if (currentProductSlug) {
+    if (currentProductSlug || window.location.pathname === "/comunidad") {
       setCurrentProductSlug("");
       setProductPreviewSlug("");
+      setCurrentPath("/");
       document.documentElement.classList.add("intro-scroll-consumed");
       window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
       setHeaderHiddenForHero(false);
@@ -1201,6 +1396,25 @@ function App() {
 
     return true;
   };
+
+  function openCommunityPage(event) {
+    event?.preventDefault();
+    setCurrentProductSlug("");
+    setProductPreviewSlug("");
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    document.documentElement.classList.add("intro-scroll-consumed");
+    window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+    setHeaderHiddenForHero(false);
+
+    if (window.location.pathname !== "/comunidad") {
+      window.history.pushState(null, "", "/comunidad");
+    }
+
+    setCurrentPath("/comunidad");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
 
   const memberButtonLabel = authUser
     ? getMemberLabel(authUser).split(/[ @]/)[0]
@@ -1280,6 +1494,40 @@ function App() {
   }
 
   useEffect(() => {
+    try {
+      window.localStorage.setItem("fullness_community_activities", JSON.stringify(communityActivities));
+    } catch {
+      // Demo persistence is best-effort.
+    }
+  }, [communityActivities]);
+
+  function updateCommunityActivityForm(event) {
+    const { name, value } = event.target;
+
+    setCommunityActivityForm((current) => ({
+      ...current,
+      [name]: value
+    }));
+  }
+
+  function addCommunityActivity(event) {
+    event.preventDefault();
+
+    const date = communityActivityForm.date.trim();
+    const description = communityActivityForm.description.trim();
+    if (!date || !description) return;
+
+    setCommunityActivities((items) =>
+      [...items, { date, description }].sort((left, right) => left.date.localeCompare(right.date))
+    );
+    setCommunityActivityForm({ date: "", description: "" });
+  }
+
+  function removeCommunityActivity(indexToRemove) {
+    setCommunityActivities((items) => items.filter((_item, index) => index !== indexToRemove));
+  }
+
+  useEffect(() => {
     let ignore = false;
 
     async function loadProducts() {
@@ -1306,6 +1554,20 @@ function App() {
     let subscription;
     let ignore = false;
 
+    const getAuthFlowType = () => {
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const searchParams = new URLSearchParams(window.location.search);
+      return hashParams.get("type") || searchParams.get("type") || "";
+    };
+
+    const openPasswordSetup = (type) => {
+      setPasswordSetupMode(type === "invite" ? "invite" : "recovery");
+      setPasswordSetupMessage("");
+      setPasswordSetupOpen(true);
+      setAccountOpen(false);
+      window.history.replaceState(null, "", window.location.pathname || "/");
+    };
+
     async function loadSession() {
       if (!isSupabaseConfigured) {
         setAuthLoading(false);
@@ -1314,14 +1576,23 @@ function App() {
 
       const supabase = await getSupabaseClient();
       const { data } = await supabase.auth.getSession();
+      const flowType = getAuthFlowType();
 
       if (!ignore) {
         setAuthUser(data.session?.user || null);
+        if (data.session?.user && (flowType === "recovery" || flowType === "invite")) {
+          openPasswordSetup(flowType);
+        }
         setAuthLoading(false);
       }
 
-      const listener = supabase.auth.onAuthStateChange((_event, session) => {
+      const listener = supabase.auth.onAuthStateChange((event, session) => {
         setAuthUser(session?.user || null);
+        const type = event === "PASSWORD_RECOVERY" ? "recovery" : getAuthFlowType();
+
+        if (session?.user && (type === "recovery" || type === "invite")) {
+          openPasswordSetup(type);
+        }
       });
 
       subscription = listener.data.subscription;
@@ -1668,6 +1939,8 @@ function App() {
   const productPreviewIndex = productPreview
     ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(productPreview)))
     : 0;
+  const singleDishProduct = products[0] || demoProducts[0];
+  const isCommunityPage = currentPath === "/comunidad" && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
 
   function addToCart(product) {
@@ -1742,6 +2015,43 @@ function App() {
     form.reset();
   }
 
+  function submitCommunityMember(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const email = String(data.get("communityEmail") || "").trim();
+    const name = String(data.get("communityName") || "").trim();
+    const consent = data.get("communityConsent") === "on";
+
+    if (!email || !consent) return;
+
+    try {
+      const stored = window.localStorage.getItem("fullness_community_members");
+      const members = stored ? JSON.parse(stored) : [];
+      const cleanMembers = Array.isArray(members) ? members : [];
+      const nextMember = {
+        name,
+        email,
+        consent: true,
+        createdAt: new Date().toISOString()
+      };
+
+      window.localStorage.setItem(
+        "fullness_community_members",
+        JSON.stringify([
+          ...cleanMembers.filter((memberItem) => memberItem.email !== email),
+          nextMember
+        ])
+      );
+    } catch {
+      // Local demo persistence is best-effort.
+    }
+
+    setCommunityMemberMessage("Gracias. Ya quedaste inscrita en la lista de Comunidad Fullness.");
+    form.reset();
+  }
+
   async function submitAccount(event) {
     event.preventDefault();
 
@@ -1768,6 +2078,78 @@ function App() {
     }
 
     setAccountOpen(false);
+  }
+
+  async function requestPasswordReset(event) {
+    const form = event.currentTarget.form;
+    const data = new FormData(form);
+    const email = String(data.get("email") || "").trim();
+
+    if (!email) {
+      setGoogleMessage("Ingresa tu correo para enviarte el enlace de recuperación.");
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setGoogleMessage("El acceso no está disponible en este entorno.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setGoogleMessage("");
+
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    });
+
+    setAuthLoading(false);
+
+    if (error) {
+      setGoogleMessage(getSupabaseErrorMessage(error, "No pudimos enviar el correo de recuperación."));
+      return;
+    }
+
+    setGoogleMessage("Te enviamos un correo para restablecer tu contraseña.");
+  }
+
+  async function submitPasswordSetup(event) {
+    event.preventDefault();
+
+    const data = new FormData(event.currentTarget);
+    const password = String(data.get("newPassword") || "");
+    const passwordConfirm = String(data.get("newPasswordConfirm") || "");
+
+    if (password.length < 8) {
+      setPasswordSetupMessage("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setPasswordSetupMessage("Las contraseñas no coinciden.");
+      return;
+    }
+
+    if (!isSupabaseConfigured) {
+      setPasswordSetupMessage("El acceso no está disponible en este entorno.");
+      return;
+    }
+
+    setPasswordSetupSaving(true);
+    setPasswordSetupMessage("");
+
+    const supabase = await getSupabaseClient();
+    const { error } = await supabase.auth.updateUser({ password });
+
+    setPasswordSetupSaving(false);
+
+    if (error) {
+      setPasswordSetupMessage(getSupabaseErrorMessage(error, "No pudimos guardar tu contraseña."));
+      return;
+    }
+
+    setPasswordSetupOpen(false);
+    setAccountOpen(true);
   }
 
   function updateMenuForm(event) {
@@ -1891,7 +2273,7 @@ function App() {
 
   const navItems = [
     { href: "#oferta", label: "Planes" },
-    { href: "#comunidad", label: "Comunidad" },
+    { href: "/comunidad", label: "Comunidad" },
     { href: "#proposito", label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
     ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
@@ -1908,6 +2290,11 @@ function App() {
           return;
         }
 
+        if (item.href === "/comunidad") {
+          openCommunityPage(event);
+          return;
+        }
+
         if (item.href.startsWith("#")) {
           event.preventDefault();
           navigateToSection(item.href);
@@ -1917,6 +2304,43 @@ function App() {
       {item.label}
     </a>
   ));
+
+  const renderSiteFooter = () => (
+    <footer id="contacto">
+      <div className="footer-brand">
+        <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
+        <p>Nutrición consciente para una vida plena y equilibrada.</p>
+        <div className="footer-socials" aria-label="Redes Fullness Lab">
+          <a href={whatsappUrl} target="_blank" rel="noreferrer" aria-label="WhatsApp Fullness Lab">W</a>
+          <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }} aria-label="Instagram Fullness Lab">I</a>
+          <a href="#oferta" onClick={(event) => { event.preventDefault(); navigateToSection("#oferta"); }} aria-label="Explorar Fullness Lab">F</a>
+        </div>
+      </div>
+      <nav className="footer-column" aria-label="Navegación de pie de página">
+        <h3>Navegación</h3>
+        <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }}>Menú</a>
+        <a href="#oferta" onClick={(event) => { event.preventDefault(); navigateToSection("#oferta"); }}>Planes</a>
+        <a href={getProductPath(singleDishProduct)} onClick={(event) => openProductDetail(singleDishProduct, event)}>Tienda</a>
+        <a href="/comunidad" onClick={openCommunityPage}>Comunidad</a>
+        <a href="#proposito" onClick={(event) => { event.preventDefault(); navigateToSection("#proposito"); }}>Nosotros</a>
+        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Contacto</a>
+      </nav>
+      <div className="footer-column">
+        <h3>Ayuda</h3>
+        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Preguntas frecuentes</a>
+        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Políticas de envío</a>
+        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Cambios y devoluciones</a>
+        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Términos y condiciones</a>
+      </div>
+      <address className="footer-column footer-contact">
+        <h3>Contacto</h3>
+        <a href={whatsappUrl} target="_blank" rel="noreferrer">+56 9 9658 8199</a>
+        <a href="mailto:hola@fullnesslab.cl">hola@fullnesslab.cl</a>
+        <span>Vitacura, Santiago</span>
+      </address>
+      <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados</p>
+    </footer>
+  );
 
   return (
     <main ref={appRef}>
@@ -1982,6 +2406,11 @@ function App() {
                   return;
                 }
 
+                if (item.href === "/comunidad") {
+                  openCommunityPage(event);
+                  return;
+                }
+
                 event.preventDefault();
                 setMenuOpen(false);
                 navigateToSection(item.href);
@@ -2012,11 +2441,26 @@ function App() {
           onAdd={addToCart}
           onBackToShop={backToShop}
         />
+      ) : isCommunityPage ? (
+        <>
+          <CommunityPage
+            activities={communityActivities}
+            activitiesExpanded={activitiesExpanded}
+            memberMessage={communityMemberMessage}
+            onCommunityMemberSubmit={submitCommunityMember}
+            onToggleActivities={() => setActivitiesExpanded((current) => !current)}
+          />
+          {renderSiteFooter()}
+        </>
       ) : (
         <>
           <IntroScrollSequence />
 
-          <section className="plate-hero" id="programa">
+          <section
+            className="plate-hero"
+            id="programa"
+            style={{ "--hero-beet-line": `url("${heroBeetLineSrc}")` }}
+          >
         <div className="plate-hero-blackout" aria-hidden="true" />
         <div className="plate-hero-vectors" aria-hidden="true" />
         <div className="plate-hero-copy">
@@ -2141,7 +2585,14 @@ function App() {
           </ul>
           <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Ver planes</a>
         </div>
-        <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+        <a
+          className="meal-prep-visual-link"
+          href={getProductPath(singleDishProduct)}
+          aria-label="Ir a la tienda de platos únicos"
+          onClick={(event) => openProductDetail(singleDishProduct, event)}
+        >
+          <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+        </a>
       </section>
 
       <section
@@ -2162,8 +2613,8 @@ function App() {
             <span>Contenido exclusivo</span>
             <span>Encuentros y comunidad</span>
           </div>
-          <a className="membership-cta" href={workshopsWhatsappUrl} target="_blank" rel="noreferrer">
-            Conoce la comunidad
+          <a className="membership-cta" href="/comunidad" onClick={openCommunityPage}>
+            Únete a la comunidad
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
         </div>
@@ -2192,7 +2643,7 @@ function App() {
             <h3>Preparados para disfrutar</h3>
             <p>Platos preparados para disfrutar hoy, hechos con amor.</p>
             <img src={sampleProductImages[1]} alt="" aria-hidden="true" />
-            <a href={whatsappUrl} target="_blank" rel="noreferrer">
+            <a href={getProductPath(singleDishProduct)} onClick={(event) => openProductDetail(singleDishProduct, event)}>
               Ver Menús
             </a>
           </article>
@@ -2207,15 +2658,7 @@ function App() {
         </div>
       </section>
 
-          <footer id="contacto">
-            <div className="footer-brand">
-              <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
-            </div>
-            <p>
-              Fullness Lab nace de la convicción de que el bienestar no se construye desde la perfección, sino desde pequeñas decisiones sostenibles que se repiten día a día.
-            </p>
-            <strong>Nutrirse desde la raíz.</strong>
-          </footer>
+          {renderSiteFooter()}
         </>
       )}
 
@@ -2267,8 +2710,41 @@ function App() {
                 <button className="primary-button full" type="submit" disabled={authLoading}>
                   {authLoading ? "Ingresando…" : "Iniciar sesión"}
                 </button>
+                <button className="account-link-button" type="button" onClick={requestPasswordReset} disabled={authLoading}>
+                  Olvidé mi contraseña
+                </button>
               </form>
             )}
+          </section>
+        </div>
+      )}
+
+      {passwordSetupOpen && (
+        <div className="overlay password-setup-overlay" role="dialog" aria-modal="true" aria-labelledby="password-setup-title">
+          <section className="plans-panel login-only">
+            <form className="account-panel embedded" onSubmit={submitPasswordSetup}>
+              <p className="eyebrow">Cuenta Fullness</p>
+              <h2 id="password-setup-title">
+                {passwordSetupMode === "invite" ? "Crea tu contraseña" : "Nueva contraseña"}
+              </h2>
+              <p className="account-helper">
+                {passwordSetupMode === "invite"
+                  ? "Define tu contraseña para activar tu acceso a Fullness Lab."
+                  : "Define una nueva contraseña para volver a entrar a tu cuenta."}
+              </p>
+              {passwordSetupMessage && <p className="form-note">{passwordSetupMessage}</p>}
+              <label>
+                Contraseña
+                <span><Lock size={18} /><input required name="newPassword" type="password" placeholder="Mínimo 8 caracteres…" minLength={8} autoComplete="new-password" /></span>
+              </label>
+              <label>
+                Repetir contraseña
+                <span><Lock size={18} /><input required name="newPasswordConfirm" type="password" placeholder="Repite tu contraseña…" minLength={8} autoComplete="new-password" /></span>
+              </label>
+              <button className="primary-button full" type="submit" disabled={passwordSetupSaving}>
+                {passwordSetupSaving ? "Guardando…" : "Guardar contraseña"}
+              </button>
+            </form>
           </section>
         </div>
       )}
@@ -2320,7 +2796,7 @@ function App() {
                   </p>
                 )}
 
-                <div className="backoffice-layout">
+                <div className="backoffice-layout backoffice-layout-with-community">
                   <aside className="backoffice-list" aria-label="Menús configurados">
                     <div className="backoffice-list-top">
                       <h3>Configurados</h3>
@@ -2492,6 +2968,56 @@ function App() {
                       </button>
                     </div>
                   </form>
+
+                  <aside className="backoffice-activities" aria-label="Actividades de comunidad">
+                    <div className="backoffice-list-top">
+                      <h3>Comunidad</h3>
+                    </div>
+                    <form className="community-admin-form" onSubmit={addCommunityActivity}>
+                      <label>
+                        Fecha
+                        <input
+                          required
+                          name="date"
+                          type="date"
+                          value={communityActivityForm.date}
+                          onChange={updateCommunityActivityForm}
+                        />
+                      </label>
+                      <label>
+                        Descripción
+                        <textarea
+                          required
+                          name="description"
+                          rows="3"
+                          value={communityActivityForm.description}
+                          onChange={updateCommunityActivityForm}
+                          placeholder="Clase de cocina antiinflamatoria…"
+                        />
+                      </label>
+                      <button className="backoffice-command" type="submit">
+                        <Plus size={17} />
+                        Agregar actividad
+                      </button>
+                    </form>
+                    <div className="community-admin-list">
+                      {communityActivities.map((activity, index) => {
+                        const date = formatCommunityActivityDate(activity.date);
+
+                        return (
+                          <article key={`${activity.date}-${activity.description}-${index}`}>
+                            <time dateTime={activity.date}>
+                              {date.day} {date.month}
+                            </time>
+                            <p>{activity.description}</p>
+                            <button type="button" onClick={() => removeCommunityActivity(index)} aria-label={`Eliminar ${activity.description}`}>
+                              <Trash2 size={15} />
+                            </button>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </aside>
                 </div>
               </>
             )}

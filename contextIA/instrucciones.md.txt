@@ -40,10 +40,12 @@ La solucion actual incluye:
 
 - Portada visual con video principal local y capa de nutrientes animados.
 - Navegacion por secciones.
-- Secciones de hero raiz, plato food porn, proposito, Meal Prep Antiinflamatorio, comunidad, oferta Fullness Lab y nutricion emocional. La vitrina publica `#productos` y la seccion `#fundamento` ya no forman parte de la home.
+- Secciones de hero raiz, plato food porn, proposito, Meal Prep Antiinflamatorio, comunidad teaser, oferta Fullness Lab y nutricion emocional. La vitrina publica `#productos` y la seccion `#fundamento` ya no forman parte de la home.
+- Pagina dedicada `/comunidad` con hero, cuatro pilares, galeria de fotos, proximas actividades y formulario de inscripcion a lista de distribucion de Comunidad Fullness.
 - Carrito funcional en memoria.
 - Notificacion al agregar productos.
 - Modal de acceso para miembros con Supabase Auth por correo y contrasena.
+- Flujo de enlaces Supabase Auth para invitacion y recuperacion de contrasena: al abrir un link `invite` o `recovery`, la app detecta la sesion y muestra un formulario para definir nueva contrasena.
 - Cliente Supabase para cargar menus activos desde `menu_items`; el fallback a productos de demo queda solo para entornos sin Supabase configurado o con error de conexion.
 - Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, caracteristicas nutricionales, receta resumida, pasos de preparacion, alergenos, estado activo y orden.
 - Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
@@ -66,7 +68,7 @@ Precision nueva entregada por la clienta el 2026-05-13:
 - Debe aparecer la idea de nutrientes, vitaminas, minerales, grasas saludables e hidratos de carbono complejos entrando o cayendo hacia el plato y luego disolviendose.
 - La diferenciacion debe levantar las tres patas: practico, rico/foodporn y antiinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
 - Frase conceptual clave: es rico y es un privilegio nutrirse bien.
-- Implementacion actual: despues de la intro, el hero hace una pausa negra de aprox. medio segundo y luego compone el plato recortado `src/assets/fullness-hero-plate-cutout.png` entrando claramente desde la derecha, con el texto entrando desde la izquierda. El hero vuelve a usar los vectores botanicos anteriores de R2 como textura sutil detras del plato; no usar la betarraga nueva detras del plato para presentacion. Por instruccion de la clienta no debe aparecer mujer, figura humana, ave ni animal en el hero. La portada mantiene plato protagonista, botanica premium y espacio a la izquierda para copy. La fuente principal del sitio es Avenir Next, con Inter solo como fallback tecnico. El copy visible actual es `Nutrir desde la raiz`, `Comida consciente para tu bienestar diario.`, `No contamos calorias. Creemos en aprender a nutrirse.` y CTA `Ver planes`. No usar marca de agua del logo dentro del hero.
+- Implementacion actual: despues de la intro, el hero hace una pausa negra de aprox. medio segundo y luego compone el plato recortado `src/assets/fullness-hero-plate-cutout.png` entrando claramente desde la derecha, con el texto entrando desde la izquierda. El fondo del hero usa una version PNG transparente del trazo de betarraga `public/images/hero/fullness-hero-betarraga-line-v2.png`, servida desde R2 bajo `images/hero/fullness-hero-betarraga-line-v2.png`, sobre fondo solido oscuro para evitar cajas o texturas de JPG. Por instruccion de la clienta no debe aparecer mujer, figura humana, ave ni animal en el hero. La portada mantiene plato protagonista, botanica premium y espacio a la izquierda para copy. La fuente principal del sitio es Avenir Next, con Inter solo como fallback tecnico. El copy visible actual es `Nutrir desde la raiz`, `Comida consciente para tu bienestar diario.`, `No contamos calorias. Creemos en aprender a nutrirse.` y CTA `Ver planes`. No usar marca de agua del logo dentro del hero.
 
 Precision nueva entregada por Cecilia el 2026-06-08:
 
@@ -179,6 +181,7 @@ Contexto actual:
 - `src/main.jsx` mantiene `demoProducts` como fallback local para rutas de producto, carrito, backoffice y futuras piezas de e-commerce. La vitrina publica `#productos` fue retirada de la home; no reinsertarla salvo nueva instruccion explicita.
 - El carrito se guarda solo en estado React.
 - La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`.
+- La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`. Los enlaces de invitacion y recuperacion de contrasena abren un modal `Cuenta Fullness` para guardar una nueva contrasena mediante `supabase.auth.updateUser({ password })`.
 - No hay router ni store global: `#backoffice` abre acceso/backoffice dentro de la misma SPA. No hay backend de checkout; la base Supabase ya esta aplicada y `menu_items` queda disponible para backoffice/rutas de producto, aunque la tienda publica no se muestra en la home.
 - El backoffice de menus permite crear, editar, borrar y activar/desactivar menus; edita nombre, slug, SKU, etiqueta, precio, orden, descripcion, foto por URL o subida a `menu-photos`, ingredientes, alergenos, descripcion nutricional, caracteristicas nutricionales, detalle nutricional, receta resumida, pasos de preparacion y datos nutricionales JSON.
 - El video introductorio anterior al hero no debe depender del scroll continuo: una intencion de scroll hacia abajo, touch hacia abajo, teclado o click en el logo central inicia un recorrido automatico de 4 segundos con efecto de scroll/scrub fluido, bloqueando la entrada y el desplazamiento real del sitio durante ese tramo. El video debe cubrir todo el alto visible, el header/menu debe estar oculto mientras corre la animacion y el sitio solo debe aterrizar en el hero al terminar los 4 segundos. Para cuidar la fluidez, la bajada hacia el hero usa reproduccion nativa del video con velocidad calculada, evitando forzar `currentTime` en cada frame. Al terminar, el intro queda consumido y sale del flujo normal: desde el hero no se puede subir al video ni al tramo negro con scroll. En estado `intro-scroll-consumed`, los listeners de wheel, touch y teclado no deben capturar input, para que el usuario pueda seguir bajando normalmente desde el hero. Solo el boton tecnico transparente `Volver a la animacion` reabre el intro y resetea el video en desktop. En mobile/tablet angosto (`<= 860px`), la intro se anula por completo: la pagina entra con `intro-scroll-consumed` y `intro-mobile-skip`, el tramo del video queda fuera del flujo y la primera pantalla es el hero.
@@ -193,10 +196,11 @@ Contexto actual:
 - Los textos de `#plato` y `#proposito` deben quedar visibles por defecto. Se retiro el pin/reveal lateral de `#proposito` porque al cambiar el orden de secciones podia dejar el texto fuera de pantalla; no volver a depender de `opacity: 0`, transformaciones laterales ni ScrollTrigger para que el copy principal sea legible.
 - La seccion `Nutricion con fundamento` / `.functional-band` fue retirada de la home por instruccion de diseno. No reinsertarla salvo nueva instruccion explicita.
 - La cuarta seccion `.food-story-strip` debe funcionar como franja editorial oscura de aprox. 400px: copy al 30% izquierdo, plato grande recortado hacia la derecha, acento en la palabra `mas` y una linea/rombo pequeno bajo el titular. No debe leerse como foto de fondo generica ni invadir la legibilidad del texto.
-- La seccion `#calentar` fue reconvertida en banda `Meal Prep Antiinflamatorio`. Debe sentirse moderna y limpia, no antigua ni parchment/vintage. Usa una imagen generada nueva de bolsas sobre fondo marfil moderno, sin papel antiguo. Mantener vectores botanicos como acentos suaves; el texto ocupa aprox. 30% y las bolsas 70% en desktop, con un gradiente de legibilidad corto que no cubra de mas la imagen. En anchos medios y mobile se prioriza la lectura aunque se sacrifique parte del packaging.
-- La seccion `Oferta Fullness Lab` / `#oferta` funciona como exploracion comercial final. Presenta Meal Prep, Platos a la carta y Talleres. Meal Prep y Talleres abren WhatsApp; Platos a la carta tambien abre WhatsApp mientras la vitrina publica no forma parte de la home. Las tres tarjetas deben mantener mismo ancho/alto en desktop y los CTAs deben quedar alineados en la base, aunque los textos tengan largos distintos.
+- La seccion `#calentar` fue reconvertida en banda `Meal Prep Antiinflamatorio`. Debe sentirse moderna y limpia, no antigua ni parchment/vintage. Usa una imagen generada nueva de bolsas sobre fondo marfil moderno, sin papel antiguo. Mantener vectores botanicos como acentos suaves; el texto ocupa aprox. 28-30% y las bolsas 70-72% en desktop, con un gradiente de legibilidad corto que no cubra de mas la imagen. Las bolsas son clickeables y llevan a la pagina del primer plato unico disponible. En anchos medios y mobile se prioriza la lectura aunque se sacrifique parte del packaging.
+- La seccion `Oferta Fullness Lab` / `#oferta` funciona como exploracion comercial final entre comunidad y footer. Debe ser baja y clara, no una pantalla completa: tres tarjetas compactas para Meal Prep, Platos a la carta y Talleres. Platos a la carta debe llevar a producto/tienda de platos unicos; Meal Prep y Talleres siguen abriendo WhatsApp por ahora.
 - La seccion publica `Productos` / `#productos` fue retirada de la home por instruccion de diseno. Mantener la infraestructura de producto, backoffice, lightbox y paginas individuales `/producto/:slug` disponible para una etapa posterior, pero no mostrar una grilla de tienda en la landing sin nueva instruccion explicita.
-- La seccion final `#comunidad` cierra con nutricion emocional y formulario de suscripcion por correo. En la demo guarda el correo en `localStorage`; no debe confundirse con pago ni checkout real.
+- La seccion teaser `#comunidad` del landing debe llevar a la pagina `/comunidad`. Dentro de `/comunidad`, el CTA principal es inscripcion como miembro/lista de distribucion por correo con consentimiento; en la demo se guarda en `localStorage` y no debe confundirse con cuenta real, pago ni checkout.
+- El backoffice incluye una gestion simple de actividades de Comunidad con solo fecha y descripcion, tambien persistida en `localStorage` mientras no exista tabla Supabase especifica.
 - No usar `overflow-x: clip` en `html` ni `body`: en el navegador embebido puede dejar el root sin desplazamiento vertical usable despues de colapsar el intro. Usar `overflow-x: hidden` para cortar desborde horizontal sin bloquear el scroll del hero hacia las secciones inferiores.
 - Las animaciones de contenido despues del hero deben ser no destructivas: nunca usar `autoAlpha: 0` ni `visibility: hidden` como estado inicial de secciones, cards, imagenes o textos clave. Los reveals pueden mover o escalar suavemente, pero el contenido debe quedar visible aunque ScrollTrigger se refresque tarde o una imagen cambie la altura del layout.
 - Las anclas de navegacion bajo el header fijo deben tener `scroll-margin-top` suficiente, especialmente `#proposito`, `#calentar`, `#oferta` y `#comunidad`, para que el salto desde menu no tape titulos ni bloquee la lectura.
@@ -246,12 +250,13 @@ Archivos y recursos:
 - R2 `assets/fullness-silhouette-root-1.png`
 - R2 `assets/fullness-silhouette-root-2.png`
 - R2 `assets/fullness-silhouette-root-3.png`
+- R2 `images/hero/fullness-hero-betarraga-line-v2.png`
 
 Contexto actual:
 
 - El logo horizontal oficial entregado como JPEG y normalizado a PNG transparente (`public/assets/fullness-lab-logo-horizontal-oficial.png`) se usa en header y footer. El logo oficial vertical marfil se usa en favicon, intro, separadores y marcas de agua suaves fuera del hero. El color aprobado base es `rgb(244, 234, 219)`. Nunca usar logos blancos puros; segun el fondo, usar marfil oficial o una version color basada en la silueta oficial.
 - El logo oficial vertical debe aparecer como marca editorial grande en secciones clave: centrado en `#calentar`, a la derecha en `#oferta` y a la derecha en `#proposito`, usando el recorte superior de betarraga/isotipo desde el asset oficial para evitar texto de logo dentro de las secciones. El tamano debe ser cercano al 50% de la columna/espacio asignado. En fondos oscuros usar marfil oficial; en fondos claros, usar color o mezcla que no lea blanco. En `#proposito`, sobre raices oscuras, debe mantenerse marfil al 90% de opacidad, sin filtros que lo aclaren hacia blanco y con color forzado por mascara CSS (`rgb(244, 234, 219)`) para evitar que se perciba o cargue como blanco. En mobile solo deben quedar visibles los logos de header, `#calentar` y footer; ocultar las marcas de hero, `#proposito` y `#oferta` para evitar saturacion.
-- La intro sigue usando `assets/scroll-intro/fullness-intro-final.jpg` como frame final del video, pero el hero estable posterior ya no usa ese frame como foto completa. El hero queda sobre negro editorial: mantiene medio segundo de negro al terminar el video, entra el plato recortado `src/assets/fullness-hero-plate-cutout.png` desde la derecha y luego entra el texto desde la izquierda. El fondo debe incluir una textura botanica muy sutil y clara, no dibujos protagonistas ni vectores invasivos. Por solicitud posterior de la clienta, no usar mujer, figura humana, ave ni animal en el hero. El hero no lleva marca de agua del logo.
+- La intro sigue usando `assets/scroll-intro/fullness-intro-final.jpg` como frame final del video, pero el hero estable posterior ya no usa ese frame como foto completa. El hero queda sobre negro editorial: mantiene medio segundo de negro al terminar el video, entra el plato recortado `src/assets/fullness-hero-plate-cutout.png` desde la derecha y luego entra el texto desde la izquierda. El fondo usa el trazo PNG transparente de betarraga `images/hero/fullness-hero-betarraga-line-v2.png`, creado sobre un fondo solido oscuro desde CSS para que no aparezcan bordes ni compresion del JPG original. Por solicitud posterior de la clienta, no usar mujer, figura humana, ave ni animal en el hero. El hero no lleva marca de agua del logo.
 - Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden de la grilla.
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
 - `src/assets/fullness-beet-roots-continuum.jpg` sigue disponible como fondo raiz/tierra para continuidad visual, pero la escena actual de `#plato` usa las nuevas siluetas botanicas desde R2 para una composicion mas limpia y editable.
@@ -292,7 +297,7 @@ Reglas al modificar:
 - Las secciones visibles deben evitar cortes rigidos o incoherentes. Se permiten degradados organicos y veladuras cuando ayudan a unir hero, plato, betarraga y raices; no usar blur pesado ni superposiciones negativas para esconder problemas de layout.
 - Los textos dentro de contenedores, tarjetas, botones y fichas tecnicas deben poder envolver correctamente y nunca salirse ni invadir elementos vecinos; revisar especialmente etiquetas largas como datos nutricionales.
 - Ajuste de diseno 2026-06-07: la paleta no debe sentirse excesivamente oscura ni monotona; el burdeo queda como acento premium y el soporte principal suma verde petroleo/musgo, marfil envejecido, salvia y cobre opaco. Los overlays se movieron hacia papel premium con bordes y sin sombras fuertes. El informe final para cliente se llama `informes/fullness-informe-entrega-a4.html` y su version PDF queda en `informes/fullness-informe-entrega-a4.pdf`.
-- Ajuste visual posterior 2026-06-07: el hero debe evitar el bloque rectangular izquierdo; la foto del plato debe ocupar todo el hero con velos graduales para fundirse hacia la escena de betarraga. La ultima seccion `#comunidad` suma formulario de suscripcion por correo con persistencia local de demo.
+- Ajuste visual posterior 2026-06-07: el hero debe evitar el bloque rectangular izquierdo; la foto del plato debe ocupar todo el hero con velos graduales para fundirse hacia la escena de betarraga. La seccion `#comunidad` del landing funciona como teaser y envia a la pagina dedicada `/comunidad`, donde vive la inscripcion por correo con persistencia local de demo.
 - Ajuste visual 2026-06-08: el CTA del hero ya no es `Ver mas`; ahora es `Ver planes` y ancla hacia `#oferta`. El orden actual de home es hero, betarraga/proposito, Meal Prep Antiinflamatorio, comunidad, oferta Fullness Lab y footer; la vitrina de tienda y `Nutricion con fundamento` fueron retiradas.
 - Propuesta comercial aceptada por Cecilia: etapa 1 diseno/publicacion web premium de 8 UF y etapa 2 e-commerce de 2 UF. La etapa 3 de gestion/seguimiento clinico de 8 UF no corresponde a esta entrega. Costos mensuales: infraestructura servidor + base de datos 0,5 UF; soporte/mejora continua 1 UF opcional. El informe de entrega debe reflejar estos montos, no 2 UF de infraestructura.
 
@@ -322,7 +327,7 @@ Secciones deseadas:
 - Plato food porn: imagen protagonista de plato montado editorial, con vapor, sombras, brillo natural y dramatismo gastronomico. Esta seccion vende emocion.
 - Nuestro proposito: fondo organico con raiz/betarraga, isotipo visible y cuatro bloques: nutricion consciente, cocina antiinflamatoria, bienestar integral, ciencia y sabor.
 - Meal Prep Antiinflamatorio: franja clara, moderna y limpia con bolsas a la derecha/abajo, vectores botanicos suaves y copy de preparaciones listas para la semana. En responsive, asegurar un fondo despejado bajo el texto aunque las bolsas queden parcialmente cubiertas.
-- Oferta Fullness Lab: tres caminos comerciales. Meal Prep, Platos a la carta y Talleres abren WhatsApp por ahora; no hay seccion de tienda visible en la home.
+- Oferta Fullness Lab: tres caminos comerciales en franja baja y clara. Meal Prep y Talleres abren WhatsApp por ahora; Platos a la carta lleva a la pagina del primer producto disponible para usar la infraestructura de producto sin reinsertar una grilla de tienda en la home.
 
 Reglas al modificar:
 
@@ -345,6 +350,7 @@ Pendientes proactivos:
 Archivos relacionados:
 
 - `supabase/migrations/20260606223000_fullness_commerce_schema.sql`
+- `supabase/auth-email-templates/`
 - `supabase/seed.sql`
 - `supabase/README.md`
 - `src/main.jsx`
@@ -368,6 +374,8 @@ Contexto actual:
 - El backoffice inicial de menus quedo implementado en la SPA. Se accede por `#backoffice` o por el enlace visible para administradores, exige Supabase Auth y valida `profiles.is_admin` antes de listar o escribir.
 - Guardar o borrar menus desde backoffice refresca la lista administrativa y la tienda publica. Si Supabase esta configurado y no hay menus activos, la tienda queda sin productos activos en vez de volver a datos demo.
 - La subida de fotos usa el bucket publico `menu-photos`; tambien se puede pegar una URL externa en el campo de foto.
+- `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, logo via `{{ .SiteURL }}/assets/fullness-lab-logo-horizontal-marfil.png` y variables oficiales de Supabase.
+- La URL productiva de Auth es `https://fullness-taupe.vercel.app`. En Supabase Auth URL Configuration, el Site URL debe apuntar a esa URL y Redirect URLs debe permitir la URL productiva y las URLs locales usadas para pruebas.
 
 Reglas al modificar:
 
@@ -428,22 +436,21 @@ Ubicacion actual:
 Contexto actual:
 
 - El formulario pide nombre, correo, telefono y contrasena.
-- El login Gmail usa OAuth implicit flow en cliente.
-- Si falta `VITE_GOOGLE_CLIENT_ID`, se muestra mensaje de configuracion.
-- La cuenta no se guarda fuera del estado React.
-- La migracion Supabase crea `profiles` sincronizado con `auth.users` y protege `is_admin`, pero la UI aun no usa Supabase Auth.
+- El formulario de acceso pide correo y contrasena.
+- El login Gmail anterior fue reemplazado por acceso Supabase Auth con correo y contrasena.
+- El formulario permite solicitar recuperacion de contrasena por correo.
+- Si el usuario abre un enlace de invitacion o recuperacion de Supabase, la app muestra un modal para definir nueva contrasena y luego deja la sesion iniciada.
+- La migracion Supabase crea `profiles` sincronizado con `auth.users` y protege `is_admin`; la UI usa Supabase Auth para sesion y permisos de backoffice.
 
 Reglas al modificar:
 
-- No tratar la cuenta como autenticacion segura hasta tener backend o proveedor real.
-- Si se cambia el flujo Gmail, revisar variables de entorno y documentacion de despliegue.
+- Mantener los flujos de invitacion y recuperacion apuntando a una URL que cargue la SPA para que `detectSessionInUrl` pueda procesar el enlace.
 - Evitar almacenar contrasenas en frontend.
 
 Pendientes proactivos:
 
-- Definir proveedor de autenticacion.
-- Conectar la cuenta a Supabase Auth si habra cuentas reales.
-- Evaluar flujo OAuth mas robusto para produccion.
+- Probar en produccion el enlace real de invitacion/reset con dominio final `https://fullness-taupe.vercel.app` y redirect allowlist de Supabase.
+- Evaluar OAuth mas robusto si se retoma acceso con proveedores externos.
 
 ## Ambito: Comunidad Y Programas
 
