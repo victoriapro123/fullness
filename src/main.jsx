@@ -713,12 +713,15 @@ function IntroScrollSequence() {
   const finalFrameRef = useRef(null);
   const signalLayerRef = useRef(null);
   const logoButtonRef = useRef(null);
+  const skipButtonRef = useRef(null);
   const progressRef = useRef(0);
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
 
   useEffect(() => {
     let animationFrame = 0;
+    let autoStartTimeout = 0;
+    let introIntentStarted = false;
     const playbackMs = 4000;
     const finalFrameHold = 0.16;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -794,6 +797,14 @@ function IntroScrollSequence() {
       document.documentElement.classList.toggle("intro-scroll-playing", locked);
       document.documentElement.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.root;
       document.body.style.scrollBehavior = locked ? "auto" : scrollBehaviorSnapshot.body;
+    };
+
+    const markIntroIntent = () => {
+      introIntentStarted = true;
+      if (autoStartTimeout) {
+        window.clearTimeout(autoStartTimeout);
+        autoStartTimeout = 0;
+      }
     };
 
     const syncHeaderVisibility = () => {
@@ -977,6 +988,29 @@ function IntroScrollSequence() {
       return true;
     };
 
+    const skipIntro = () => {
+      markIntroIntent();
+      const video = videoRef.current;
+      playbackRef.current = null;
+      setScrollLock(false);
+      setSignalsVisible(false);
+      setVideoProgress(1, false);
+      setPosterFrameVisible(false);
+      setFinalFrameVisible(false);
+
+      if (video) {
+        video.pause();
+        video.playbackRate = 1;
+        if (video.readyState >= 1) {
+          video.currentTime = Math.max(0, getVideoDuration() - finalFrameHold);
+        }
+      }
+
+      setIntroConsumed(true);
+      jumpToScroll(0);
+      syncHeaderVisibility();
+    };
+
     const handleWheel = (event) => {
       if (playbackRef.current) {
         event.preventDefault();
@@ -989,6 +1023,7 @@ function IntroScrollSequence() {
       if (direction < 0) return;
 
       event.preventDefault();
+      markIntroIntent();
       startPlayback(direction);
     };
 
@@ -1013,6 +1048,7 @@ function IntroScrollSequence() {
       if (direction < 0) return;
 
       event.preventDefault();
+      markIntroIntent();
       startPlayback(direction);
     };
 
@@ -1035,6 +1071,7 @@ function IntroScrollSequence() {
       if (direction < 0) return;
 
       event.preventDefault();
+      markIntroIntent();
       startPlayback(direction);
     };
 
@@ -1075,12 +1112,28 @@ function IntroScrollSequence() {
         }
       }
 
+      introIntentStarted = false;
+      if (autoStartTimeout) {
+        window.clearTimeout(autoStartTimeout);
+      }
+      autoStartTimeout = window.setTimeout(() => {
+        if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
+          markIntroIntent();
+          startPlayback(1);
+        }
+      }, 2000);
       syncHeaderVisibility();
     };
 
     const handleStartClick = (event) => {
       event.preventDefault();
+      markIntroIntent();
       startPlayback(1);
+    };
+
+    const handleSkipClick = (event) => {
+      event.preventDefault();
+      skipIntro();
     };
 
     const handleMobileIntroChange = () => {
@@ -1125,6 +1178,12 @@ function IntroScrollSequence() {
     syncMobileIntroMode();
     if (!mobileIntroMedia.matches) {
       setVideoProgress(getProgressFromScroll());
+      autoStartTimeout = window.setTimeout(() => {
+        if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
+          markIntroIntent();
+          startPlayback(1);
+        }
+      }, 2000);
     }
 
     videoRef.current?.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -1141,10 +1200,15 @@ function IntroScrollSequence() {
     window.addEventListener("resize", handleScroll);
     window.addEventListener("fullness:intro-reset", handleIntroReset);
     logoButtonRef.current?.addEventListener("click", handleStartClick);
+    skipButtonRef.current?.addEventListener("click", handleSkipClick);
 
     return () => {
+      if (autoStartTimeout) {
+        window.clearTimeout(autoStartTimeout);
+      }
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
       logoButtonRef.current?.removeEventListener("click", handleStartClick);
+      skipButtonRef.current?.removeEventListener("click", handleSkipClick);
       if (mobileIntroMedia.removeEventListener) {
         mobileIntroMedia.removeEventListener("change", handleMobileIntroChange);
       } else {
@@ -1203,6 +1267,9 @@ function IntroScrollSequence() {
         />
         <button className="intro-start-logo" type="button" ref={logoButtonRef} aria-label="Iniciar animación Fullness Lab">
           <img src={logoVerticalSrc} alt="" aria-hidden="true" />
+        </button>
+        <button className="intro-skip-button" type="button" ref={skipButtonRef}>
+          Saltar
         </button>
         <div className="scroll-sequence-signal-layer" ref={signalLayerRef} aria-hidden="true">
           {introTechSignals.map((signal) => (
@@ -2718,12 +2785,12 @@ function App() {
           <p className="eyebrow">Tu semana resuelta</p>
           <h2>Meal Prep Antiinflamatorio</h2>
           <p>
-            Cinco platos diseñados para nutrirte durante toda la semana, con comida real, funcional y lista para disfrutar.
+            Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
           </p>
           <ul>
-            <li>Listos para calentar</li>
-            <li>Sin ultraprocesados</li>
-            <li>Ingredientes funcionales</li>
+            <li>Cocina antiinflamatoria</li>
+            <li>Ingredientes reales</li>
+            <li>Listo para calentar</li>
             <li>Elaborados por chef y nutricionista</li>
           </ul>
           <a href={mealPrepWhatsappUrl} target="_blank" rel="noreferrer">Ver planes</a>
@@ -2745,16 +2812,16 @@ function App() {
       >
         <div>
           <p className="eyebrow">Comunidad Fullness</p>
-          <h2>Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.</h2>
+          <h2>Un espacio para aprender, compartir y crecer desde la raíz.</h2>
           <p>
-            Con tu suscripción mensual accedes a experiencias diseñadas para acompañarte más allá de la comida.
+            Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá del plato.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
-            <span>Clases de cocina antiinflamatoria</span>
-            <span>Charlas de nutrición emocional</span>
+            <span>Cocina antiinflamatoria</span>
+            <span>Nutrición funcional</span>
             <span>Talleres de bienestar</span>
             <span>Contenido exclusivo</span>
-            <span>Encuentros y comunidad</span>
+            <span>Encuentros Fullness</span>
           </div>
           <a className="membership-cta" href="/comunidad" onClick={openCommunityPage}>
             Únete a la comunidad
