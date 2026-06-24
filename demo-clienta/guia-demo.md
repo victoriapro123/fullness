@@ -22,7 +22,7 @@ Puntos a destacar:
 
 - Antes del hero aparece una secuencia de video: el logo Fullness Lab queda al centro y al hacer click, scroll, touch o Page Down activa un scrub automatico y fluido de 4 segundos. Durante ese tramo el desplazamiento real del sitio queda bloqueado, el video cubre todo el alto visible, el menu se oculta y recien al terminar aterriza en el hero.
 - Desde el hero no se puede volver al video ni al tramo negro con scroll. Para repetir la secuencia se usa el boton tecnico transparente `Volver a la animacion`, ubicado arriba a la derecha del hero con icono de video.
-- En el intro aparecen cuatro tags tecnologicos simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Empiezan despues del segundo 1 y encienden uno a uno con titileo e iluminacion suave.
+- En el intro aparecen cuatro tags tecnologicos simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Empiezan despues del segundo 1 y encienden uno a uno con titileo e iluminacion suave.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.
 - Mensaje clave: el bienestar comienza desde adentro; no se cuentan calorias, se aprende a nutrirse.
@@ -47,7 +47,7 @@ Puntos a destacar:
 
 - Se usa la betarraga como simbolo de raiz, nutrientes y vida interior.
 - El texto explica la idea de bienestar desde adentro sin volver la pagina clinica.
-- Se presentan cuatro pilares: nutricion consciente, cocina antiinflamatoria, bienestar integral y ciencia con sabor.
+- Se presentan cuatro pilares: nutricion consciente, cocina Antinflamatoria, bienestar integral y ciencia con sabor.
 
 ## 5. Mostrar Como Calentar
 

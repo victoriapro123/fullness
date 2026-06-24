@@ -16,7 +16,7 @@ La diferenciacion que se debe levantar es:
 
 - Practico: lo bueno hecho simple.
 - Rico: foodporn, placer y experiencia gastronomica.
-- Antiinflamatorio: nutrientes, combinaciones funcionales y criterio nutricional.
+- Antinflamatorio: nutrientes, combinaciones funcionales y criterio nutricional.
 - Premium: colores, tipografias, ritual y suscripcion.
 
 Lenguaje clave: coherencia, autocuidado, "soy lo que como", alimentarse bien desde el amor propio y el bienestar.

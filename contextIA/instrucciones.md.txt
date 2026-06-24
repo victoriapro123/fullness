@@ -40,7 +40,7 @@ La solucion actual incluye:
 
 - Portada visual con video principal local y capa de nutrientes animados.
 - Navegacion por secciones.
-- Secciones de hero raiz, plato food porn, proposito, Meal Prep Antiinflamatorio, comunidad teaser, oferta Fullness Lab y nutricion emocional. La vitrina publica `#productos` y la seccion `#fundamento` ya no forman parte de la home.
+- Secciones de hero raiz, plato food porn, proposito, Meal Prep Antinflamatorio, comunidad teaser, oferta Fullness Lab y nutricion emocional. La vitrina publica `#productos` y la seccion `#fundamento` ya no forman parte de la home.
 - Pagina dedicada `/comunidad` con hero, cuatro pilares, galeria de fotos, proximas actividades y formulario de inscripcion a lista de distribucion de Comunidad Fullness.
 - Carrito funcional en memoria.
 - Notificacion al agregar productos.
@@ -66,7 +66,7 @@ Precision nueva entregada por la clienta el 2026-05-13:
 - La portada no debe ser solo un plato rico. Eso se siente como "un plato mas de comida".
 - El hero debe integrar visualmente el ADN del producto: alimentos llenos de nutrientes.
 - Debe aparecer la idea de nutrientes, vitaminas, minerales, grasas saludables e hidratos de carbono complejos entrando o cayendo hacia el plato y luego disolviendose.
-- La diferenciacion debe levantar las tres patas: practico, rico/foodporn y antiinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
+- La diferenciacion debe levantar las tres patas: practico, rico/foodporn y Antinflamatorio/nutrientes, con lenguaje consciente desde el autocuidado.
 - Frase conceptual clave: es rico y es un privilegio nutrirse bien.
 - Implementacion actual: despues de la intro, el hero hace una pausa negra de aprox. medio segundo y luego compone el plato recortado `src/assets/fullness-hero-plate-cutout.png` entrando claramente desde la derecha, con el texto entrando desde la izquierda. El fondo del hero usa una version PNG transparente del trazo de betarraga `public/images/hero/fullness-hero-betarraga-line-v2.png`, servida desde R2 bajo `images/hero/fullness-hero-betarraga-line-v2.png`, sobre fondo solido oscuro para evitar cajas o texturas de JPG. Por instruccion de la clienta no debe aparecer mujer, figura humana, ave ni animal en el hero. La portada mantiene plato protagonista, botanica premium y espacio a la izquierda para copy. La fuente principal del sitio es Avenir Next, con Inter solo como fallback tecnico. El copy visible actual es `Nutrir desde la raiz`, `Comida consciente para tu bienestar diario.`, `No contamos calorias. Creemos en aprender a nutrirse.` y CTA `Ver planes`. No usar marca de agua del logo dentro del hero.
 
@@ -123,7 +123,7 @@ Reglas al modificar:
 - Tocar una fibra emocional: el cuidado personal empieza por dentro.
 - Evitar tono fitness extremo, clinico, wellness cliche, hippie recargado o tecnologico frio.
 - Si se cambia el mensaje de marca, revisar portada, productos, comunidad y documentos de demo para que no queden contradicciones.
-- Mostrar que Fullness Lab une cuatro valores: practico, rico, antiinflamatorio y premium.
+- Mostrar que Fullness Lab une cuatro valores: practico, rico, Antinflamatorio y premium.
 
 Pendientes proactivos:
 
@@ -185,7 +185,7 @@ Contexto actual:
 - No hay router ni store global: `#backoffice` abre acceso/backoffice dentro de la misma SPA. No hay backend de checkout; la base Supabase ya esta aplicada y `menu_items` queda disponible para backoffice/rutas de producto, aunque la tienda publica no se muestra en la home.
 - El backoffice de menus permite crear, editar, borrar y activar/desactivar menus; edita nombre, slug, SKU, etiqueta, precio, orden, descripcion, foto por URL o subida a `menu-photos`, ingredientes, alergenos, descripcion nutricional, caracteristicas nutricionales, detalle nutricional, receta resumida, pasos de preparacion y datos nutricionales JSON.
 - El video introductorio anterior al hero no debe depender del scroll continuo: una intencion de scroll hacia abajo, touch hacia abajo, teclado o click en el logo central inicia un recorrido automatico de 4 segundos con efecto de scroll/scrub fluido, bloqueando la entrada y el desplazamiento real del sitio durante ese tramo. El video debe cubrir todo el alto visible, el header/menu debe estar oculto mientras corre la animacion y el sitio solo debe aterrizar en el hero al terminar los 4 segundos. Para cuidar la fluidez, la bajada hacia el hero usa reproduccion nativa del video con velocidad calculada, evitando forzar `currentTime` en cada frame. Al terminar, el intro queda consumido y sale del flujo normal: desde el hero no se puede subir al video ni al tramo negro con scroll. En estado `intro-scroll-consumed`, los listeners de wheel, touch y teclado no deben capturar input, para que el usuario pueda seguir bajando normalmente desde el hero. Solo el boton tecnico transparente `Volver a la animacion` reabre el intro y resetea el video en desktop. En mobile/tablet angosto (`<= 860px`), la intro se anula por completo: la pagina entra con `intro-scroll-consumed` y `intro-mobile-skip`, el tramo del video queda fuera del flujo y la primera pantalla es el hero.
-- El intro muestra el logo Fullness Lab centrado sobre el video, con proporcion cercana al 20% de pantalla y rol de boton accesible. Bajo el logo debe aparecer `Saltar`, separado visualmente por aprox. 100px, en blanco con hover dorado de la paleta; al hacer click consume el intro y aterriza directamente en el hero. Si al cargar la pagina pasan 2 segundos sin scroll, touch, teclado ni click en el logo, el intro se activa automaticamente como si el usuario hubiera iniciado la animacion. Al iniciar la animacion, el logo debe desaparecer gradualmente, no de golpe. Los textos tecnologicos son cuatro tags simples apilados a la izquierda, mas grandes, sin glass pesado, sin blur, sin borde y sin rectangulo visible: solo una palabra/frase luminosa sobre el video: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Deben empezar despues del segundo 1 y aparecer uno a uno con efecto de titileo e iluminacion. En el hero estable, el CTA visible actual es `Ver planes` y baja a `#oferta`.
+- El intro muestra el logo Fullness Lab centrado sobre el video, con proporcion cercana al 20% de pantalla y rol de boton accesible. Bajo el logo debe aparecer `Saltar`, separado visualmente por aprox. 100px, en blanco con hover dorado de la paleta; al hacer click consume el intro y aterriza directamente en el hero. Si al cargar la pagina pasan 2 segundos sin scroll, touch, teclado ni click en el logo, el intro se activa automaticamente como si el usuario hubiera iniciado la animacion. Al iniciar la animacion, el logo debe desaparecer gradualmente, no de golpe. Los textos tecnologicos son cuatro tags simples apilados a la izquierda, mas grandes, sin glass pesado, sin blur, sin borde y sin rectangulo visible: solo una palabra/frase luminosa sobre el video: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Deben empezar despues del segundo 1 y aparecer uno a uno con efecto de titileo e iluminacion. En el hero estable, el CTA visible actual es `Ver planes` y baja a `#oferta`.
 - El hero es el primer viewport real despues de consumir el intro y no debe depender de ScrollTrigger para hacerse visible. No ocultar `.plate-hero-copy` ni `.plate-hero-visual` con `autoAlpha: 0`, porque puede quedar invisible cuando el intro sale del flujo.
 - La imagen/foto del hero debe cubrir todo el alto del hero desde el borde superior; no reservar una franja negra superior para el boton `Volver a la animacion`. Ese boton debe ir absoluto sobre la foto en desktop, sin participar en el flujo de layout, y ocultarse en mobile porque la animacion queda anulada.
 - Cuando la intro esta consumida, `#programa` debe comenzar despues del header fijo, no detras del header. Se reserva `--site-header-height` con padding superior en `.intro-scroll-consumed main` y la navegacion a `#programa` debe volver a scroll `0`.
@@ -196,7 +196,7 @@ Contexto actual:
 - Los textos de `#plato` y `#proposito` deben quedar visibles por defecto. Se retiro el pin/reveal lateral de `#proposito` porque al cambiar el orden de secciones podia dejar el texto fuera de pantalla; no volver a depender de `opacity: 0`, transformaciones laterales ni ScrollTrigger para que el copy principal sea legible.
 - La seccion `Nutricion con fundamento` / `.functional-band` fue retirada de la home por instruccion de diseno. No reinsertarla salvo nueva instruccion explicita.
 - La cuarta seccion `.food-story-strip` debe funcionar como franja editorial oscura de aprox. 400px: copy al 30% izquierdo, plato grande recortado hacia la derecha, acento en la palabra `mas` y una linea/rombo pequeno bajo el titular. No debe leerse como foto de fondo generica ni invadir la legibilidad del texto.
-- La seccion `#calentar` fue reconvertida en banda `Meal Prep Antiinflamatorio`. Debe sentirse moderna y limpia, no antigua ni parchment/vintage. Usa una imagen generada nueva de bolsas sobre fondo marfil moderno, sin papel antiguo. Mantener vectores botanicos como acentos suaves; el texto ocupa aprox. 28-30% y las bolsas 70-72% en desktop, con un gradiente de legibilidad corto que no cubra de mas la imagen. Las bolsas son clickeables y llevan a la pagina del primer plato unico disponible. En anchos medios y mobile se prioriza la lectura aunque se sacrifique parte del packaging. El copy y la tipografia deben seguir la estrategia editorial de las primeras secciones: Avenir Next, titulares espaciados, cobre/marfil/ink y mensaje desde cuidado semanal, raiz y bienestar, no solo conveniencia.
+- La seccion `#calentar` fue reconvertida en banda `Meal Prep Antinflamatorio`. Debe sentirse moderna y limpia, no antigua ni parchment/vintage. Usa una imagen generada nueva de bolsas sobre fondo marfil moderno, sin papel antiguo. Mantener vectores botanicos como acentos suaves; el texto ocupa aprox. 28-30% y las bolsas 70-72% en desktop, con un gradiente de legibilidad corto que no cubra de mas la imagen. Las bolsas son clickeables y llevan a la pagina del primer plato unico disponible. En anchos medios y mobile se prioriza la lectura aunque se sacrifique parte del packaging. El copy y la tipografia deben seguir la estrategia editorial de las primeras secciones: Avenir Next, titulares espaciados, cobre/marfil/ink y mensaje desde cuidado semanal, raiz y bienestar, no solo conveniencia.
 - La seccion `Oferta Fullness Lab` / `#oferta` funciona como exploracion comercial final entre comunidad y footer. Debe ser baja y clara, no una pantalla completa: tres tarjetas compactas para Meal Prep, Platos a la carta y Talleres. Platos a la carta debe llevar a producto/tienda de platos unicos; Meal Prep y Talleres siguen abriendo WhatsApp por ahora.
 - La seccion publica `Productos` / `#productos` fue retirada de la home por instruccion de diseno. Mantener la infraestructura de producto, backoffice, lightbox y paginas individuales `/producto/:slug` disponible para una etapa posterior, pero no mostrar una grilla de tienda en la landing sin nueva instruccion explicita.
 - La seccion teaser `#comunidad` del landing debe llevar a la pagina `/comunidad`. Dentro de `/comunidad`, el CTA principal es inscripcion como miembro/lista de distribucion por correo con consentimiento; en la demo se guarda en `localStorage` y no debe confundirse con cuenta real, pago ni checkout. El teaser de comunidad debe mantener el mismo tono premium/editorial de la portada: cobre para eyebrow y divisores, marfil para titulares, textos breves sobre aprendizaje, bienestar y crecimiento desde la raiz.
@@ -261,7 +261,7 @@ Contexto actual:
 - Hay recursos disponibles que no necesariamente estan usados en la UI actual.
 - `src/assets/fullness-beet-roots-continuum.jpg` sigue disponible como fondo raiz/tierra para continuidad visual, pero la escena actual de `#plato` usa las nuevas siluetas botanicas desde R2 para una composicion mas limpia y editable.
 - Las siluetas entregadas por Cecilia se normalizaron como PNG con transparencia: `public/assets/fullness-silhouette-botanical.png`, `public/assets/fullness-silhouette-root-1.png`, `public/assets/fullness-silhouette-root-2.png` y `public/assets/fullness-silhouette-root-3.png`. `Siluetas x 3.png` fue separado en tres siluetas independientes para aplicarlas por seccion.
-- La franja `Meal Prep Antiinflamatorio` usa `src/assets/fullness-mealprep-band-modern.png` como visual de bolsas generado desde cero. No volver al asset anterior con textura de papel antiguo. El fondo debe ser claro, moderno y liso, con matices suaves pero sin parchment/vintage/grunge. El texto queda sobre una reserva pequena a la izquierda.
+- La franja `Meal Prep Antinflamatorio` usa `src/assets/fullness-mealprep-band-modern.png` como visual de bolsas generado desde cero. No volver al asset anterior con textura de papel antiguo. El fondo debe ser claro, moderno y liso, con matices suaves pero sin parchment/vintage/grunge. El texto queda sobre una reserva pequena a la izquierda.
 - En la seccion de proposito, el fondo activo debe ser `src/assets/fullness-philosophy-botanical-vector.png`: fondo solido `rgb(12, 11, 7)`, zona izquierda limpia para copy y las ilustraciones botanicas de referencia integradas dentro del mismo lienzo con margen amplio. Debe contener solo hoja, alcachofa y umbela en gris/marfil, sin zanahorias ni vegetales extra. En CSS debe mantener proporcion y recortarse naturalmente cuando baja el ancho; nunca estirarlo a `100% 100%`. No usar fondo azul, textura de papel, logo gigante ni vectores rojizos en esta seccion oscura.
 - La clienta quiere que el color predominante venga principalmente de los platos.
 - Los vectores botanicos sobre fondos oscuros deben leerse gris/marfil envejecido, no rojizos. En fondos claros o marfil, el rojizo/palo de rosa sigue permitido porque mantiene contraste y calidez.
@@ -298,7 +298,7 @@ Reglas al modificar:
 - Los textos dentro de contenedores, tarjetas, botones y fichas tecnicas deben poder envolver correctamente y nunca salirse ni invadir elementos vecinos; revisar especialmente etiquetas largas como datos nutricionales.
 - Ajuste de diseno 2026-06-07: la paleta no debe sentirse excesivamente oscura ni monotona; el burdeo queda como acento premium y el soporte principal suma verde petroleo/musgo, marfil envejecido, salvia y cobre opaco. Los overlays se movieron hacia papel premium con bordes y sin sombras fuertes. El informe final para cliente se llama `informes/fullness-informe-entrega-a4.html` y su version PDF queda en `informes/fullness-informe-entrega-a4.pdf`.
 - Ajuste visual posterior 2026-06-07: el hero debe evitar el bloque rectangular izquierdo; la foto del plato debe ocupar todo el hero con velos graduales para fundirse hacia la escena de betarraga. La seccion `#comunidad` del landing funciona como teaser y envia a la pagina dedicada `/comunidad`, donde vive la inscripcion por correo con persistencia local de demo.
-- Ajuste visual 2026-06-08: el CTA del hero ya no es `Ver mas`; ahora es `Ver planes` y ancla hacia `#oferta`. El orden actual de home es hero, betarraga/proposito, Meal Prep Antiinflamatorio, comunidad, oferta Fullness Lab y footer; la vitrina de tienda y `Nutricion con fundamento` fueron retiradas.
+- Ajuste visual 2026-06-08: el CTA del hero ya no es `Ver mas`; ahora es `Ver planes` y ancla hacia `#oferta`. El orden actual de home es hero, betarraga/proposito, Meal Prep Antinflamatorio, comunidad, oferta Fullness Lab y footer; la vitrina de tienda y `Nutricion con fundamento` fueron retiradas.
 - Propuesta comercial aceptada por Cecilia: etapa 1 diseno/publicacion web premium de 8 UF y etapa 2 e-commerce de 2 UF. La etapa 3 de gestion/seguimiento clinico de 8 UF no corresponde a esta entrega. Costos mensuales: infraestructura servidor + base de datos 0,5 UF; soporte/mejora continua 1 UF opcional. El informe de entrega debe reflejar estos montos, no 2 UF de infraestructura.
 
 Pendientes proactivos:
@@ -306,7 +306,7 @@ Pendientes proactivos:
 - Reemplazar fotos de demo por fotos finales de productos.
 - Definir lineamientos finales de uso del logo oficial en formatos de marca externos; en la web ya se usa horizontal para header y vertical para sistema visual.
 - Revisar peso de imagenes si la web se vuelve lenta.
-- Mantener la banda Meal Prep Antiinflamatorio como composicion moderna: fondo limpio, bolsas a la derecha/abajo y texto legible antes que packaging completo.
+- Mantener la banda Meal Prep Antinflamatorio como composicion moderna: fondo limpio, bolsas a la derecha/abajo y texto legible antes que packaging completo.
 - Conseguir o generar imagen food porn cinematografica para plato editorial grande sin reemplazar el hero final del video.
 - Explorar animacion de entrada donde nutrientes caen o flotan hacia el plato y se disuelven con leyendas breves.
 
@@ -317,7 +317,7 @@ Orden pedido por la clienta:
 1. Hero.
 2. Plato food porn.
 3. Nuestro proposito.
-4. Meal Prep Antiinflamatorio.
+4. Meal Prep Antinflamatorio.
 5. Oferta Fullness Lab.
 6. Comunidad / suscripcion.
 
@@ -325,8 +325,8 @@ Secciones deseadas:
 
 - Hero: plato protagonista cinematografico sobre negro editorial, con pausa negra posterior al video, plato recortado entrando desde la derecha y texto desde la izquierda. Debe mostrar el concepto de nutricion interior, raiz y bienestar sin mujer, ave ni animal. Copy actual: `Nutrir desde la raiz`, `Comida consciente para tu bienestar diario.`, `No contamos calorias. Creemos en aprender a nutrirse.` y CTA `Ver planes`.
 - Plato food porn: imagen protagonista de plato montado editorial, con vapor, sombras, brillo natural y dramatismo gastronomico. Esta seccion vende emocion.
-- Nuestro proposito: fondo organico con raiz/betarraga, isotipo visible y cuatro bloques: nutricion consciente, cocina antiinflamatoria, bienestar integral, ciencia y sabor.
-- Meal Prep Antiinflamatorio: franja clara, moderna y limpia con bolsas a la derecha/abajo, vectores botanicos suaves y copy de preparaciones listas para la semana. En responsive, asegurar un fondo despejado bajo el texto aunque las bolsas queden parcialmente cubiertas.
+- Nuestro proposito: fondo organico con raiz/betarraga, isotipo visible y cuatro bloques: nutricion consciente, cocina Antinflamatoria, bienestar integral, ciencia y sabor.
+- Meal Prep Antinflamatorio: franja clara, moderna y limpia con bolsas a la derecha/abajo, vectores botanicos suaves y copy de preparaciones listas para la semana. En responsive, asegurar un fondo despejado bajo el texto aunque las bolsas queden parcialmente cubiertas.
 - Oferta Fullness Lab: tres caminos comerciales en franja baja y clara. Meal Prep y Talleres abren WhatsApp por ahora; Platos a la carta lleva a la pagina del primer producto disponible para usar la infraestructura de producto sin reinsertar una grilla de tienda en la home.
 
 Reglas al modificar:
@@ -509,7 +509,7 @@ Pendientes proactivos:
 
 - Mantener una guia de demo corta y actual.
 - Diferenciar claramente demo visual, funcionalidad parcial y funcionalidad productiva.
-- Actualizar documentos de demo cuando se implemente la nueva direccion: hero raiz, food porn, proposito, oferta, Meal Prep Antiinflamatorio y nutricion emocional.
+- Actualizar documentos de demo cuando se implemente la nueva direccion: hero raiz, food porn, proposito, oferta, Meal Prep Antinflamatorio y nutricion emocional.
 
 ## Ambito: Despliegue Y Entorno
 

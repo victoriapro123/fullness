@@ -7,7 +7,7 @@
 - Se mantuvo el enfoque visual en comida real, ingredientes frescos y energia natural.
 - Se aplico el logo oficial entregado por la clienta.
 - El video introductorio anterior al hero muestra el logo Fullness Lab centrado sobre el video. La animacion avanza de forma autonoma y fluida durante 4 segundos cuando el usuario hace click en el logo o intenta bajar; durante ese tramo se bloquea el desplazamiento real del sitio, el video cubre todo el alto visible y el menu permanece oculto hasta aterrizar en el hero.
-- Los elementos tecnologicos quedaron como cuatro tags simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Encienden uno a uno con titileo e iluminacion suave.
+- Los elementos tecnologicos quedaron como cuatro tags simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Encienden uno a uno con titileo e iluminacion suave.
 - Desde el hero no se puede volver al video ni al tramo negro con scroll; se agrego un boton transparente con icono de video para `Volver a la animacion`, que reabre y resetea el intro.
 - El logo del header se aumento y se ajusto a una lectura marfil/dorado suave para no verse blanco ni generico.
 - Se agrego isotipo de betarraga como favicon, marca visual de secciones, marca de agua suave y footer.
@@ -77,7 +77,7 @@ Cada producto tiene foto de muestra servida desde Cloudflare R2, precio, descrip
 ## Proposito y oferta
 
 - Se transformo `Nuestra filosofia` en `Nuestro proposito`.
-- Se integraron cuatro pilares: nutricion consciente, cocina antiinflamatoria, bienestar integral y ciencia con sabor.
+- Se integraron cuatro pilares: nutricion consciente, cocina Antinflamatoria, bienestar integral y ciencia con sabor.
 - Se agrego una seccion `Oferta Fullness Lab` con tres caminos:
   - Menus preparados con CTA a tienda.
   - Meal Prep con CTA directo a WhatsApp.

@@ -8,7 +8,7 @@ Crear una pagina web para Fullness Lab, una marca de comida real y bienestar des
 
 La propuesta comunica:
 
-- Alimentacion antiinflamatoria y nutricion consciente.
+- Alimentacion Antinflamatoria y nutricion consciente.
 - Ingredientes reales y preparaciones honestas.
 - Bienestar desde adentro, cuerpo, mente y emociones.
 - Comida lista para servir en bolsas al vacio.
@@ -24,7 +24,7 @@ La portada se actualizo para levantar las cuatro patas definidas por la clienta:
 
 - Practico: lo bueno hecho simple.
 - Rico: food porn y placer gastronomico.
-- Antiinflamatorio: nutrientes, vitaminas, minerales y combinaciones funcionales.
+- Antinflamatorio: nutrientes, vitaminas, minerales y combinaciones funcionales.
 - Premium: paleta oscura, marfil calido, dorados opacos, burdeo betarraga, isotipo de raiz y lenguaje editorial.
 
 El proyecto esta preparado para desplegarse en Vercel desde GitHub.

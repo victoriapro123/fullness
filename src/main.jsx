@@ -241,13 +241,13 @@ const demoProducts = [
     id: "pollo-camote-hojas",
     slug: "pollo-camote-hojas",
     name: "Pollo especiado, camote y hojas verdes",
-    tag: "Antiinflamatorio",
+    tag: "Antinflamatorio",
     price: 7990,
     description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
     image: sampleProductImages[1],
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
     nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
-    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antiinflamatorias", "Saciedad prolongada"],
+    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias Antinflamatorias", "Saciedad prolongada"],
     nutritionDetail: "Preparación equilibrada para sostener energía durante el día, con especias cálidas y vegetales que aportan color, fibra y sabor.",
     nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
     recipeSummary: "Pollo especiado con cúrcuma, puré rústico de camote y hojas verdes frescas.",
@@ -294,7 +294,7 @@ const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero inform
 const introTechSignals = [
   {
     id: "anti",
-    label: "Antiinflamatorio"
+    label: "Antinflamatorio"
   },
   {
     id: "nutrients",
@@ -355,7 +355,7 @@ const communityFeatures = [
   }
 ];
 const defaultCommunityActivities = [
-  { date: "2026-07-08", description: "Clase de Cocina Antiinflamatoria" },
+  { date: "2026-07-08", description: "Clase de Cocina Antinflamatoria" },
   { date: "2026-07-17", description: "Taller de Batch Cooking" },
   { date: "2026-07-29", description: "Charla Nutrición Funcional" },
   { date: "2026-08-05", description: "Encuentro Fullness" },
@@ -2783,12 +2783,12 @@ function App() {
       <section className="meal-prep-feature" id="calentar">
         <div className="meal-prep-copy">
           <p className="eyebrow">Tu semana resuelta</p>
-          <h2>Meal Prep Antiinflamatorio</h2>
+          <h2>Meal Prep Antinflamatorio</h2>
           <p>
             Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
           </p>
           <ul>
-            <li>Cocina antiinflamatoria</li>
+            <li>Cocina Antinflamatoria</li>
             <li>Ingredientes reales</li>
             <li>Listo para calentar</li>
             <li>Elaborados por chef y nutricionista</li>
@@ -2817,7 +2817,7 @@ function App() {
             Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá del plato.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
-            <span>Cocina antiinflamatoria</span>
+            <span>Cocina Antinflamatoria</span>
             <span>Nutrición funcional</span>
             <span>Talleres de bienestar</span>
             <span>Contenido exclusivo</span>
@@ -3203,7 +3203,7 @@ function App() {
                           rows="3"
                           value={communityActivityForm.description}
                           onChange={updateCommunityActivityForm}
-                          placeholder="Clase de cocina antiinflamatoria…"
+                          placeholder="Clase de cocina Antinflamatoria…"
                         />
                       </label>
                       <button className="backoffice-command" type="submit">

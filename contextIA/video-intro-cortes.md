@@ -8,7 +8,7 @@ Este documento registra los dos cortes visibles del video introductorio anterior
 - Momento aproximado dentro de la animacion de 4 segundos: alrededor de 2.5s a 3.0s.
 - Percepcion visual: el plato termina de entrar y hay un cambio brusco de composicion/posicion.
 - Uso en UI: se sostiene el lenguaje de tags tecnologicos simples, con fondo transparente, borde blanco y texto breve.
-- Mensaje visible asociado al sistema actual: `Antiinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`.
+- Mensaje visible asociado al sistema actual: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`.
 
 ## Corte 02: Rebote Del Plato
 
