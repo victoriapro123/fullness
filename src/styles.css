@@ -8642,3 +8642,13 @@ footer::before {
   content: none !important;
   background: none !important;
 }
+
+/* Presentation safety: the purpose copy must never depend on a scroll animation to be readable. */
+.food-editorial .editorial-copy,
+.food-editorial .editorial-reveal-left,
+.food-editorial .editorial-reveal-right {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: none !important;
+}

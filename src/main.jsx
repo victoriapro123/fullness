@@ -1500,47 +1500,11 @@ function App() {
       });
 
       foodMotion.add("(min-width: 861px)", () => {
-        const foodTimeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: ".food-editorial",
-            start: () => {
-              const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
-              return `top top+=${Math.round(headerHeight)}`;
-            },
-            end: () => `+=${Math.round(window.innerHeight * 1.7)}`,
-            scrub: 0.75,
-            pin: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true
-          }
-        });
-
-        foodTimeline
-          .fromTo(".food-editorial .editorial-reveal-left",
-            { xPercent: -120, opacity: 0, filter: "blur(10px)" },
-            { xPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.42, ease: "power3.out" },
-            0.08
-          )
-          .fromTo(".food-editorial .editorial-reveal-right",
-            { xPercent: 120, opacity: 0, filter: "blur(10px)" },
-            { xPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.42, ease: "power3.out" },
-            0.54
-          )
-          .fromTo(".food-editorial .editorial-shop-photo",
-            { y: 44, opacity: 0, scale: 0.96 },
-            { y: 0, opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
-            0.86
-          );
-
-        return () => {
-          foodTimeline.scrollTrigger?.kill();
-          foodTimeline.kill();
-          gsap.set([
-            ".food-editorial .editorial-reveal-left",
-            ".food-editorial .editorial-reveal-right",
-            ".food-editorial .editorial-shop-photo"
-          ], { clearProps: "opacity,transform,filter" });
-        };
+        gsap.set([
+          ".food-editorial .editorial-reveal-left",
+          ".food-editorial .editorial-reveal-right",
+          ".food-editorial .editorial-shop-photo"
+        ], { clearProps: "opacity,transform,filter" });
       });
 
       foodMotion.add("(max-width: 860px)", () => {
