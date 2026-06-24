@@ -54,7 +54,7 @@ const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
 const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-line-v2.png");
-const communitySceneSrc = mediaSrc("images/community/comunidad-landing.jpeg");
+const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -240,13 +240,13 @@ const demoProducts = [
     id: "pollo-camote-hojas",
     slug: "pollo-camote-hojas",
     name: "Pollo especiado, camote y hojas verdes",
-    tag: "Antiinflamatorio",
+    tag: "Antinflamatorio",
     price: 7990,
     description: "Pollo con especias cálidas, puré de camote y hojas verdes frescas.",
     image: sampleProductImages[1],
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "oliva"],
     nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
-    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antiinflamatorias", "Saciedad prolongada"],
+    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Especias antinflamatorias", "Saciedad prolongada"],
     nutritionDetail: "Preparación equilibrada para sostener energía durante el día, con especias cálidas y vegetales que aportan color, fibra y sabor.",
     nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
     recipeSummary: "Pollo especiado con cúrcuma, puré rústico de camote y hojas verdes frescas.",
@@ -294,7 +294,7 @@ const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero inform
 const introTechSignals = [
   {
     id: "anti",
-    label: "Antiinflamatorio"
+    label: "Antinflamatorio"
   },
   {
     id: "nutrients",
@@ -351,6 +351,28 @@ const communityFeatures = [
   {
     title: "Encuentros Fullness",
     text: "Experiencias presenciales para conectar, compartir y formar parte de una comunidad que te inspira.",
+    icon: Heart
+  }
+];
+const communityLandingFeatures = [
+  {
+    title: "Clases de cocina antinflamatoria",
+    icon: CookingPot
+  },
+  {
+    title: "Charlas de nutrición funcional",
+    icon: Sprout
+  },
+  {
+    title: "Talleres de bienestar",
+    icon: Sparkles
+  },
+  {
+    title: "Contenido exclusivo",
+    icon: Lock
+  },
+  {
+    title: "Encuentros y comunidad",
     icon: Heart
   }
 ];
@@ -2697,6 +2719,7 @@ function App() {
         <div className="plate-hero-copy">
           <p className="eyebrow">Nutrir desde la raíz</p>
           <h1>Comida consciente para tu bienestar <span>diario.</span></h1>
+          <span className="section-rule" aria-hidden="true" />
           <p>
             Ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz.
           </p>
@@ -2759,11 +2782,10 @@ function App() {
         <section className="food-editorial" id="proposito">
           <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
             <p className="eyebrow">Nuestra filosofía</p>
-            <h2>Así como es por fuera, es por dentro.</h2>
+            <h2>Así como es por fuera, es por <span>dentro.</span></h2>
+            <span className="section-rule" aria-hidden="true" />
             <p>
               Creemos en una alimentación consciente que transforma tu energía, tu salud y tu entorno.
-            </p>
-            <p>
               Seleccionamos ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz. Porque nutrirte es mucho más que comer.
             </p>
             <a
@@ -2798,18 +2820,23 @@ function App() {
           <strong>mucho <em>más</em> que comer.</strong>
           <span className="story-rule" aria-hidden="true" />
           <span className="story-copy">Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
+          <span className="section-cta">
+            Explorar Fullness
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </span>
         </a>
       </section>
 
       <section className="meal-prep-feature" id="calentar">
         <div className="meal-prep-copy">
           <p className="eyebrow">Tu semana resuelta</p>
-          <h2>Meal Prep Antiinflamatorio</h2>
+          <h2>Meal Prep <span>Antinflamatorio</span></h2>
+          <span className="section-rule" aria-hidden="true" />
           <p>
             Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
           </p>
           <ul>
-            <li>Cocina antiinflamatoria</li>
+            <li>Cocina antinflamatoria</li>
             <li>Ingredientes reales</li>
             <li>Listo para calentar</li>
             <li>Elaborados por chef y nutricionista</li>
@@ -2833,16 +2860,18 @@ function App() {
       >
         <div>
           <p className="eyebrow">Comunidad Fullness</p>
-          <h2>Un espacio para aprender, compartir y crecer desde la raíz.</h2>
+          <h2>Un espacio para aprender, compartir y crecer desde la <span>raíz.</span></h2>
+          <span className="section-rule" aria-hidden="true" />
           <p>
             Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá del plato.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
-            <span>Cocina antiinflamatoria</span>
-            <span>Nutrición funcional</span>
-            <span>Talleres de bienestar</span>
-            <span>Contenido exclusivo</span>
-            <span>Encuentros Fullness</span>
+            {communityLandingFeatures.map(({ title, icon: Icon }) => (
+              <article key={title}>
+                <Icon size={24} aria-hidden="true" />
+                <span>{title}</span>
+              </article>
+            ))}
           </div>
           <a className="membership-cta" href="/comunidad" onClick={openCommunityPage}>
             Únete a la comunidad
@@ -2857,7 +2886,9 @@ function App() {
         </div>
         <div className="section-heading">
           <p className="eyebrow">Explora Fullness</p>
-          <h2>Elige tu camino.</h2>
+          <h2>Elige tu <span>camino.</span></h2>
+          <span className="section-rule" aria-hidden="true" />
+          <p>Meal prep, opciones familiares y actividades para nutrirte desde la raíz.</p>
         </div>
         <div className="offer-grid">
           <article className="offer-card">

@@ -15,8 +15,8 @@
   --beet-night: #210814;
   --beet-shadow: #311020;
   --beet-glow: #ad465c;
-  --copper: #a9703f;
-  --gold: #d0ad73;
+  --copper: #b87878;
+  --gold: #b87878;
   --sage: #b9c3ad;
   --paper: #efe7d7;
   --stone: #d5c8b4;
@@ -36,8 +36,8 @@
   --site-header-space: clamp(94px, 7.4vw, 116px);
   --site-header-height: var(--site-header-space);
   --editorial-black: #090806;
-  --editorial-copper: #b77a54;
-  --editorial-line: rgba(183, 122, 84, 0.42);
+  --editorial-copper: #b87878;
+  --editorial-line: rgba(184, 120, 120, 0.42);
 }
 
 body {
@@ -49,7 +49,7 @@ body {
   gap: clamp(20px, 3vw, 54px);
   padding: 18px clamp(22px, 3.8vw, 64px);
   background: rgba(9, 8, 6, 0.94);
-  border-bottom: 1px solid rgba(183, 122, 84, 0.2);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.2);
 }
 
 .brand {
@@ -83,7 +83,7 @@ body {
 .member-link,
 .icon-button {
   background: rgba(9, 8, 6, 0.46);
-  border-color: rgba(183, 122, 84, 0.46);
+  border-color: rgba(184, 120, 120, 0.46);
 }
 
 .plate-hero {
@@ -96,7 +96,7 @@ body {
 
 .plate-hero::before {
   background:
-    radial-gradient(ellipse at 70% 35%, rgba(183, 122, 84, 0.1), transparent 34%),
+    radial-gradient(ellipse at 70% 35%, rgba(184, 120, 120, 0.1), transparent 34%),
     linear-gradient(90deg, rgba(9, 8, 6, 0.99) 0%, rgba(9, 8, 6, 0.9) 31%, rgba(9, 8, 6, 0.22) 57%, rgba(9, 8, 6, 0.18) 100%),
     linear-gradient(180deg, rgba(9, 8, 6, 0.04) 0%, rgba(9, 8, 6, 0.08) 64%, #0b0907 100%);
 }
@@ -150,7 +150,7 @@ body {
   margin-top: 26px;
   padding-inline: 24px;
   color: #f4eadb;
-  border-color: rgba(183, 122, 84, 0.78);
+  border-color: rgba(184, 120, 120, 0.78);
   background: rgba(9, 8, 6, 0.18);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -177,8 +177,8 @@ body {
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid rgba(183, 122, 84, 0.26);
-  border-bottom: 1px solid rgba(183, 122, 84, 0.26);
+  border-top: 1px solid rgba(184, 120, 120, 0.26);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.26);
   background: #0d0c0a;
   color: #f4eadb;
 }
@@ -190,7 +190,7 @@ body {
   align-items: center;
   min-height: 112px;
   padding: 22px clamp(18px, 2.4vw, 38px);
-  border-right: 1px solid rgba(183, 122, 84, 0.2);
+  border-right: 1px solid rgba(184, 120, 120, 0.2);
 }
 
 .hero-benefits article:last-child {
@@ -233,7 +233,7 @@ body {
   padding: clamp(54px, 6vw, 84px) clamp(28px, 4vw, 76px);
   gap: clamp(24px, 3vw, 54px);
   background:
-    radial-gradient(ellipse at 72% 52%, rgba(183, 122, 84, 0.08), transparent 34%),
+    radial-gradient(ellipse at 72% 52%, rgba(184, 120, 120, 0.08), transparent 34%),
     linear-gradient(180deg, #0b0a08 0%, #11100d 100%);
 }
 
@@ -257,7 +257,7 @@ body {
   width: min(38vw, 520px);
   min-width: 330px;
   opacity: 0.68;
-  filter: sepia(0.4) saturate(1.15) drop-shadow(0 20px 52px rgba(183, 122, 84, 0.18));
+  filter: sepia(0.4) saturate(1.15) drop-shadow(0 20px 52px rgba(184, 120, 120, 0.18));
 }
 
 .food-editorial .editorial-copy {
@@ -562,7 +562,7 @@ body {
 .community-benefits span {
   min-width: 0;
   padding-top: 12px;
-  border-top: 1px solid rgba(183, 122, 84, 0.28);
+  border-top: 1px solid rgba(184, 120, 120, 0.28);
   color: rgba(244, 234, 219, 0.72);
   font-size: 0.72rem;
   line-height: 1.32;
@@ -653,20 +653,20 @@ body {
 
 .products {
   background:
-    radial-gradient(circle at 18% 18%, rgba(183, 122, 84, 0.18) 0 0.22rem, transparent 0.42rem),
+    radial-gradient(circle at 18% 18%, rgba(184, 120, 120, 0.18) 0 0.22rem, transparent 0.42rem),
     radial-gradient(circle at 54% 12%, rgba(244, 234, 219, 0.12) 0 0.26rem, transparent 0.48rem),
     linear-gradient(180deg, #0d0c0a 0%, #11100d 100%);
 }
 
 .functional-band {
   background:
-    radial-gradient(circle at 12% 16%, rgba(183, 122, 84, 0.08), transparent 28%),
+    radial-gradient(circle at 12% 16%, rgba(184, 120, 120, 0.08), transparent 28%),
     linear-gradient(180deg, #11100d 0%, #0b0a08 100%);
 }
 
 footer {
   background: #090806;
-  border-top: 1px solid rgba(183, 122, 84, 0.24);
+  border-top: 1px solid rgba(184, 120, 120, 0.24);
 }
 
 @media (max-width: 1120px) {
@@ -701,7 +701,7 @@ footer {
   justify-content: center;
   min-height: 34px;
   padding: 0 14px;
-  border: 1px solid rgba(183, 122, 84, 0.48);
+  border: 1px solid rgba(184, 120, 120, 0.48);
   border-radius: 999px;
   color: rgb(244, 234, 219);
   background: rgba(9, 8, 6, 0.72);
@@ -1040,7 +1040,7 @@ main[data-background-mode="plum"] .membership::after {
   .hero-benefits article {
     min-height: 92px;
     border-right: 0;
-    border-bottom: 1px solid rgba(183, 122, 84, 0.2);
+    border-bottom: 1px solid rgba(184, 120, 120, 0.2);
   }
 
   .hero-benefits article:last-child {
@@ -1565,7 +1565,7 @@ footer h3 {
   padding: clamp(78px, 9svh, 118px) clamp(32px, 4.8vw, 86px) clamp(62px, 8svh, 104px) !important;
   background:
     radial-gradient(ellipse at 78% 35%, rgba(90, 91, 83, 0.18), transparent 34%),
-    radial-gradient(ellipse at 58% 72%, rgba(183, 122, 84, 0.1), transparent 32%),
+    radial-gradient(ellipse at 58% 72%, rgba(184, 120, 120, 0.1), transparent 32%),
     linear-gradient(180deg, #020202 0%, #070706 42%, #0b0907 100%) !important;
 }
 
@@ -1574,7 +1574,7 @@ footer h3 {
   background:
     linear-gradient(90deg, rgba(2, 2, 2, 0.96) 0%, rgba(3, 3, 3, 0.78) 34%, rgba(3, 3, 3, 0.2) 58%, rgba(3, 3, 3, 0) 100%),
     radial-gradient(ellipse at 66% 34%, rgba(244, 234, 219, 0.08), transparent 30%),
-    radial-gradient(ellipse at 78% 72%, rgba(183, 122, 84, 0.12), transparent 34%) !important;
+    radial-gradient(ellipse at 78% 72%, rgba(184, 120, 120, 0.12), transparent 34%) !important;
 }
 
 .plate-hero::after {
@@ -1792,7 +1792,7 @@ footer h3 {
   padding: clamp(78px, 9svh, 118px) clamp(32px, 4.8vw, 86px) clamp(62px, 8svh, 104px);
   background:
     radial-gradient(ellipse at 78% 35%, rgba(90, 91, 83, 0.18), transparent 34%),
-    radial-gradient(ellipse at 58% 72%, rgba(183, 122, 84, 0.1), transparent 32%),
+    radial-gradient(ellipse at 58% 72%, rgba(184, 120, 120, 0.1), transparent 32%),
     linear-gradient(180deg, #020202 0%, #070706 42%, #0b0907 100%);
 }
 
@@ -1801,7 +1801,7 @@ footer h3 {
   background:
     linear-gradient(90deg, rgba(2, 2, 2, 0.96) 0%, rgba(3, 3, 3, 0.78) 34%, rgba(3, 3, 3, 0.2) 58%, rgba(3, 3, 3, 0) 100%),
     radial-gradient(ellipse at 66% 34%, rgba(244, 234, 219, 0.08), transparent 30%),
-    radial-gradient(ellipse at 78% 72%, rgba(183, 122, 84, 0.12), transparent 34%);
+    radial-gradient(ellipse at 78% 72%, rgba(184, 120, 120, 0.12), transparent 34%);
 }
 
 .plate-hero::after {
@@ -2475,7 +2475,7 @@ footer::before {
 
 .plate-hero::before {
   background:
-    radial-gradient(ellipse at 70% 35%, rgba(183, 122, 84, 0.12), transparent 34%),
+    radial-gradient(ellipse at 70% 35%, rgba(184, 120, 120, 0.12), transparent 34%),
     linear-gradient(90deg, rgba(9, 8, 6, 0.94) 0%, rgba(9, 8, 6, 0.78) 31%, rgba(9, 8, 6, 0.16) 57%, rgba(9, 8, 6, 0.12) 100%),
     linear-gradient(180deg, rgba(9, 8, 6, 0.02) 0%, rgba(9, 8, 6, 0.04) 64%, #0b0907 100%);
 }
@@ -3530,7 +3530,7 @@ h3 {
 }
 
 .plate-hero-copy .eyebrow {
-  color: #d0ad73;
+  color: #b87878;
 }
 
 .plate-hero-copy h1 {
@@ -4004,7 +4004,7 @@ h3 {
   pointer-events: none;
   background-image:
     radial-gradient(circle, rgba(240, 194, 112, 0.95) 0 1px, transparent 2px),
-    radial-gradient(circle, rgba(183, 122, 63, 0.7) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(184, 120, 120, 0.7) 0 1px, transparent 2px),
     radial-gradient(circle, rgba(255, 238, 183, 0.72) 0 1px, transparent 2px);
   background-position: 8% 18%, 54% 42%, 82% 26%;
   background-size: 180px 180px, 260px 260px, 340px 340px;
@@ -5306,7 +5306,7 @@ footer p {
 
 footer strong {
   justify-self: end;
-  color: #d0ad73;
+  color: #b87878;
   font-family: var(--font-display);
   font-size: clamp(1rem, 1.1vw, 1.22rem);
   font-weight: 500;
@@ -7124,7 +7124,7 @@ footer strong {
   --site-header-space: clamp(94px, 7.4vw, 116px);
   --site-header-height: var(--site-header-space);
   --editorial-black: #090806;
-  --editorial-copper: #b77a54;
+  --editorial-copper: #b87878;
 }
 
 body {
@@ -7136,7 +7136,7 @@ body {
   gap: clamp(20px, 3vw, 54px);
   padding: 18px clamp(22px, 3.8vw, 64px);
   background: rgba(9, 8, 6, 0.94);
-  border-bottom: 1px solid rgba(183, 122, 84, 0.2);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.2);
 }
 
 .brand {
@@ -7170,7 +7170,7 @@ body {
 .member-link,
 .icon-button {
   background: rgba(9, 8, 6, 0.46);
-  border-color: rgba(183, 122, 84, 0.46);
+  border-color: rgba(184, 120, 120, 0.46);
 }
 
 .plate-hero {
@@ -7183,7 +7183,7 @@ body {
 
 .plate-hero::before {
   background:
-    radial-gradient(ellipse at 70% 35%, rgba(183, 122, 84, 0.1), transparent 34%),
+    radial-gradient(ellipse at 70% 35%, rgba(184, 120, 120, 0.1), transparent 34%),
     linear-gradient(90deg, rgba(9, 8, 6, 0.99) 0%, rgba(9, 8, 6, 0.9) 31%, rgba(9, 8, 6, 0.22) 57%, rgba(9, 8, 6, 0.18) 100%),
     linear-gradient(180deg, rgba(9, 8, 6, 0.04) 0%, rgba(9, 8, 6, 0.08) 64%, #0b0907 100%);
 }
@@ -7237,7 +7237,7 @@ body {
   margin-top: 26px;
   padding-inline: 24px;
   color: #f4eadb;
-  border-color: rgba(183, 122, 84, 0.78);
+  border-color: rgba(184, 120, 120, 0.78);
   background: rgba(9, 8, 6, 0.18);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -7264,8 +7264,8 @@ body {
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid rgba(183, 122, 84, 0.26);
-  border-bottom: 1px solid rgba(183, 122, 84, 0.26);
+  border-top: 1px solid rgba(184, 120, 120, 0.26);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.26);
   background: #0d0c0a;
   color: #f4eadb;
 }
@@ -7277,7 +7277,7 @@ body {
   align-items: center;
   min-height: 112px;
   padding: 22px clamp(18px, 2.4vw, 38px);
-  border-right: 1px solid rgba(183, 122, 84, 0.2);
+  border-right: 1px solid rgba(184, 120, 120, 0.2);
 }
 
 .hero-benefits article:last-child {
@@ -7320,7 +7320,7 @@ body {
   padding: clamp(54px, 6vw, 84px) clamp(28px, 4vw, 76px);
   gap: clamp(24px, 3vw, 54px);
   background:
-    radial-gradient(ellipse at 72% 52%, rgba(183, 122, 84, 0.08), transparent 34%),
+    radial-gradient(ellipse at 72% 52%, rgba(184, 120, 120, 0.08), transparent 34%),
     linear-gradient(180deg, #0b0a08 0%, #11100d 100%);
 }
 
@@ -7344,7 +7344,7 @@ body {
   width: min(38vw, 520px);
   min-width: 330px;
   opacity: 0.68;
-  filter: sepia(0.4) saturate(1.15) drop-shadow(0 20px 52px rgba(183, 122, 84, 0.18));
+  filter: sepia(0.4) saturate(1.15) drop-shadow(0 20px 52px rgba(184, 120, 120, 0.18));
 }
 
 .food-editorial .editorial-copy {
@@ -7647,7 +7647,7 @@ body {
 .community-benefits span {
   min-width: 0;
   padding-top: 12px;
-  border-top: 1px solid rgba(183, 122, 84, 0.28);
+  border-top: 1px solid rgba(184, 120, 120, 0.28);
   color: rgba(244, 234, 219, 0.72);
   font-size: 0.72rem;
   line-height: 1.32;
@@ -7735,20 +7735,20 @@ body {
 
 .products {
   background:
-    radial-gradient(circle at 18% 18%, rgba(183, 122, 84, 0.18) 0 0.22rem, transparent 0.42rem),
+    radial-gradient(circle at 18% 18%, rgba(184, 120, 120, 0.18) 0 0.22rem, transparent 0.42rem),
     radial-gradient(circle at 54% 12%, rgba(244, 234, 219, 0.12) 0 0.26rem, transparent 0.48rem),
     linear-gradient(180deg, #0d0c0a 0%, #11100d 100%);
 }
 
 .functional-band {
   background:
-    radial-gradient(circle at 12% 16%, rgba(183, 122, 84, 0.08), transparent 28%),
+    radial-gradient(circle at 12% 16%, rgba(184, 120, 120, 0.08), transparent 28%),
     linear-gradient(180deg, #11100d 0%, #0b0a08 100%);
 }
 
 footer {
   background: #090806;
-  border-top: 1px solid rgba(183, 122, 84, 0.24);
+  border-top: 1px solid rgba(184, 120, 120, 0.24);
 }
 
 @media (max-width: 1120px) {
@@ -7825,7 +7825,7 @@ footer {
   .hero-benefits article {
     min-height: 92px;
     border-right: 0;
-    border-bottom: 1px solid rgba(183, 122, 84, 0.2);
+    border-bottom: 1px solid rgba(184, 120, 120, 0.2);
   }
 
   .hero-benefits article:last-child {
@@ -8250,7 +8250,7 @@ footer h3 {
   padding: clamp(78px, 9svh, 118px) clamp(32px, 4.8vw, 86px) clamp(62px, 8svh, 104px) !important;
   background:
     radial-gradient(ellipse at 78% 35%, rgba(90, 91, 83, 0.18), transparent 34%),
-    radial-gradient(ellipse at 58% 72%, rgba(183, 122, 84, 0.1), transparent 32%),
+    radial-gradient(ellipse at 58% 72%, rgba(184, 120, 120, 0.1), transparent 32%),
     linear-gradient(180deg, #020202 0%, #070706 42%, #0b0907 100%) !important;
 }
 
@@ -8259,7 +8259,7 @@ footer h3 {
   background:
     linear-gradient(90deg, rgba(2, 2, 2, 0.96) 0%, rgba(3, 3, 3, 0.78) 34%, rgba(3, 3, 3, 0.2) 58%, rgba(3, 3, 3, 0) 100%),
     radial-gradient(ellipse at 66% 34%, rgba(244, 234, 219, 0.08), transparent 30%),
-    radial-gradient(ellipse at 78% 72%, rgba(183, 122, 84, 0.12), transparent 34%) !important;
+    radial-gradient(ellipse at 78% 72%, rgba(184, 120, 120, 0.12), transparent 34%) !important;
 }
 
 .plate-hero::after {
@@ -8597,7 +8597,7 @@ footer::before {
 }
 
 .plate-hero-copy .eyebrow {
-  color: #b77a54 !important;
+  color: #b87878 !important;
   font-size: clamp(0.64rem, 0.58vw, 0.76rem) !important;
   font-weight: 700 !important;
   letter-spacing: 0.18em !important;
@@ -9473,7 +9473,7 @@ footer address {
   place-items: center;
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(183, 122, 84, 0.42);
+  border: 1px solid rgba(184, 120, 120, 0.42);
   border-radius: 999px;
   color: rgba(244, 234, 219, 0.84);
   font-size: 0.72rem;
@@ -9490,7 +9490,7 @@ footer address {
 
 .footer-column h3 {
   margin: 0 0 8px;
-  color: #b77a54;
+  color: #b87878;
   font-size: clamp(0.68rem, 0.72vw, 0.82rem);
   font-weight: 900;
   letter-spacing: 0.16em;
@@ -9700,7 +9700,7 @@ footer address {
   background:
     linear-gradient(90deg, rgba(9, 8, 6, 0.97) 0%, rgba(9, 8, 6, 0.84) 33%, rgba(9, 8, 6, 0.28) 64%, rgba(9, 8, 6, 0.1) 100%),
     var(--community-page-hero) center right / cover no-repeat;
-  border-bottom: 1px solid rgba(183, 122, 84, 0.22);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.22);
 }
 
 .community-page-hero-copy {
@@ -9747,7 +9747,7 @@ footer address {
   gap: 16px;
   min-height: 54px;
   padding: 0 28px;
-  border: 1px solid rgba(183, 122, 84, 0.7);
+  border: 1px solid rgba(184, 120, 120, 0.7);
   color: #f4eadb;
   font-family: var(--font-display);
   font-size: clamp(0.72rem, 0.82vw, 0.94rem);
@@ -9760,7 +9760,7 @@ footer address {
 .community-page-features {
   padding: clamp(54px, 6vw, 92px) clamp(32px, 5vw, 86px);
   background: #0b0a08;
-  border-bottom: 1px solid rgba(183, 122, 84, 0.18);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.18);
 }
 
 .community-section-title {
@@ -9784,7 +9784,7 @@ footer address {
 .community-section-title span {
   width: 44px;
   height: 2px;
-  background: rgba(183, 122, 84, 0.84);
+  background: rgba(184, 120, 120, 0.84);
 }
 
 .community-feature-grid {
@@ -9852,9 +9852,9 @@ footer address {
   gap: clamp(40px, 6vw, 92px);
   padding: clamp(56px, 6vw, 96px) clamp(32px, 5vw, 86px);
   background:
-    radial-gradient(circle at 84% 28%, rgba(183, 122, 84, 0.12), transparent 34%),
+    radial-gradient(circle at 84% 28%, rgba(184, 120, 120, 0.12), transparent 34%),
     #0b0a08;
-  border-top: 1px solid rgba(183, 122, 84, 0.18);
+  border-top: 1px solid rgba(184, 120, 120, 0.18);
 }
 
 .community-activities,
@@ -9968,7 +9968,7 @@ footer address {
 }
 
 .community-member-form input:focus {
-  border-color: rgba(183, 122, 84, 0.78);
+  border-color: rgba(184, 120, 120, 0.78);
   outline: none;
 }
 
@@ -10351,7 +10351,7 @@ footer::before {
 }
 
 .meal-prep-copy .eyebrow {
-  color: #8b5b43 !important;
+  color: #b87878 !important;
 }
 
 .meal-prep-copy h2 {
@@ -10387,8 +10387,8 @@ footer::before {
 }
 
 .meal-prep-copy a {
-  border-color: rgba(139, 91, 67, 0.36) !important;
-  color: #5d3829 !important;
+  border-color: rgba(184, 120, 120, 0.36) !important;
+  color: #b87878 !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.64rem, 0.68vw, 0.78rem) !important;
   font-weight: 800 !important;
@@ -10434,8 +10434,8 @@ footer::before {
 .community-benefits {
   max-width: 880px !important;
   margin-top: clamp(22px, 2.4vw, 34px) !important;
-  border-top: 1px solid rgba(183, 122, 84, 0.28) !important;
-  border-bottom: 1px solid rgba(183, 122, 84, 0.18) !important;
+  border-top: 1px solid rgba(184, 120, 120, 0.28) !important;
+  border-bottom: 1px solid rgba(184, 120, 120, 0.18) !important;
 }
 
 .community-benefits span {
@@ -10451,7 +10451,7 @@ footer::before {
 }
 
 .membership-cta {
-  border-color: rgba(183, 122, 84, 0.52) !important;
+  border-color: rgba(184, 120, 120, 0.52) !important;
   color: rgb(244, 234, 219) !important;
   background: rgba(9, 8, 6, 0.34) !important;
   font-family: var(--font-display) !important;
@@ -10517,7 +10517,7 @@ footer::before {
     justify-items: start !important;
     text-align: left !important;
     border-right: 0 !important;
-    border-bottom: 1px solid rgba(183, 122, 84, 0.16) !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.16) !important;
   }
 }
 
@@ -10643,5 +10643,792 @@ footer::before {
     width: min(88vw, 420px) !important;
     margin-left: 24px !important;
     margin-right: 24px !important;
+  }
+}
+
+/* Final editorial system: hero pattern applied across narrative sections. */
+:root {
+  --fullness-highlight: #b87878;
+  --fullness-highlight-soft: rgba(184, 120, 120, 0.74);
+  --fullness-marfil: rgb(244, 234, 219);
+  --fullness-ink: rgb(9, 8, 6);
+}
+
+.plate-hero-copy,
+.food-editorial .editorial-copy,
+.food-story-strip a,
+.meal-prep-copy,
+.membership > div,
+.fullness-offer .section-heading,
+.offer-card {
+  overflow-wrap: break-word !important;
+}
+
+.plate-hero-copy .eyebrow,
+.food-editorial .eyebrow,
+.food-story-strip .eyebrow,
+.meal-prep-copy .eyebrow,
+.membership .eyebrow,
+.fullness-offer .section-heading .eyebrow,
+.offer-card .offer-kicker {
+  color: var(--fullness-highlight) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+}
+
+.plate-hero-copy h1 span,
+.food-editorial .editorial-copy h2 span,
+.food-story-strip strong em,
+.meal-prep-copy h2 span,
+.membership h2 span,
+.fullness-offer .section-heading h2 span {
+  color: var(--fullness-highlight) !important;
+}
+
+.food-editorial .editorial-copy h2,
+.food-story-strip strong,
+.meal-prep-copy h2,
+.membership h2,
+.fullness-offer .section-heading h2 {
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.18em !important;
+  line-height: 1.18 !important;
+  text-transform: uppercase !important;
+}
+
+.meal-prep-copy h2 span,
+.membership h2 span,
+.fullness-offer .section-heading h2 span {
+  display: inline !important;
+}
+
+.section-rule {
+  position: relative !important;
+  display: block !important;
+  width: clamp(78px, 7vw, 118px) !important;
+  height: 1px !important;
+  margin: clamp(16px, 1.8vw, 26px) 0 clamp(22px, 2.2vw, 34px) !important;
+  background: linear-gradient(90deg, var(--fullness-highlight-soft), rgba(184, 120, 120, 0)) !important;
+}
+
+.section-rule::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  width: 7px !important;
+  height: 7px !important;
+  border: 1px solid var(--fullness-highlight-soft) !important;
+  transform: translate(-1px, -50%) rotate(45deg) !important;
+  background: transparent !important;
+}
+
+.food-editorial .editorial-copy::before,
+.food-editorial .editorial-pills {
+  display: none !important;
+}
+
+.food-editorial .editorial-copy p,
+.food-story-strip .story-copy,
+.membership p {
+  color: rgba(244, 234, 219, 0.76) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 500 !important;
+  line-height: 1.72 !important;
+}
+
+.meal-prep-copy p,
+.meal-prep-copy li,
+.fullness-offer .section-heading p,
+.offer-card p:not(.offer-kicker) {
+  color: rgba(9, 8, 6, 0.72) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+
+.plate-hero-primary,
+.editorial-cta,
+.food-story-strip .section-cta,
+.meal-prep-copy a,
+.membership-cta,
+.offer-card a {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  min-height: 48px !important;
+  padding: 13px 22px !important;
+  border: 1px solid rgba(184, 120, 120, 0.62) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--fullness-marfil) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(0.66rem, 0.68vw, 0.78rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.16em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+  transition: border-color 180ms ease, color 180ms ease, background-color 180ms ease !important;
+  white-space: normal !important;
+}
+
+.plate-hero-primary:hover,
+.plate-hero-primary:focus-visible,
+.editorial-cta:hover,
+.editorial-cta:focus-visible,
+.food-story-strip .section-cta:hover,
+.food-story-strip a:focus-visible .section-cta,
+.meal-prep-copy a:hover,
+.meal-prep-copy a:focus-visible,
+.membership-cta:hover,
+.membership-cta:focus-visible,
+.offer-card a:hover,
+.offer-card a:focus-visible {
+  border-color: var(--fullness-highlight) !important;
+  color: var(--fullness-highlight) !important;
+  background: rgba(184, 120, 120, 0.08) !important;
+}
+
+.meal-prep-copy a,
+.offer-card a {
+  color: var(--fullness-ink) !important;
+}
+
+.meal-prep-copy a:hover,
+.meal-prep-copy a:focus-visible,
+.offer-card a:hover,
+.offer-card a:focus-visible {
+  color: var(--fullness-highlight) !important;
+}
+
+.food-story-strip a {
+  align-content: center !important;
+  gap: 0 !important;
+}
+
+.food-story-strip .story-copy {
+  margin-bottom: clamp(20px, 2vw, 30px) !important;
+}
+
+.food-story-strip .section-cta {
+  margin-top: 0 !important;
+}
+
+.membership .community-benefits {
+  margin-top: clamp(18px, 2vw, 28px) !important;
+  margin-bottom: clamp(18px, 2.2vw, 32px) !important;
+  border-color: rgba(184, 120, 120, 0.22) !important;
+}
+
+.community-benefits span {
+  color: rgba(244, 234, 219, 0.78) !important;
+}
+
+.fullness-offer .section-heading {
+  max-width: min(720px, 88vw) !important;
+  margin-inline: auto !important;
+}
+
+.fullness-offer .section-heading .section-rule {
+  margin-inline: auto !important;
+}
+
+.fullness-offer .section-heading h2 {
+  color: var(--fullness-ink) !important;
+}
+
+.fullness-offer .section-heading p {
+  max-width: 54ch !important;
+  margin: 0 auto clamp(22px, 2.4vw, 34px) !important;
+  text-align: center !important;
+}
+
+.offer-card h3 {
+  color: var(--fullness-ink) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1.18 !important;
+  text-transform: uppercase !important;
+}
+
+.member-link {
+  color: var(--fullness-highlight) !important;
+  border-color: rgba(184, 120, 120, 0.62) !important;
+}
+
+.member-link:hover,
+.member-link:focus-visible {
+  color: var(--fullness-marfil) !important;
+  border-color: var(--fullness-highlight) !important;
+}
+
+@media (max-width: 900px) {
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2,
+  .fullness-offer .section-heading h2 {
+    letter-spacing: 0.12em !important;
+  }
+
+  .meal-prep-copy h2 span,
+  .membership h2 span,
+  .fullness-offer .section-heading h2 span {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .plate-hero-primary,
+  .editorial-cta,
+  .food-story-strip .section-cta,
+  .meal-prep-copy a,
+  .membership-cta,
+  .offer-card a {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    font-size: 0.66rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2,
+  .fullness-offer .section-heading h2 {
+    letter-spacing: 0.09em !important;
+  }
+}
+
+/* Client-approved editorial grammar: eyebrow, headline, diamond rule, copy and outlined CTA. */
+:root {
+  --fullness-highlight: #b87878;
+  --fullness-highlight-soft: rgba(184, 120, 120, 0.76);
+  --fullness-highlight-faint: rgba(184, 120, 120, 0.12);
+}
+
+.plate-hero-copy .eyebrow,
+.food-editorial .eyebrow,
+.food-story-strip .eyebrow,
+.meal-prep-copy .eyebrow,
+.membership .eyebrow,
+.fullness-offer .section-heading .eyebrow,
+.offer-card .offer-kicker,
+.member-link,
+.community-page-hero .eyebrow,
+.community-section-title {
+  color: var(--fullness-highlight) !important;
+}
+
+.plate-hero-copy .eyebrow,
+.food-editorial .eyebrow,
+.food-story-strip .eyebrow,
+.meal-prep-copy .eyebrow,
+.membership .eyebrow,
+.fullness-offer .section-heading .eyebrow {
+  margin-bottom: clamp(14px, 1.5vw, 22px) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(0.76rem, 0.86vw, 1rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.22em !important;
+  line-height: 1.18 !important;
+  text-transform: uppercase !important;
+}
+
+.plate-hero-copy h1,
+.food-editorial .editorial-copy h2,
+.food-story-strip strong,
+.meal-prep-copy h2,
+.membership h2,
+.fullness-offer .section-heading h2 {
+  margin: 0 !important;
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.18em !important;
+  line-height: 1.18 !important;
+  text-transform: uppercase !important;
+  text-wrap: balance !important;
+}
+
+.plate-hero-copy h1 {
+  max-width: 12.5ch !important;
+  font-size: clamp(2.15rem, 4.4vw, 5.15rem) !important;
+}
+
+.food-editorial .editorial-copy h2,
+.membership h2 {
+  max-width: 14.5ch !important;
+  font-size: clamp(1.85rem, 3.15vw, 4rem) !important;
+}
+
+.food-story-strip strong {
+  max-width: 13.5ch !important;
+  font-size: clamp(1.55rem, 2.65vw, 3.05rem) !important;
+}
+
+.meal-prep-copy h2 {
+  max-width: 13.5ch !important;
+  font-size: clamp(1.65rem, 2.35vw, 3rem) !important;
+}
+
+.fullness-offer .section-heading h2 {
+  font-size: clamp(1.75rem, 2.8vw, 3.45rem) !important;
+}
+
+.plate-hero-copy h1 span,
+.food-editorial .editorial-copy h2 span,
+.food-story-strip strong em,
+.meal-prep-copy h2 span,
+.membership h2 span,
+.fullness-offer .section-heading h2 span {
+  color: var(--fullness-highlight) !important;
+  font-style: normal !important;
+}
+
+.meal-prep-copy h2 span {
+  display: block !important;
+  width: max-content !important;
+  max-width: 100% !important;
+  font-size: clamp(1rem, 1.18vw, 1.28rem) !important;
+  letter-spacing: 0.14em !important;
+  line-height: 1.2 !important;
+  white-space: normal !important;
+}
+
+.plate-hero-copy h1::after {
+  display: none !important;
+}
+
+.section-rule,
+.story-rule {
+  position: relative !important;
+  display: block !important;
+  width: clamp(80px, 7.2vw, 124px) !important;
+  height: 1px !important;
+  margin: clamp(17px, 1.8vw, 26px) 0 clamp(22px, 2.35vw, 36px) !important;
+  background: linear-gradient(90deg, var(--fullness-highlight-soft), rgba(184, 120, 120, 0)) !important;
+}
+
+.section-rule::before,
+.story-rule::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  width: 7px !important;
+  height: 7px !important;
+  border: 1px solid var(--fullness-highlight-soft) !important;
+  background: transparent !important;
+  transform: translate(-1px, -50%) rotate(45deg) !important;
+}
+
+.story-rule::after {
+  display: none !important;
+}
+
+.plate-hero-copy p:not(.eyebrow),
+.food-editorial .editorial-copy p,
+.food-story-strip .story-copy,
+.membership p {
+  max-width: 44ch !important;
+  margin: 0 0 clamp(22px, 2.25vw, 34px) !important;
+  color: rgba(244, 234, 219, 0.78) !important;
+  font-family: var(--font-body) !important;
+  font-size: clamp(0.96rem, 0.9vw, 1.12rem) !important;
+  font-weight: 500 !important;
+  line-height: 1.72 !important;
+}
+
+.meal-prep-copy p,
+.meal-prep-copy li,
+.fullness-offer .section-heading p,
+.offer-card p:not(.offer-kicker) {
+  color: rgba(9, 8, 6, 0.72) !important;
+  font-family: var(--font-body) !important;
+  font-size: clamp(0.96rem, 0.9vw, 1.1rem) !important;
+  font-weight: 500 !important;
+  line-height: 1.62 !important;
+}
+
+.hero-manifesto {
+  color: var(--fullness-highlight) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 700 !important;
+}
+
+.plate-hero-primary,
+.editorial-cta,
+.food-story-strip .section-cta,
+.meal-prep-copy a,
+.membership-cta,
+.offer-card a,
+.member-link {
+  border-color: rgba(184, 120, 120, 0.66) !important;
+  color: var(--fullness-marfil) !important;
+}
+
+.meal-prep-copy a,
+.offer-card a {
+  color: var(--fullness-ink) !important;
+}
+
+.plate-hero-primary:hover,
+.plate-hero-primary:focus-visible,
+.editorial-cta:hover,
+.editorial-cta:focus-visible,
+.food-story-strip .section-cta:hover,
+.food-story-strip a:focus-visible .section-cta,
+.meal-prep-copy a:hover,
+.meal-prep-copy a:focus-visible,
+.membership-cta:hover,
+.membership-cta:focus-visible,
+.offer-card a:hover,
+.offer-card a:focus-visible,
+.member-link:hover,
+.member-link:focus-visible {
+  border-color: var(--fullness-highlight) !important;
+  color: var(--fullness-highlight) !important;
+  background: var(--fullness-highlight-faint) !important;
+}
+
+.plate-hero-copy {
+  justify-self: start !important;
+  max-width: min(39vw, 560px) !important;
+  padding-inline: clamp(34px, 4.8vw, 82px) 0 !important;
+}
+
+.plate-hero-copy .section-rule {
+  margin-top: clamp(17px, 1.7vw, 25px) !important;
+}
+
+.food-editorial .editorial-copy,
+.meal-prep-copy,
+.membership > div {
+  display: grid !important;
+  align-content: center !important;
+}
+
+.food-story-strip a {
+  display: grid !important;
+  align-content: center !important;
+}
+
+.fullness-offer .section-heading {
+  display: grid !important;
+  justify-items: center !important;
+  text-align: center !important;
+}
+
+.fullness-offer .section-heading .section-rule {
+  margin-inline: auto !important;
+}
+
+@media (max-width: 1040px) {
+  .plate-hero-copy {
+    max-width: min(48vw, 520px) !important;
+  }
+
+  .plate-hero-copy h1,
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2,
+  .fullness-offer .section-heading h2 {
+    letter-spacing: 0.13em !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .plate-hero-copy {
+    max-width: min(88vw, 520px) !important;
+    padding-inline: 24px !important;
+  }
+
+  .plate-hero-copy .eyebrow,
+  .food-editorial .eyebrow,
+  .food-story-strip .eyebrow,
+  .meal-prep-copy .eyebrow,
+  .membership .eyebrow,
+  .fullness-offer .section-heading .eyebrow {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.18em !important;
+  }
+
+  .plate-hero-copy h1,
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2,
+  .fullness-offer .section-heading h2 {
+    letter-spacing: 0.1em !important;
+  }
+}
+
+/* Community landing image: right-side photo blended with shadow, no hard column split. */
+.membership {
+  position: relative !important;
+  min-height: calc(100svh - var(--site-header-height)) !important;
+  overflow: hidden !important;
+  background: var(--fullness-ink) !important;
+}
+
+.membership::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 0 0 auto !important;
+  width: 60vw !important;
+  min-width: 60vw !important;
+  background: var(--community-scene-bg, none) center / cover no-repeat !important;
+  opacity: 1 !important;
+  filter: saturate(0.94) contrast(1.04) brightness(0.88) !important;
+  transform: none !important;
+}
+
+.membership::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(ellipse at 46% 50%, rgba(9, 8, 6, 0.72) 0%, rgba(9, 8, 6, 0.42) 22%, rgba(9, 8, 6, 0) 48%),
+    linear-gradient(90deg, rgba(9, 8, 6, 1) 0%, rgba(9, 8, 6, 0.98) 31%, rgba(9, 8, 6, 0.82) 43%, rgba(9, 8, 6, 0.46) 56%, rgba(9, 8, 6, 0.14) 72%, rgba(9, 8, 6, 0.2) 100%) !important;
+  opacity: 1 !important;
+}
+
+.membership > div {
+  position: relative !important;
+  z-index: 2 !important;
+  max-width: min(42vw, 660px) !important;
+}
+
+@media (max-width: 1040px) {
+  .membership::before {
+    width: 64vw !important;
+    min-width: 64vw !important;
+    background-position: 54% center !important;
+  }
+
+  .membership::after {
+    background:
+      radial-gradient(ellipse at 48% 48%, rgba(9, 8, 6, 0.68) 0%, rgba(9, 8, 6, 0.38) 22%, rgba(9, 8, 6, 0) 50%),
+      linear-gradient(90deg, rgba(9, 8, 6, 1) 0%, rgba(9, 8, 6, 0.96) 42%, rgba(9, 8, 6, 0.62) 61%, rgba(9, 8, 6, 0.22) 100%) !important;
+  }
+
+  .membership > div {
+    max-width: min(52vw, 620px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .membership::before {
+    inset: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    background-position: 58% center !important;
+    opacity: 0.7 !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(180deg, rgba(9, 8, 6, 0.98) 0%, rgba(9, 8, 6, 0.88) 43%, rgba(9, 8, 6, 0.7) 100%),
+      linear-gradient(90deg, rgba(9, 8, 6, 0.94) 0%, rgba(9, 8, 6, 0.62) 62%, rgba(9, 8, 6, 0.24) 100%) !important;
+  }
+
+  .membership > div {
+    max-width: min(92vw, 540px) !important;
+  }
+}
+
+/* Community benefits row: icon + feature, like Cecilia's reference. */
+.membership > div {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.membership .community-benefits {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(96px, 1fr)) !important;
+  align-items: stretch !important;
+  width: min(980px, 76vw) !important;
+  max-width: calc(100vw - clamp(48px, 8vw, 140px)) !important;
+  margin-top: clamp(26px, 3vw, 46px) !important;
+  margin-bottom: 0 !important;
+  border-top: 1px solid rgba(184, 120, 120, 0.24) !important;
+  border-bottom: 0 !important;
+}
+
+.membership .community-benefits article {
+  display: grid !important;
+  grid-template-rows: auto 1fr !important;
+  align-content: start !important;
+  justify-items: center !important;
+  min-width: 0 !important;
+  min-height: 112px !important;
+  padding: 22px clamp(10px, 1.1vw, 18px) 16px !important;
+  border-right: 1px solid rgba(184, 120, 120, 0.2) !important;
+  text-align: center !important;
+}
+
+.membership .community-benefits article:last-child {
+  border-right: 0 !important;
+}
+
+.membership .community-benefits svg {
+  width: clamp(20px, 1.8vw, 30px) !important;
+  height: clamp(20px, 1.8vw, 30px) !important;
+  margin-bottom: 14px !important;
+  color: var(--fullness-highlight) !important;
+  stroke-width: 1.45 !important;
+}
+
+.membership .community-benefits span {
+  display: block !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: rgba(244, 234, 219, 0.82) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(0.56rem, 0.58vw, 0.68rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.28 !important;
+  text-transform: uppercase !important;
+  overflow-wrap: anywhere !important;
+}
+
+@media (max-width: 1040px) {
+  .membership .community-benefits {
+    width: min(680px, 84vw) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .membership .community-benefits article:nth-child(3n),
+  .membership .community-benefits article:last-child {
+    border-right: 0 !important;
+  }
+
+  .membership .community-benefits article:nth-child(n + 4) {
+    border-top: 1px solid rgba(184, 120, 120, 0.18) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .membership .community-benefits {
+    width: min(100%, 520px) !important;
+    max-width: 100% !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .membership .community-benefits article,
+  .membership .community-benefits article:nth-child(n + 4) {
+    grid-template-columns: 34px 1fr !important;
+    grid-template-rows: none !important;
+    justify-items: start !important;
+    align-items: center !important;
+    min-height: 58px !important;
+    padding: 13px 0 !important;
+    border-right: 0 !important;
+    border-top: 0 !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.16) !important;
+    text-align: left !important;
+  }
+
+  .membership .community-benefits svg {
+    margin: 0 !important;
+  }
+}
+
+/* Food story strip: keep the plate complete and integrated with the text. */
+.food-story-strip {
+  min-height: 0 !important;
+  height: clamp(390px, 34vw, 560px) !important;
+  background: #080807 !important;
+  overflow: hidden !important;
+}
+
+.food-story-strip::before {
+  inset: 0 !important;
+  background:
+    var(--food-story-bg, none) right clamp(24px, 5.6vw, 96px) center / auto 91% no-repeat !important;
+  filter: saturate(1.08) contrast(1.12) brightness(0.9) !important;
+  opacity: 1 !important;
+}
+
+.food-story-strip::after {
+  background:
+    radial-gradient(ellipse at 57% 50%, rgba(8, 8, 7, 0) 0%, rgba(8, 8, 7, 0.1) 34%, rgba(8, 8, 7, 0.42) 66%, rgba(8, 8, 7, 0.88) 100%),
+    linear-gradient(90deg, rgba(8, 8, 7, 1) 0%, rgba(8, 8, 7, 0.98) 25%, rgba(8, 8, 7, 0.78) 38%, rgba(8, 8, 7, 0.34) 52%, rgba(8, 8, 7, 0.08) 68%, rgba(8, 8, 7, 0.18) 100%),
+    linear-gradient(180deg, rgba(8, 8, 7, 0.68) 0%, rgba(8, 8, 7, 0.02) 20%, rgba(8, 8, 7, 0.02) 78%, rgba(8, 8, 7, 0.76) 100%) !important;
+}
+
+.food-story-strip a {
+  min-height: 100% !important;
+  width: min(31vw, 470px) !important;
+  max-width: 470px !important;
+  margin-left: clamp(36px, 5.4vw, 100px) !important;
+  padding-block: clamp(36px, 4vw, 62px) !important;
+}
+
+.food-story-strip strong {
+  font-size: clamp(1.3rem, 2.05vw, 2.32rem) !important;
+  letter-spacing: 0.19em !important;
+}
+
+.food-story-strip .story-copy {
+  max-width: 42ch !important;
+}
+
+@media (max-width: 1040px) {
+  .food-story-strip {
+    height: clamp(350px, 40vw, 460px) !important;
+  }
+
+  .food-story-strip::before {
+    background-position: right clamp(10px, 2vw, 26px) center !important;
+    background-size: auto 86% !important;
+  }
+
+  .food-story-strip::after {
+    background:
+      linear-gradient(90deg, rgba(8, 8, 7, 1) 0%, rgba(8, 8, 7, 0.96) 36%, rgba(8, 8, 7, 0.64) 54%, rgba(8, 8, 7, 0.18) 82%, rgba(8, 8, 7, 0.22) 100%),
+      linear-gradient(180deg, rgba(8, 8, 7, 0.7) 0%, rgba(8, 8, 7, 0.02) 24%, rgba(8, 8, 7, 0.72) 100%) !important;
+  }
+
+  .food-story-strip a {
+    width: min(40vw, 390px) !important;
+    margin-left: clamp(28px, 4vw, 46px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .food-story-strip {
+    height: clamp(390px, 86vw, 520px) !important;
+  }
+
+  .food-story-strip::before {
+    background-position: right -18vw bottom 12px !important;
+    background-size: auto 58% !important;
+    opacity: 0.72 !important;
+  }
+
+  .food-story-strip::after {
+    background:
+      linear-gradient(180deg, rgba(8, 8, 7, 0.98) 0%, rgba(8, 8, 7, 0.86) 42%, rgba(8, 8, 7, 0.5) 100%),
+      linear-gradient(90deg, rgba(8, 8, 7, 0.96) 0%, rgba(8, 8, 7, 0.76) 62%, rgba(8, 8, 7, 0.34) 100%) !important;
+  }
+
+  .food-story-strip a {
+    width: min(86vw, 420px) !important;
+    margin-left: 24px !important;
+    margin-right: 24px !important;
+    padding-block: 34px !important;
   }
 }

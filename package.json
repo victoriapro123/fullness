@@ -18,7 +18,9 @@
     "remotion:render:plate:desktop": "remotion render src/remotion/index.jsx FullnessLabPlateAssemblyDesktop public/assets/fullness/exports/fullness-lab-plate-assembly-desktop.mp4 --codec=h264",
     "remotion:render:plate": "npm run remotion:render:plate:mobile && npm run remotion:render:plate:desktop",
     "remotion:frames": "node scripts/export-fullness-frames.mjs",
-    "r2:sync-media": "node scripts/sync-public-media-to-r2.mjs"
+    "r2:sync-media": "node scripts/sync-public-media-to-r2.mjs",
+    "whatsapp:convert-audio": "node scripts/transcribe-whatsapp-opus.mjs --convert-only",
+    "whatsapp:transcribe": "node scripts/transcribe-whatsapp-opus.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
@@ -30,7 +32,10 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@remotion/cli": "^4.0.462",
+    "dotenv": "^17.4.2",
+    "openai": "^6.45.0",
     "remotion": "^4.0.462"
   }
 }
