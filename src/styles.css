@@ -12905,3 +12905,77 @@ footer::before {
       linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 0.98) 0%, rgba(var(--membership-shadow-rgb), 0.72) 64%, rgba(var(--membership-shadow-rgb), 0.34) 100%) !important;
   }
 }
+
+/* Wide desktop pass: keep sections 2 and 3 connected and bring the plate back into the scene. */
+@media (min-width: 1500px) {
+  .philosophy-story-combo {
+    grid-template-rows: minmax(570px, 0.92fr) minmax(340px, 0.56fr) !important;
+    min-height: clamp(930px, calc(100svh + 130px), 1160px) !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-top: clamp(58px, 4.2vw, 88px) !important;
+    padding-bottom: clamp(96px, 5.4vw, 124px) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-top: clamp(36px, 3vw, 54px) !important;
+    padding-bottom: clamp(38px, 3.6vw, 64px) !important;
+  }
+
+  .philosophy-story-combo .editorial-copy,
+  .philosophy-story-combo .food-story-strip a {
+    width: min(30vw, 500px) !important;
+    max-width: min(30vw, 500px) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: clamp(-36px, -1.8vw, -18px) !important;
+    width: min(69vw, 1280px) !important;
+    transform: translateY(-40%) !important;
+  }
+}
+
+@media (min-width: 1900px) {
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: clamp(-18px, -0.7vw, -8px) !important;
+    width: min(71vw, 1400px) !important;
+    transform: translateY(-42%) !important;
+  }
+}
+
+/* Hero final pass: black field with the client-provided beet centered behind the plate. */
+.plate-hero {
+  background: #000 !important;
+}
+
+.plate-hero::before {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.88) 26%, rgba(0, 0, 0, 0.34) 58%, rgba(0, 0, 0, 0.1) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.08) 62%, #000 100%) !important;
+}
+
+.plate-hero::after {
+  background:
+    radial-gradient(circle at 64% 48%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.18) 52%, rgba(0, 0, 0, 0.82) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 64%, #000 100%) !important;
+}
+
+.plate-hero-vectors {
+  inset: 0 !important;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(244, 234, 219, 0.035), transparent 34%),
+    var(--hero-beet-line) 50% 50% / auto min(86svh, 72vw) no-repeat !important;
+  opacity: 0.54 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+@media (max-width: 980px) {
+  .plate-hero-vectors {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(244, 234, 219, 0.03), transparent 34%),
+      var(--hero-beet-line) 50% 38% / auto 58% no-repeat !important;
+    opacity: 0.28 !important;
+  }
+}

@@ -63,7 +63,7 @@ const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
-const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-line-v2.png");
+const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-centered-v2.png");
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
@@ -3369,7 +3369,7 @@ function App() {
         <a href="mailto:hola@fullnesslab.cl">hola@fullnesslab.cl</a>
         <span>Vitacura, Santiago</span>
       </address>
-      <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados</p>
+      <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados • By Prof3sional.com</p>
     </footer>
   );
 
