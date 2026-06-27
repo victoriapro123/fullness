@@ -63,7 +63,7 @@ const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
-const heroBeetLineSrc = mediaSrc("images/hero/fullness-hero-betarraga-centered-v2.png");
+const heroBeetLineSrc = mediaSrc("assets/betarraga hero.png");
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
@@ -83,6 +83,239 @@ const legacyPlaceholderProductSlugs = new Set([
   "legumbres-granos-oliva"
 ]);
 const shopPath = "/tienda";
+const faqPath = "/preguntas-frecuentes";
+
+const faqGroups = [
+  {
+    id: "preguntas",
+    eyebrow: "Preguntas frecuentes",
+    title: "Información práctica para comprar y disfrutar Fullness.",
+    navLabel: "Preguntas",
+    items: [
+      {
+        question: "¿Qué es Fullness Lab?",
+        answer: [
+          "Fullness Lab es una propuesta de alimentación consciente que combina cocina antinflamatoria, ingredientes de calidad y una mirada integral al bienestar. Creemos que nutrirse va mucho más allá de alimentarse."
+        ]
+      },
+      {
+        question: "¿Cómo vienen envasados los productos?",
+        answer: [
+          "Nuestras preparaciones se entregan en bolsas selladas al vacío, libres de BPA y aptas para uso alimentario, diseñadas para preservar la calidad de cada ingrediente.",
+          "Este formato ayuda a mantener la frescura, sabor y valor nutricional de los alimentos, facilitando además su conservación y consumo durante la semana."
+        ]
+      },
+      {
+        question: "¿Los productos vienen listos para consumir?",
+        answer: [
+          "Sí. Todos nuestros productos están cocinados y sólo requieren regeneración siguiendo las instrucciones indicadas en su etiqueta."
+        ]
+      },
+      {
+        question: "¿Cómo debo conservar los productos?",
+        answer: [
+          "Los productos deben mantenerse refrigerados o congelados según la indicación de cada etiqueta. Recomendamos respetar siempre la cadena de frío para asegurar su calidad y seguridad."
+        ]
+      },
+      {
+        question: "¿Cuánto duran los productos?",
+        answer: [
+          ["Refrigerados: entre 5 y 7 días según el producto.", "Congelados: hasta 3 meses manteniendo la cadena de frío."],
+          "Cada producto incluye su fecha de elaboración y vencimiento."
+        ]
+      },
+      {
+        question: "¿Puedo congelar los productos?",
+        answer: [
+          "Sí. Nuestros productos están diseñados para conservarse adecuadamente congelados sin afectar significativamente su calidad."
+        ]
+      },
+      {
+        question: "¿Cómo se recalientan?",
+        answer: [
+          "Cada producto incluye instrucciones específicas. Generalmente recomendamos horno, sartén o baño maría para obtener los mejores resultados de sabor y textura."
+        ]
+      },
+      {
+        question: "¿Los productos son libres de gluten?",
+        answer: [
+          "En Fullness Lab no utilizamos ingredientes con gluten en nuestras preparaciones. Sin embargo, algunos ingredientes naturales utilizados en nuestras recetas, como ciertas legumbres, semillas o granos, pueden incluir la advertencia “puede contener trazas de gluten” emitida por sus fabricantes.",
+          "Por esta razón, aunque nuestras preparaciones son elaboradas sin gluten como ingrediente, no podemos garantizar la ausencia absoluta de trazas de gluten y nuestros productos no están recomendados para personas con enfermedad celíaca.",
+          "Si tienes dudas sobre algún producto específico, estaremos encantados de orientarte antes de tu compra."
+        ]
+      },
+      {
+        question: "¿Los productos son aptos para personas con alergias alimentarias?",
+        answer: [
+          "Algunos productos pueden contener o haber sido elaborados con ingredientes como frutos secos, huevos, lácteos, pescado o mariscos. Recomendamos revisar la información de cada producto y consultarnos ante cualquier duda."
+        ]
+      },
+      {
+        question: "¿Puedo modificar ingredientes o solicitar adaptaciones?",
+        answer: [
+          "Dependiendo del producto y disponibilidad, algunas adaptaciones pueden ser posibles. Te recomendamos contactarnos antes de realizar tu compra."
+        ]
+      },
+      {
+        question: "¿Realizan pedidos especiales?",
+        answer: [
+          "Sí. Desarrollamos propuestas para eventos, empresas, talleres, experiencias gastronómicas y requerimientos especiales."
+        ]
+      },
+      {
+        question: "¿Puedo regalar productos o experiencias Fullness Lab?",
+        answer: [
+          "Sí. Contamos con alternativas de regalo y experiencias especialmente diseñadas para compartir bienestar y alimentación consciente."
+        ]
+      },
+      {
+        question: "¿Cómo puedo contactarlos?",
+        answer: [
+          "Puedes escribirnos a través de nuestro formulario de contacto, correo electrónico o WhatsApp. Estaremos encantados de ayudarte."
+        ]
+      }
+    ]
+  },
+  {
+    id: "envios",
+    eyebrow: "Políticas de envío",
+    title: "Despacho cuidado, cadena de frío y tiempos claros.",
+    navLabel: "Envíos",
+    items: [
+      {
+        question: "Cobertura de despacho",
+        answer: ["Actualmente realizamos despachos dentro de la Región Metropolitana en comunas seleccionadas."]
+      },
+      {
+        question: "Días de entrega",
+        answer: ["Los despachos se realizan de lunes a viernes."]
+      },
+      {
+        question: "Horarios de entrega",
+        answer: ["Las entregas se efectúan entre las 9:00 y las 20:00 horas."]
+      },
+      {
+        question: "Costo de despacho",
+        answer: ["El valor del despacho se calcula automáticamente según la dirección de entrega y se informa antes de finalizar la compra."]
+      },
+      {
+        question: "Recepción del pedido",
+        answer: ["Es responsabilidad del cliente asegurarse de que exista una persona disponible para recibir el pedido dentro del horario informado."]
+      },
+      {
+        question: "Cadena de frío",
+        answer: ["Todos nuestros productos son transportados manteniendo las condiciones adecuadas de refrigeración o congelación."]
+      },
+      {
+        question: "Ausencia en el domicilio",
+        answer: [
+          "Si no hay nadie para recibir el pedido:",
+          ["El transportista intentará contactar al cliente.", "Si la entrega no puede realizarse, podrá coordinarse un nuevo despacho con costo adicional."]
+        ]
+      },
+      {
+        question: "Modificaciones de dirección",
+        answer: ["Los cambios de dirección deben solicitarse con al menos 24 horas hábiles de anticipación a la fecha de entrega."]
+      },
+      {
+        question: "Retrasos por fuerza mayor",
+        answer: ["En situaciones excepcionales como cortes de ruta, condiciones climáticas extremas o contingencias externas, los tiempos de entrega podrían verse afectados."]
+      }
+    ]
+  },
+  {
+    id: "cambios",
+    eyebrow: "Cambios y devoluciones",
+    title: "Criterios simples para productos perecibles.",
+    navLabel: "Cambios",
+    items: [
+      {
+        question: "Productos alimenticios",
+        answer: ["Por tratarse de productos perecibles, no realizamos devoluciones una vez entregado el pedido."]
+      },
+      {
+        question: "Productos dañados o con problemas de calidad",
+        answer: [
+          "Si recibes un producto dañado o en mal estado, debes contactarnos dentro de las primeras 24 horas posteriores a la recepción, adjuntando fotografías del producto y su empaque.",
+          "Evaluaremos cada caso y, si corresponde, realizaremos:",
+          ["Reposición del producto.", "Nota de crédito.", "Devolución del dinero."]
+        ]
+      },
+      {
+        question: "Contacto por pedidos o despachos",
+        answer: ["Para cualquier consulta relacionada con pedidos o despachos: contacto@fullnesslab.cl · WhatsApp: +56 9 9658 8199."]
+      }
+    ]
+  },
+  {
+    id: "meal-prep",
+    eyebrow: "Meal Prep semanal",
+    title: "Cómo realizar tu pedido semanal.",
+    navLabel: "Meal Prep",
+    items: [
+      {
+        question: "¿Cómo funciona el Meal Prep Semanal?",
+        answer: ["Cada semana preparamos una selección de platos elaborados con ingredientes naturales, técnicas de cocina saludables y porciones pensadas para facilitar tu alimentación durante la semana."]
+      },
+      {
+        question: "¿Qué incluye?",
+        answer: [
+          "Cada box contiene:",
+          ["5 platos individuales.", "Proteínas y acompañamientos envasados por separado.", "Productos sellados al vacío.", "Instrucciones de conservación y regeneración."]
+        ]
+      },
+      {
+        question: "¿Cuándo debo realizar mi pedido?",
+        answer: ["Los pedidos se reciben hasta las 23:59 hrs del día miércoles de cada semana."]
+      },
+      {
+        question: "¿Cuándo se entregan?",
+        answer: ["Las entregas se realizan los días lunes y martes de la semana siguiente, según la zona de despacho."]
+      },
+      {
+        question: "¿Puedo elegir los platos?",
+        answer: [
+          "Dependiendo del programa contratado, podrás:",
+          ["Elegir entre las opciones disponibles de la semana.", "Recibir el menú diseñado por nuestro equipo."]
+        ]
+      },
+      {
+        question: "¿Puedo modificar ingredientes?",
+        answer: ["Algunos ingredientes pueden ajustarse según disponibilidad y restricciones alimentarias previamente informadas."]
+      },
+      {
+        question: "¿Los platos llegan congelados o refrigerados?",
+        answer: ["Dependiendo de la preparación, los productos pueden entregarse refrigerados o congelados para asegurar la mejor calidad y conservación."]
+      },
+      {
+        question: "¿Cómo debo conservarlos?",
+        answer: [
+          ["Refrigerados: mantener entre 0°C y 4°C.", "Congelados: mantener a -18°C o menos."]
+        ]
+      },
+      {
+        question: "¿Qué pasa si olvido consumir un producto?",
+        answer: ["Recomendamos congelar inmediatamente aquellos productos que no consumirás dentro de los días indicados en la etiqueta."]
+      }
+    ]
+  },
+  {
+    id: "calidad",
+    eyebrow: "Compromiso de calidad",
+    title: "Pequeñas producciones, ingredientes reales y sabor cuidado.",
+    navLabel: "Calidad",
+    items: [
+      {
+        question: "Nuestro compromiso",
+        answer: [
+          "En Fullness Lab elaboramos nuestros productos en pequeñas producciones para asegurar frescura, sabor y calidad nutricional.",
+          "No utilizamos colorantes artificiales ni potenciadores de sabor industriales, privilegiando ingredientes reales y técnicas culinarias que respetan el alimento.",
+          "Nutrir desde la raíz."
+        ]
+      }
+    ]
+  }
+];
 
 function getProductImage(product, index) {
   const image = product.image || "";
@@ -1991,6 +2224,91 @@ function CommunityPage({
   );
 }
 
+function FaqAnswer({ blocks }) {
+  return blocks.map((block, index) => {
+    if (Array.isArray(block)) {
+      return (
+        <ul key={`list-${index}`}>
+          {block.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    return <p key={`text-${index}`}>{block}</p>;
+  });
+}
+
+function FaqPage({ onNavigateToShop }) {
+  return (
+    <article className="faq-page">
+      <section className="faq-hero">
+        <div className="faq-hero-copy">
+          <p className="eyebrow">Ayuda Fullness Lab</p>
+          <h1>Preguntas frecuentes <span>y políticas.</span></h1>
+          <span className="section-rule" aria-hidden="true" />
+          <p>
+            Información esencial para comprar, conservar y disfrutar preparaciones Fullness con claridad,
+            cuidado y confianza.
+          </p>
+          <nav className="faq-anchor-nav" aria-label="Secciones de preguntas frecuentes">
+            {faqGroups.map((group) => (
+              <a key={group.id} href={`#${group.id}`}>{group.navLabel}</a>
+            ))}
+          </nav>
+        </div>
+      </section>
+
+      <div className="faq-groups">
+        {faqGroups.map((group, groupIndex) => (
+          <section className="faq-group" id={group.id} key={group.id}>
+            <div className="faq-group-heading">
+              <p className="eyebrow">{group.eyebrow}</p>
+              <h2>{group.title}</h2>
+              <span className="section-rule" aria-hidden="true" />
+            </div>
+            <div className="faq-items">
+              {group.items.map((item, itemIndex) => (
+                <details
+                  className="faq-item"
+                  key={item.question}
+                  open={groupIndex === 0 && itemIndex < 2}
+                >
+                  <summary>{item.question}</summary>
+                  <div className="faq-answer">
+                    <FaqAnswer blocks={item.answer} />
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="faq-contact">
+        <p className="eyebrow">¿Tienes dudas?</p>
+        <h2>Te ayudamos a elegir la mejor alternativa para ti.</h2>
+        <p>Escríbenos por WhatsApp o correo electrónico y resolvemos tus preguntas antes de comprar.</p>
+        <div className="faq-contact-actions">
+          <a href={whatsappUrl} target="_blank" rel="noreferrer">
+            WhatsApp
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+          <a href="mailto:contacto@fullnesslab.cl">
+            contacto@fullnesslab.cl
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+          <a href={shopPath} onClick={onNavigateToShop}>
+            Ver planes
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+      </section>
+    </article>
+  );
+}
+
 function App() {
   const appRef = useRef(null);
   const [cart, setCart] = useState([]);
@@ -2055,7 +2373,7 @@ function App() {
       return;
     }
 
-    if (window.location.pathname === "/comunidad" || window.location.pathname === shopPath) {
+    if (window.location.pathname === "/comunidad" || window.location.pathname === shopPath || window.location.pathname === faqPath) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setHeaderHiddenForHero(false);
       return;
@@ -2129,7 +2447,12 @@ function App() {
       return Math.max(0, sectionTop - headerHeight - 14);
     };
 
-    if (currentProductSlug || window.location.pathname === "/comunidad" || window.location.pathname === shopPath) {
+    if (
+      currentProductSlug ||
+      window.location.pathname === "/comunidad" ||
+      window.location.pathname === shopPath ||
+      window.location.pathname === faqPath
+    ) {
       setCurrentProductSlug("");
       setProductPreviewSlug("");
       setMealPreview(null);
@@ -2212,6 +2535,45 @@ function App() {
 
     setCurrentPath("/comunidad");
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  function openFaqPage(event, hash = "") {
+    event?.preventDefault();
+    setCurrentProductSlug("");
+    setProductPreviewSlug("");
+    setMealPreview(null);
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    document.documentElement.classList.add("intro-scroll-consumed");
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-mobile-skip");
+    }
+    window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+    setHeaderHiddenForHero(false);
+
+    const nextUrl = `${faqPath}${hash}`;
+    if (window.location.pathname !== faqPath || window.location.hash !== hash) {
+      window.history.pushState(null, "", nextUrl);
+    }
+
+    setCurrentPath(faqPath);
+    window.requestAnimationFrame(() => {
+      if (!hash) {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        return;
+      }
+
+      const target = document.querySelector(hash);
+      const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+      if (!target) return;
+
+      window.scrollTo({
+        top: Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 14),
+        left: 0,
+        behavior: "instant"
+      });
+    });
   }
 
   function openShopPage(event, { replace = false } = {}) {
@@ -2746,6 +3108,22 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (currentPath !== faqPath || !window.location.hash) return;
+
+    window.requestAnimationFrame(() => {
+      const target = document.querySelector(window.location.hash);
+      const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+      if (!target) return;
+
+      window.scrollTo({
+        top: Math.max(0, target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 14),
+        left: 0,
+        behavior: "instant"
+      });
+    });
+  }, [currentPath]);
+
+  useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace("#", ""));
     const isSupabaseAuthHash = Boolean(hash.get("type") || hash.get("refresh_token"));
 
@@ -2832,6 +3210,7 @@ function App() {
   const singleDishProduct = familyProducts[0] || products[0] || demoProducts[0];
   const isCommunityPage = currentPath === "/comunidad" && !currentProductSlug;
   const isShopPage = currentPath === shopPath && !currentProductSlug;
+  const isFaqPage = currentPath === faqPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
 
   function addToCart(product) {
@@ -3358,10 +3737,10 @@ function App() {
       </nav>
       <div className="footer-column">
         <h3>Ayuda</h3>
-        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Preguntas frecuentes</a>
-        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Políticas de envío</a>
-        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Cambios y devoluciones</a>
-        <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Términos y condiciones</a>
+        <a href={faqPath} onClick={openFaqPage}>Preguntas frecuentes</a>
+        <a href={`${faqPath}#envios`} onClick={(event) => openFaqPage(event, "#envios")}>Políticas de envío</a>
+        <a href={`${faqPath}#cambios`} onClick={(event) => openFaqPage(event, "#cambios")}>Cambios y devoluciones</a>
+        <a href={`${faqPath}#calidad`} onClick={(event) => openFaqPage(event, "#calidad")}>Compromiso de calidad</a>
       </div>
       <address className="footer-column footer-contact">
         <h3>Contacto</h3>
@@ -3499,6 +3878,11 @@ function App() {
             onCommunityMemberSubmit={submitCommunityMember}
             onToggleActivities={() => setActivitiesExpanded((current) => !current)}
           />
+          {renderSiteFooter()}
+        </>
+      ) : isFaqPage ? (
+        <>
+          <FaqPage onNavigateToShop={openShopPage} />
           {renderSiteFooter()}
         </>
       ) : isShopPage ? (

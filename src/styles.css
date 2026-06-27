@@ -12965,8 +12965,8 @@ footer::before {
   inset: 0 !important;
   background:
     radial-gradient(circle at 50% 48%, rgba(244, 234, 219, 0.035), transparent 34%),
-    var(--hero-beet-line) 50% 50% / auto min(86svh, 72vw) no-repeat !important;
-  opacity: 0.54 !important;
+    url("./assets/fullness-original-vector-hero-beet.png") 38% 46% / auto min(82svh, 50vw) no-repeat !important;
+  opacity: 0.34 !important;
   filter: none !important;
   mix-blend-mode: normal !important;
 }
@@ -12975,7 +12975,1035 @@ footer::before {
   .plate-hero-vectors {
     background:
       radial-gradient(circle at 50% 40%, rgba(244, 234, 219, 0.03), transparent 34%),
-      var(--hero-beet-line) 50% 38% / auto 58% no-repeat !important;
-    opacity: 0.28 !important;
+      url("./assets/fullness-original-vector-hero-beet.png") 52% 38% / auto 56% no-repeat !important;
+    opacity: 0.24 !important;
+  }
+}
+
+@media (min-width: 1500px) {
+  .plate-hero-visual-stage {
+    right: clamp(180px, 13vw, 300px) !important;
+  }
+}
+
+/* Shared botanical background for sections 2 and 3. */
+.philosophy-story-combo {
+  position: relative !important;
+  isolation: isolate !important;
+  background: #050604 !important;
+  overflow: hidden !important;
+}
+
+.philosophy-story-combo::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background: url("./assets/fullness-sections-2-3-botanical-bg.webp") center / cover no-repeat !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.philosophy-story-combo::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.92) 26%, rgba(5, 6, 4, 0.46) 38%, rgba(5, 6, 4, 0.08) 62%, rgba(5, 6, 4, 0.16) 100%),
+    linear-gradient(180deg, rgba(5, 6, 4, 0.04) 0%, rgba(5, 6, 4, 0) 44%, rgba(184, 120, 120, 0.04) 50%, rgba(5, 6, 4, 0) 58%, rgba(5, 6, 4, 0.12) 100%) !important;
+}
+
+.philosophy-story-combo .food-editorial,
+.philosophy-story-combo .food-story-strip {
+  position: relative !important;
+  z-index: 2 !important;
+  background: transparent !important;
+}
+
+.philosophy-story-combo .food-editorial::before,
+.philosophy-story-combo .food-editorial::after,
+.philosophy-story-combo .food-story-strip::before,
+.philosophy-story-combo .food-story-strip::after,
+.philosophy-story-combo .food-editorial-beet {
+  display: none !important;
+}
+
+.philosophy-story-combo .editorial-copy,
+.philosophy-story-combo .food-story-strip a {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.philosophy-story-combo .food-story-strip .philosophy-story-plate {
+  z-index: 3 !important;
+}
+
+@media (max-width: 1040px) {
+  .philosophy-story-combo::before {
+    background-position: 56% center !important;
+    background-size: auto 100% !important;
+    opacity: 0.7 !important;
+  }
+
+  .philosophy-story-combo::after {
+    background:
+      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.9) 40%, rgba(5, 6, 4, 0.38) 70%, rgba(5, 6, 4, 0.16) 100%),
+      linear-gradient(180deg, rgba(5, 6, 4, 0.12) 0%, rgba(5, 6, 4, 0.02) 42%, rgba(184, 120, 120, 0.06) 50%, rgba(5, 6, 4, 0.1) 100%) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .philosophy-story-combo::before {
+    background-position: 58% center !important;
+    background-size: auto 100% !important;
+    opacity: 0.46 !important;
+  }
+
+  .philosophy-story-combo::after {
+    background:
+      linear-gradient(180deg, rgba(5, 6, 4, 0.96) 0%, rgba(5, 6, 4, 0.76) 48%, rgba(5, 6, 4, 0.9) 100%),
+      linear-gradient(90deg, rgba(5, 6, 4, 0.94) 0%, rgba(5, 6, 4, 0.62) 68%, rgba(5, 6, 4, 0.34) 100%) !important;
+  }
+}
+
+/* Original Fullness Lab vector pass: replace generated decorative art with Cecilia's Illustrator assets. */
+.plate-hero-vectors {
+  background:
+    radial-gradient(circle at 42% 46%, rgba(244, 234, 219, 0.025), transparent 36%),
+    url("./assets/fullness-original-vector-hero-beet.png") 42% 47% / auto min(78svh, 44vw) no-repeat !important;
+  opacity: 0.32 !important;
+}
+
+.philosophy-story-combo::before {
+  background: url("./assets/fullness-sections-2-3-botanical-bg.webp") center / cover no-repeat !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.meal-prep-feature::before {
+  background:
+    url("./assets/fullness-original-vector-light-artichoke.png") left clamp(-74px, -4.8vw, -28px) center / min(22vw, 340px) auto no-repeat,
+    url("./assets/fullness-original-vector-light-flower.png") right clamp(-56px, -3.8vw, -24px) center / min(19vw, 300px) auto no-repeat !important;
+  opacity: 0.58 !important;
+  filter: none !important;
+}
+
+.fullness-offer::before {
+  background:
+    url("./assets/fullness-original-vector-footer-root.png") left clamp(-130px, -9vw, -70px) bottom clamp(-170px, -12vw, -90px) / min(35vw, 540px) auto no-repeat !important;
+  opacity: 0.18 !important;
+  filter: none !important;
+}
+
+footer::before {
+  background:
+    url("./assets/fullness-original-vector-footer-root.png") right clamp(-120px, -7vw, -60px) bottom clamp(-140px, -9vw, -80px) / min(33vw, 540px) auto no-repeat !important;
+  opacity: 0.2 !important;
+  filter: none !important;
+}
+
+.membership::after {
+  background:
+    url("./assets/fullness-original-vector-community-root.png") right clamp(-120px, -8vw, -60px) bottom clamp(-170px, -11vw, -84px) / min(34vw, 560px) auto no-repeat,
+    radial-gradient(ellipse at 45% 72%, rgba(var(--membership-shadow-rgb), 0.94) 0%, rgba(var(--membership-shadow-rgb), 0.76) 22%, rgba(var(--membership-shadow-rgb), 0.34) 48%, rgba(var(--membership-shadow-rgb), 0) 72%),
+    linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 1) 0%, rgba(var(--membership-shadow-rgb), 1) 33%, rgba(var(--membership-shadow-rgb), 0.96) 41%, rgba(var(--membership-shadow-rgb), 0.78) 49%, rgba(var(--membership-shadow-rgb), 0.48) 57%, rgba(var(--membership-shadow-rgb), 0.18) 68%, rgba(var(--membership-shadow-rgb), 0.06) 82%, rgba(var(--membership-shadow-rgb), 0.14) 100%),
+    linear-gradient(0deg, rgba(var(--membership-shadow-rgb), 0.72) 0%, rgba(var(--membership-shadow-rgb), 0.34) 24%, rgba(var(--membership-shadow-rgb), 0) 52%) !important;
+}
+
+@media (min-width: 1500px) {
+  .plate-hero-vectors {
+    background:
+      radial-gradient(circle at 44% 46%, rgba(244, 234, 219, 0.022), transparent 36%),
+      url("./assets/fullness-original-vector-hero-beet.png") 43% 47% / auto min(80svh, 38vw) no-repeat !important;
+  }
+}
+
+@media (max-width: 1040px) {
+  .plate-hero-vectors {
+    background:
+      radial-gradient(circle at 50% 42%, rgba(244, 234, 219, 0.024), transparent 34%),
+      url("./assets/fullness-original-vector-hero-beet.png") 50% 42% / auto 58% no-repeat !important;
+    opacity: 0.24 !important;
+  }
+
+  .meal-prep-feature::before {
+    background:
+      url("./assets/fullness-original-vector-light-artichoke.png") left -96px bottom -42px / 260px auto no-repeat,
+      url("./assets/fullness-original-vector-light-flower.png") right -70px top 18px / 220px auto no-repeat !important;
+    opacity: 0.34 !important;
+  }
+
+  .membership::after {
+    background:
+      radial-gradient(ellipse at 45% 74%, rgba(var(--membership-shadow-rgb), 0.94) 0%, rgba(var(--membership-shadow-rgb), 0.72) 24%, rgba(var(--membership-shadow-rgb), 0.3) 50%, rgba(var(--membership-shadow-rgb), 0) 76%),
+      linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 1) 0%, rgba(var(--membership-shadow-rgb), 0.98) 39%, rgba(var(--membership-shadow-rgb), 0.75) 51%, rgba(var(--membership-shadow-rgb), 0.36) 66%, rgba(var(--membership-shadow-rgb), 0.12) 100%),
+      linear-gradient(0deg, rgba(var(--membership-shadow-rgb), 0.78) 0%, rgba(var(--membership-shadow-rgb), 0.38) 28%, rgba(var(--membership-shadow-rgb), 0) 58%) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .meal-prep-feature::before,
+  .fullness-offer::before,
+  footer::before {
+    opacity: 0.14 !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(180deg, rgba(var(--membership-shadow-rgb), 0.98) 0%, rgba(var(--membership-shadow-rgb), 0.9) 48%, rgba(var(--membership-shadow-rgb), 0.78) 100%),
+      linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 0.98) 0%, rgba(var(--membership-shadow-rgb), 0.72) 64%, rgba(var(--membership-shadow-rgb), 0.34) 100%) !important;
+  }
+}
+
+/* FAQ route: client-provided purchase, delivery and meal prep information. */
+.faq-page {
+  min-height: 100svh;
+  padding-top: var(--site-header-height);
+  color: #f4eadb;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(184, 120, 120, 0.12), transparent 28%),
+    linear-gradient(180deg, #090806 0%, #0b0907 54%, #090806 100%);
+}
+
+.faq-hero {
+  display: grid;
+  align-items: end;
+  min-height: min(620px, calc(100svh - var(--site-header-height)));
+  padding: clamp(58px, 8vw, 120px) clamp(28px, 6vw, 92px);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.22);
+}
+
+.faq-hero-copy {
+  width: min(880px, 100%);
+}
+
+.faq-page .eyebrow {
+  color: var(--fullness-highlight, #b87878);
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 0.78vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.faq-hero h1,
+.faq-group-heading h2,
+.faq-contact h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  line-height: 1.16;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.faq-hero h1 {
+  max-width: 780px;
+  color: #f4eadb;
+  font-size: clamp(2.3rem, 6vw, 6.4rem);
+}
+
+.faq-hero h1 span,
+.faq-group-heading h2 span {
+  color: var(--fullness-highlight, #b87878);
+}
+
+.faq-hero p:not(.eyebrow),
+.faq-contact p {
+  max-width: 680px;
+  margin: 24px 0 0;
+  color: rgba(244, 234, 219, 0.76);
+  font-size: clamp(1rem, 1.05vw, 1.18rem);
+  line-height: 1.72;
+}
+
+.faq-anchor-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: clamp(28px, 4vw, 48px);
+}
+
+.faq-anchor-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid rgba(184, 120, 120, 0.48);
+  color: rgba(244, 234, 219, 0.86);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.faq-anchor-nav a:hover,
+.faq-anchor-nav a:focus-visible {
+  border-color: var(--fullness-highlight, #b87878);
+  color: var(--fullness-highlight, #b87878);
+}
+
+.faq-groups {
+  display: grid;
+  gap: clamp(48px, 6vw, 88px);
+  padding: clamp(58px, 7vw, 104px) clamp(28px, 6vw, 92px);
+}
+
+.faq-group {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.34fr) minmax(0, 0.66fr);
+  gap: clamp(28px, 5vw, 76px);
+  scroll-margin-top: calc(var(--site-header-height) + 24px);
+}
+
+.faq-group-heading {
+  position: sticky;
+  top: calc(var(--site-header-height) + 24px);
+  align-self: start;
+}
+
+.faq-group-heading h2 {
+  max-width: 470px;
+  color: #f4eadb;
+  font-size: clamp(1.55rem, 2.45vw, 3.25rem);
+}
+
+.faq-items {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-item {
+  border: 1px solid rgba(184, 120, 120, 0.22);
+  border-radius: 8px;
+  background: rgba(244, 234, 219, 0.03);
+  overflow: hidden;
+}
+
+.faq-item summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 68px;
+  padding: 18px 56px 18px 22px;
+  color: rgba(244, 234, 219, 0.94);
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 1vw, 1.18rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "+";
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  color: var(--fullness-highlight, #b87878);
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.faq-item[open] summary::after {
+  content: "−";
+}
+
+.faq-answer {
+  padding: 0 22px 22px;
+  color: rgba(244, 234, 219, 0.72);
+  font-size: clamp(0.96rem, 0.92vw, 1.08rem);
+  line-height: 1.7;
+}
+
+.faq-answer p {
+  margin: 0 0 14px;
+}
+
+.faq-answer p:last-child {
+  margin-bottom: 0;
+}
+
+.faq-answer ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding-left: 1.1rem;
+}
+
+.faq-answer li::marker {
+  color: var(--fullness-highlight, #b87878);
+}
+
+.faq-contact {
+  margin: 0 clamp(28px, 6vw, 92px) clamp(64px, 7vw, 112px);
+  padding: clamp(34px, 5vw, 64px);
+  border: 1px solid rgba(184, 120, 120, 0.34);
+  border-radius: 8px;
+  background: rgba(244, 234, 219, 0.04);
+}
+
+.faq-contact h2 {
+  max-width: 780px;
+  color: #f4eadb;
+  font-size: clamp(1.55rem, 3vw, 4rem);
+}
+
+.faq-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.faq-contact-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid rgba(184, 120, 120, 0.62);
+  color: #f4eadb;
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.faq-contact-actions a:hover,
+.faq-contact-actions a:focus-visible {
+  border-color: var(--fullness-highlight, #b87878);
+  color: var(--fullness-highlight, #b87878);
+}
+
+@media (max-width: 980px) {
+  .faq-hero {
+    min-height: auto;
+    padding-top: clamp(46px, 8vw, 78px);
+  }
+
+  .faq-group {
+    grid-template-columns: 1fr;
+  }
+
+  .faq-group-heading {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .faq-page {
+    padding-top: calc(var(--site-header-height) * 0.7);
+  }
+
+  .faq-hero,
+  .faq-groups {
+    padding-inline: 22px;
+  }
+
+  .faq-hero h1 {
+    font-size: clamp(2rem, 12vw, 3.8rem);
+    letter-spacing: 0.12em;
+  }
+
+  .faq-anchor-nav a {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .faq-item summary {
+    min-height: 62px;
+    padding-left: 18px;
+  }
+
+  .faq-answer {
+    padding-inline: 18px;
+  }
+
+  .faq-contact {
+    margin-inline: 22px;
+    padding: 26px 20px;
+  }
+
+  .faq-contact-actions a {
+    width: 100%;
+  }
+}
+
+/* Responsive polish: keep the landing fluid and quiet on tablet/mobile. */
+.plate-hero-vectors {
+  mix-blend-mode: screen !important;
+  background-blend-mode: normal, screen !important;
+}
+
+.section-rule,
+.story-rule {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  width: min(86px, 24vw) !important;
+  height: 14px !important;
+  margin-block: clamp(16px, 2vw, 26px) !important;
+  background: transparent !important;
+}
+
+.section-rule::before,
+.story-rule::before {
+  content: "" !important;
+  width: 7px !important;
+  height: 7px !important;
+  flex: 0 0 7px !important;
+  border: 1px solid var(--fullness-highlight, #b87878) !important;
+  transform: rotate(45deg) !important;
+}
+
+.section-rule::after,
+.story-rule::after {
+  content: "" !important;
+  height: 1px !important;
+  flex: 1 1 auto !important;
+  background: rgba(184, 120, 120, 0.46) !important;
+}
+
+@media (max-width: 1180px) and (min-width: 861px) {
+  .plate-hero {
+    overflow: hidden !important;
+  }
+
+  .plate-hero-copy {
+    width: min(42vw, 430px) !important;
+    max-width: min(42vw, 430px) !important;
+    margin-left: clamp(34px, 5.5vw, 74px) !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 100% !important;
+    font-size: clamp(2.35rem, 4.45vw, 3.35rem) !important;
+    line-height: 1.18 !important;
+    letter-spacing: 0.15em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow),
+  .plate-hero-copy .hero-manifesto {
+    max-width: 34ch !important;
+    font-size: 0.96rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .plate-hero-vectors {
+    background:
+      radial-gradient(circle at 48% 46%, rgba(244, 234, 219, 0.018), transparent 32%),
+      url("./assets/fullness-original-vector-hero-beet.png") 47% 45% / auto min(60svh, 48vw) no-repeat !important;
+    opacity: 0.2 !important;
+  }
+
+  .plate-hero-visual-stage {
+    right: clamp(-96px, -7vw, -42px) !important;
+    width: min(69vw, 820px) !important;
+  }
+
+  .plate-hero-replay {
+    right: clamp(34px, 5vw, 60px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  html,
+  body,
+  #root,
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --site-header-space: 92px;
+    --site-header-height: 92px;
+  }
+
+  .site-header {
+    min-height: var(--site-header-height) !important;
+    padding: 14px 20px !important;
+  }
+
+  .desktop-nav,
+  .site-header .member-link {
+    display: none !important;
+  }
+
+  .site-header .brand {
+    width: min(58vw, 240px) !important;
+    max-width: min(58vw, 240px) !important;
+  }
+
+  .site-header .brand img {
+    width: min(52vw, 218px) !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .plate-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: auto !important;
+    gap: 24px !important;
+    padding: calc(var(--site-header-height) + 34px) 22px 44px !important;
+    overflow: hidden !important;
+    background: #050604 !important;
+  }
+
+  .plate-hero::before {
+    background:
+      linear-gradient(180deg, rgba(5, 6, 4, 0.94) 0%, rgba(5, 6, 4, 0.74) 48%, rgba(5, 6, 4, 0.98) 100%) !important;
+  }
+
+  .plate-hero::after {
+    background: linear-gradient(180deg, rgba(5, 6, 4, 0) 56%, #050604 100%) !important;
+  }
+
+  .plate-hero-vectors {
+    inset: 0 !important;
+    background:
+      radial-gradient(circle at 54% 34%, rgba(244, 234, 219, 0.018), transparent 30%),
+      url("./assets/fullness-original-vector-hero-beet.png") center 27% / min(84vw, 390px) auto no-repeat !important;
+    opacity: 0.14 !important;
+  }
+
+  .plate-hero-copy {
+    position: relative !important;
+    z-index: 3 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .plate-hero-copy .eyebrow,
+  .food-editorial .eyebrow,
+  .food-story-strip .eyebrow,
+  .meal-prep-copy .eyebrow,
+  .membership .eyebrow,
+  .fullness-offer .eyebrow {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1.35 !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 100% !important;
+    font-size: clamp(2rem, 10vw, 3.25rem) !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.14em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow),
+  .hero-manifesto {
+    max-width: 100% !important;
+    font-size: 0.96rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .hero-manifesto {
+    display: block !important;
+  }
+
+  .plate-hero-primary,
+  .editorial-cta,
+  .section-cta,
+  .meal-prep-copy a,
+  .membership-cta {
+    width: min(100%, 260px) !important;
+    min-height: 50px !important;
+    white-space: normal !important;
+  }
+
+  .plate-hero-replay,
+  .background-mode-toggle,
+  .plate-hero-signals {
+    display: none !important;
+  }
+
+  .plate-hero-visual-stage {
+    position: relative !important;
+    inset: auto !important;
+    z-index: 2 !important;
+    order: 2 !important;
+    width: min(128vw, 560px) !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: -8px -34vw 0 auto !important;
+    transform: none !important;
+    pointer-events: none !important;
+  }
+
+  .plate-hero-visual-stage .plate-hero-visual,
+  .intro-scroll-consumed .plate-hero-visual-stage .plate-hero-visual {
+    position: relative !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    object-fit: contain !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .hero-benefits {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    gap: 0 !important;
+    padding: 22px !important;
+    overflow: hidden !important;
+  }
+
+  .hero-benefits article {
+    display: grid !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    min-height: auto !important;
+    gap: 14px !important;
+    padding: 18px 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.22) !important;
+  }
+
+  .hero-benefits article:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .hero-benefits h2 {
+    font-size: 0.8rem !important;
+    letter-spacing: 0.12em !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .hero-benefits p {
+    font-size: 0.84rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .philosophy-story-combo {
+    display: block !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: #050604 !important;
+  }
+
+  .philosophy-story-combo::before {
+    background-position: 57% center !important;
+    background-size: auto 100% !important;
+    opacity: 0.18 !important;
+    mix-blend-mode: screen !important;
+  }
+
+  .philosophy-story-combo::after {
+    background:
+      linear-gradient(180deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.84) 46%, rgba(5, 6, 4, 0.98) 100%),
+      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.76) 64%, rgba(5, 6, 4, 0.44) 100%) !important;
+  }
+
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip {
+    display: block !important;
+    min-height: auto !important;
+    padding-inline: 22px !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-block: 52px 36px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-block: 38px 210px !important;
+    border-top: 1px solid rgba(184, 120, 120, 0.18) !important;
+  }
+
+  .philosophy-story-combo .editorial-copy,
+  .philosophy-story-combo .food-story-strip a {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2 {
+    max-width: 100% !important;
+    font-size: clamp(1.75rem, 8.2vw, 2.55rem) !important;
+    line-height: 1.18 !important;
+    letter-spacing: 0.14em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .food-editorial .editorial-copy p,
+  .food-story-strip .story-copy,
+  .meal-prep-copy p,
+  .meal-prep-copy li,
+  .membership p {
+    max-width: 100% !important;
+    font-size: 0.94rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    position: absolute !important;
+    right: -38vw !important;
+    bottom: -30px !important;
+    width: min(132vw, 560px) !important;
+    max-width: none !important;
+    opacity: 0.96 !important;
+    transform: none !important;
+    filter: none !important;
+    pointer-events: none !important;
+  }
+
+  .meal-prep-feature {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: auto !important;
+    padding: 50px 22px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .meal-prep-copy {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .meal-prep-copy ul {
+    display: grid !important;
+    gap: 8px !important;
+    margin: 22px 0 24px !important;
+    padding: 0 !important;
+  }
+
+  .meal-prep-visual-link {
+    position: relative !important;
+    display: block !important;
+    width: 142% !important;
+    min-height: 190px !important;
+    margin: 10px -34% 0 -8% !important;
+  }
+
+  .meal-prep-visual-link img {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .membership {
+    display: block !important;
+    min-height: auto !important;
+    overflow: hidden !important;
+    background: #050604 !important;
+  }
+
+  .membership::before {
+    left: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    opacity: 0.42 !important;
+    background-position: 60% center !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(180deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.9) 48%, rgba(5, 6, 4, 0.98) 100%),
+      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.74) 58%, rgba(5, 6, 4, 0.42) 100%) !important;
+  }
+
+  .membership > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 54px 22px 44px !important;
+  }
+
+  .membership .community-benefits {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    margin: 26px 0 !important;
+    gap: 0 !important;
+  }
+
+  .membership .community-benefits article {
+    min-width: 0 !important;
+    padding: 16px 10px !important;
+  }
+
+  .membership .community-benefits span {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.08em !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .fullness-offer {
+    min-height: auto !important;
+    padding: 48px 22px !important;
+  }
+
+  .fullness-offer .section-heading {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .fullness-offer .section-heading h2 {
+    font-size: clamp(1.8rem, 8vw, 2.5rem) !important;
+    line-height: 1.18 !important;
+  }
+
+  .offer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .offer-card {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    min-height: 0 !important;
+    gap: 14px !important;
+    padding: 20px !important;
+    overflow: hidden !important;
+  }
+
+  .offer-card img {
+    position: static !important;
+    width: 74px !important;
+    max-width: 24vw !important;
+    height: auto !important;
+    max-height: 86px !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+  }
+
+  .offer-card h3 {
+    font-size: 1rem !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .offer-card p:not(.offer-kicker) {
+    font-size: 0.88rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .offer-card a {
+    grid-column: 2 / -1 !important;
+    width: min(100%, 190px) !important;
+    min-height: 44px !important;
+  }
+
+  footer {
+    padding: 44px 22px 96px !important;
+    overflow: hidden !important;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+
+  .footer-brand,
+  .footer-col {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .footer-brand p {
+    max-width: 100% !important;
+    font-size: 0.88rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .footer-legal {
+    padding-inline: 22px !important;
+    font-size: 0.7rem !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+  }
+
+  .whatsapp-float {
+    right: 14px !important;
+    bottom: 14px !important;
+    z-index: 80 !important;
+    min-height: 50px !important;
+    padding: 0 18px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  :root {
+    --site-header-space: 86px;
+    --site-header-height: 86px;
+  }
+
+  .site-header {
+    padding-inline: 16px !important;
+  }
+
+  .plate-hero {
+    padding-inline: 18px !important;
+  }
+
+  .plate-hero-copy h1 {
+    font-size: clamp(1.78rem, 10.8vw, 2.65rem) !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2 {
+    font-size: clamp(1.55rem, 8.7vw, 2.22rem) !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .membership .community-benefits {
+    grid-template-columns: 1fr !important;
+  }
+
+  .offer-card {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+  }
+
+  .offer-card img {
+    grid-column: 2 !important;
+    justify-self: start !important;
+  }
+
+  .whatsapp-float {
+    max-width: calc(100vw - 28px) !important;
   }
 }
