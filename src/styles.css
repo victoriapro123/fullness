@@ -14007,3 +14007,255 @@ footer::before {
     max-width: calc(100vw - 28px) !important;
   }
 }
+
+/* Final background illustration pass: image-reference direction, without changing section content. */
+.plate-hero,
+.hero-benefits,
+.philosophy-story-combo,
+.meal-prep-feature,
+.membership,
+.fullness-offer,
+footer {
+  isolation: isolate !important;
+}
+
+.plate-hero {
+  background:
+    radial-gradient(ellipse at 76% 30%, rgba(142, 72, 45, 0.12), transparent 28%),
+    radial-gradient(ellipse at 66% 72%, rgba(184, 120, 120, 0.08), transparent 30%),
+    linear-gradient(180deg, #050505 0%, #070706 54%, #090806 100%) !important;
+}
+
+.plate-hero-vectors {
+  z-index: 2 !important;
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left clamp(210px, 24vw, 460px) top clamp(42px, 7vw, 108px) / min(20vw, 330px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomates_en_rama_v1.png") right min(19vw, 300px) top clamp(76px, 10vw, 150px) / min(15vw, 240px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/ramita_frutos_pequena_v1.png") right min(12vw, 190px) top clamp(120px, 16vw, 250px) / min(9vw, 132px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") left clamp(340px, 38vw, 640px) bottom 14% / min(13vw, 220px) auto no-repeat !important;
+  opacity: 0.24 !important;
+  filter: grayscale(1) saturate(0) brightness(0.88) contrast(1.15) !important;
+  mix-blend-mode: screen !important;
+}
+
+.plate-hero::before {
+  z-index: 1 !important;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 5, 0.98) 0%, rgba(5, 5, 5, 0.9) 28%, rgba(5, 5, 5, 0.34) 58%, rgba(5, 5, 5, 0.1) 100%),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.06) 0%, rgba(5, 5, 5, 0.08) 62%, #090806 100%) !important;
+}
+
+.plate-hero-copy,
+.plate-hero-visual-stage,
+.plate-hero-replay {
+  position: relative !important;
+}
+
+.plate-hero-copy {
+  z-index: 5 !important;
+}
+
+.plate-hero-visual-stage {
+  z-index: 4 !important;
+}
+
+.hero-benefits {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, #090908 0%, #0c0b09 100%) !important;
+}
+
+.hero-benefits::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") 50% 52% / min(62vw, 920px) auto no-repeat,
+    linear-gradient(90deg, rgba(184, 120, 120, 0.05), transparent 26%, transparent 74%, rgba(184, 120, 120, 0.04)) !important;
+  opacity: 0.16 !important;
+  filter: grayscale(1) saturate(0) brightness(0.86) contrast(1.18) !important;
+  mix-blend-mode: screen !important;
+}
+
+.hero-benefits article {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.philosophy-story-combo {
+  background:
+    radial-gradient(ellipse at 68% 44%, rgba(190, 96, 55, 0.12), transparent 34%),
+    linear-gradient(180deg, #080807 0%, #050504 100%) !important;
+}
+
+.philosophy-story-combo::before {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") left 52% top 18% / min(25vw, 410px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/brocoli_con_hojas_v1.png") left 66% top 15% / min(22vw, 360px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") right 7% top 12% / min(19vw, 300px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomates_en_rama_v1.png") left 56% top 40% / min(17vw, 270px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/rama_eneldo_v1.png") right 10% bottom 18% / min(17vw, 280px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") right -5vw bottom -4vw / min(25vw, 430px) auto no-repeat !important;
+  opacity: 0.34 !important;
+  filter: grayscale(1) saturate(0) brightness(1.12) contrast(1.18) !important;
+  mix-blend-mode: screen !important;
+}
+
+.philosophy-story-combo::after {
+  background:
+    linear-gradient(90deg, rgba(5, 5, 4, 0.99) 0%, rgba(5, 5, 4, 0.92) 30%, rgba(5, 5, 4, 0.42) 54%, rgba(5, 5, 4, 0.08) 78%, rgba(5, 5, 4, 0.24) 100%),
+    linear-gradient(180deg, rgba(5, 5, 4, 0.16) 0%, rgba(5, 5, 4, 0.02) 45%, rgba(5, 5, 4, 0.38) 100%) !important;
+}
+
+.philosophy-story-combo .food-editorial,
+.philosophy-story-combo .food-story-strip,
+.philosophy-story-combo .editorial-copy,
+.philosophy-story-combo .food-story-strip a,
+.philosophy-story-combo .food-story-strip .philosophy-story-plate {
+  position: relative !important;
+}
+
+.meal-prep-feature {
+  background:
+    radial-gradient(circle at 10% 24%, rgba(111, 76, 64, 0.08), transparent 28%),
+    linear-gradient(180deg, #f3eadf 0%, #e8ddce 100%) !important;
+}
+
+.meal-prep-feature::before {
+  z-index: 1 !important;
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_abierta_v1.png") left clamp(-70px, -4vw, -28px) center / min(20vw, 310px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/zanahoria_flores_con_raiz_v1.png") right clamp(-58px, -3.4vw, -22px) center / min(18vw, 290px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/raiz_floral_horizontal_v1.png") left 17% bottom -42% / min(28vw, 440px) auto no-repeat !important;
+  opacity: 0.22 !important;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(16%) saturate(540%) hue-rotate(326deg) brightness(92%) contrast(90%) !important;
+  mix-blend-mode: multiply !important;
+}
+
+.meal-prep-copy {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.meal-prep-visual-link {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+}
+
+.meal-prep-visual-link img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: 61% center !important;
+}
+
+.membership::after {
+  background:
+    linear-gradient(90deg, rgba(5, 5, 4, 1) 0%, rgba(5, 5, 4, 0.98) 35%, rgba(5, 5, 4, 0.78) 47%, rgba(5, 5, 4, 0.36) 65%, rgba(5, 5, 4, 0.1) 100%),
+    linear-gradient(0deg, rgba(5, 5, 4, 0.82) 0%, rgba(5, 5, 4, 0.34) 32%, rgba(5, 5, 4, 0.04) 58%),
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/rama_hojas_frutos_v1.png") right clamp(-150px, -8vw, -72px) center / min(13vw, 220px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/flor_umbela_v1.png") right -10vw bottom -7vw / min(15vw, 250px) auto no-repeat !important;
+  opacity: 1 !important;
+}
+
+.fullness-offer::before {
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") left clamp(-118px, -7vw, -52px) top clamp(28px, 5vw, 82px) / min(23vw, 360px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/zanahoria_follaje_extenso_v1.png") right clamp(-90px, -5vw, -36px) bottom clamp(-120px, -8vw, -58px) / min(24vw, 390px) auto no-repeat !important;
+  opacity: 0.2 !important;
+  filter: brightness(0) saturate(100%) invert(27%) sepia(16%) saturate(516%) hue-rotate(327deg) brightness(92%) contrast(88%) !important;
+}
+
+footer::before {
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomate_corte_v1.png") right clamp(34px, 5vw, 96px) bottom clamp(28px, 4vw, 78px) / min(13vw, 220px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/coco_gajos_v1.png") right clamp(160px, 15vw, 320px) bottom clamp(-38px, -2.5vw, -16px) / min(16vw, 280px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/raiz_floral_horizontal_v1.png") right clamp(-180px, -10vw, -82px) bottom clamp(-170px, -10vw, -70px) / min(32vw, 520px) auto no-repeat !important;
+  opacity: 0.16 !important;
+  filter: grayscale(1) saturate(0) brightness(0.94) contrast(1.12) !important;
+  mix-blend-mode: screen !important;
+}
+
+@media (max-width: 1180px) and (min-width: 861px) {
+  .plate-hero-vectors {
+    background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left 28vw top 9vw / min(24vw, 300px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomates_en_rama_v1.png") right 14vw top 11vw / min(17vw, 210px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") left 48vw bottom 14% / min(17vw, 220px) auto no-repeat !important;
+    opacity: 0.2 !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .plate-hero-vectors {
+    background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left -18vw top 10vw / min(62vw, 280px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") right -10vw top 16vw / min(44vw, 210px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/ramita_frutos_pequena_v1.png") right 8vw top 38vw / min(28vw, 130px) auto no-repeat !important;
+    opacity: 0.16 !important;
+  }
+
+  .hero-benefits::before {
+    background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") center / 118vw auto no-repeat !important;
+    opacity: 0.1 !important;
+  }
+
+  .philosophy-story-combo::before {
+    background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") right -24vw top 4vw / min(70vw, 310px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/rama_eneldo_v1.png") right -20vw bottom 24vw / min(62vw, 270px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left -24vw bottom -8vw / min(74vw, 320px) auto no-repeat !important;
+    opacity: 0.18 !important;
+  }
+
+  .meal-prep-feature::before {
+    background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_abierta_v1.png") left -30vw top 16vw / min(70vw, 300px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/zanahoria_flores_con_raiz_v1.png") right -34vw bottom 0 / min(76vw, 330px) auto no-repeat !important;
+    opacity: 0.15 !important;
+  }
+
+  .meal-prep-visual-link {
+    position: relative !important;
+    display: block !important;
+    inset: auto !important;
+    z-index: 2 !important;
+    width: 142% !important;
+    min-height: 190px !important;
+    margin: 10px -34% 0 -8% !important;
+  }
+
+  .meal-prep-visual-link img {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    object-position: center bottom !important;
+  }
+
+  .membership::after {
+    background:
+      linear-gradient(180deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.9) 48%, rgba(5, 6, 4, 0.98) 100%),
+      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.74) 58%, rgba(5, 6, 4, 0.42) 100%),
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/rama_hojas_frutos_v1.png") right -34vw bottom 10vw / min(56vw, 260px) auto no-repeat !important;
+  }
+
+  .fullness-offer::before,
+  footer::before {
+    opacity: 0.12 !important;
+  }
+}
