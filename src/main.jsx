@@ -37,7 +37,6 @@ import {
   UploadCloud,
   Users,
   Utensils,
-  Video,
   X
 } from "lucide-react";
 import {
@@ -50,8 +49,12 @@ import {
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-modern.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
-import storyPlateCutoutSrc from "./assets/fullness-story-plate-cutout.png";
+import storyPlateCutoutSrc from "./assets/fullness-story-plate-croquettes-cutout.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
+import philosophyPlantIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/planta30.png";
+import philosophyBroccoliIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png";
+import philosophyCarrotIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png";
+import storyTomatoesIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png";
 import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -63,7 +66,6 @@ const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
-const heroBeetLineSrc = mediaSrc("assets/betarraga hero.png");
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
@@ -84,6 +86,7 @@ const legacyPlaceholderProductSlugs = new Set([
 ]);
 const shopPath = "/tienda";
 const faqPath = "/preguntas-frecuentes";
+const aboutPath = "/quienes-somos";
 
 const faqGroups = [
   {
@@ -315,6 +318,22 @@ const faqGroups = [
       }
     ]
   }
+];
+
+const aboutStoryParagraphs = [
+  "Soy Cecilia Salas, chef, emprendedora y creadora de Fullness Lab.",
+  "Mi camino en la gastronomía comenzó hace más de quince años, impartiendo clases de cocina para pequeños grupos en mi propia casa. Lo que nació como una instancia para compartir conocimientos y experiencias fue creciendo hasta convertirse en una empresa dedicada a la producción gastronómica y eventos, desarrollando proyectos para clientes particulares y para importantes marcas nacionales e internacionales.",
+  "Durante años tuve el privilegio de participar en lanzamientos, experiencias de marca, celebraciones y eventos de gran escala. Fue una etapa de mucho aprendizaje, crecimiento y desarrollo profesional. Sin embargo, con el tiempo comenzó a surgir una pregunta que no lograba ignorar: ¿cuál era el verdadero propósito detrás de lo que hacía?",
+  "Aunque disfrutaba profundamente la cocina, sentía que gran parte de la industria gastronómica y de eventos se había vuelto cada vez más rápida, comercial y repetitiva. Existía abundancia de estímulos, imágenes y experiencias efímeras, pero pocas veces un impacto real y duradero en la vida de las personas.",
+  "Paralelamente, algo me acompañaba desde mis inicios en la cocina. Siempre tuve una visión profundamente romántica de los alimentos. Me fascinaba buscar ingredientes de calidad, comprender su origen y trabajarlos de una manera que potenciara al máximo su sabor y valor nutricional, interviniéndolos lo menos posible. Sin saberlo, ya estaba buscando una forma más consciente de cocinar.",
+  "Fue mi propio proceso de búsqueda personal y sanación el que finalmente dio sentido a esa intuición. Comencé a profundizar en la relación entre alimentación, emociones, bienestar y propósito, descubriendo que la forma en que nos nutrimos tiene un impacto mucho más profundo de lo que solemos imaginar.",
+  "Ese camino me llevó a ampliar mi formación y actualmente me encuentro cursando un Diplomado en Nutrición Emocional, integrando herramientas que complementan mi experiencia gastronómica y enriquecen la visión que hoy sustenta este proyecto.",
+  "Así nació Fullness Lab.",
+  "Fullness Lab surge de la necesidad de volver a lo esencial. De recuperar una forma de alimentarnos más consciente, más humana y más conectada con nuestro bienestar integral. Es el encuentro entre la gastronomía, la nutrición funcional, el desarrollo personal y la convicción de que la comida puede ser una poderosa herramienta de transformación.",
+  "Creemos que alimentarse es mucho más que comer.",
+  "Creemos en ingredientes reales, en procesos respetuosos, en el placer de una buena mesa y en la profunda conexión entre cuerpo, mente y emociones.",
+  "Porque cuando aprendemos a nutrirnos desde la raíz, descubrimos que el bienestar no es algo que se busca afuera, sino algo que se construye desde dentro.",
+  "Como es adentro, es afuera"
 ];
 
 function getProductImage(product, index) {
@@ -2224,6 +2243,69 @@ function CommunityPage({
   );
 }
 
+function AboutPage({ onNavigateToShop, onNavigateToCommunity }) {
+  return (
+    <article className="about-page">
+      <section className="about-hero">
+        <div className="about-hero-copy">
+          <p className="eyebrow">Nuestra Historia</p>
+          <h1>Nuestra <span>Historia</span></h1>
+          <span className="section-rule" aria-hidden="true" />
+          <p>{aboutStoryParagraphs[0]}</p>
+        </div>
+      </section>
+
+      <section className="about-story" aria-label="Historia de Cecilia Salas y Fullness Lab">
+        <aside className="about-story-aside" aria-hidden="true">
+          <span>NUTRIRSE DESDE LA RAÍZ</span>
+        </aside>
+        <div className="about-story-body">
+          {aboutStoryParagraphs.slice(1).map((paragraph, index) => {
+            const isAccent = paragraph === "Así nació Fullness Lab.";
+            const isBelief = paragraph === "Creemos que alimentarse es mucho más que comer.";
+            const isClosing = paragraph === "Como es adentro, es afuera";
+
+            if (isClosing) {
+              return (
+                <p className="about-story-closing" key={paragraph}>
+                  {paragraph}
+                </p>
+              );
+            }
+
+            if (isAccent || isBelief) {
+              return (
+                <p className="about-story-highlight" key={paragraph}>
+                  {paragraph}
+                </p>
+              );
+            }
+
+            return <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>;
+          })}
+        </div>
+      </section>
+
+      <section className="about-next">
+        <div>
+          <p className="eyebrow">Fullness Lab</p>
+          <h2>Bienestar que se construye desde dentro.</h2>
+        </div>
+        <div className="about-next-actions">
+          <a href={shopPath} onClick={onNavigateToShop}>
+            Ver planes
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+          <a href="/comunidad" onClick={onNavigateToCommunity}>
+            Comunidad
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        </div>
+      </section>
+    </article>
+  );
+}
+
 function FaqAnswer({ blocks }) {
   return blocks.map((block, index) => {
     if (Array.isArray(block)) {
@@ -2373,7 +2455,12 @@ function App() {
       return;
     }
 
-    if (window.location.pathname === "/comunidad" || window.location.pathname === shopPath || window.location.pathname === faqPath) {
+    if (
+      window.location.pathname === "/comunidad" ||
+      window.location.pathname === shopPath ||
+      window.location.pathname === faqPath ||
+      window.location.pathname === aboutPath
+    ) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setHeaderHiddenForHero(false);
       return;
@@ -2413,23 +2500,6 @@ function App() {
     setBackgroundMode((mode) => (mode === "plum" ? "current" : "plum"));
   };
 
-  const returnToIntro = () => {
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-scroll-consumed", "intro-mobile-skip");
-      window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
-      setHeaderHiddenForHero(false);
-      navigateToSection("#programa", { smooth: true, replace: true });
-      return;
-    }
-
-    document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
-    if (window.location.hash && window.location.hash !== "#inicio") {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    window.dispatchEvent(new Event("fullness:intro-reset"));
-  };
-
   const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
     const resolvedHref = href === "#filosofia" ? "#proposito" : href;
     if (resolvedHref === "#oferta") {
@@ -2451,7 +2521,8 @@ function App() {
       currentProductSlug ||
       window.location.pathname === "/comunidad" ||
       window.location.pathname === shopPath ||
-      window.location.pathname === faqPath
+      window.location.pathname === faqPath ||
+      window.location.pathname === aboutPath
     ) {
       setCurrentProductSlug("");
       setProductPreviewSlug("");
@@ -2534,6 +2605,29 @@ function App() {
     }
 
     setCurrentPath("/comunidad");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  function openAboutPage(event) {
+    event?.preventDefault();
+    setCurrentProductSlug("");
+    setProductPreviewSlug("");
+    setMealPreview(null);
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    document.documentElement.classList.add("intro-scroll-consumed");
+    if (isMobileIntroViewport()) {
+      document.documentElement.classList.add("intro-mobile-skip");
+    }
+    window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+    setHeaderHiddenForHero(false);
+
+    if (window.location.pathname !== aboutPath) {
+      window.history.pushState(null, "", aboutPath);
+    }
+
+    setCurrentPath(aboutPath);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }
 
@@ -3211,6 +3305,7 @@ function App() {
   const isCommunityPage = currentPath === "/comunidad" && !currentProductSlug;
   const isShopPage = currentPath === shopPath && !currentProductSlug;
   const isFaqPage = currentPath === faqPath && !currentProductSlug;
+  const isAboutPage = currentPath === aboutPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
 
   function addToCart(product) {
@@ -3671,7 +3766,7 @@ function App() {
   const navItems = [
     { href: shopPath, label: "Planes" },
     { href: "/comunidad", label: "Comunidad" },
-    { href: "#proposito", label: "Nosotros" },
+    { href: aboutPath, label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
     ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
   ];
@@ -3694,6 +3789,11 @@ function App() {
 
         if (item.href === shopPath) {
           openShopPage(event);
+          return;
+        }
+
+        if (item.href === aboutPath) {
+          openAboutPage(event);
           return;
         }
 
@@ -3732,7 +3832,7 @@ function App() {
         <a href={shopPath} onClick={openShopPage}>Planes</a>
         <a href={shopPath} onClick={openShopPage}>Tienda</a>
         <a href="/comunidad" onClick={openCommunityPage}>Comunidad</a>
-        <a href="#proposito" onClick={(event) => { event.preventDefault(); navigateToSection("#proposito"); }}>Nosotros</a>
+        <a href={aboutPath} onClick={openAboutPage}>Nosotros</a>
         <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Contacto</a>
       </nav>
       <div className="footer-column">
@@ -3838,6 +3938,11 @@ function App() {
                   return;
                 }
 
+                if (item.href === aboutPath) {
+                  openAboutPage(event);
+                  return;
+                }
+
                 event.preventDefault();
                 setMenuOpen(false);
                 navigateToSection(item.href);
@@ -3885,6 +3990,14 @@ function App() {
           <FaqPage onNavigateToShop={openShopPage} />
           {renderSiteFooter()}
         </>
+      ) : isAboutPage ? (
+        <>
+          <AboutPage
+            onNavigateToShop={openShopPage}
+            onNavigateToCommunity={openCommunityPage}
+          />
+          {renderSiteFooter()}
+        </>
       ) : isShopPage ? (
         <>
           <div className="shop-page-shell">
@@ -3906,7 +4019,6 @@ function App() {
           <section
             className="plate-hero"
             id="programa"
-            style={{ "--hero-beet-line": `url("${heroBeetLineSrc}")` }}
           >
         <div className="plate-hero-blackout" aria-hidden="true" />
         <div className="plate-hero-vectors" aria-hidden="true" />
@@ -3934,10 +4046,6 @@ function App() {
             ))}
           </aside>
         </div>
-        <button className="plate-hero-replay" type="button" onClick={returnToIntro}>
-          <Video size={17} aria-hidden="true" />
-          Volver a la animación
-        </button>
         <div className="plate-hero-visual-stage" aria-hidden="true">
           <img
             className="plate-hero-visual"
@@ -3970,6 +4078,11 @@ function App() {
           "--silhouette-botanical": `url("${silhouetteBotanicalSrc}")`
         }}
       >
+        <div className="philosophy-illustrations" aria-hidden="true">
+          <img className="philosophy-illustration philosophy-illustration-plant" src={philosophyPlantIllustrationSrc} alt="" />
+          <img className="philosophy-illustration philosophy-illustration-broccoli" src={philosophyBroccoliIllustrationSrc} alt="" />
+          <img className="philosophy-illustration philosophy-illustration-carrot" src={philosophyCarrotIllustrationSrc} alt="" />
+        </div>
         <section className="food-editorial" id="proposito">
           <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
             <p className="eyebrow">Nuestra filosofía</p>
@@ -3981,10 +4094,10 @@ function App() {
             </p>
             <a
               className="editorial-cta"
-              href="#calentar"
+              href={aboutPath}
               onClick={(event) => {
                 event.preventDefault();
-                navigateToSection("#calentar");
+                openAboutPage(event);
               }}
             >
               Conócenos
@@ -4010,6 +4123,7 @@ function App() {
             </span>
           </a>
           <img className="philosophy-story-plate" src={storyPlateCutoutSrc} alt="" aria-hidden="true" />
+          <img className="philosophy-story-tomatoes" src={storyTomatoesIllustrationSrc} alt="" aria-hidden="true" />
         </section>
       </div>
 

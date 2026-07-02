@@ -8488,11 +8488,11 @@ footer::before {
 .plate-hero-visual-stage {
   position: absolute;
   z-index: 2;
-  inset: auto clamp(-130px, -6vw, -44px) auto auto;
+  inset: auto auto auto 65%;
   top: 52%;
   width: min(72vw, 1120px);
   max-height: min(76svh, 820px);
-  transform: translate(0, -50%);
+  transform: translate(-50%, -50%);
   will-change: transform, opacity;
 }
 
@@ -8522,18 +8522,19 @@ footer::before {
 @keyframes fullnessPlateStageIn {
   0% {
     opacity: 0;
-    transform: translate(44vw, -50%) scale(0.94);
+    transform: translate(-8%, -50%) scale(0.94);
   }
 
   100% {
     opacity: 1;
-    transform: translate(0, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @media (max-width: 1040px) {
   .plate-hero-visual-stage {
-    right: clamp(-170px, -15vw, -90px);
+    left: 65%;
+    right: auto;
     width: min(82vw, 900px);
   }
 
@@ -8553,6 +8554,7 @@ footer::before {
   }
 
   .plate-hero-visual-stage {
+    left: auto;
     right: clamp(-190px, -34vw, -120px);
     top: 61%;
     width: min(116vw, 780px);
@@ -11989,33 +11991,32 @@ footer::before {
 .philosophy-story-combo .food-story-strip .philosophy-story-plate {
   position: absolute !important;
   z-index: 3 !important;
-  top: 0 !important;
-  right: clamp(-92px, -4.5vw, -34px) !important;
-  bottom: auto !important;
-  width: min(60vw, 960px) !important;
+  top: auto !important;
+  right: clamp(-210px, -12vw, -82px) !important;
+  bottom: 0 !important;
+  width: min(58vw, 920px) !important;
   max-width: none !important;
   height: auto !important;
   opacity: 1 !important;
-  transform: translateY(-25%) !important;
+  transform: translateY(70%) !important;
   pointer-events: none !important;
   filter: none !important;
 }
 
 @media (max-width: 1040px) {
   .philosophy-story-combo .food-story-strip .philosophy-story-plate {
-    right: -26vw !important;
-    width: 92vw !important;
-    transform: translateY(-25%) !important;
+    right: -42vw !important;
+    width: 104vw !important;
+    transform: translateY(70%) !important;
   }
 }
 
 @media (max-width: 760px) {
   .philosophy-story-combo .food-story-strip .philosophy-story-plate {
-    right: -56vw !important;
-    top: auto !important;
+    right: -88vw !important;
     bottom: 0 !important;
-    width: 158vw !important;
-    transform: translateY(0) !important;
+    width: 178vw !important;
+    transform: translateY(64%) !important;
     opacity: 0.95 !important;
   }
 }
@@ -13453,9 +13454,8 @@ footer::before {
 
 .section-rule,
 .story-rule {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 5px !important;
+  position: relative !important;
+  display: inline-block !important;
   width: min(86px, 24vw) !important;
   height: 14px !important;
   margin-block: clamp(16px, 2vw, 26px) !important;
@@ -13465,19 +13465,26 @@ footer::before {
 .section-rule::before,
 .story-rule::before {
   content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
   width: 7px !important;
   height: 7px !important;
-  flex: 0 0 7px !important;
   border: 1px solid var(--fullness-highlight, #b87878) !important;
-  transform: rotate(45deg) !important;
+  box-sizing: border-box !important;
+  transform: translateY(-50%) rotate(45deg) !important;
 }
 
 .section-rule::after,
 .story-rule::after {
   content: "" !important;
+  position: absolute !important;
+  left: 12px !important;
+  right: 0 !important;
+  top: 50% !important;
   height: 1px !important;
-  flex: 1 1 auto !important;
   background: rgba(184, 120, 120, 0.46) !important;
+  transform: translateY(-50%) !important;
 }
 
 @media (max-width: 1180px) and (min-width: 861px) {
@@ -14009,6 +14016,32 @@ footer::before {
 }
 
 /* Final background illustration pass: image-reference direction, without changing section content. */
+main {
+  --hero-bg-current-rgb: 5 5 5;
+  --hero-bg-current-end-rgb: 9 8 6;
+  --hero-bg-uva-rgb: 48 32 43;
+  --hero-bg-uva-end-rgb: 40 24 38;
+  --hero-bg-rgb: var(--hero-bg-current-rgb);
+  --hero-bg-end-rgb: var(--hero-bg-current-end-rgb);
+  --section-dark-bg-current-rgb: 5 6 4;
+  --section-dark-bg-current-end-rgb: 7 6 5;
+  --section-dark-bg-uva-rgb: 48 32 43;
+  --section-dark-bg-uva-end-rgb: 40 24 38;
+  --section-dark-bg-rgb: var(--section-dark-bg-current-rgb);
+  --section-dark-bg-end-rgb: var(--section-dark-bg-current-end-rgb);
+  --hero-glow-warm-rgb: 142 72 45;
+  --hero-glow-accent-rgb: 184 120 120;
+}
+
+main[data-background-mode="plum"] {
+  --hero-bg-rgb: var(--hero-bg-uva-rgb);
+  --hero-bg-end-rgb: var(--hero-bg-uva-end-rgb);
+  --section-dark-bg-rgb: var(--section-dark-bg-uva-rgb);
+  --section-dark-bg-end-rgb: var(--section-dark-bg-uva-end-rgb);
+  --hero-glow-warm-rgb: 96 54 78;
+  --hero-glow-accent-rgb: 184 120 148;
+}
+
 .plate-hero,
 .hero-benefits,
 .philosophy-story-combo,
@@ -14021,33 +14054,59 @@ footer {
 
 .plate-hero {
   background:
-    radial-gradient(ellipse at 76% 30%, rgba(142, 72, 45, 0.12), transparent 28%),
-    radial-gradient(ellipse at 66% 72%, rgba(184, 120, 120, 0.08), transparent 30%),
-    linear-gradient(180deg, #050505 0%, #070706 54%, #090806 100%) !important;
+    radial-gradient(ellipse at 76% 30%, rgb(var(--hero-glow-warm-rgb) / 0.12), transparent 28%),
+    radial-gradient(ellipse at 66% 72%, rgb(var(--hero-glow-accent-rgb) / 0.08), transparent 30%),
+    linear-gradient(180deg, rgb(var(--hero-bg-rgb)) 0%, rgb(var(--hero-bg-rgb)) 54%, rgb(var(--hero-bg-end-rgb)) 100%) !important;
 }
 
 .plate-hero-vectors {
   z-index: 2 !important;
   background:
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left clamp(210px, 24vw, 460px) top clamp(42px, 7vw, 108px) / min(20vw, 330px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomates_en_rama_v1.png") right min(19vw, 300px) top clamp(76px, 10vw, 150px) / min(15vw, 240px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/ramita_frutos_pequena_v1.png") right min(12vw, 190px) top clamp(120px, 16vw, 250px) / min(9vw, 132px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") left clamp(340px, 38vw, 640px) bottom 14% / min(13vw, 220px) auto no-repeat !important;
-  opacity: 0.24 !important;
-  filter: grayscale(1) saturate(0) brightness(0.88) contrast(1.15) !important;
-  mix-blend-mode: screen !important;
+    radial-gradient(circle at 50% 44%, rgba(244, 234, 219, 0.03), transparent 35%) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.plate-hero-vectors::before,
+.plate-hero-vectors::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  opacity: 0.5 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  pointer-events: none !important;
+  transform-origin: center center !important;
+}
+
+.plate-hero-vectors::before {
+  left: clamp(-214px, -10.92vw, -126px) !important;
+  top: 52% !important;
+  width: clamp(420px, 36.4vw, 714px) !important;
+  aspect-ratio: 653 / 905 !important;
+  background: url("./assets/ilustraciones-fondo/hero/hoja30.png") center / contain no-repeat !important;
+  transform: translateY(-50%) !important;
+}
+
+.plate-hero-vectors::after {
+  right: clamp(-227px, -11.34vw, -139px) !important;
+  top: 47% !important;
+  width: clamp(462px, 37.8vw, 756px) !important;
+  aspect-ratio: 756 / 905 !important;
+  background: url("./assets/ilustraciones-fondo/hero/hojas30.png") center / contain no-repeat !important;
+  transform: translateY(-50%) !important;
 }
 
 .plate-hero::before {
   z-index: 1 !important;
   background:
-    linear-gradient(90deg, rgba(5, 5, 5, 0.98) 0%, rgba(5, 5, 5, 0.9) 28%, rgba(5, 5, 5, 0.34) 58%, rgba(5, 5, 5, 0.1) 100%),
-    linear-gradient(180deg, rgba(5, 5, 5, 0.06) 0%, rgba(5, 5, 5, 0.08) 62%, #090806 100%) !important;
+    linear-gradient(90deg, rgb(var(--hero-bg-rgb) / 0.98) 0%, rgb(var(--hero-bg-rgb) / 0.9) 28%, rgb(var(--hero-bg-rgb) / 0.34) 58%, rgb(var(--hero-bg-rgb) / 0.1) 100%),
+    linear-gradient(180deg, rgb(var(--hero-bg-rgb) / 0.06) 0%, rgb(var(--hero-bg-rgb) / 0.08) 62%, rgb(var(--hero-bg-end-rgb)) 100%) !important;
 }
 
 .plate-hero-copy,
-.plate-hero-visual-stage,
-.plate-hero-replay {
+.plate-hero-visual-stage {
   position: relative !important;
 }
 
@@ -14073,9 +14132,8 @@ footer {
   z-index: 0 !important;
   pointer-events: none !important;
   background:
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") 50% 52% / min(62vw, 920px) auto no-repeat,
     linear-gradient(90deg, rgba(184, 120, 120, 0.05), transparent 26%, transparent 74%, rgba(184, 120, 120, 0.04)) !important;
-  opacity: 0.16 !important;
+  opacity: 0.12 !important;
   filter: grayscale(1) saturate(0) brightness(0.86) contrast(1.18) !important;
   mix-blend-mode: screen !important;
 }
@@ -14087,8 +14145,8 @@ footer {
 
 .philosophy-story-combo {
   background:
-    radial-gradient(ellipse at 68% 44%, rgba(190, 96, 55, 0.12), transparent 34%),
-    linear-gradient(180deg, #080807 0%, #050504 100%) !important;
+    radial-gradient(ellipse at 68% 44%, rgb(var(--hero-glow-accent-rgb) / 0.09), transparent 34%),
+    linear-gradient(180deg, rgb(var(--section-dark-bg-rgb)) 0%, rgb(var(--section-dark-bg-end-rgb)) 100%) !important;
 }
 
 .philosophy-story-combo::before {
@@ -14099,6 +14157,7 @@ footer {
   z-index: 0 !important;
   pointer-events: none !important;
   background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") 30% 50% / min(44vw, 760px) auto no-repeat,
     url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") left 52% top 18% / min(25vw, 410px) auto no-repeat,
     url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/brocoli_con_hojas_v1.png") left 66% top 15% / min(22vw, 360px) auto no-repeat,
     url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") right 7% top 12% / min(19vw, 300px) auto no-repeat,
@@ -14131,19 +14190,21 @@ footer {
 }
 
 .meal-prep-feature::before {
-  z-index: 1 !important;
+  z-index: 6 !important;
   background:
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_abierta_v1.png") left clamp(-70px, -4vw, -28px) center / min(20vw, 310px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/zanahoria_flores_con_raiz_v1.png") right clamp(-58px, -3.4vw, -22px) center / min(18vw, 290px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/raiz_floral_horizontal_v1.png") left 17% bottom -42% / min(28vw, 440px) auto no-repeat !important;
-  opacity: 0.22 !important;
-  filter: brightness(0) saturate(100%) invert(28%) sepia(16%) saturate(540%) hue-rotate(326deg) brightness(92%) contrast(90%) !important;
+    url("./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png") right 7% top -20% / min(19vw, 310px) auto no-repeat !important;
+  opacity: 0.38 !important;
+  filter: brightness(0) saturate(100%) invert(23%) sepia(14%) saturate(492%) hue-rotate(334deg) brightness(92%) contrast(91%) !important;
   mix-blend-mode: multiply !important;
+}
+
+.meal-prep-feature::after {
+  z-index: 3 !important;
 }
 
 .meal-prep-copy {
   position: relative !important;
-  z-index: 3 !important;
+  z-index: 7 !important;
 }
 
 .meal-prep-visual-link {
@@ -14191,30 +14252,53 @@ footer::before {
 @media (max-width: 1180px) and (min-width: 861px) {
   .plate-hero-vectors {
     background:
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left 28vw top 9vw / min(24vw, 300px) auto no-repeat,
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/tomates_en_rama_v1.png") right 14vw top 11vw / min(17vw, 210px) auto no-repeat,
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") left 48vw bottom 14% / min(17vw, 220px) auto no-repeat !important;
-    opacity: 0.2 !important;
+      radial-gradient(circle at 50% 42%, rgba(244, 234, 219, 0.024), transparent 34%) !important;
+  }
+
+  .plate-hero-vectors::before {
+    left: clamp(-151px, -15.96vw, -105px) !important;
+    top: 50% !important;
+    width: clamp(350px, 53.2vw, 504px) !important;
+    opacity: 0.5 !important;
+  }
+
+  .plate-hero-vectors::after {
+    right: clamp(-164px, -16.8vw, -113px) !important;
+    top: 45% !important;
+    width: clamp(378px, 56vw, 546px) !important;
+    opacity: 0.5 !important;
   }
 }
 
 @media (max-width: 860px) {
   .plate-hero-vectors {
     background:
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left -18vw top 10vw / min(62vw, 280px) auto no-repeat,
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png") right -10vw top 16vw / min(44vw, 210px) auto no-repeat,
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/ramita_frutos_pequena_v1.png") right 8vw top 38vw / min(28vw, 130px) auto no-repeat !important;
-    opacity: 0.16 !important;
+      radial-gradient(circle at 50% 30%, rgba(244, 234, 219, 0.02), transparent 32%) !important;
+  }
+
+  .plate-hero-vectors::before {
+    left: clamp(-139px, -26.88vw, -97px) !important;
+    top: 50% !important;
+    width: clamp(322px, 89.6vw, 462px) !important;
+    opacity: 0.5 !important;
+  }
+
+  .plate-hero-vectors::after {
+    right: clamp(-151px, -28.56vw, -105px) !important;
+    top: 45% !important;
+    width: clamp(350px, 95.2vw, 504px) !important;
+    opacity: 0.5 !important;
   }
 
   .hero-benefits::before {
     background:
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") center / 118vw auto no-repeat !important;
-    opacity: 0.1 !important;
+      linear-gradient(90deg, rgba(184, 120, 120, 0.03), transparent 20%, transparent 80%, rgba(184, 120, 120, 0.03)) !important;
+    opacity: 0.08 !important;
   }
 
   .philosophy-story-combo::before {
     background:
+      url("./assets/ilustraciones-fondo/linea-gris-transparente/iconos/secuencia_flor_cuenco_corazon_v1.png") 30% 24% / min(92vw, 520px) auto no-repeat,
       url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") right -24vw top 4vw / min(70vw, 310px) auto no-repeat,
       url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/rama_eneldo_v1.png") right -20vw bottom 24vw / min(62vw, 270px) auto no-repeat,
       url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/hoja_repollo_v1.png") left -24vw bottom -8vw / min(74vw, 320px) auto no-repeat !important;
@@ -14223,9 +14307,8 @@ footer::before {
 
   .meal-prep-feature::before {
     background:
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_abierta_v1.png") left -30vw top 16vw / min(70vw, 300px) auto no-repeat,
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/zanahoria_flores_con_raiz_v1.png") right -34vw bottom 0 / min(76vw, 330px) auto no-repeat !important;
-    opacity: 0.15 !important;
+      url("./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png") right -20vw top -20% / min(58vw, 280px) auto no-repeat !important;
+    opacity: 0.18 !important;
   }
 
   .meal-prep-visual-link {
@@ -14257,5 +14340,1291 @@ footer::before {
   .fullness-offer::before,
   footer::before {
     opacity: 0.12 !important;
+  }
+}
+
+/* Hero composition refinement: 10% botanical left rail, 30% copy, 60% plate. */
+@media (min-width: 861px) {
+  .plate-hero-copy {
+    width: min(40vw, 620px) !important;
+    max-width: min(40vw, 620px) !important;
+    margin-left: 0 !important;
+    padding-inline-start: clamp(82px, 10vw, 132px) !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 100% !important;
+    font-size: clamp(1.55rem, 2.05vw, 2.72rem) !important;
+    line-height: 1.25 !important;
+    letter-spacing: 0.12em !important;
+    text-wrap: wrap !important;
+    text-wrap-style: auto !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow) {
+    max-width: 31ch !important;
+  }
+
+  .plate-hero-visual-stage {
+    position: absolute !important;
+    left: auto !important;
+    right: clamp(24px, 4vw, 92px) !important;
+    top: 52% !important;
+    width: min(66vw, 1280px) !important;
+    max-height: min(76svh, 820px) !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+@media (min-width: 1440px) {
+  .plate-hero-vectors::before {
+    left: clamp(-214px, -10.92vw, -126px) !important;
+  }
+
+  .plate-hero-vectors::after {
+    right: clamp(-227px, -11.34vw, -139px) !important;
+  }
+
+  .plate-hero-copy {
+    margin-left: clamp(64px, 5.6vw, 128px) !important;
+  }
+}
+
+@media (max-width: 1280px) and (min-width: 1041px) {
+  .plate-hero {
+    padding-left: clamp(18px, 2.2vw, 34px) !important;
+    padding-right: clamp(16px, 2vw, 28px) !important;
+  }
+
+  .plate-hero-copy {
+    width: 40vw !important;
+    max-width: 40vw !important;
+    padding-inline-start: clamp(88px, 10vw, 126px) !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 100% !important;
+    font-size: clamp(1.55rem, 2.04vw, 2.55rem) !important;
+    letter-spacing: 0.115em !important;
+  }
+
+  .plate-hero-visual-stage {
+    right: clamp(24px, 4vw, 58px) !important;
+    width: 66vw !important;
+  }
+}
+
+@media (max-width: 1040px) and (min-width: 861px) {
+  .plate-hero {
+    padding-left: clamp(14px, 1.8vw, 24px) !important;
+    padding-right: clamp(10px, 1.4vw, 20px) !important;
+  }
+
+  .plate-hero-copy {
+    width: 40vw !important;
+    max-width: 40vw !important;
+    margin-left: 0 !important;
+    padding-inline-start: clamp(76px, 10vw, 98px) !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 100% !important;
+    font-size: clamp(1.5rem, 2.55vw, 1.9rem) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.11em !important;
+    text-wrap: balance !important;
+    text-wrap-style: balance !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow),
+  .plate-hero-copy .hero-manifesto {
+    max-width: 29ch !important;
+  }
+
+  .plate-hero-visual-stage {
+    position: absolute !important;
+    left: auto !important;
+    right: auto !important;
+    right: clamp(18px, 3vw, 30px) !important;
+    width: 66vw !important;
+  }
+}
+
+/* Mobile/tablet refinement: keep benefit titles orderly and let the hero plate crop to the right before it reaches the copy. */
+@media (max-width: 1180px) and (min-width: 761px) {
+  .plate-hero-visual-stage {
+    right: clamp(-170px, -12vw, -92px) !important;
+    width: min(66vw, 760px) !important;
+  }
+
+  .hero-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: clamp(30px, 4vw, 42px) clamp(36px, 5vw, 62px) !important;
+    align-items: stretch !important;
+    align-content: center !important;
+  }
+
+  .hero-benefits article,
+  .hero-benefits article:nth-child(2n) {
+    display: grid !important;
+    grid-template-columns: clamp(36px, 4.4vw, 46px) minmax(0, 1fr) !important;
+    align-items: center !important;
+    justify-items: start !important;
+    gap: clamp(14px, 2vw, 20px) !important;
+    min-height: 128px !important;
+    padding: clamp(18px, 2.5vw, 26px) clamp(20px, 3vw, 30px) !important;
+    border-right: 1px solid rgba(244, 234, 219, 0.12) !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.1) !important;
+  }
+
+  .hero-benefits article:nth-child(2n) {
+    border-right: 0 !important;
+  }
+
+  .hero-benefits article:nth-last-child(-n + 2) {
+    border-bottom: 0 !important;
+  }
+
+  .hero-benefits svg {
+    width: clamp(34px, 4vw, 42px) !important;
+    height: clamp(34px, 4vw, 42px) !important;
+    justify-self: center !important;
+  }
+
+  .hero-benefits h2 {
+    max-width: 20ch !important;
+    margin-bottom: 8px !important;
+    font-size: clamp(0.74rem, 1.18vw, 0.84rem) !important;
+    line-height: 1.22 !important;
+    letter-spacing: 0.13em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+    text-wrap: balance !important;
+  }
+
+  .hero-benefits p {
+    max-width: 28ch !important;
+    font-size: clamp(0.76rem, 1.12vw, 0.84rem) !important;
+    line-height: 1.46 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .plate-hero-visual-stage {
+    margin-right: -18vw !important;
+    transform: translateX(-24vw) !important;
+  }
+
+  .hero-benefits article {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  .hero-benefits svg {
+    width: 32px !important;
+    height: 32px !important;
+    justify-self: center !important;
+  }
+
+  .hero-benefits h2 {
+    font-size: 0.76rem !important;
+    line-height: 1.22 !important;
+    letter-spacing: 0.11em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+}
+
+/* Section 3 cleanup: a single protagonist illustration with tighter vertical rhythm. */
+.philosophy-story-combo {
+  position: relative !important;
+  z-index: 1 !important;
+  display: block !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.philosophy-story-combo::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: clamp(-82px, -4.4vw, -44px) 0 0 0 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  background:
+    url("./assets/ilustraciones-fondo/editorial-600ppi/planta30.png") left 43% top 13% / min(23vw, 360px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png") right 26% top 21% / min(18vw, 290px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png") right 4% top 12% / min(16vw, 260px) auto no-repeat !important;
+  opacity: 0.34 !important;
+  filter: grayscale(1) saturate(0) brightness(0.9) contrast(1.1) !important;
+  mix-blend-mode: screen !important;
+}
+
+.philosophy-story-combo::after {
+  display: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
+
+.philosophy-story-combo .food-editorial {
+  min-height: clamp(460px, 49vw, 620px) !important;
+  padding-block: clamp(50px, 6vw, 84px) clamp(20px, 2.8vw, 34px) !important;
+  align-items: end !important;
+  justify-items: start !important;
+  overflow: visible !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.philosophy-story-combo .editorial-copy {
+  position: relative !important;
+  z-index: 5 !important;
+  align-self: end !important;
+  padding-bottom: 10px !important;
+}
+
+.philosophy-story-combo .food-story-strip {
+  min-height: clamp(360px, 34vw, 430px) !important;
+  height: clamp(360px, 34vw, 430px) !important;
+  padding-block: clamp(18px, 2.4vw, 30px) !important;
+  overflow: visible !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(184, 120, 120, 0.2) !important;
+  box-shadow: none !important;
+}
+
+.philosophy-story-combo .food-story-strip a {
+  position: relative !important;
+  z-index: 5 !important;
+  min-height: auto !important;
+}
+
+.philosophy-story-combo .food-editorial::before,
+.philosophy-story-combo .food-editorial::after,
+.philosophy-story-combo .food-story-strip::before,
+.philosophy-story-combo .food-story-strip::after {
+  display: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
+
+main[data-background-mode="plum"] .philosophy-story-combo,
+main[data-background-mode="plum"] .philosophy-story-combo .food-editorial,
+main[data-background-mode="plum"] .philosophy-story-combo .food-story-strip {
+  background-color: transparent !important;
+}
+
+main[data-background-mode="plum"] .philosophy-story-combo {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+main[data-background-mode="plum"] .philosophy-story-combo .food-editorial,
+main[data-background-mode="plum"] .philosophy-story-combo .food-story-strip {
+  background: transparent !important;
+}
+
+@media (max-width: 1040px) {
+  .philosophy-story-combo::before {
+    background:
+      url("./assets/ilustraciones-fondo/editorial-600ppi/planta30.png") left 46% top 14% / min(30vw, 310px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png") right 20% top 24% / min(22vw, 240px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png") right -5% top 14% / min(21vw, 230px) auto no-repeat !important;
+    opacity: 0.25 !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    min-height: clamp(470px, 58vw, 580px) !important;
+    padding-block: 44px 28px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    min-height: clamp(340px, 38vw, 400px) !important;
+    height: clamp(340px, 38vw, 400px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .philosophy-story-combo::before {
+    background:
+      url("./assets/ilustraciones-fondo/editorial-600ppi/planta30.png") right -16vw top 10vw / min(56vw, 260px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png") right -18vw top 38vw / min(54vw, 230px) auto no-repeat,
+      url("./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png") left -28vw bottom 18vw / min(62vw, 250px) auto no-repeat !important;
+    opacity: 0.16 !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    min-height: auto !important;
+    padding-block: 42px 24px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    min-height: auto !important;
+    height: auto !important;
+    padding-block: 26px 180px !important;
+  }
+}
+
+/* Section 3 story plate: right aligned and 70% vertically out of its section. */
+.philosophy-story-combo .food-story-strip {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.philosophy-story-combo .food-story-strip .philosophy-story-plate {
+  position: absolute !important;
+  z-index: 3 !important;
+  top: clamp(-320px, -19vw, -190px) !important;
+  right: clamp(18px, 5vw, 92px) !important;
+  bottom: auto !important;
+  width: min(64vw, 980px) !important;
+  max-width: none !important;
+  height: auto !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none !important;
+  filter: none !important;
+}
+
+.philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
+  position: absolute !important;
+  z-index: 4 !important;
+  top: clamp(76px, 9vw, 148px) !important;
+  right: clamp(20px, 5vw, 98px) !important;
+  width: min(17vw, 260px) !important;
+  max-width: none !important;
+  height: auto !important;
+  opacity: 0.46 !important;
+  pointer-events: none !important;
+  filter: grayscale(1) saturate(0) brightness(0.9) contrast(1.1) !important;
+  mix-blend-mode: screen !important;
+}
+
+@media (max-width: 1040px) {
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    top: -24vw !important;
+    right: -18vw !important;
+    width: 92vw !important;
+    transform: none !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
+    top: 14vw !important;
+    right: -1vw !important;
+    width: min(24vw, 220px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    top: -22vw !important;
+    right: -64vw !important;
+    width: 154vw !important;
+    transform: none !important;
+    opacity: 0.95 !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
+    top: 30vw !important;
+    right: -8vw !important;
+    width: min(42vw, 190px) !important;
+    opacity: 0.34 !important;
+  }
+}
+
+/* Benefits strip: use the page background, not a separate panel layer. */
+main {
+  background-color: rgb(var(--section-dark-bg-rgb)) !important;
+}
+
+.hero-benefits {
+  position: relative !important;
+  z-index: 2 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.hero-benefits::before {
+  display: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
+
+/* Sections 1-4 share one page background: no veils between background and illustrations. */
+.plate-hero,
+.hero-benefits,
+.philosophy-story-combo,
+.philosophy-story-combo .food-editorial,
+.philosophy-story-combo .food-story-strip {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.plate-hero-vectors {
+  background: none !important;
+}
+
+.plate-hero::before,
+.plate-hero::after,
+.hero-benefits::before,
+.hero-benefits::after,
+.philosophy-story-combo::before,
+.philosophy-story-combo::after,
+.philosophy-story-combo .food-editorial::before,
+.philosophy-story-combo .food-editorial::after,
+.philosophy-story-combo .food-story-strip::before,
+.philosophy-story-combo .food-story-strip::after {
+  display: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
+
+.hero-benefits article {
+  background: transparent !important;
+}
+
+.philosophy-illustrations {
+  position: absolute !important;
+  inset: clamp(-42px, -2.6vw, -20px) 0 clamp(-240px, -12vw, -120px) 0 !important;
+  z-index: 1 !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+.philosophy-illustration {
+  position: absolute !important;
+  display: block !important;
+  height: auto !important;
+  max-width: none !important;
+  opacity: 0.34 !important;
+  filter: grayscale(1) saturate(0) brightness(0.9) contrast(1.1) !important;
+  mix-blend-mode: screen !important;
+}
+
+.philosophy-illustration-plant {
+  left: 33.5% !important;
+  top: clamp(28px, 5vw, 82px) !important;
+  width: min(23vw, 360px) !important;
+}
+
+.philosophy-illustration-broccoli {
+  right: 21% !important;
+  top: clamp(42px, 6.2vw, 104px) !important;
+  width: min(18vw, 290px) !important;
+}
+
+.philosophy-illustration-carrot {
+  right: 3.2% !important;
+  top: clamp(24px, 4.4vw, 76px) !important;
+  width: min(16vw, 260px) !important;
+}
+
+@media (max-width: 1040px) {
+  .philosophy-illustrations {
+    inset: clamp(-34px, -2.8vw, -18px) 0 clamp(-220px, -14vw, -120px) 0 !important;
+  }
+
+  .philosophy-illustration {
+    opacity: 0.25 !important;
+  }
+
+  .philosophy-illustration-plant {
+    left: 37% !important;
+    top: clamp(30px, 6vw, 70px) !important;
+    width: min(30vw, 310px) !important;
+  }
+
+  .philosophy-illustration-broccoli {
+    right: 18% !important;
+    top: clamp(54px, 7vw, 92px) !important;
+    width: min(22vw, 240px) !important;
+  }
+
+  .philosophy-illustration-carrot {
+    right: -4% !important;
+    top: clamp(32px, 5vw, 72px) !important;
+    width: min(21vw, 230px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .philosophy-illustrations {
+    inset: 0 0 -160px 0 !important;
+  }
+
+  .philosophy-illustration {
+    opacity: 0.16 !important;
+  }
+
+  .philosophy-illustration-plant {
+    left: auto !important;
+    right: -16vw !important;
+    top: 10vw !important;
+    width: min(56vw, 260px) !important;
+  }
+
+  .philosophy-illustration-broccoli {
+    right: -18vw !important;
+    top: 38vw !important;
+    width: min(54vw, 230px) !important;
+  }
+
+  .philosophy-illustration-carrot {
+    left: -28vw !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: 18vw !important;
+    width: min(62vw, 250px) !important;
+  }
+}
+
+/* Mobile premium pass: content stays navigable; only plates/illustrations may crop. */
+@media (max-width: 860px) {
+  html,
+  body,
+  #root,
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  main {
+    background-color: rgb(var(--section-dark-bg-rgb)) !important;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  .site-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-height: var(--site-header-height) !important;
+    padding: 12px 18px !important;
+    gap: 14px !important;
+  }
+
+  .site-header .brand {
+    min-width: 0 !important;
+    width: min(58vw, 220px) !important;
+  }
+
+  .site-header .brand-reference-logo {
+    width: 100% !important;
+    max-width: 220px !important;
+    height: auto !important;
+  }
+
+  .header-actions,
+  .site-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex: 0 0 auto !important;
+    justify-content: flex-end !important;
+    min-width: max-content !important;
+  }
+
+  .cart-button,
+  .menu-toggle,
+  .menu-button,
+  .icon-button {
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+  }
+
+  .plate-hero,
+  .hero-benefits,
+  .philosophy-story-combo,
+  .meal-prep-feature,
+  .membership,
+  .fullness-offer,
+  footer {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+
+  .plate-hero {
+    min-height: auto !important;
+    padding: calc(var(--site-header-height) + 34px) 20px 34px !important;
+    gap: 20px !important;
+    overflow: hidden !important;
+  }
+
+  .plate-hero-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+
+  .plate-hero-copy .eyebrow,
+  .plate-hero-copy h1,
+  .plate-hero-copy p,
+  .plate-hero-copy a,
+  .editorial-reveal-left,
+  .editorial-copy,
+  .editorial-copy .eyebrow,
+  .editorial-copy h2,
+  .editorial-copy p,
+  .editorial-copy a,
+  .food-story-strip a,
+  .meal-prep-copy,
+  .membership > div,
+  .fullness-offer .section-heading,
+  .offer-card,
+  .footer-brand,
+  .footer-column,
+  .footer-inner {
+    transform: none !important;
+  }
+
+  .plate-hero-copy h1,
+  .food-editorial .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2,
+  .fullness-offer .section-heading h2 {
+    max-width: 100% !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+    text-wrap: balance !important;
+  }
+
+  .plate-hero-copy h1 {
+    font-size: clamp(1.86rem, 9.6vw, 3rem) !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0.11em !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow),
+  .hero-manifesto,
+  .food-editorial .editorial-copy p,
+  .food-story-strip .story-copy,
+  .meal-prep-copy p,
+  .meal-prep-copy li,
+  .membership p,
+  .fullness-offer p,
+  .offer-card p,
+  footer p,
+  footer a {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  .plate-hero-primary,
+  .editorial-cta,
+  .section-cta,
+  .meal-prep-copy a,
+  .membership-cta,
+  .offer-card a,
+  .about-next-actions a {
+    width: min(100%, 280px) !important;
+    max-width: 100% !important;
+    min-height: 48px !important;
+    padding-inline: 18px !important;
+    white-space: normal !important;
+  }
+
+  .plate-hero-visual-stage {
+    align-self: flex-end !important;
+    width: min(128vw, 560px) !important;
+    max-width: none !important;
+    margin: -4px -34vw 0 0 !important;
+  }
+
+  .plate-hero-vectors::before {
+    left: -44vw !important;
+    top: 48% !important;
+    width: 96vw !important;
+  }
+
+  .plate-hero-vectors::after {
+    right: -45vw !important;
+    top: 44% !important;
+    width: 104vw !important;
+  }
+
+  .hero-benefits {
+    grid-template-columns: 1fr !important;
+    padding: 20px !important;
+    overflow: visible !important;
+  }
+
+  .hero-benefits article,
+  .hero-benefits article:nth-child(2n) {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    padding: 17px 0 !important;
+    min-width: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.2) !important;
+  }
+
+  .hero-benefits article:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .hero-benefits h2 {
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+  }
+
+  .philosophy-story-combo {
+    overflow: visible !important;
+  }
+
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip {
+    padding-inline: 20px !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-block: 48px 38px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    min-height: 520px !important;
+    padding-block: 36px 260px !important;
+  }
+
+  .philosophy-story-combo .editorial-copy,
+  .philosophy-story-combo .food-story-strip a {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    top: auto !important;
+    right: -76vw !important;
+    bottom: 10px !important;
+    width: 168vw !important;
+    max-width: none !important;
+    opacity: 0.96 !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
+    top: auto !important;
+    right: -10vw !important;
+    bottom: 74px !important;
+    width: min(46vw, 190px) !important;
+  }
+
+  .philosophy-illustrations {
+    inset: 0 0 -180px 0 !important;
+    overflow: visible !important;
+  }
+
+  .meal-prep-feature {
+    padding: 46px 20px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .meal-prep-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .meal-prep-copy ul {
+    width: 100% !important;
+  }
+
+  .meal-prep-visual-link {
+    width: 138% !important;
+    max-width: none !important;
+    margin: 12px -32% 0 -6% !important;
+  }
+
+  .membership > div,
+  .fullness-offer .section-heading,
+  .footer-brand,
+  .footer-column,
+  .footer-inner,
+  .footer-legal {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .membership > div {
+    padding: 52px 20px 44px !important;
+  }
+
+  .membership .community-benefits {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0 !important;
+  }
+
+  .membership .community-benefits article {
+    min-width: 0 !important;
+  }
+
+  .fullness-offer {
+    padding: 46px 20px !important;
+  }
+
+  .offer-grid,
+  footer,
+  .footer-inner {
+    grid-template-columns: 1fr !important;
+  }
+
+  .offer-card {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .offer-card img {
+    grid-column: 2 !important;
+    justify-self: start !important;
+    width: min(40vw, 132px) !important;
+    max-width: 100% !important;
+  }
+
+  .offer-card a {
+    grid-column: 2 !important;
+  }
+
+  footer {
+    display: grid !important;
+    gap: 26px !important;
+    padding-inline: 20px !important;
+  }
+
+  .footer-brand img {
+    width: min(64vw, 240px) !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .footer-legal {
+    grid-column: auto !important;
+    justify-self: start !important;
+    padding-inline: 0 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    text-align: left !important;
+  }
+
+  .whatsapp-float {
+    right: 12px !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .site-header {
+    padding-inline: 14px !important;
+  }
+
+  .site-header .brand {
+    width: min(54vw, 190px) !important;
+  }
+
+  .cart-button,
+  .menu-toggle,
+  .menu-button,
+  .icon-button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+  }
+
+  .plate-hero,
+  .hero-benefits,
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip,
+  .meal-prep-feature,
+  .membership > div,
+  .fullness-offer,
+  footer {
+    padding-inline: 18px !important;
+  }
+
+  .plate-hero-copy h1 {
+    font-size: clamp(1.72rem, 10.3vw, 2.52rem) !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow),
+  .hero-manifesto,
+  .food-editorial .editorial-copy p,
+  .food-story-strip .story-copy {
+    font-size: 0.92rem !important;
+  }
+
+  .membership .community-benefits {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-header {
+    padding-inline: 12px !important;
+    gap: 10px !important;
+  }
+
+  .site-header .brand {
+    width: min(50vw, 166px) !important;
+  }
+
+  .cart-button,
+  .menu-toggle,
+  .menu-button,
+  .icon-button {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+  }
+
+  .plate-hero,
+  .hero-benefits,
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip,
+  .meal-prep-feature,
+  .membership > div,
+  .fullness-offer,
+  footer {
+    padding-inline: 16px !important;
+  }
+
+  .plate-hero-copy h1 {
+    font-size: clamp(1.56rem, 10vw, 2.08rem) !important;
+    letter-spacing: 0.085em !important;
+  }
+
+  .hero-benefits h2,
+  .offer-card h3 {
+    letter-spacing: 0.08em !important;
+  }
+
+  .whatsapp-float {
+    padding-inline: 14px !important;
+  }
+}
+
+/* About route: Cecilia Salas story, set as a long-form editorial page. */
+.about-page {
+  position: relative;
+  min-height: 100svh;
+  padding-top: var(--site-header-height);
+  color: #f4eadb;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(184, 120, 120, 0.1), transparent 30%),
+    linear-gradient(180deg, #090806 0%, #050504 54%, #090806 100%);
+  overflow: hidden;
+  overflow-x: clip;
+}
+
+.about-page::before {
+  content: "";
+  position: absolute;
+  inset: var(--site-header-height) 0 auto auto;
+  width: min(48vw, 720px);
+  height: min(62vw, 860px);
+  background:
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_con_hojas_v1.png") right -7vw top 8vw / min(34vw, 520px) auto no-repeat,
+    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/flor_umbela_v1.png") right 8vw bottom 3vw / min(18vw, 280px) auto no-repeat;
+  opacity: 0.18;
+  filter: grayscale(1) brightness(0.62) contrast(1.12);
+  pointer-events: none;
+}
+
+.about-hero,
+.about-story,
+.about-next {
+  position: relative;
+  z-index: 1;
+}
+
+.about-hero {
+  display: grid;
+  align-items: end;
+  min-height: min(650px, calc(100svh - var(--site-header-height)));
+  padding: clamp(66px, 8vw, 128px) clamp(28px, 6vw, 96px);
+  border-bottom: 1px solid rgba(184, 120, 120, 0.24);
+}
+
+.about-hero-copy {
+  width: min(880px, 100%);
+}
+
+.about-page .eyebrow {
+  margin: 0 0 20px;
+  color: var(--fullness-highlight, #b87878);
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 0.78vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.about-hero h1,
+.about-next h2 {
+  margin: 0;
+  color: #f4eadb;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  line-height: 1.14;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.about-hero h1 {
+  max-width: 780px;
+  font-size: clamp(2.5rem, 6.4vw, 7rem);
+}
+
+.about-hero h1 span,
+.about-story-highlight,
+.about-story-closing {
+  color: var(--fullness-highlight, #b87878);
+}
+
+.about-hero p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 26px 0 0;
+  color: rgba(244, 234, 219, 0.82);
+  font-size: clamp(1.05rem, 1.22vw, 1.42rem);
+  line-height: 1.74;
+}
+
+.about-story {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.28fr) minmax(0, 0.72fr);
+  gap: clamp(26px, 5vw, 84px);
+  padding: clamp(62px, 7vw, 120px) clamp(28px, 6vw, 96px);
+}
+
+.about-story-aside {
+  position: sticky;
+  top: calc(var(--site-header-height) + 34px);
+  align-self: start;
+  min-height: 42vh;
+  border-left: 1px solid rgba(184, 120, 120, 0.34);
+}
+
+.about-story-aside span {
+  display: block;
+  max-width: 160px;
+  padding-left: 22px;
+  color: rgba(244, 234, 219, 0.48);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1.55;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.about-story-body {
+  width: min(780px, 100%);
+}
+
+.about-story-body p {
+  margin: 0 0 clamp(22px, 3vw, 34px);
+  color: rgba(244, 234, 219, 0.78);
+  font-size: clamp(1.02rem, 1.08vw, 1.22rem);
+  line-height: 1.86;
+}
+
+.about-story-body p:first-child::first-letter {
+  float: left;
+  padding: 0.1em 0.12em 0 0;
+  color: #f4eadb;
+  font-family: var(--font-display);
+  font-size: clamp(4.2rem, 7vw, 7rem);
+  line-height: 0.78;
+}
+
+.about-story-highlight {
+  max-width: 660px;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.4vw, 3.2rem) !important;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.28 !important;
+  text-transform: uppercase;
+}
+
+.about-story-closing {
+  max-width: 720px;
+  margin-top: clamp(32px, 5vw, 74px) !important;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.8vw, 5.6rem) !important;
+  font-weight: 400;
+  letter-spacing: 0.13em;
+  line-height: 1.16 !important;
+  text-transform: uppercase;
+}
+
+.about-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(24px, 4vw, 64px);
+  margin: 0 clamp(28px, 6vw, 96px) clamp(64px, 7vw, 112px);
+  padding: clamp(30px, 4vw, 56px);
+  border: 1px solid rgba(184, 120, 120, 0.34);
+  background: rgba(244, 234, 219, 0.035);
+}
+
+.about-next h2 {
+  max-width: 680px;
+  font-size: clamp(1.45rem, 2.7vw, 3.5rem);
+}
+
+.about-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.about-next-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid rgba(184, 120, 120, 0.62);
+  color: #f4eadb;
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.about-next-actions a:hover,
+.about-next-actions a:focus-visible {
+  border-color: var(--fullness-highlight, #b87878);
+  color: var(--fullness-highlight, #b87878);
+}
+
+@media (max-width: 900px) {
+  .about-page::before {
+    width: 86vw;
+    height: 720px;
+    opacity: 0.11;
+  }
+
+  .about-hero {
+    min-height: auto;
+    padding-top: clamp(46px, 8vw, 78px);
+  }
+
+  .about-story {
+    grid-template-columns: 1fr;
+  }
+
+  .about-story-aside {
+    position: static;
+    min-height: 0;
+  }
+
+  .about-story-aside span {
+    max-width: none;
+    writing-mode: horizontal-tb;
+  }
+
+  .about-next {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .about-next-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .about-page {
+    padding-top: calc(var(--site-header-height) * 0.7);
+    max-width: 100vw;
+  }
+
+  .about-hero,
+  .about-story {
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+    padding-inline: 22px;
+  }
+
+  .about-hero-copy,
+  .about-story-body,
+  .about-hero p:not(.eyebrow),
+  .about-story-body p {
+    width: 100%;
+    max-width: min(calc(100vw - 44px), 320px);
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .about-hero h1 {
+    max-width: 100%;
+    font-size: clamp(2.2rem, 10.8vw, 3.2rem);
+    letter-spacing: 0.08em;
+    line-height: 1.18;
+  }
+
+  .about-story-body p {
+    max-width: 100%;
+    font-size: 1rem;
+    line-height: 1.76;
+  }
+
+  .about-story-body p:first-child::first-letter {
+    font-size: clamp(3.4rem, 15vw, 4.6rem);
+  }
+
+  .about-story-highlight {
+    font-size: clamp(1.3rem, 7vw, 2.1rem) !important;
+  }
+
+  .about-story-closing {
+    font-size: clamp(1.7rem, 10vw, 3.1rem) !important;
+  }
+
+  .about-next {
+    margin-inline: 22px;
+    padding: 26px 20px;
+  }
+
+  .about-next-actions,
+  .about-next-actions a {
+    width: 100%;
   }
 }
