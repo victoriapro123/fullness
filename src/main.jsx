@@ -47,7 +47,7 @@ import {
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
-import mealPrepBandSrc from "./assets/fullness-mealprep-band-modern.png";
+import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
 import storyPlateCutoutSrc from "./assets/fullness-story-plate-croquettes-cutout.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
@@ -2431,11 +2431,7 @@ function App() {
   const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [communityMemberMessage, setCommunityMemberMessage] = useState("");
-  const [backgroundMode, setBackgroundMode] = useState(() => {
-    if (typeof window === "undefined") return "current";
-
-    return window.localStorage.getItem("fullness_background_mode") || "current";
-  });
+  const [backgroundMode, setBackgroundMode] = useState("current");
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#comunidad", "#contacto"]);
@@ -2485,8 +2481,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("fullness_background_mode", backgroundMode);
-  }, [backgroundMode]);
+    window.localStorage.removeItem("fullness_background_mode");
+  }, []);
 
   useEffect(() => {
     try {

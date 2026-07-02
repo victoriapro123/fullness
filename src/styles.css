@@ -13108,7 +13108,6 @@ footer::before {
 
 .membership::after {
   background:
-    url("./assets/fullness-original-vector-community-root.png") right clamp(-120px, -8vw, -60px) bottom clamp(-170px, -11vw, -84px) / min(34vw, 560px) auto no-repeat,
     radial-gradient(ellipse at 45% 72%, rgba(var(--membership-shadow-rgb), 0.94) 0%, rgba(var(--membership-shadow-rgb), 0.76) 22%, rgba(var(--membership-shadow-rgb), 0.34) 48%, rgba(var(--membership-shadow-rgb), 0) 72%),
     linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 1) 0%, rgba(var(--membership-shadow-rgb), 1) 33%, rgba(var(--membership-shadow-rgb), 0.96) 41%, rgba(var(--membership-shadow-rgb), 0.78) 49%, rgba(var(--membership-shadow-rgb), 0.48) 57%, rgba(var(--membership-shadow-rgb), 0.18) 68%, rgba(var(--membership-shadow-rgb), 0.06) 82%, rgba(var(--membership-shadow-rgb), 0.14) 100%),
     linear-gradient(0deg, rgba(var(--membership-shadow-rgb), 0.72) 0%, rgba(var(--membership-shadow-rgb), 0.34) 24%, rgba(var(--membership-shadow-rgb), 0) 52%) !important;
@@ -14223,10 +14222,9 @@ footer {
 
 .membership::after {
   background:
-    linear-gradient(90deg, rgba(5, 5, 4, 1) 0%, rgba(5, 5, 4, 0.98) 35%, rgba(5, 5, 4, 0.78) 47%, rgba(5, 5, 4, 0.36) 65%, rgba(5, 5, 4, 0.1) 100%),
-    linear-gradient(0deg, rgba(5, 5, 4, 0.82) 0%, rgba(5, 5, 4, 0.34) 32%, rgba(5, 5, 4, 0.04) 58%),
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/rama_hojas_frutos_v1.png") right clamp(-150px, -8vw, -72px) center / min(13vw, 220px) auto no-repeat,
-    url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/flor_umbela_v1.png") right -10vw bottom -7vw / min(15vw, 250px) auto no-repeat !important;
+    radial-gradient(ellipse at 44% 70%, rgba(var(--membership-shadow-rgb), 0.96) 0%, rgba(var(--membership-shadow-rgb), 0.78) 24%, rgba(var(--membership-shadow-rgb), 0.38) 50%, rgba(var(--membership-shadow-rgb), 0) 74%),
+    linear-gradient(90deg, rgba(var(--membership-shadow-rgb), 1) 0%, rgba(var(--membership-shadow-rgb), 1) 33%, rgba(var(--membership-shadow-rgb), 0.96) 42%, rgba(var(--membership-shadow-rgb), 0.8) 50%, rgba(var(--membership-shadow-rgb), 0.5) 60%, rgba(var(--membership-shadow-rgb), 0.2) 72%, rgba(var(--membership-shadow-rgb), 0.08) 86%, rgba(var(--membership-shadow-rgb), 0.16) 100%),
+    linear-gradient(0deg, rgba(var(--membership-shadow-rgb), 0.82) 0%, rgba(var(--membership-shadow-rgb), 0.46) 28%, rgba(var(--membership-shadow-rgb), 0.08) 58%, rgba(var(--membership-shadow-rgb), 0) 74%) !important;
   opacity: 1 !important;
 }
 
@@ -14331,8 +14329,7 @@ footer::before {
   .membership::after {
     background:
       linear-gradient(180deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.9) 48%, rgba(5, 6, 4, 0.98) 100%),
-      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.74) 58%, rgba(5, 6, 4, 0.42) 100%),
-      url("./assets/ilustraciones-fondo/linea-gris-transparente/brassicas-legumbres/rama_hojas_frutos_v1.png") right -34vw bottom 10vw / min(56vw, 260px) auto no-repeat !important;
+      linear-gradient(90deg, rgba(5, 6, 4, 0.98) 0%, rgba(5, 6, 4, 0.74) 58%, rgba(5, 6, 4, 0.42) 100%) !important;
   }
 
   .fullness-offer::before,
@@ -14697,7 +14694,7 @@ main[data-background-mode="plum"] .philosophy-story-combo .food-story-strip {
 .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
   position: absolute !important;
   z-index: 4 !important;
-  top: clamp(76px, 9vw, 148px) !important;
+  top: -10px !important;
   right: clamp(20px, 5vw, 98px) !important;
   width: min(17vw, 260px) !important;
   max-width: none !important;
@@ -14717,7 +14714,7 @@ main[data-background-mode="plum"] .philosophy-story-combo .food-story-strip {
   }
 
   .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
-    top: 14vw !important;
+    top: -10px !important;
     right: -1vw !important;
     width: min(24vw, 220px) !important;
   }
@@ -14733,7 +14730,7 @@ main[data-background-mode="plum"] .philosophy-story-combo .food-story-strip {
   }
 
   .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
-    top: 30vw !important;
+    top: -10px !important;
     right: -8vw !important;
     width: min(42vw, 190px) !important;
     opacity: 0.34 !important;
@@ -14813,20 +14810,20 @@ main {
 
 .philosophy-illustration-plant {
   left: 33.5% !important;
-  top: clamp(28px, 5vw, 82px) !important;
-  width: min(23vw, 360px) !important;
+  top: clamp(42px, 7.5vw, 123px) !important;
+  width: min(28.75vw, 450px) !important;
 }
 
 .philosophy-illustration-broccoli {
   right: 21% !important;
-  top: clamp(42px, 6.2vw, 104px) !important;
+  top: clamp(190px, 22vw, 300px) !important;
   width: min(18vw, 290px) !important;
 }
 
 .philosophy-illustration-carrot {
   right: 3.2% !important;
-  top: clamp(24px, 4.4vw, 76px) !important;
-  width: min(16vw, 260px) !important;
+  top: clamp(36px, 6.6vw, 114px) !important;
+  width: min(20vw, 325px) !important;
 }
 
 @media (max-width: 1040px) {
@@ -14840,20 +14837,20 @@ main {
 
   .philosophy-illustration-plant {
     left: 37% !important;
-    top: clamp(30px, 6vw, 70px) !important;
-    width: min(30vw, 310px) !important;
+    top: clamp(45px, 9vw, 105px) !important;
+    width: min(37.5vw, 388px) !important;
   }
 
   .philosophy-illustration-broccoli {
     right: 18% !important;
-    top: clamp(54px, 7vw, 92px) !important;
+    top: clamp(170px, 24vw, 255px) !important;
     width: min(22vw, 240px) !important;
   }
 
   .philosophy-illustration-carrot {
     right: -4% !important;
-    top: clamp(32px, 5vw, 72px) !important;
-    width: min(21vw, 230px) !important;
+    top: clamp(48px, 7.5vw, 108px) !important;
+    width: min(26.25vw, 288px) !important;
   }
 }
 
@@ -14869,13 +14866,13 @@ main {
   .philosophy-illustration-plant {
     left: auto !important;
     right: -16vw !important;
-    top: 10vw !important;
-    width: min(56vw, 260px) !important;
+    top: 15vw !important;
+    width: min(70vw, 325px) !important;
   }
 
   .philosophy-illustration-broccoli {
     right: -18vw !important;
-    top: 38vw !important;
+    top: 58vw !important;
     width: min(54vw, 230px) !important;
   }
 
@@ -14883,8 +14880,8 @@ main {
     left: -28vw !important;
     right: auto !important;
     top: auto !important;
-    bottom: 18vw !important;
-    width: min(62vw, 250px) !important;
+    bottom: 9vw !important;
+    width: min(77.5vw, 313px) !important;
   }
 }
 
@@ -15127,9 +15124,9 @@ main {
   }
 
   .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes {
-    top: auto !important;
+    top: -10px !important;
     right: -10vw !important;
-    bottom: 74px !important;
+    bottom: auto !important;
     width: min(46vw, 190px) !important;
   }
 
