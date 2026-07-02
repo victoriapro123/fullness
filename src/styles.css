@@ -14191,11 +14191,10 @@ footer {
 
 .meal-prep-feature::before {
   z-index: 6 !important;
-  background:
-    url("./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png") right 7% top -20% / min(19vw, 310px) auto no-repeat !important;
-  opacity: 0.38 !important;
-  filter: brightness(0) saturate(100%) invert(23%) sepia(14%) saturate(492%) hue-rotate(334deg) brightness(92%) contrast(91%) !important;
-  mix-blend-mode: multiply !important;
+  background: none !important;
+  opacity: 0 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
 }
 
 .meal-prep-feature::after {
@@ -14306,9 +14305,8 @@ footer::before {
   }
 
   .meal-prep-feature::before {
-    background:
-      url("./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png") right -20vw top -20% / min(58vw, 280px) auto no-repeat !important;
-    opacity: 0.18 !important;
+    background: none !important;
+    opacity: 0 !important;
   }
 
   .meal-prep-visual-link {
