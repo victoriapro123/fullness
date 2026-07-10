@@ -51,7 +51,7 @@ import {
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
-import storyPlateCutoutSrc from "./assets/fullness-story-plate-croquettes-cutout.png";
+import storyPlateCutoutSrc from "./assets/fullness-story-plate-vegetable-cutout.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
 import philosophyPlantIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/planta30.png";
 import philosophyBroccoliIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png";
