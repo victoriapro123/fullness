@@ -41,9 +41,11 @@ import {
 } from "lucide-react";
 import {
   deleteMenuItem,
+  getShopSettings,
   listActiveMenuItems,
   listAdminMenuItems,
   saveMenuItem,
+  saveShopSettings,
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
@@ -67,6 +69,8 @@ const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
+const shopPlanBoxCardSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-87fca2f2a7cf.png");
+const shopPlanBoxCardHoverSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-hover-70f16092b298.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -510,8 +514,8 @@ const demoProducts = [
     tag: "5 meal preps / 1 semana",
     price: 44900,
     description: "Cinco preparaciones listas para calentar, pensadas para sostener energía, saciedad y una rutina más liviana durante la semana.",
-    image: sampleProductImages[1],
-    secondaryImage: sampleProductImages[2],
+    image: shopPlanBoxCardSrc,
+    secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Antioxidante", "Energético", "Digestivo"],
     ingredients: ["proteínas magras", "raíces", "legumbres", "hojas verdes", "aceite de oliva"],
     nutritionDescription: "Plan equilibrado con proteína, fibra vegetal, grasas saludables y carbohidratos de energía estable.",
@@ -573,8 +577,8 @@ const demoProducts = [
     tag: "20 meal preps / 4 semanas",
     price: 169000,
     description: "Plan mensual con entregas semanales y rotación de platos para sostener una alimentación funcional sin repetir decisiones cada día.",
-    image: sampleProductImages[2],
-    secondaryImage: sampleProductImages[0],
+    image: shopPlanBoxCardSrc,
+    secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Balance", "Detox", "Energético"],
     ingredients: ["pescados", "pollo", "legumbres", "granos integrales", "vegetales de estación"],
     nutritionDescription: "Rotación funcional para cubrir proteína, fibra, grasas saludables y micronutrientes durante el mes.",
@@ -685,6 +689,60 @@ const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer
 const familyOptionsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer las opciones familiares.");
 const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero información sobre los talleres.");
 const instagramUrl = "https://www.instagram.com/fullnesslab";
+const subscriptionPopupStorageKey = "fullness_subscription_popup_settings";
+const subscriptionPopupSubscribersStorageKey = "fullness_subscription_popup_subscribers";
+const adminAccessModeStorageKey = "fullness_carlos_access_mode";
+const adminPersonaEmail = "carlos@prof3sional.com";
+const subscriptionLightboxHighlights = [
+  { label: "Alimentación consciente", image: philosophyPlantIllustrationSrc },
+  { label: "Nutrición funcional", image: philosophyBroccoliIllustrationSrc },
+  { label: "Experiencias Fullness", image: philosophyCarrotIllustrationSrc },
+  { label: "Comunidad", image: storyTomatoesIllustrationSrc }
+];
+
+function createDefaultSubscriptionPopupSettings() {
+  return {
+    enabled: true,
+    eyebrow: "Experiencia Fullness",
+    title: "Nutre tu cuerpo. Reconecta con tu esencia.",
+    body: "Suscríbete a Fullness Lab y recibe novedades, planes y experiencias pensadas para nutrirte desde la raíz.",
+    ctaLabel: "Quiero ser parte",
+    secondaryCtaLabel: "Conocer la experiencia",
+    successCtaLabel: "Descubre nuestros planes",
+    backgroundUrl: communitySceneSrc,
+    backgroundStoragePath: ""
+  };
+}
+
+function normalizeSubscriptionPopupSettings(settings) {
+  const defaults = createDefaultSubscriptionPopupSettings();
+  const merged = settings && typeof settings === "object" ? settings : {};
+
+  return {
+    ...defaults,
+    ...merged,
+    enabled: merged.enabled === undefined ? defaults.enabled : Boolean(merged.enabled),
+    eyebrow: String(merged.eyebrow ?? defaults.eyebrow),
+    title: String(merged.title ?? defaults.title),
+    body: String(merged.body ?? defaults.body),
+    ctaLabel: String(merged.ctaLabel ?? defaults.ctaLabel),
+    secondaryCtaLabel: String(merged.secondaryCtaLabel ?? defaults.secondaryCtaLabel),
+    successCtaLabel: String(merged.successCtaLabel ?? defaults.successCtaLabel),
+    backgroundUrl: String(merged.backgroundUrl ?? defaults.backgroundUrl),
+    backgroundStoragePath: String(merged.backgroundStoragePath ?? "")
+  };
+}
+
+function loadStoredSubscriptionPopupSettings() {
+  if (typeof window === "undefined") return createDefaultSubscriptionPopupSettings();
+
+  try {
+    const stored = window.localStorage.getItem(subscriptionPopupStorageKey);
+    return normalizeSubscriptionPopupSettings(stored ? JSON.parse(stored) : null);
+  } catch {
+    return createDefaultSubscriptionPopupSettings();
+  }
+}
 
 function InstagramGlyph({ size = 16 }) {
   return (
@@ -700,6 +758,104 @@ function InstagramGlyph({ size = 16 }) {
       <circle cx="12" cy="12" r="3.4" stroke="currentColor" strokeWidth="1.8" />
       <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" />
     </svg>
+  );
+}
+
+function SubscriptionLightbox({
+  settings,
+  mode,
+  message,
+  onClose,
+  onOpenForm,
+  onSubmit,
+  onPlans
+}) {
+  const isFormMode = mode === "form";
+  const isSuccessMode = mode === "success";
+
+  return (
+    <div
+      className="subscription-lightbox-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="subscription-lightbox-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className={`subscription-lightbox subscription-lightbox-mode-${mode}`}
+        style={{ "--subscription-lightbox-bg": `url("${settings.backgroundUrl}")` }}
+      >
+        <button className="subscription-lightbox-close" type="button" onClick={onClose} aria-label="Cerrar suscripción">
+          <X size={24} />
+        </button>
+
+        {!isFormMode && !isSuccessMode && (
+          <div className="subscription-lightbox-content">
+            <img className="subscription-lightbox-logo" src={logoHeaderFooterSrc} alt="Fullness Lab" />
+            <p className="eyebrow">{settings.eyebrow}</p>
+            <h2 id="subscription-lightbox-title">{settings.title}</h2>
+            <p>{settings.body}</p>
+            <div className="subscription-lightbox-benefits" aria-label="Beneficios de la experiencia Fullness">
+              {subscriptionLightboxHighlights.map(({ label, image }) => (
+                <span key={label}>
+                  <img src={image} alt="" aria-hidden="true" loading="lazy" />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <div className="subscription-lightbox-actions">
+              <button className="subscription-lightbox-primary" type="button" onClick={onOpenForm}>
+                {settings.ctaLabel}
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+              {settings.secondaryCtaLabel && (
+                <button className="subscription-lightbox-secondary" type="button" onClick={onPlans}>
+                  {settings.secondaryCtaLabel}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isFormMode && (
+          <form className="subscription-lightbox-form" onSubmit={onSubmit}>
+            <p className="eyebrow">Suscripción Fullness</p>
+            <h2 id="subscription-lightbox-title">Déjanos tus datos</h2>
+            <label>
+              Nombre
+              <input required name="subscriberName" autoComplete="name" placeholder="Tu nombre…" />
+            </label>
+            <label>
+              Teléfono
+              <input required name="subscriberPhone" autoComplete="tel" placeholder="+56 9…" />
+            </label>
+            <label>
+              Mail
+              <input required name="subscriberEmail" type="email" autoComplete="email" placeholder="nombre@dominio.cl…" />
+            </label>
+            {message && <p className="subscription-lightbox-message" role="status">{message}</p>}
+            <button className="subscription-lightbox-primary" type="submit">
+              Suscribirme
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </button>
+          </form>
+        )}
+
+        {isSuccessMode && (
+          <div className="subscription-lightbox-success">
+            <p className="eyebrow">Ya eres parte</p>
+            <h2 id="subscription-lightbox-title">Gracias por suscribirte a Fullness Lab.</h2>
+            <button className="subscription-lightbox-primary subscription-lightbox-plans" type="button" onClick={onPlans}>
+              {settings.successCtaLabel}
+              <ArrowUpRight size={20} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 const introTechSignals = [
@@ -818,6 +974,120 @@ function formatPrice(value) {
     currency: "CLP",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+function createDefaultShopSettings() {
+  return {
+    id: "main",
+    heroEyebrow: "Nutrir desde la raíz",
+    heroTitle: "Alimentación consciente, organizada para toda la semana.",
+    heroBody: "Platos diseñados por chef y nutricionista para que comer bien sea simple, práctico y delicioso.",
+    heroImageUrl: mealPrepBandSrc,
+    heroImageStoragePath: "",
+    heroPrimaryLabel: "Ver planes semanales",
+    heroSecondaryLabel: "Suscribirme",
+    heroMetrics: [
+      "5 proteínas independientes",
+      "5 acompañamientos independientes",
+      "Combina como quieras durante la semana"
+    ],
+    subscriptionEyebrow: "Suscripción Fullness",
+    subscriptionTitle: "La forma más conveniente de alimentarte toda la semana.",
+    subscriptionBody: "Recibe 4 semanas al mes con mejor valor que la compra semanal.",
+    subscriptionCtaLabel: "Suscribirme ahora",
+    subscriptionBenefits: [
+      "4 semanas diferentes cada mes",
+      "Menús renovados constantemente",
+      "Mejor precio",
+      "Prioridad de producción",
+      "Cancela cuando quieras"
+    ],
+    subscriptionComparison: [
+      { label: "Precio", subscription: "Mejor valor", weekly: "Precio normal" },
+      { label: "Renovación", subscription: "Automática", weekly: "Manual" },
+      { label: "Menús", subscription: "4 semanas", weekly: "1 semana" },
+      { label: "Prioridad", subscription: "Sí", weekly: "No" },
+      { label: "Flexibilidad", subscription: "Cancela cuando quieras", weekly: "Compra cuando quieras" }
+    ]
+  };
+}
+
+function mergeShopSettings(settings) {
+  const defaults = createDefaultShopSettings();
+  if (!settings) return defaults;
+
+  return {
+    ...defaults,
+    ...settings,
+    heroImageUrl: settings.heroImageUrl || defaults.heroImageUrl,
+    heroMetrics: settings.heroMetrics?.length ? settings.heroMetrics : defaults.heroMetrics,
+    subscriptionBenefits: settings.subscriptionBenefits?.length
+      ? settings.subscriptionBenefits
+      : defaults.subscriptionBenefits,
+    subscriptionComparison: settings.subscriptionComparison?.length
+      ? settings.subscriptionComparison
+      : defaults.subscriptionComparison
+  };
+}
+
+function renderShopHeroTitle(title) {
+  const text = String(title || "");
+  const match = text.match(/toda la semana\.?/i);
+  if (!match) return text;
+
+  const start = match.index || 0;
+  const end = start + match[0].length;
+
+  return (
+    <>
+      {text.slice(0, start)}
+      <span>{text.slice(start, end)}</span>
+      {text.slice(end)}
+    </>
+  );
+}
+
+function createShopSettingsForm(settings = createDefaultShopSettings()) {
+  const merged = mergeShopSettings(settings);
+
+  return {
+    heroEyebrow: merged.heroEyebrow || "",
+    heroTitle: merged.heroTitle || "",
+    heroBody: merged.heroBody || "",
+    heroImageUrl: merged.heroImageUrl || "",
+    heroImageStoragePath: merged.heroImageStoragePath || "",
+    heroPrimaryLabel: merged.heroPrimaryLabel || "",
+    heroSecondaryLabel: merged.heroSecondaryLabel || "",
+    heroMetrics: (merged.heroMetrics || []).join("\n"),
+    subscriptionEyebrow: merged.subscriptionEyebrow || "",
+    subscriptionTitle: merged.subscriptionTitle || "",
+    subscriptionBody: merged.subscriptionBody || "",
+    subscriptionCtaLabel: merged.subscriptionCtaLabel || "",
+    subscriptionBenefits: (merged.subscriptionBenefits || []).join("\n"),
+    subscriptionComparison: (merged.subscriptionComparison || [])
+      .map((row) => [row.label, row.subscription, row.weekly].join(" | "))
+      .join("\n")
+  };
+}
+
+function parseShopComparisonRows(value) {
+  return String(value || "")
+    .split("\n")
+    .map((line) => {
+      const [label = "", subscription = "", weekly = ""] = line.split("|").map((part) => part.trim());
+      if (!label && !subscription && !weekly) return null;
+      return { label, subscription, weekly };
+    })
+    .filter(Boolean);
+}
+
+function parseShopSettingsForm(form) {
+  return {
+    ...form,
+    heroMetrics: form.heroMetrics,
+    subscriptionBenefits: form.subscriptionBenefits,
+    subscriptionComparison: parseShopComparisonRows(form.subscriptionComparison)
+  };
 }
 
 function loadStoredCommunityActivities() {
@@ -1171,87 +1441,256 @@ function HoverImage({ alt, primary, secondary }) {
   );
 }
 
-function ProductCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
+const shopMetricIcons = [Leaf, CookingPot, Heart];
+const shopProcessSteps = [
+  { icon: Leaf, title: "Elige tu objetivo", text: "Define energía, equilibrio o recuperación." },
+  { icon: CookingPot, title: "Selecciona tus favoritos", text: "Planes completos o packs familiares." },
+  { icon: PackageCheck, title: "Recibe tu box", text: "Cada plato llega listo y etiquetado." },
+  { icon: Timer, title: "Calienta en minutos", text: "Regeneración simple para tu rutina." },
+  { icon: Heart, title: "Disfruta tu semana", text: "Comida completa sin improvisar." }
+];
+
+function getPlanFeatureIcon(meal = {}, index = 0) {
+  const text = [
+    meal.tag,
+    meal.name,
+    ...(meal.benefitTags || [])
+  ].join(" ").toLowerCase();
+
+  if (/omega|salm[oó]n|pescad|grasa/.test(text)) return Heart;
+  if (/digest|fibra|lenteja|legumbre/.test(text)) return Leaf;
+  if (/detox|verde|quinoa|micro/.test(text)) return Sprout;
+  if (/antiinflama|c[uú]rcuma|prote[ií]na|pollo/.test(text)) return ShieldCheck;
+  if (/energ|camote|ra[ií]z|carbo/.test(text)) return Sparkles;
+
+  return [Leaf, Sparkles, Heart, Sprout, CookingPot][index % 5];
+}
+
+function ShopPlanCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
   const includedItems = product.includedItems || [];
   const benefitTags = getBenefitTags(product);
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
+  const isMonthly = product.planFrequency === "monthly";
+  const purchaseLabel = product.purchaseLabel || (isMonthly ? "Comprar mensual" : "Comprar esta semana");
 
   return (
-    <article className={`meal-product-card is-${getProductType(product)}`}>
-      <button className="meal-product-main" type="button" onClick={() => onOpenProduct(product)}>
+    <article className="shop-plan-card">
+      <button className="shop-plan-media-button" type="button" onClick={() => onOpenProduct(product)}>
         <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
-        <span className="meal-product-kicker">{getProductTypeLabel(product)}</span>
-        <h3>{product.name}</h3>
-        <p>{product.description}</p>
+        <span>{isMonthly ? "Mensual" : "Semanal"}</span>
       </button>
 
-      {benefitTags.length > 0 && (
-        <ul className="meal-benefit-tags" aria-label="Beneficios">
-          {benefitTags.slice(0, 4).map((tag) => <li key={tag}>{tag}</li>)}
-        </ul>
-      )}
+      <div className="shop-plan-body">
+        <button className="shop-plan-title-button" type="button" onClick={() => onOpenProduct(product)}>
+          <span>{isMonthly ? "Plan mensual" : "Semana"}</span>
+          <h3>{product.name}</h3>
+          <p>{product.description}</p>
+        </button>
+
+        {benefitTags.length > 0 && (
+          <ul className="shop-benefit-tags" aria-label="Beneficios">
+            {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
+          </ul>
+        )}
+      </div>
 
       {includedItems.length > 0 && (
-        <div className="meal-product-included" aria-label={`Platos incluidos en ${product.name}`}>
-          {includedItems.slice(0, 4).map((meal, mealIndex) => (
-            <button
-              key={meal.id || meal.name}
-              type="button"
-              onClick={(event) => onOpenMeal(product, meal, event)}
-            >
-              <HoverImage
-                primary={getMealImage(meal, mealIndex)}
-                secondary={getMealSecondaryImage(meal, mealIndex)}
-                alt={meal.name}
-              />
-              <span>{meal.name}</span>
-            </button>
-          ))}
+        <div className="shop-plan-meals" aria-label={`Características incluidas en ${product.name}`}>
+          {includedItems.slice(0, 3).map((meal, mealIndex) => {
+            const FeatureIcon = getPlanFeatureIcon(meal, mealIndex);
+
+            return (
+              <button
+                key={meal.id || meal.name}
+                type="button"
+                onClick={(event) => onOpenMeal(product, meal, event)}
+              >
+                <span className="shop-plan-meal-icon" aria-hidden="true">
+                  <FeatureIcon size={22} />
+                </span>
+                <span className="shop-plan-meal-kicker">{meal.tag || meal.benefitTags?.[0] || "Meal prep"}</span>
+                <strong>{meal.name}</strong>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <div className="meal-product-footer">
-        <span>{product.servingLabel || product.tag}</span>
+      <div className="shop-plan-footer">
+        <small>{product.servingLabel || product.tag}</small>
         <strong>{formatPrice(product.price)}</strong>
-        <button className="add-button" type="button" onClick={() => onAdd(product)}>
-          <Plus size={17} />
-          {product.purchaseLabel || "Agregar"}
+        <div>
+          <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
+            Ver menú
+          </button>
+          <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
+            {purchaseLabel}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
+  const primaryImage = getProductImage(product, index);
+  const secondaryImage = getProductSecondaryImage(product, index);
+  const benefitTags = getBenefitTags(product);
+
+  return (
+    <article className="shop-family-card">
+      <button className="shop-family-media-button" type="button" onClick={() => onOpenProduct(product)}>
+        <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
+      </button>
+      <div className="shop-family-copy">
+        <span>{product.servingLabel || product.tag || "Para compartir"}</span>
+        <h3>{product.name}</h3>
+        <p>{product.description}</p>
+        {benefitTags.length > 0 && (
+          <ul className="shop-benefit-tags" aria-label="Beneficios">
+            {benefitTags.slice(0, 2).map((tag) => <li key={tag}>{tag}</li>)}
+          </ul>
+        )}
+      </div>
+      <div className="shop-family-footer">
+        <strong>{formatPrice(product.price)}</strong>
+        <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
+          Ver detalle
+        </button>
+        <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
+          Agregar al carrito
         </button>
       </div>
     </article>
   );
 }
 
-function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans }) {
+function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans, shopSettings }) {
+  const settings = mergeShopSettings(shopSettings);
+  const monthlyPlan = plans.find((product) => product.planFrequency === "monthly");
+  const subscriptionProduct = monthlyPlan || plans[0] || null;
+  const heroFallbackProduct = plans[0] || familyProducts[0] || demoProducts[0];
+  const heroImage = settings.heroImageUrl || getProductImage(heroFallbackProduct, 0);
+  const heroMetrics = settings.heroMetrics.slice(0, 3);
+  const comparisonRows = settings.subscriptionComparison;
+  const planHeading = plans.some((product) => product.planFrequency === "monthly")
+    ? "Planes semanales y mensuales"
+    : "Planes semanales";
+
+  const scrollToBlock = (event, selector) => {
+    event.preventDefault();
+    document.querySelector(selector)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <section className="meal-prep-shop" id="oferta">
-      <div className="section-brand-mark offer-brand-mark" aria-hidden="true">
-        <img src={logoVerticalSrc} alt="" />
-      </div>
-      <div className="section-heading">
-        <p className="eyebrow">Meal prep Fullness</p>
-        <h2>Planes y familiares <span>listos.</span></h2>
-        <span className="section-rule" aria-hidden="true" />
-        <p>Elige planes semanales o mensuales, o suma preparaciones familiares para compartir.</p>
-      </div>
+    <section className="meal-prep-shop shop-commerce-page" id="oferta">
+      <section className="shop-hero-showcase" aria-labelledby="shop-hero-title">
+        <img className="shop-hero-botanical" src={silhouetteRootOneSrc} alt="" aria-hidden="true" />
+        <div className="shop-hero-copy">
+          <p className="eyebrow">{settings.heroEyebrow}</p>
+          <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
+          <p>{settings.heroBody}</p>
+          <div className="shop-hero-actions">
+            <a className="shop-solid-link" href="#shop-plans" onClick={(event) => scrollToBlock(event, "#shop-plans")}>
+              {settings.heroPrimaryLabel}
+              <ArrowUpRight size={17} />
+            </a>
+            <a className="shop-outline-link" href="#shop-subscription" onClick={(event) => scrollToBlock(event, "#shop-subscription")}>
+              {settings.heroSecondaryLabel}
+              <ArrowUpRight size={17} />
+            </a>
+          </div>
+          {heroMetrics.length > 0 && (
+            <ul className="shop-hero-metrics" aria-label="Beneficios del formato">
+              {heroMetrics.map((metric, index) => {
+                const MetricIcon = shopMetricIcons[index % shopMetricIcons.length];
+
+                return (
+                  <li key={metric}>
+                    <MetricIcon size={28} aria-hidden="true" />
+                    <span>{metric}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <figure className="shop-hero-media">
+          <img src={heroImage} alt="Meal prep Fullness" />
+        </figure>
+      </section>
 
       {loading ? (
         <p className="products-empty">Cargando meal preps…</p>
       ) : (
         <>
-          <div className="catalog-block">
-            <div className="catalog-block-heading">
-              <CalendarDays size={24} aria-hidden="true" />
-              <div>
-                <p className="eyebrow">Planes</p>
-                <h3>Semanal y mensual</h3>
-              </div>
+          <section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
+            <div className="shop-subscription-copy">
+              <p className="eyebrow">{settings.subscriptionEyebrow}</p>
+              <h2 id="shop-subscription-title">{settings.subscriptionTitle}</h2>
+              <p>{settings.subscriptionBody}</p>
+              <button
+                className="shop-solid-button"
+                type="button"
+                onClick={() => subscriptionProduct && onAdd(subscriptionProduct)}
+                disabled={!subscriptionProduct}
+              >
+                {settings.subscriptionCtaLabel}
+                <ArrowUpRight size={17} />
+              </button>
+            </div>
+
+            <ul className="shop-subscription-benefits">
+              {settings.subscriptionBenefits.map((benefit) => (
+                <li key={benefit}>
+                  <CheckCircle2 size={17} aria-hidden="true" />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+
+            <div className="shop-comparison-table" aria-label="Comparación de suscripción">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Precio</th>
+                    <th scope="col">Suscripción</th>
+                    <th scope="col">Compra semanal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonRows.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row">{row.label}</th>
+                      <td>{row.subscription}</td>
+                      <td>{row.weekly}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button
+                className="shop-solid-button"
+                type="button"
+                onClick={() => subscriptionProduct && onAdd(subscriptionProduct)}
+                disabled={!subscriptionProduct}
+              >
+                Comprar plan semanal
+                <ArrowUpRight size={17} />
+              </button>
+            </div>
+          </section>
+
+          <section className="shop-plans-section" id="shop-plans" aria-labelledby="shop-plans-title">
+            <div className="shop-section-heading">
+              <p className="eyebrow">Meal prep</p>
+              <h2 id="shop-plans-title">{planHeading}</h2>
+              <p>Cada semana un propósito distinto. Nosotros hacemos la selección por ti.</p>
             </div>
             {plans.length > 0 ? (
-              <div className="meal-product-grid">
+              <div className="shop-plan-grid">
                 {plans.map((product, index) => (
-                  <ProductCard
+                  <ShopPlanCard
                     key={product.id}
                     product={product}
                     index={index}
@@ -1264,25 +1703,48 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
             ) : (
               <p className="products-empty">Aún no hay planes activos.</p>
             )}
-          </div>
+          </section>
 
-          <div className="catalog-block">
-            <div className="catalog-block-heading">
-              <Users size={24} aria-hidden="true" />
-              <div>
-                <p className="eyebrow">Formato familiar</p>
-                <h3>Meal preps únicos</h3>
-              </div>
+          <section className="shop-process-band" aria-labelledby="shop-process-title">
+            <h2 id="shop-process-title">Cómo funciona</h2>
+            <ol>
+              {shopProcessSteps.map((step, index) => {
+                const StepIcon = step.icon;
+
+                return (
+                  <li key={step.title}>
+                    <span>{index + 1}</span>
+                    <StepIcon size={28} aria-hidden="true" />
+                    <strong>{step.title}</strong>
+                    <small>{step.text}</small>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="shop-process-features" aria-label="Sellos de servicio">
+              {["Proteínas separadas", "Acompañamientos separados", "Ingredientes frescos", "Instrucciones de regeneración", "Tablas nutricionales", "Conservación segura"].map((item) => (
+                <span key={item}>
+                  <CheckCircle2 size={15} aria-hidden="true" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <section className="shop-family-section" aria-labelledby="shop-family-title">
+            <div className="shop-section-heading is-left">
+              <p className="eyebrow">Packs familiares</p>
+              <h2 id="shop-family-title">Para compartir en casa.</h2>
+              <p>Proteínas y acompañamientos favoritos en porciones generosas para la familia.</p>
             </div>
             {familyProducts.length > 0 ? (
-              <div className="meal-product-grid family-grid">
+              <div className="shop-family-grid">
                 {familyProducts.map((product, index) => (
-                  <ProductCard
+                  <ShopFamilyCard
                     key={product.id}
                     product={product}
                     index={index + plans.length}
                     onAdd={onAdd}
-                    onOpenMeal={onOpenMeal}
                     onOpenProduct={onOpenProduct}
                   />
                 ))}
@@ -1290,7 +1752,23 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
             ) : (
               <p className="products-empty">Aún no hay opciones familiares activas.</p>
             )}
-          </div>
+          </section>
+
+          <section
+            className="shop-community-band"
+            style={{ "--shop-community-bg": `url("${communitySceneSrc}")` }}
+            aria-labelledby="shop-community-title"
+          >
+            <div>
+              <p className="eyebrow">Comunidad Fullness</p>
+              <h2 id="shop-community-title">Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.</h2>
+              <p>Encuentros, recetas y experiencias para acompañar tu rutina más allá del meal prep.</p>
+            </div>
+            <a href="/comunidad">
+              Conoce la comunidad
+              <ArrowUpRight size={17} />
+            </a>
+          </section>
         </>
       )}
     </section>
@@ -2424,6 +2902,12 @@ function App() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [shopSettings, setShopSettings] = useState(createDefaultShopSettings);
+  const [shopSettingsForm, setShopSettingsForm] = useState(() => createShopSettingsForm());
+  const [shopSettingsSaving, setShopSettingsSaving] = useState(false);
+  const [shopHeroUploading, setShopHeroUploading] = useState(false);
+  const [shopSettingsMessage, setShopSettingsMessage] = useState("");
+  const [shopSettingsError, setShopSettingsError] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
@@ -2431,7 +2915,29 @@ function App() {
   const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [communityMemberMessage, setCommunityMemberMessage] = useState("");
-  const [backgroundMode, setBackgroundMode] = useState("current");
+  const [subscriptionPopupSettings, setSubscriptionPopupSettings] = useState(loadStoredSubscriptionPopupSettings);
+  const [subscriptionPopupForm, setSubscriptionPopupForm] = useState(loadStoredSubscriptionPopupSettings);
+  const [subscriptionPopupOpen, setSubscriptionPopupOpen] = useState(false);
+  const [subscriptionPopupMode, setSubscriptionPopupMode] = useState("intro");
+  const [subscriptionPopupDismissed, setSubscriptionPopupDismissed] = useState(false);
+  const [subscriptionPopupMessage, setSubscriptionPopupMessage] = useState("");
+  const [subscriptionPopupUploading, setSubscriptionPopupUploading] = useState(false);
+  const [subscriptionPopupAdminMessage, setSubscriptionPopupAdminMessage] = useState("");
+  const [subscriptionPopupAdminError, setSubscriptionPopupAdminError] = useState("");
+  const subscriptionPopupTimerRef = useRef(null);
+  const subscriptionPopupOpenedRef = useRef(false);
+  const [accessMode, setAccessMode] = useState(() => {
+    if (typeof window === "undefined") return "admin";
+
+    try {
+      return window.localStorage.getItem(adminAccessModeStorageKey) === "user" ? "user" : "admin";
+    } catch {
+      return "admin";
+    }
+  });
+  const normalizedAuthEmail = authUser?.email?.toLowerCase() || "";
+  const canChooseAccessMode = isAdmin && normalizedAuthEmail === adminPersonaEmail;
+  const activeIsAdmin = isAdmin && (!canChooseAccessMode || accessMode === "admin");
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#comunidad", "#contacto"]);
@@ -2481,8 +2987,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    window.localStorage.removeItem("fullness_background_mode");
-  }, []);
+    if (!canChooseAccessMode) return;
+
+    try {
+      window.localStorage.setItem(adminAccessModeStorageKey, accessMode);
+    } catch {
+      // Local access-mode preference is best-effort.
+    }
+  }, [accessMode, canChooseAccessMode]);
 
   useEffect(() => {
     try {
@@ -2492,9 +3004,54 @@ function App() {
     }
   }, [checkoutForm]);
 
-  const toggleBackgroundMode = () => {
-    setBackgroundMode((mode) => (mode === "plum" ? "current" : "plum"));
-  };
+  useEffect(() => {
+    if (!subscriptionPopupSettings.enabled) return undefined;
+    if (subscriptionPopupDismissed || subscriptionPopupOpenedRef.current) return undefined;
+    if (currentPath !== "/" || currentProductSlug) return undefined;
+    if (accountOpen || cartOpen || adminOpen || menuOpen || passwordSetupOpen) return undefined;
+
+    const clearPopupTimer = () => {
+      if (!subscriptionPopupTimerRef.current) return;
+      window.clearTimeout(subscriptionPopupTimerRef.current);
+      subscriptionPopupTimerRef.current = null;
+    };
+
+    const schedulePopup = () => {
+      const hero = document.querySelector("#programa");
+      if (!hero) return;
+
+      const heroRect = hero.getBoundingClientRect();
+      const userMovedPastHero = window.scrollY > 120 && heroRect.bottom <= window.innerHeight * 0.9;
+
+      if (!userMovedPastHero || subscriptionPopupTimerRef.current || subscriptionPopupOpenedRef.current) return;
+
+      subscriptionPopupTimerRef.current = window.setTimeout(() => {
+        subscriptionPopupTimerRef.current = null;
+        subscriptionPopupOpenedRef.current = true;
+        setSubscriptionPopupMode("intro");
+        setSubscriptionPopupMessage("");
+        setSubscriptionPopupOpen(true);
+      }, 2000);
+    };
+
+    window.addEventListener("scroll", schedulePopup, { passive: true });
+    schedulePopup();
+
+    return () => {
+      window.removeEventListener("scroll", schedulePopup);
+      clearPopupTimer();
+    };
+  }, [
+    accountOpen,
+    adminOpen,
+    cartOpen,
+    currentPath,
+    currentProductSlug,
+    menuOpen,
+    passwordSetupOpen,
+    subscriptionPopupDismissed,
+    subscriptionPopupSettings.enabled
+  ]);
 
   const navigateToSection = (href, { smooth = true, replace = false } = {}) => {
     const resolvedHref = href === "#filosofia" ? "#proposito" : href;
@@ -2715,7 +3272,7 @@ function App() {
   }
 
   async function refreshAdminItems({ silent = false } = {}) {
-    if (!isAdmin) return;
+    if (!activeIsAdmin) return;
 
     if (!silent) {
       setAdminLoading(true);
@@ -2756,6 +3313,12 @@ function App() {
   }
 
   function openBackoffice() {
+    if (!activeIsAdmin) {
+      setAdminOpen(false);
+      setAccountOpen(true);
+      return;
+    }
+
     setAccountOpen(false);
     setMenuOpen(false);
     setAdminOpen(true);
@@ -2822,6 +3385,25 @@ function App() {
     }
 
     loadProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadShopSettings() {
+      const result = await getShopSettings();
+      if (ignore || result.error || !result.configured || !result.data) return;
+
+      const merged = mergeShopSettings(result.data);
+      setShopSettings(merged);
+      setShopSettingsForm(createShopSettingsForm(merged));
+    }
+
+    loadShopSettings();
 
     return () => {
       ignore = true;
@@ -2958,7 +3540,7 @@ function App() {
     const syncBackofficeHash = () => {
       if (window.location.hash !== "#backoffice") return;
 
-      if (isAdmin) {
+      if (activeIsAdmin) {
         setAdminOpen(true);
         setAccountOpen(false);
       } else if (!authLoading) {
@@ -2972,16 +3554,16 @@ function App() {
     return () => {
       window.removeEventListener("hashchange", syncBackofficeHash);
     };
-  }, [authLoading, isAdmin]);
+  }, [activeIsAdmin, authLoading]);
 
   useEffect(() => {
-    if (adminOpen && isAdmin) {
+    if (adminOpen && activeIsAdmin) {
       refreshAdminItems();
     }
-  }, [adminOpen, isAdmin]);
+  }, [activeIsAdmin, adminOpen]);
 
   useEffect(() => {
-    if (currentProductSlug) return undefined;
+    if (currentPath !== "/" || currentProductSlug) return undefined;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     const revealGroups = [
@@ -3420,6 +4002,132 @@ function App() {
     form.reset();
   }
 
+  function closeSubscriptionPopup() {
+    setSubscriptionPopupOpen(false);
+    setSubscriptionPopupDismissed(true);
+    setSubscriptionPopupMessage("");
+  }
+
+  function openSubscriptionPopupForm() {
+    setSubscriptionPopupMode("form");
+    setSubscriptionPopupMessage("");
+  }
+
+  function openSubscriptionPopupPlans(event) {
+    event?.preventDefault();
+    setSubscriptionPopupOpen(false);
+    setSubscriptionPopupDismissed(true);
+    openShopPage(event);
+  }
+
+  function submitPopupSubscription(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const name = String(data.get("subscriberName") || "").trim();
+    const phone = String(data.get("subscriberPhone") || "").trim();
+    const email = String(data.get("subscriberEmail") || "").trim();
+
+    if (!name || !phone || !email) {
+      setSubscriptionPopupMessage("Completa nombre, teléfono y mail para suscribirte.");
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(subscriptionPopupSubscribersStorageKey);
+      const parsed = stored ? JSON.parse(stored) : [];
+      const subscribers = Array.isArray(parsed) ? parsed : [];
+      const nextSubscriber = {
+        name,
+        phone,
+        email,
+        source: "subscription-lightbox",
+        createdAt: new Date().toISOString()
+      };
+
+      window.localStorage.setItem(
+        subscriptionPopupSubscribersStorageKey,
+        JSON.stringify([
+          ...subscribers.filter((subscriber) => String(subscriber.email || "").toLowerCase() !== email.toLowerCase()),
+          nextSubscriber
+        ])
+      );
+    } catch {
+      // Local demo persistence is best-effort.
+    }
+
+    setSubscriptionPopupMode("success");
+    setSubscriptionPopupMessage("");
+    form.reset();
+  }
+
+  function updateSubscriptionPopupForm(event) {
+    const { checked, name, type, value } = event.target;
+
+    setSubscriptionPopupForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value
+    }));
+    setSubscriptionPopupAdminMessage("");
+    setSubscriptionPopupAdminError("");
+  }
+
+  async function handleSubscriptionPopupBackgroundChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSubscriptionPopupUploading(true);
+    setSubscriptionPopupAdminMessage("");
+    setSubscriptionPopupAdminError("");
+
+    const result = await uploadMenuPhoto(file);
+
+    if (result.error || !result.configured) {
+      setSubscriptionPopupAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la imagen del lightbox."));
+    } else {
+      setSubscriptionPopupForm((current) => ({
+        ...current,
+        backgroundUrl: result.data.photoUrl,
+        backgroundStoragePath: result.data.photoStoragePath
+      }));
+      setSubscriptionPopupAdminMessage("Imagen del lightbox cargada.");
+    }
+
+    setSubscriptionPopupUploading(false);
+    event.target.value = "";
+  }
+
+  function submitSubscriptionPopupSettings(event) {
+    event.preventDefault();
+
+    if (!activeIsAdmin) {
+      setSubscriptionPopupAdminError("Tu cuenta no tiene acceso de administración.");
+      return;
+    }
+
+    const nextSettings = normalizeSubscriptionPopupSettings(subscriptionPopupForm);
+
+    try {
+      window.localStorage.setItem(subscriptionPopupStorageKey, JSON.stringify(nextSettings));
+    } catch {
+      setSubscriptionPopupAdminError("No pudimos guardar la configuración en este navegador.");
+      return;
+    }
+
+    setSubscriptionPopupSettings(nextSettings);
+    setSubscriptionPopupForm(nextSettings);
+    setSubscriptionPopupAdminError("");
+    setSubscriptionPopupAdminMessage("Lightbox guardado.");
+  }
+
+  function resetSubscriptionPopupSettings() {
+    const defaults = createDefaultSubscriptionPopupSettings();
+    setSubscriptionPopupForm(defaults);
+    setSubscriptionPopupAdminError("");
+    setSubscriptionPopupAdminMessage("Configuración restaurada para revisar antes de guardar.");
+  }
+
   function submitCommunityMember(event) {
     event.preventDefault();
 
@@ -3612,6 +4320,68 @@ function App() {
     }));
   }
 
+  function updateShopSettingsForm(event) {
+    const { name, value } = event.target;
+
+    setShopSettingsForm((current) => ({
+      ...current,
+      [name]: value
+    }));
+    setShopSettingsError("");
+    setShopSettingsMessage("");
+  }
+
+  async function handleShopHeroPhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setShopHeroUploading(true);
+    setShopSettingsError("");
+    setShopSettingsMessage("");
+
+    const result = await uploadMenuPhoto(file);
+
+    if (result.error || !result.configured) {
+      setShopSettingsError(getSupabaseErrorMessage(result.error, "No pudimos subir la imagen del hero."));
+    } else {
+      setShopSettingsForm((current) => ({
+        ...current,
+        heroImageUrl: result.data.photoUrl,
+        heroImageStoragePath: result.data.photoStoragePath
+      }));
+      setShopSettingsMessage("Imagen de tienda cargada.");
+    }
+
+    setShopHeroUploading(false);
+    event.target.value = "";
+  }
+
+  async function submitShopSettings(event) {
+    event.preventDefault();
+
+    if (!activeIsAdmin) {
+      setShopSettingsError("Tu cuenta no tiene acceso de administración.");
+      return;
+    }
+
+    setShopSettingsSaving(true);
+    setShopSettingsError("");
+    setShopSettingsMessage("");
+
+    const result = await saveShopSettings(parseShopSettingsForm(shopSettingsForm));
+
+    if (result.error || !result.configured) {
+      setShopSettingsError(getSupabaseErrorMessage(result.error, "No pudimos guardar la tienda."));
+    } else {
+      const merged = mergeShopSettings(result.data);
+      setShopSettings(merged);
+      setShopSettingsForm(createShopSettingsForm(merged));
+      setShopSettingsMessage("Tienda guardada.");
+    }
+
+    setShopSettingsSaving(false);
+  }
+
   async function handleMenuPhotoChange(event, target = "primary", mealIndex = null) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -3673,7 +4443,7 @@ function App() {
   async function submitMenuItem(event) {
     event.preventDefault();
 
-    if (!isAdmin) {
+    if (!activeIsAdmin) {
       setAdminError("Tu cuenta no tiene acceso de administración.");
       return;
     }
@@ -3764,7 +4534,7 @@ function App() {
     { href: "/comunidad", label: "Comunidad" },
     { href: aboutPath, label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
-    ...(isAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
+    ...(activeIsAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
   ];
 
   const nav = navItems.map((item) => (
@@ -3808,6 +4578,7 @@ function App() {
     adminOpen ||
     menuOpen ||
     passwordSetupOpen ||
+    subscriptionPopupOpen ||
     Boolean(productPreview) ||
     Boolean(mealPreviewItem);
 
@@ -3849,28 +4620,18 @@ function App() {
   );
 
   return (
-    <main ref={appRef} data-background-mode={backgroundMode}>
+    <main ref={appRef} className={isShopPage ? "route-shop" : undefined}>
       {!floatingActionsHidden && (
-        <>
-          <a
-            className="whatsapp-float"
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Escribir a Fullness Lab por WhatsApp"
-          >
-            <WhatsAppIcon size={24} />
-            <span>WhatsApp</span>
-          </a>
-          <button
-            className="background-mode-toggle"
-            type="button"
-            onClick={toggleBackgroundMode}
-            aria-pressed={backgroundMode === "plum"}
-          >
-            Fondo: {backgroundMode === "plum" ? "uva" : "actual"}
-          </button>
-        </>
+        <a
+          className="whatsapp-float"
+          href={whatsappUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Escribir a Fullness Lab por WhatsApp"
+        >
+          <WhatsAppIcon size={24} />
+          <span>WhatsApp</span>
+        </a>
       )}
 
       <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
@@ -3961,6 +4722,18 @@ function App() {
         </div>
       )}
 
+      {subscriptionPopupOpen && (
+        <SubscriptionLightbox
+          settings={subscriptionPopupSettings}
+          mode={subscriptionPopupMode}
+          message={subscriptionPopupMessage}
+          onClose={closeSubscriptionPopup}
+          onOpenForm={openSubscriptionPopupForm}
+          onSubmit={submitPopupSubscription}
+          onPlans={openSubscriptionPopupPlans}
+        />
+      )}
+
       {isProductPage ? (
         <ProductDetailPage
           product={currentProduct}
@@ -4000,6 +4773,7 @@ function App() {
             <MealPrepCatalog
               plans={planProducts}
               familyProducts={familyProducts}
+              shopSettings={shopSettings}
               loading={productsLoading}
               onAdd={addToCart}
               onOpenMeal={openMealQuickView}
@@ -4220,7 +4994,31 @@ function App() {
                 <h2 id="account-title">{getMemberLabel(authUser)}</h2>
                 <p className="account-email">{authUser.email}</p>
                 {googleMessage && <p className="form-note">{googleMessage}</p>}
-                {isAdmin && (
+                {canChooseAccessMode && (
+                  <div className="account-mode-switch" aria-label="Modo de acceso">
+                    <p>Entrar como</p>
+                    <div>
+                      <button
+                        className={accessMode === "admin" ? "is-active" : ""}
+                        type="button"
+                        onClick={() => setAccessMode("admin")}
+                      >
+                        Administrador
+                      </button>
+                      <button
+                        className={accessMode === "user" ? "is-active" : ""}
+                        type="button"
+                        onClick={() => {
+                          setAccessMode("user");
+                          setAdminOpen(false);
+                        }}
+                      >
+                        Usuario
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {activeIsAdmin && (
                   <button className="primary-button full" type="button" onClick={openBackoffice}>
                     <ShieldCheck size={18} />
                     Abrir backoffice
@@ -4295,7 +5093,7 @@ function App() {
                 <h2 id="backoffice-title">Meal preps</h2>
               </div>
               <div className="backoffice-header-actions">
-                {isAdmin && (
+                {activeIsAdmin && (
                   <button
                     className="icon-button"
                     type="button"
@@ -4312,7 +5110,7 @@ function App() {
               </div>
             </header>
 
-            {!isAdmin ? (
+            {!activeIsAdmin ? (
               <div className="backoffice-state">
                 <ShieldCheck size={34} />
                 <h3>Acceso administrador</h3>
@@ -4676,10 +5474,180 @@ function App() {
                     </div>
                   </form>
 
-                  <aside className="backoffice-activities" aria-label="Actividades de comunidad">
-                    <div className="backoffice-list-top">
-                      <h3>Comunidad</h3>
-                    </div>
+                  <aside className="backoffice-activities" aria-label="Tienda y comunidad">
+                    <section className="backoffice-side-panel" aria-labelledby="shop-settings-title">
+                      <div className="backoffice-list-top">
+                        <h3 id="shop-settings-title">Tienda</h3>
+                      </div>
+                      {(shopSettingsError || shopSettingsMessage) && (
+                        <p className={`backoffice-alert ${shopSettingsError ? "is-error" : "is-success"}`} role="status">
+                          {shopSettingsError || shopSettingsMessage}
+                        </p>
+                      )}
+                      <form className="shop-settings-admin-form" onSubmit={submitShopSettings}>
+                        <label>
+                          Eyebrow hero
+                          <input name="heroEyebrow" value={shopSettingsForm.heroEyebrow} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Título hero
+                          <textarea required name="heroTitle" rows="3" value={shopSettingsForm.heroTitle} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Bajada hero
+                          <textarea required name="heroBody" rows="4" value={shopSettingsForm.heroBody} onChange={updateShopSettingsForm} />
+                        </label>
+
+                        <div className="shop-settings-photo">
+                          <div className="backoffice-photo-preview">
+                            {shopSettingsForm.heroImageUrl ? (
+                              <img src={shopSettingsForm.heroImageUrl} alt="" aria-hidden="true" />
+                            ) : (
+                              <UploadCloud size={28} />
+                            )}
+                          </div>
+                          <label className="upload-control">
+                            <UploadCloud size={18} />
+                            {shopHeroUploading ? "Subiendo…" : "Subir hero"}
+                            <input type="file" accept="image/*" onChange={handleShopHeroPhotoChange} disabled={shopHeroUploading || shopSettingsSaving} />
+                          </label>
+                        </div>
+
+                        <label>
+                          URL imagen hero
+                          <input name="heroImageUrl" value={shopSettingsForm.heroImageUrl} onChange={updateShopSettingsForm} placeholder="/api/media?key=images/meal-preps/…" />
+                        </label>
+
+                        <div className="shop-settings-two">
+                          <label>
+                            Botón principal
+                            <input name="heroPrimaryLabel" value={shopSettingsForm.heroPrimaryLabel} onChange={updateShopSettingsForm} />
+                          </label>
+                          <label>
+                            Botón secundario
+                            <input name="heroSecondaryLabel" value={shopSettingsForm.heroSecondaryLabel} onChange={updateShopSettingsForm} />
+                          </label>
+                        </div>
+
+                        <label>
+                          Métricas hero
+                          <textarea name="heroMetrics" rows="4" value={shopSettingsForm.heroMetrics} onChange={updateShopSettingsForm} placeholder={"5 proteínas independientes\n5 acompañamientos independientes"} />
+                        </label>
+
+                        <label>
+                          Eyebrow suscripción
+                          <input name="subscriptionEyebrow" value={shopSettingsForm.subscriptionEyebrow} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Título suscripción
+                          <textarea required name="subscriptionTitle" rows="3" value={shopSettingsForm.subscriptionTitle} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Bajada suscripción
+                          <textarea required name="subscriptionBody" rows="3" value={shopSettingsForm.subscriptionBody} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Botón suscripción
+                          <input name="subscriptionCtaLabel" value={shopSettingsForm.subscriptionCtaLabel} onChange={updateShopSettingsForm} />
+                        </label>
+                        <label>
+                          Beneficios suscripción
+                          <textarea name="subscriptionBenefits" rows="5" value={shopSettingsForm.subscriptionBenefits} onChange={updateShopSettingsForm} placeholder={"4 semanas diferentes cada mes\nMenús renovados constantemente"} />
+                        </label>
+                        <label>
+                          Tabla comparativa
+                          <textarea name="subscriptionComparison" rows="6" value={shopSettingsForm.subscriptionComparison} onChange={updateShopSettingsForm} placeholder={"Precio | Mejor valor | Precio normal\nRenovación | Automática | Manual"} />
+                        </label>
+
+                        <button className="primary-button" type="submit" disabled={shopSettingsSaving || shopHeroUploading}>
+                          {shopSettingsSaving ? <RefreshCw size={18} /> : <Save size={18} />}
+                          {shopSettingsSaving ? "Guardando…" : "Guardar tienda"}
+                        </button>
+                      </form>
+                    </section>
+
+                    <section className="backoffice-side-panel" aria-labelledby="subscription-popup-admin-title">
+                      <div className="backoffice-list-top">
+                        <h3 id="subscription-popup-admin-title">Lightbox</h3>
+                      </div>
+                      {(subscriptionPopupAdminError || subscriptionPopupAdminMessage) && (
+                        <p className={`backoffice-alert ${subscriptionPopupAdminError ? "is-error" : "is-success"}`} role="status">
+                          {subscriptionPopupAdminError || subscriptionPopupAdminMessage}
+                        </p>
+                      )}
+                      <form className="subscription-popup-admin-form" onSubmit={submitSubscriptionPopupSettings}>
+                        <label className="backoffice-switch subscription-popup-enabled">
+                          <input
+                            name="enabled"
+                            type="checkbox"
+                            checked={subscriptionPopupForm.enabled}
+                            onChange={updateSubscriptionPopupForm}
+                          />
+                          <span>
+                            {subscriptionPopupForm.enabled ? <Eye size={16} /> : <EyeOff size={16} />}
+                            {subscriptionPopupForm.enabled ? "Activo" : "Inactivo"}
+                          </span>
+                        </label>
+                        <label>
+                          Título pequeño
+                          <input name="eyebrow" value={subscriptionPopupForm.eyebrow} onChange={updateSubscriptionPopupForm} />
+                        </label>
+                        <label>
+                          Texto grande
+                          <textarea required name="title" rows="3" value={subscriptionPopupForm.title} onChange={updateSubscriptionPopupForm} />
+                        </label>
+                        <label>
+                          Bajada
+                          <textarea required name="body" rows="4" value={subscriptionPopupForm.body} onChange={updateSubscriptionPopupForm} />
+                        </label>
+                        <div className="shop-settings-two">
+                          <label>
+                            Botón suscripción
+                            <input name="ctaLabel" value={subscriptionPopupForm.ctaLabel} onChange={updateSubscriptionPopupForm} />
+                          </label>
+                          <label>
+                            Botón final
+                            <input name="successCtaLabel" value={subscriptionPopupForm.successCtaLabel} onChange={updateSubscriptionPopupForm} />
+                          </label>
+                        </div>
+                        <label>
+                          Botón secundario
+                          <input name="secondaryCtaLabel" value={subscriptionPopupForm.secondaryCtaLabel} onChange={updateSubscriptionPopupForm} />
+                        </label>
+                        <div className="subscription-popup-admin-preview">
+                          <div className="backoffice-photo-preview">
+                            {subscriptionPopupForm.backgroundUrl ? (
+                              <img src={subscriptionPopupForm.backgroundUrl} alt="" aria-hidden="true" />
+                            ) : (
+                              <UploadCloud size={28} />
+                            )}
+                          </div>
+                          <label className="upload-control">
+                            <UploadCloud size={18} />
+                            {subscriptionPopupUploading ? "Subiendo…" : "Subir fondo"}
+                            <input type="file" accept="image/*" onChange={handleSubscriptionPopupBackgroundChange} disabled={subscriptionPopupUploading} />
+                          </label>
+                        </div>
+                        <label>
+                          URL imagen de fondo
+                          <input name="backgroundUrl" value={subscriptionPopupForm.backgroundUrl} onChange={updateSubscriptionPopupForm} placeholder="/api/media?key=images/…" />
+                        </label>
+                        <div className="subscription-popup-admin-actions">
+                          <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings}>
+                            Restaurar
+                          </button>
+                          <button className="primary-button" type="submit" disabled={subscriptionPopupUploading}>
+                            <Save size={18} />
+                            Guardar lightbox
+                          </button>
+                        </div>
+                      </form>
+                    </section>
+
+                    <section className="backoffice-side-panel" aria-labelledby="community-admin-title">
+                      <div className="backoffice-list-top">
+                        <h3 id="community-admin-title">Comunidad</h3>
+                      </div>
                     <form className="community-admin-form" onSubmit={addCommunityActivity}>
                       <label>
                         Fecha
@@ -4724,6 +5692,7 @@ function App() {
                         );
                       })}
                     </div>
+                    </section>
                   </aside>
                 </div>
               </>

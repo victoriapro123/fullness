@@ -1,6 +1,8 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 
 const MENU_ITEM_COLUMNS = "*";
+const SHOP_SETTINGS_COLUMNS = "*";
+const SHOP_SETTINGS_ID = "main";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -92,6 +94,24 @@ function normalizeIncludedItems(value) {
     .filter(Boolean);
 }
 
+function normalizeComparisonRows(value) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((row) => {
+      if (!row || typeof row !== "object") return null;
+
+      const label = cleanText(row.label || row.name);
+      const subscription = cleanText(row.subscription || row.subscriptionValue || row.plan);
+      const weekly = cleanText(row.weekly || row.weeklyValue || row.single || row.purchase);
+
+      if (!label && !subscription && !weekly) return null;
+
+      return { label, subscription, weekly };
+    })
+    .filter(Boolean);
+}
+
 export function mapMenuItem(row) {
   return {
     id: row.id,
@@ -127,6 +147,27 @@ export function mapMenuItem(row) {
   };
 }
 
+export function mapShopSettings(row) {
+  return {
+    id: row.id || SHOP_SETTINGS_ID,
+    heroEyebrow: row.hero_eyebrow || "",
+    heroTitle: row.hero_title || "",
+    heroBody: row.hero_body || "",
+    heroImageUrl: row.hero_image_url || "",
+    heroImageStoragePath: row.hero_image_storage_path || "",
+    heroPrimaryLabel: row.hero_primary_label || "",
+    heroSecondaryLabel: row.hero_secondary_label || "",
+    heroMetrics: Array.isArray(row.hero_metrics) ? row.hero_metrics : [],
+    subscriptionEyebrow: row.subscription_eyebrow || "",
+    subscriptionTitle: row.subscription_title || "",
+    subscriptionBody: row.subscription_body || "",
+    subscriptionCtaLabel: row.subscription_cta_label || "",
+    subscriptionBenefits: Array.isArray(row.subscription_benefits) ? row.subscription_benefits : [],
+    subscriptionComparison: normalizeComparisonRows(row.subscription_comparison),
+    updatedAt: row.updated_at || ""
+  };
+}
+
 function buildMenuItemPayload(input) {
   const productType = normalizeProductType(input.productType || input.product_type);
 
@@ -158,6 +199,26 @@ function buildMenuItemPayload(input) {
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
     display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order)
+  };
+}
+
+function buildShopSettingsPayload(input) {
+  return {
+    id: SHOP_SETTINGS_ID,
+    hero_eyebrow: nullableText(input.heroEyebrow || input.hero_eyebrow),
+    hero_title: nullableText(input.heroTitle || input.hero_title),
+    hero_body: nullableText(input.heroBody || input.hero_body),
+    hero_image_url: nullableText(input.heroImageUrl || input.hero_image_url),
+    hero_image_storage_path: nullableText(input.heroImageStoragePath || input.hero_image_storage_path),
+    hero_primary_label: nullableText(input.heroPrimaryLabel || input.hero_primary_label),
+    hero_secondary_label: nullableText(input.heroSecondaryLabel || input.hero_secondary_label),
+    hero_metrics: normalizeTextList(input.heroMetrics || input.hero_metrics),
+    subscription_eyebrow: nullableText(input.subscriptionEyebrow || input.subscription_eyebrow),
+    subscription_title: nullableText(input.subscriptionTitle || input.subscription_title),
+    subscription_body: nullableText(input.subscriptionBody || input.subscription_body),
+    subscription_cta_label: nullableText(input.subscriptionCtaLabel || input.subscription_cta_label),
+    subscription_benefits: normalizeTextList(input.subscriptionBenefits || input.subscription_benefits),
+    subscription_comparison: normalizeComparisonRows(input.subscriptionComparison || input.subscription_comparison)
   };
 }
 
@@ -218,6 +279,23 @@ export async function listAdminMenuItems() {
   };
 }
 
+export async function getShopSettings() {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const { data, error } = await supabase
+    .from("ecommerce_shop_settings")
+    .select(SHOP_SETTINGS_COLUMNS)
+    .eq("id", SHOP_SETTINGS_ID)
+    .maybeSingle();
+
+  if (error) {
+    return { data: null, error, configured: true };
+  }
+
+  return { data: data ? mapShopSettings(data) : null, error: null, configured: true };
+}
+
 export async function saveMenuItem(input) {
   const supabase = await getConfiguredSupabase();
   if (!supabase) return unavailableResult();
@@ -234,6 +312,24 @@ export async function saveMenuItem(input) {
   }
 
   return { data: mapMenuItem(data), error: null, configured: true };
+}
+
+export async function saveShopSettings(input) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const payload = buildShopSettingsPayload(input);
+  const { data, error } = await supabase
+    .from("ecommerce_shop_settings")
+    .upsert(payload, { onConflict: "id" })
+    .select(SHOP_SETTINGS_COLUMNS)
+    .single();
+
+  if (error) {
+    return { data: null, error, configured: true };
+  }
+
+  return { data: mapShopSettings(data), error: null, configured: true };
 }
 
 export async function deleteMenuItem(id) {
