@@ -17778,3 +17778,241 @@ main {
     font-size: clamp(1.45rem, 8vw, 2.35rem);
   }
 }
+
+/* Final QA polish: keep subscription benefit icons readable and keep the story plate inside the dark scene. */
+.subscription-lightbox-benefits {
+  position: relative;
+  z-index: 2;
+  margin-block: clamp(4px, 0.85svh, 10px);
+  background: rgba(244, 234, 219, 0.035);
+  border-top-color: rgba(244, 234, 219, 0.34);
+  border-bottom-color: rgba(244, 234, 219, 0.24);
+}
+
+.subscription-lightbox-benefits span {
+  color: rgba(244, 234, 219, 0.86);
+  font-weight: 300;
+}
+
+.subscription-lightbox-benefits span + span {
+  border-left-color: rgba(244, 234, 219, 0.28);
+}
+
+.subscription-lightbox-benefits img {
+  opacity: 0.94;
+  filter: invert(90%) sepia(18%) saturate(620%) hue-rotate(306deg) brightness(1.02) contrast(0.92);
+}
+
+.subscription-lightbox-actions {
+  position: relative;
+  z-index: 3;
+}
+
+.philosophy-story-combo .food-story-strip .philosophy-story-plate {
+  top: clamp(-275px, -18vw, -218px) !important;
+  right: clamp(28px, 7vw, 132px) !important;
+  width: min(56vw, 780px) !important;
+}
+
+@media (max-width: 1040px) {
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    top: clamp(-220px, -20vw, -145px) !important;
+    right: clamp(-80px, -8vw, -18px) !important;
+    width: min(72vw, 680px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    top: auto !important;
+    right: -38vw !important;
+    bottom: 22px !important;
+    width: min(128vw, 620px) !important;
+  }
+}
+
+/* Campaign lightbox editorial refinement: make it feel like a brand spread, not app UI. */
+.subscription-lightbox-overlay {
+  padding: clamp(18px, 3.2vw, 42px);
+  background: rgba(3, 3, 2, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+.subscription-lightbox {
+  --popup-inline: clamp(34px, 5.4vw, 78px);
+  --popup-block: clamp(26px, 5.4svh, 54px);
+  --popup-copy-width: clamp(340px, 43%, 610px);
+  width: min(86vw, 1320px);
+  height: min(74svh, 820px);
+  border-color: rgba(244, 234, 219, 0.13);
+  border-radius: clamp(12px, 1.45vw, 20px);
+  background-image:
+    linear-gradient(90deg, rgba(6, 5, 4, 0.97) 0%, rgba(6, 5, 4, 0.84) 36%, rgba(6, 5, 4, 0.26) 70%, rgba(6, 5, 4, 0.08) 100%),
+    linear-gradient(180deg, rgba(6, 5, 4, 0.04), rgba(6, 5, 4, 0.44)),
+    var(--subscription-lightbox-bg);
+}
+
+.subscription-lightbox::before {
+  background:
+    radial-gradient(circle at 19% 78%, rgba(184, 120, 120, 0.1), transparent 31%),
+    linear-gradient(90deg, rgba(4, 3, 3, 0.34), transparent 55%);
+}
+
+.subscription-lightbox-close {
+  top: clamp(16px, 2vw, 28px);
+  right: clamp(16px, 2vw, 28px);
+  width: clamp(42px, 4vw, 56px);
+  height: clamp(42px, 4vw, 56px);
+  color: rgba(244, 234, 219, 0.94);
+  background: rgba(244, 234, 219, 0.035);
+  border-color: rgba(244, 234, 219, 0.36);
+}
+
+.subscription-lightbox-logo {
+  width: min(210px, 48%);
+}
+
+.subscription-lightbox .eyebrow {
+  color: var(--highlight);
+  font-weight: 700;
+}
+
+.subscription-lightbox h2 {
+  max-width: 13.5ch;
+  font-size: clamp(2.35rem, 6svh, 5rem);
+  font-weight: 300;
+  line-height: 0.95;
+}
+
+.subscription-lightbox-content > p:not(.eyebrow),
+.subscription-lightbox-success p:not(.eyebrow) {
+  max-width: 50ch;
+  color: rgba(244, 234, 219, 0.84);
+  font-weight: 300;
+  line-height: 1.42;
+}
+
+.subscription-lightbox-benefits {
+  display: flex;
+  align-items: stretch;
+  width: min(660px, 100%);
+  margin-block: clamp(6px, 1.2svh, 13px);
+  padding-block: clamp(8px, 1.3svh, 13px);
+  background: transparent;
+  border-top: 1px solid rgba(244, 234, 219, 0.22);
+  border-bottom: 1px solid rgba(244, 234, 219, 0.16);
+}
+
+.subscription-lightbox-benefits span {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 clamp(8px, 1.1vw, 16px);
+  color: rgba(244, 234, 219, 0.72);
+  font-family: var(--font-body);
+  font-size: clamp(0.56rem, 0.74vw, 0.68rem);
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  line-height: 1.28;
+  text-align: center;
+}
+
+.subscription-lightbox-benefits span + span {
+  border-left: 1px solid rgba(244, 234, 219, 0.2);
+}
+
+.subscription-lightbox-benefits img {
+  display: none;
+}
+
+.subscription-lightbox-actions {
+  width: min(470px, 100%);
+  gap: clamp(8px, 1.2svh, 12px);
+}
+
+.subscription-lightbox-primary,
+.subscription-lightbox-secondary {
+  min-height: clamp(46px, 6.2svh, 58px);
+  font-size: clamp(0.68rem, 1.16svh, 0.82rem);
+  letter-spacing: 0.18em;
+}
+
+.subscription-lightbox-secondary {
+  background: rgba(9, 8, 6, 0.22);
+  border-color: rgba(244, 234, 219, 0.34);
+}
+
+@media (max-height: 760px) and (min-width: 721px) {
+  .subscription-lightbox {
+    height: min(76svh, 780px);
+  }
+
+  .subscription-lightbox-logo {
+    width: min(168px, 42%);
+  }
+
+  .subscription-lightbox h2 {
+    font-size: clamp(2rem, 5.35svh, 4rem);
+  }
+
+  .subscription-lightbox-benefits {
+    width: min(580px, 100%);
+    padding-block: 7px;
+  }
+}
+
+@media (max-width: 980px) {
+  .subscription-lightbox {
+    width: min(92vw, 780px);
+    height: min(78svh, 780px);
+    background-image:
+      linear-gradient(90deg, rgba(6, 5, 4, 0.97) 0%, rgba(6, 5, 4, 0.86) 65%, rgba(6, 5, 4, 0.42) 100%),
+      var(--subscription-lightbox-bg);
+  }
+}
+
+@media (max-width: 640px) {
+  .subscription-lightbox {
+    --popup-inline: clamp(18px, 5.4vw, 28px);
+    --popup-block: clamp(46px, 7svh, 58px);
+    width: calc(100vw - 20px);
+    height: min(86svh, 760px);
+    border-radius: 14px;
+  }
+
+  .subscription-lightbox h2 {
+    max-width: 12.4ch;
+    font-size: clamp(2rem, 10.3vw, 3.55rem);
+  }
+
+  .subscription-lightbox-benefits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    padding-block: 0;
+  }
+
+  .subscription-lightbox-benefits span {
+    justify-content: flex-start;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: clamp(0.5rem, 1.9vw, 0.58rem);
+    text-align: left;
+  }
+
+  .subscription-lightbox-benefits span:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .subscription-lightbox-benefits span:nth-child(n + 3) {
+    border-top: 1px solid rgba(244, 234, 219, 0.14);
+  }
+}
+
+@media (max-width: 640px) and (max-height: 620px) {
+  .subscription-lightbox-benefits {
+    display: none;
+  }
+}
