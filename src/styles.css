@@ -17844,18 +17844,36 @@ main {
   --popup-copy-width: clamp(340px, 43%, 610px);
   width: min(86vw, 1320px);
   height: min(74svh, 820px);
-  border-color: rgba(244, 234, 219, 0.13);
-  border-radius: clamp(12px, 1.45vw, 20px);
+  border-color: rgba(244, 234, 219, 0.08);
+  border-radius: 0;
   background-image:
     linear-gradient(90deg, rgba(6, 5, 4, 0.97) 0%, rgba(6, 5, 4, 0.84) 36%, rgba(6, 5, 4, 0.26) 70%, rgba(6, 5, 4, 0.08) 100%),
     linear-gradient(180deg, rgba(6, 5, 4, 0.04), rgba(6, 5, 4, 0.44)),
     var(--subscription-lightbox-bg);
+  box-shadow:
+    0 0 0 1px rgba(244, 234, 219, 0.06),
+    0 0 38px rgba(244, 234, 219, 0.12),
+    0 0 110px rgba(184, 120, 120, 0.13),
+    0 28px 92px rgba(0, 0, 0, 0.62);
 }
 
 .subscription-lightbox::before {
   background:
     radial-gradient(circle at 19% 78%, rgba(184, 120, 120, 0.1), transparent 31%),
     linear-gradient(90deg, rgba(4, 3, 3, 0.34), transparent 55%);
+}
+
+.subscription-lightbox::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px solid rgba(244, 234, 219, 0.16);
+  box-shadow:
+    inset 0 0 22px rgba(244, 234, 219, 0.045),
+    0 0 22px rgba(244, 234, 219, 0.08);
+  filter: blur(1px);
 }
 
 .subscription-lightbox-close {
@@ -17979,7 +17997,7 @@ main {
     --popup-block: clamp(46px, 7svh, 58px);
     width: calc(100vw - 20px);
     height: min(86svh, 760px);
-    border-radius: 14px;
+    border-radius: 0;
   }
 
   .subscription-lightbox h2 {
@@ -18014,5 +18032,1076 @@ main {
 @media (max-width: 640px) and (max-height: 620px) {
   .subscription-lightbox-benefits {
     display: none;
+  }
+}
+
+/* Backoffice UX refresh */
+.backoffice-overlay {
+  padding: clamp(10px, 2vw, 22px);
+  background:
+    radial-gradient(circle at 18% 10%, rgba(142, 38, 60, 0.1), transparent 32%),
+    linear-gradient(135deg, rgba(246, 239, 228, 0.98), rgba(235, 224, 207, 0.96));
+}
+
+.backoffice-panel {
+  width: min(1500px, calc(100vw - clamp(20px, 4vw, 44px)));
+  max-height: calc(100svh - clamp(20px, 4vw, 44px));
+  border: 1px solid rgba(81, 20, 37, 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 244, 0.96), rgba(246, 239, 228, 0.98));
+  box-shadow:
+    0 24px 70px rgba(28, 17, 13, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.58) inset;
+}
+
+.backoffice-header {
+  padding: clamp(18px, 2vw, 26px) clamp(18px, 2.4vw, 32px);
+  background: rgba(255, 250, 242, 0.92);
+}
+
+.backoffice-header h2 {
+  font-size: clamp(2rem, 3vw, 3.2rem);
+  letter-spacing: 0;
+}
+
+.backoffice-header-subtitle {
+  max-width: 48ch;
+  margin: 6px 0 0;
+  color: rgba(23, 17, 12, 0.58);
+  line-height: 1.45;
+}
+
+.backoffice-dashboard {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: clamp(14px, 1.7vw, 22px);
+  padding: clamp(16px, 2vw, 28px);
+}
+
+.backoffice-module-nav {
+  position: sticky;
+  top: 104px;
+  align-self: start;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.backoffice-module-summary {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid rgba(81, 20, 37, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 250, 242, 0.82);
+}
+
+.backoffice-module-summary span {
+  color: var(--beet);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.backoffice-module-summary strong {
+  color: rgba(23, 17, 12, 0.82);
+  font-size: 0.94rem;
+  line-height: 1.35;
+}
+
+.backoffice-module-buttons {
+  display: grid;
+  gap: 8px;
+}
+
+.backoffice-module-button {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 66px;
+  padding: 10px;
+  border: 1px solid rgba(81, 20, 37, 0.1);
+  border-radius: 8px;
+  color: rgba(23, 17, 12, 0.72);
+  background: rgba(255, 250, 242, 0.62);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.backoffice-module-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(142, 38, 60, 0.24);
+  background: rgba(255, 253, 248, 0.94);
+}
+
+.backoffice-module-button.is-active {
+  color: var(--ink);
+  border-color: rgba(142, 38, 60, 0.42);
+  background:
+    linear-gradient(135deg, rgba(142, 38, 60, 0.12), rgba(255, 253, 248, 0.92));
+}
+
+.backoffice-module-button > svg {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  border: 1px solid rgba(81, 20, 37, 0.12);
+  border-radius: 8px;
+  color: var(--beet);
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.backoffice-module-button span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.backoffice-module-button strong,
+.backoffice-module-button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-module-button strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+}
+
+.backoffice-module-button small {
+  color: rgba(23, 17, 12, 0.56);
+  font-size: 0.78rem;
+}
+
+.backoffice-module-content {
+  min-width: 0;
+}
+
+.backoffice-mealprep-layout {
+  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr);
+  padding: 0;
+}
+
+.backoffice-list,
+.backoffice-form,
+.backoffice-module-panel {
+  border-color: rgba(81, 20, 37, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 250, 242, 0.84);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.76) inset;
+}
+
+.backoffice-form,
+.backoffice-module-panel {
+  padding: clamp(16px, 1.7vw, 24px);
+}
+
+.backoffice-module-panel {
+  display: grid;
+  gap: 18px;
+  max-width: 920px;
+}
+
+.backoffice-menu-card {
+  background: rgba(255, 253, 248, 0.78);
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.backoffice-menu-card.is-selected {
+  background: rgba(255, 253, 248, 0.98);
+}
+
+.backoffice-command,
+.backoffice-card-actions button,
+.upload-control {
+  border-radius: 8px;
+}
+
+.backoffice-form select,
+.backoffice-form input,
+.backoffice-form textarea,
+.shop-settings-admin-form input,
+.shop-settings-admin-form textarea,
+.community-admin-form input,
+.community-admin-form textarea {
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.88);
+}
+
+.shop-settings-admin-form label,
+.community-admin-form label {
+  color: rgba(23, 17, 12, 0.72);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shop-settings-admin-form input,
+.shop-settings-admin-form textarea,
+.community-admin-form input,
+.community-admin-form textarea {
+  border-color: rgba(81, 20, 37, 0.14);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.96rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.shop-settings-admin-form input:focus-visible,
+.shop-settings-admin-form textarea:focus-visible,
+.community-admin-form input:focus-visible,
+.community-admin-form textarea:focus-visible {
+  border-color: rgba(142, 38, 60, 0.42);
+  outline: 2px solid rgba(142, 38, 60, 0.28);
+  outline-offset: 2px;
+}
+
+.community-admin-list {
+  max-height: min(52svh, 520px);
+}
+
+.community-admin-list article {
+  border-color: rgba(81, 20, 37, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.community-admin-list time {
+  color: var(--beet);
+}
+
+.community-admin-list p {
+  color: rgba(23, 17, 12, 0.74);
+}
+
+.community-admin-list button {
+  border-color: rgba(81, 20, 37, 0.12);
+  border-radius: 8px;
+  color: rgba(23, 17, 12, 0.7);
+}
+
+.backoffice-alert {
+  margin-inline: clamp(16px, 2vw, 28px);
+  border-radius: 8px;
+}
+
+@media (max-width: 1180px) {
+  .backoffice-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-module-nav {
+    position: static;
+  }
+
+  .backoffice-module-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .backoffice-module-button {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    min-height: 104px;
+    text-align: center;
+  }
+
+  .backoffice-module-button span {
+    justify-items: center;
+  }
+
+  .backoffice-mealprep-layout {
+    grid-template-columns: minmax(250px, 0.38fr) minmax(0, 0.62fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .backoffice-panel {
+    width: calc(100vw - 20px);
+    max-height: calc(100svh - 20px);
+  }
+
+  .backoffice-header {
+    align-items: flex-start;
+  }
+
+  .backoffice-header-subtitle {
+    display: none;
+  }
+
+  .backoffice-dashboard {
+    padding: 12px;
+  }
+
+  .backoffice-module-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .backoffice-mealprep-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .backoffice-header {
+    padding: 16px;
+  }
+
+  .backoffice-header h2 {
+    font-size: clamp(1.75rem, 9vw, 2.3rem);
+  }
+
+  .backoffice-module-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-module-button {
+    grid-template-columns: 38px minmax(0, 1fr);
+    justify-items: stretch;
+    min-height: 62px;
+    text-align: left;
+  }
+
+  .backoffice-module-button span {
+    justify-items: stretch;
+  }
+
+  .backoffice-module-button small {
+    white-space: normal;
+  }
+}
+
+/* Final mobile editorial pass: keep the desktop botanical mood without hurting usability. */
+.subscription-lightbox {
+  border-radius: 0 !important;
+  box-shadow:
+    0 0 0 1px rgba(244, 234, 219, 0.055),
+    0 0 1px rgba(244, 234, 219, 0.32),
+    0 0 54px rgba(244, 234, 219, 0.13),
+    0 0 132px rgba(184, 120, 120, 0.17),
+    0 32px 110px rgba(0, 0, 0, 0.72) !important;
+}
+
+.subscription-lightbox::after {
+  border-radius: 0 !important;
+  filter: blur(1px) !important;
+}
+
+@media (max-width: 860px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  body {
+    background: var(--editorial-black) !important;
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    touch-action: manipulation;
+  }
+
+  main {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
+    background: var(--editorial-black) !important;
+  }
+
+  .site-header {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: var(--site-header-height) !important;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px !important;
+    gap: 12px !important;
+  }
+
+  .site-header .brand {
+    width: min(58vw, 220px) !important;
+    max-width: 220px !important;
+  }
+
+  .site-header .brand-reference-logo {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .site-header .nav-links,
+  .site-header .member-link {
+    display: none !important;
+  }
+
+  .header-actions,
+  .site-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    min-width: max-content !important;
+  }
+
+  .cart-button,
+  .menu-toggle,
+  .menu-button,
+  .icon-button {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 46px !important;
+  }
+
+  .theme-switcher,
+  .plate-hero-replay {
+    display: none !important;
+  }
+
+  .plate-hero,
+  .hero-benefits,
+  .philosophy-story-combo,
+  .meal-prep-feature,
+  .membership,
+  .fullness-offer,
+  .site-footer,
+  footer {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+
+  .plate-hero {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: calc(100svh - var(--site-header-height)) !important;
+    padding: calc(var(--site-header-height) + 34px) 20px 42px !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    background:
+      radial-gradient(circle at 72% 38%, rgba(244, 234, 219, 0.06), transparent 30%),
+      linear-gradient(180deg, rgba(9, 8, 6, 0.98), rgba(9, 8, 6, 0.94)) !important;
+  }
+
+  .plate-hero-vectors {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .plate-hero-vectors::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 12vw !important;
+    top: 12svh !important;
+    width: min(82vw, 390px) !important;
+    aspect-ratio: 1 / 1.18 !important;
+    display: block !important;
+    background: url("./assets/fullness-original-vector-hero-beet.png") center / contain no-repeat !important;
+    opacity: 0.16 !important;
+    filter: grayscale(1) saturate(0) brightness(1.28) contrast(0.86) !important;
+    mix-blend-mode: screen !important;
+  }
+
+  .plate-hero-vectors::after {
+    content: "" !important;
+    position: absolute !important;
+    right: -24vw !important;
+    bottom: 4svh !important;
+    width: min(68vw, 300px) !important;
+    aspect-ratio: 1 / 1 !important;
+    display: block !important;
+    background: url("./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/planta_con_raices_v1.png") center / contain no-repeat !important;
+    opacity: 0.07 !important;
+    filter: grayscale(1) saturate(0) brightness(1.15) !important;
+    mix-blend-mode: screen !important;
+  }
+
+  .plate-hero-copy {
+    position: relative !important;
+    z-index: 2 !important;
+    width: min(100%, 400px) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .plate-hero-copy .eyebrow,
+  .editorial-copy .eyebrow,
+  .food-story-strip .eyebrow,
+  .meal-prep-copy .eyebrow,
+  .membership .eyebrow,
+  .fullness-offer .eyebrow {
+    color: var(--editorial-copper) !important;
+  }
+
+  .plate-hero-copy h1 {
+    max-width: 11.5ch !important;
+    font-size: clamp(2rem, 10.2vw, 3.25rem) !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0.105em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+  }
+
+  .plate-hero-copy p:not(.eyebrow) {
+    max-width: 28ch !important;
+    font-size: clamp(0.96rem, 3.7vw, 1.08rem) !important;
+    line-height: 1.68 !important;
+  }
+
+  .plate-hero-copy .hero-manifesto,
+  .plate-hero-signals {
+    display: none !important;
+  }
+
+  .plate-hero-primary,
+  .editorial-cta,
+  .section-cta,
+  .membership-cta,
+  .offer-card a,
+  .meal-prep-copy a {
+    width: min(100%, 292px) !important;
+    max-width: 100% !important;
+    min-height: 48px !important;
+    padding: 0 18px !important;
+    border-color: rgba(184, 120, 120, 0.78) !important;
+    white-space: normal !important;
+  }
+
+  .plate-hero-visual-stage {
+    position: relative !important;
+    z-index: 1 !important;
+    justify-self: end !important;
+    width: min(122vw, 560px) !important;
+    max-width: none !important;
+    margin: -18px -36vw 0 0 !important;
+    pointer-events: none !important;
+  }
+
+  .plate-hero-visual {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    filter: none !important;
+  }
+
+  .hero-benefits {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    padding: 18px 20px !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at 92% 18%, rgba(244, 234, 219, 0.035), transparent 32%),
+      var(--editorial-black) !important;
+  }
+
+  .hero-benefits::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: auto -26vw -12vw auto !important;
+    width: min(86vw, 360px) !important;
+    aspect-ratio: 1 / 1.2 !important;
+    display: block !important;
+    background: url("./assets/ilustraciones-fondo/linea-gris-transparente/vegetales-frutas-tuberculos/alcachofa_frontal_v1.png") center / contain no-repeat !important;
+    opacity: 0.07 !important;
+    filter: grayscale(1) saturate(0) brightness(1.2) !important;
+    mix-blend-mode: screen !important;
+    pointer-events: none !important;
+  }
+
+  .hero-benefits article,
+  .hero-benefits article:nth-child(2n) {
+    position: relative !important;
+    z-index: 1 !important;
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    padding: 18px 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.2) !important;
+    background: transparent !important;
+  }
+
+  .hero-benefits article:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .hero-benefits svg {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .hero-benefits h2,
+  .hero-benefits p {
+    min-width: 0 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .hero-benefits h2 {
+    font-size: 0.82rem !important;
+    line-height: 1.18 !important;
+    text-wrap: balance !important;
+  }
+
+  .hero-benefits p {
+    max-width: 32ch !important;
+    font-size: 0.84rem !important;
+    line-height: 1.48 !important;
+  }
+
+  .philosophy-story-combo {
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    background:
+      linear-gradient(180deg, rgba(9, 8, 6, 0.99), rgba(9, 8, 6, 0.96)) !important;
+  }
+
+  .philosophy-illustrations {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .philosophy-illustration {
+    display: block !important;
+    opacity: 0.1 !important;
+    filter: grayscale(1) saturate(0) brightness(1.12) contrast(0.9) !important;
+    mix-blend-mode: screen !important;
+  }
+
+  .philosophy-illustration-plant {
+    left: auto !important;
+    right: -20vw !important;
+    top: 5svh !important;
+    width: min(78vw, 330px) !important;
+  }
+
+  .philosophy-illustration-broccoli {
+    left: -18vw !important;
+    right: auto !important;
+    top: 44svh !important;
+    width: min(62vw, 250px) !important;
+  }
+
+  .philosophy-illustration-carrot {
+    left: auto !important;
+    right: -32vw !important;
+    bottom: 12svh !important;
+    top: auto !important;
+    width: min(88vw, 360px) !important;
+  }
+
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip {
+    position: relative !important;
+    z-index: 1 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: auto !important;
+    padding-inline: 20px !important;
+    background: transparent !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-block: 52px 36px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-block: 34px 250px !important;
+    border-top: 1px solid rgba(184, 120, 120, 0.18) !important;
+  }
+
+  .editorial-copy,
+  .food-story-strip a,
+  .meal-prep-copy,
+  .membership > div,
+  .fullness-offer .section-heading,
+  .offer-card,
+  .footer-brand,
+  .footer-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+
+  .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2 {
+    max-width: 100% !important;
+    font-size: clamp(1.82rem, 8.2vw, 2.7rem) !important;
+    line-height: 1.17 !important;
+    letter-spacing: 0.14em !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+  }
+
+  .editorial-copy p,
+  .food-story-strip .story-copy,
+  .meal-prep-copy p,
+  .meal-prep-copy li,
+  .membership p,
+  .fullness-offer p,
+  footer p,
+  footer a {
+    max-width: 100% !important;
+    font-size: clamp(0.94rem, 3.6vw, 1.04rem) !important;
+    line-height: 1.62 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    position: absolute !important;
+    right: -55vw !important;
+    bottom: -10px !important;
+    top: auto !important;
+    width: min(142vw, 560px) !important;
+    max-width: none !important;
+    height: auto !important;
+    opacity: 0.98 !important;
+    filter: none !important;
+    pointer-events: none !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-tomatoes,
+  .food-editorial-beet {
+    display: none !important;
+  }
+
+  .meal-prep-feature {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 48px 20px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .meal-prep-feature::before {
+    opacity: 0.13 !important;
+    background-size: min(82vw, 330px) auto !important;
+    background-position: right -22vw top 26px !important;
+  }
+
+  .meal-prep-copy {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  .meal-prep-copy h2 {
+    color: var(--ink) !important;
+  }
+
+  .meal-prep-visual-link {
+    position: relative !important;
+    z-index: 1 !important;
+    display: block !important;
+    width: 142% !important;
+    max-width: none !important;
+    margin: 16px -42% 0 0 !important;
+  }
+
+  .meal-prep-visual-link img {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .membership {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: auto !important;
+    overflow: hidden !important;
+    background: var(--editorial-black) !important;
+  }
+
+  .membership::before {
+    inset: 0 !important;
+    width: 100% !important;
+    opacity: 0.42 !important;
+    background-position: 62% center !important;
+    background-size: cover !important;
+  }
+
+  .membership::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    background:
+      linear-gradient(90deg, rgba(9, 8, 6, 0.96) 0%, rgba(9, 8, 6, 0.9) 45%, rgba(9, 8, 6, 0.52) 100%),
+      linear-gradient(180deg, rgba(9, 8, 6, 0.2), rgba(9, 8, 6, 0.72)) !important;
+  }
+
+  .membership > div {
+    position: relative !important;
+    z-index: 2 !important;
+    padding: 54px 20px 42px !important;
+  }
+
+  .membership .community-benefits {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    width: 100% !important;
+    margin-block: 28px 24px !important;
+    border-top: 1px solid rgba(244, 234, 219, 0.16) !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.16) !important;
+  }
+
+  .membership .community-benefits article {
+    min-width: 0 !important;
+    padding: 16px 10px !important;
+    border-right: 1px solid rgba(244, 234, 219, 0.1) !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.1) !important;
+    text-align: center !important;
+  }
+
+  .membership .community-benefits article:nth-child(2n) {
+    border-right: 0 !important;
+  }
+
+  .membership .community-benefits article:nth-last-child(-n + 2) {
+    border-bottom: 0 !important;
+  }
+
+  .membership .community-benefits span {
+    display: block !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    text-wrap: balance !important;
+  }
+
+  .fullness-offer {
+    padding: 46px 20px !important;
+  }
+
+  .fullness-offer .offer-grid,
+  .offer-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .offer-card {
+    display: grid !important;
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: start !important;
+    overflow: hidden !important;
+  }
+
+  .offer-card img {
+    grid-column: 2 !important;
+    justify-self: start !important;
+    width: min(42vw, 128px) !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .offer-card a {
+    grid-column: 2 !important;
+  }
+
+  .site-footer,
+  footer {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 28px !important;
+    padding: 46px 20px max(76px, calc(42px + env(safe-area-inset-bottom))) !important;
+    overflow: hidden !important;
+  }
+
+  .footer-inner {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 24px !important;
+  }
+
+  .footer-brand img,
+  .footer-logo {
+    width: min(64vw, 240px) !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .footer-legal {
+    max-width: 100% !important;
+    text-align: left !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .subscription-lightbox-overlay {
+    align-items: center !important;
+    padding: max(12px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom)) !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .subscription-lightbox {
+    --popup-inline: clamp(18px, 5.4vw, 30px) !important;
+    --popup-block: clamp(28px, 6svh, 46px) !important;
+    width: min(94vw, 760px) !important;
+    height: min(78svh, 760px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background-position: 62% center !important;
+  }
+
+  .subscription-lightbox-logo {
+    width: min(48vw, 176px) !important;
+  }
+
+  .subscription-lightbox h2 {
+    max-width: 12.4ch !important;
+    font-size: clamp(2rem, 9.6vw, 3.65rem) !important;
+    line-height: 0.96 !important;
+  }
+
+  .subscription-lightbox-content > p:not(.eyebrow),
+  .subscription-lightbox-success p:not(.eyebrow) {
+    max-width: 34ch !important;
+    font-size: clamp(0.9rem, 3.2vw, 1.02rem) !important;
+  }
+
+  .subscription-lightbox-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+  }
+
+  .whatsapp-float {
+    right: 12px !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .site-header .brand {
+    width: min(56vw, 190px) !important;
+  }
+
+  .cart-button,
+  .menu-toggle,
+  .menu-button,
+  .icon-button {
+    width: 43px !important;
+    min-width: 43px !important;
+    height: 43px !important;
+  }
+
+  .plate-hero {
+    padding-inline: 18px !important;
+    padding-bottom: 34px !important;
+  }
+
+  .plate-hero-copy h1 {
+    font-size: clamp(1.92rem, 10.8vw, 2.72rem) !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  .plate-hero-visual-stage {
+    width: min(138vw, 500px) !important;
+    margin-right: -54vw !important;
+    margin-top: -8px !important;
+  }
+
+  .plate-hero-vectors::before {
+    left: 3vw !important;
+    top: 18svh !important;
+    width: min(98vw, 360px) !important;
+    opacity: 0.12 !important;
+  }
+
+  .hero-benefits p {
+    max-width: 28ch !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-bottom: 228px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: -68vw !important;
+    width: 164vw !important;
+  }
+
+  .meal-prep-copy h2,
+  .membership h2,
+  .editorial-copy h2,
+  .food-story-strip strong {
+    font-size: clamp(1.66rem, 9vw, 2.22rem) !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .membership .community-benefits {
+    grid-template-columns: 1fr !important;
+  }
+
+  .membership .community-benefits article {
+    border-right: 0 !important;
+  }
+
+  .membership .community-benefits article:nth-last-child(-n + 2) {
+    border-bottom: 1px solid rgba(244, 234, 219, 0.1) !important;
+  }
+
+  .membership .community-benefits article:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .subscription-lightbox {
+    width: calc(100vw - 18px) !important;
+    height: min(82svh, 720px) !important;
+  }
+
+  .subscription-lightbox-benefits {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .plate-hero-copy h1,
+  .editorial-copy h2,
+  .food-story-strip strong,
+  .meal-prep-copy h2,
+  .membership h2 {
+    letter-spacing: 0.07em !important;
+  }
+
+  .plate-hero-primary,
+  .editorial-cta,
+  .section-cta,
+  .membership-cta,
+  .offer-card a,
+  .meal-prep-copy a {
+    width: 100% !important;
   }
 }

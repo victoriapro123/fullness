@@ -2876,6 +2876,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-preps");
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
@@ -4572,6 +4573,36 @@ function App() {
       {item.label}
     </a>
   ));
+
+  const activeMealPrepCount = adminItems.filter((item) => item.isActive).length;
+  const adminModuleItems = [
+    {
+      id: "meal-preps",
+      label: "Meal preps",
+      description: `${adminItems.length} configurados · ${activeMealPrepCount} activos`,
+      Icon: Utensils
+    },
+    {
+      id: "shop",
+      label: "Tienda",
+      description: "Hero, CTA y bloque de suscripción",
+      Icon: Store
+    },
+    {
+      id: "lightbox",
+      label: "Lightbox",
+      description: subscriptionPopupForm.enabled ? "Popup activo" : "Popup inactivo",
+      Icon: Sparkles
+    },
+    {
+      id: "community",
+      label: "Comunidad",
+      description: `${communityActivities.length} actividades`,
+      Icon: Users
+    }
+  ];
+  const currentAdminModule =
+    adminModuleItems.find((item) => item.id === activeBackofficeModule) || adminModuleItems[0];
   const floatingActionsHidden =
     cartOpen ||
     accountOpen ||
@@ -5090,7 +5121,8 @@ function App() {
             <header className="backoffice-header">
               <div>
                 <p className="eyebrow">Backoffice</p>
-                <h2 id="backoffice-title">Meal preps</h2>
+                <h2 id="backoffice-title">Panel Fullness</h2>
+                <p className="backoffice-header-subtitle">Gestiona contenido, tienda y comunidad desde un solo lugar.</p>
               </div>
               <div className="backoffice-header-actions">
                 {activeIsAdmin && (
@@ -5131,7 +5163,35 @@ function App() {
                   </p>
                 )}
 
-                <div className="backoffice-layout backoffice-layout-with-community">
+                <div className="backoffice-dashboard">
+                  <aside className="backoffice-module-nav" aria-label="Módulos del backoffice">
+                    <div className="backoffice-module-summary">
+                      <span>{currentAdminModule.label}</span>
+                      <strong>{currentAdminModule.description}</strong>
+                    </div>
+                    <div className="backoffice-module-buttons" role="tablist" aria-label="Secciones del backoffice">
+                      {adminModuleItems.map(({ id, label, description, Icon }) => (
+                        <button
+                          className={`backoffice-module-button ${activeBackofficeModule === id ? "is-active" : ""}`}
+                          key={id}
+                          type="button"
+                          role="tab"
+                          aria-selected={activeBackofficeModule === id}
+                          onClick={() => setActiveBackofficeModule(id)}
+                        >
+                          <Icon size={18} />
+                          <span>
+                            <strong>{label}</strong>
+                            <small>{description}</small>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+
+                  <div className="backoffice-module-content">
+                    {activeBackofficeModule === "meal-preps" && (
+                      <div className="backoffice-layout backoffice-mealprep-layout">
                   <aside className="backoffice-list" aria-label="Meal preps configurados">
                     <div className="backoffice-list-top">
                       <h3>Configurados</h3>
@@ -5473,9 +5533,11 @@ function App() {
                       </button>
                     </div>
                   </form>
+                      </div>
+                    )}
 
-                  <aside className="backoffice-activities" aria-label="Tienda y comunidad">
-                    <section className="backoffice-side-panel" aria-labelledby="shop-settings-title">
+                    {activeBackofficeModule === "shop" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="shop-settings-title">
                       <div className="backoffice-list-top">
                         <h3 id="shop-settings-title">Tienda</h3>
                       </div>
@@ -5565,8 +5627,10 @@ function App() {
                         </button>
                       </form>
                     </section>
+                    )}
 
-                    <section className="backoffice-side-panel" aria-labelledby="subscription-popup-admin-title">
+                    {activeBackofficeModule === "lightbox" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="subscription-popup-admin-title">
                       <div className="backoffice-list-top">
                         <h3 id="subscription-popup-admin-title">Lightbox</h3>
                       </div>
@@ -5643,8 +5707,10 @@ function App() {
                         </div>
                       </form>
                     </section>
+                    )}
 
-                    <section className="backoffice-side-panel" aria-labelledby="community-admin-title">
+                    {activeBackofficeModule === "community" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="community-admin-title">
                       <div className="backoffice-list-top">
                         <h3 id="community-admin-title">Comunidad</h3>
                       </div>
@@ -5693,7 +5759,8 @@ function App() {
                       })}
                     </div>
                     </section>
-                  </aside>
+                    )}
+                  </div>
                 </div>
               </>
             )}

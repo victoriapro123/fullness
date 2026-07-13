@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manual Cecilia | Backoffice Fullness Lab</title>
+    <style>
+      :root {
+        --ink: #17110c;
+        --cream: #f4eadb;
+        --paper: #fff8ef;
+        --beet: #8e263c;
+        --beet-deep: #300814;
+        --plum: #16060c;
+        --muted: #8e806f;
+        --sage: #70825f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 1600px;
+        height: 900px;
+        overflow: hidden;
+        color: var(--cream);
+        background: var(--plum);
+        font-family: "Avenir Next", "Inter", Arial, sans-serif;
+      }
+
+      .slide {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        width: 1600px;
+        height: 900px;
+        padding: 74px 86px 66px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 86% 14%, rgba(142, 38, 60, 0.28), transparent 30%),
+          radial-gradient(circle at 10% 90%, rgba(244, 234, 219, 0.09), transparent 28%),
+          linear-gradient(135deg, #13060b 0%, #251019 48%, #080706 100%);
+      }
+
+      .slide.light {
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 88% 10%, rgba(142, 38, 60, 0.12), transparent 31%),
+          radial-gradient(circle at 8% 92%, rgba(112, 130, 95, 0.18), transparent 30%),
+          linear-gradient(135deg, #fff8ef 0%, #efe3d1 100%);
+      }
+
+      .slide::before {
+        content: "";
+        position: absolute;
+        inset: 38px;
+        border: 1px solid rgba(244, 234, 219, 0.16);
+        pointer-events: none;
+      }
+
+      .slide.light::before {
+        border-color: rgba(81, 20, 37, 0.16);
+      }
+
+      .brand {
+        position: absolute;
+        top: 54px;
+        right: 72px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: inherit;
+      }
+
+      .brand img {
+        width: 168px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .brand span {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        opacity: 0.7;
+      }
+
+      .eyebrow {
+        margin: 0 0 18px;
+        color: #c98699;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .light .eyebrow {
+        color: var(--beet);
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-family: "Avenir Next", "Inter", Arial, sans-serif;
+        font-weight: 500;
+        letter-spacing: -0.015em;
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 920px;
+        font-size: 92px;
+        line-height: 0.95;
+      }
+
+      h2 {
+        max-width: 860px;
+        font-size: 68px;
+        line-height: 0.98;
+      }
+
+      .lead {
+        max-width: 760px;
+        margin: 28px 0 0;
+        color: rgba(244, 234, 219, 0.78);
+        font-size: 29px;
+        line-height: 1.35;
+      }
+
+      .light .lead {
+        color: rgba(23, 17, 12, 0.68);
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+        align-self: center;
+      }
+
+      .cover-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(420px, 0.65fr);
+        gap: 72px;
+        align-items: center;
+      }
+
+      .cover-card {
+        align-self: end;
+        padding: 34px;
+        border: 1px solid rgba(244, 234, 219, 0.15);
+        background: rgba(244, 234, 219, 0.06);
+      }
+
+      .cover-card p {
+        margin: 0;
+        color: rgba(244, 234, 219, 0.76);
+        font-size: 25px;
+        line-height: 1.35;
+      }
+
+      .module-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 22px;
+        margin-top: 42px;
+      }
+
+      .module-card,
+      .step-card,
+      .note-card {
+        min-height: 190px;
+        padding: 28px;
+        border: 1px solid rgba(81, 20, 37, 0.14);
+        background: rgba(255, 250, 242, 0.74);
+      }
+
+      .slide:not(.light) .module-card,
+      .slide:not(.light) .step-card,
+      .slide:not(.light) .note-card {
+        border-color: rgba(244, 234, 219, 0.14);
+        background: rgba(244, 234, 219, 0.07);
+      }
+
+      .module-card strong,
+      .step-card strong,
+      .note-card strong {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--beet);
+        font-size: 25px;
+      }
+
+      .slide:not(.light) .module-card strong,
+      .slide:not(.light) .step-card strong,
+      .slide:not(.light) .note-card strong {
+        color: #e2a5b4;
+      }
+
+      .module-card p,
+      .step-card p,
+      .note-card p {
+        margin: 0;
+        color: rgba(23, 17, 12, 0.68);
+        font-size: 22px;
+        line-height: 1.34;
+        overflow-wrap: anywhere;
+      }
+
+      .slide:not(.light) .module-card p,
+      .slide:not(.light) .step-card p,
+      .slide:not(.light) .note-card p {
+        color: rgba(244, 234, 219, 0.72);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+        gap: 64px;
+        align-items: center;
+      }
+
+      .list {
+        display: grid;
+        gap: 16px;
+        margin-top: 34px;
+      }
+
+      .list-item {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+        font-size: 25px;
+        line-height: 1.28;
+      }
+
+      .bullet {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        color: var(--cream);
+        background: var(--beet);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .visual-panel {
+        position: relative;
+        min-height: 520px;
+        padding: 38px;
+        border: 1px solid rgba(244, 234, 219, 0.16);
+        background:
+          linear-gradient(160deg, rgba(244, 234, 219, 0.1), rgba(244, 234, 219, 0.02)),
+          rgba(10, 7, 6, 0.34);
+      }
+
+      .light .visual-panel {
+        border-color: rgba(81, 20, 37, 0.14);
+        background:
+          linear-gradient(160deg, rgba(142, 38, 60, 0.08), rgba(255, 255, 255, 0.5)),
+          rgba(255, 250, 242, 0.78);
+      }
+
+      .mock-panel {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 16px;
+        height: 100%;
+      }
+
+      .mock-nav {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+
+      .mock-nav span,
+      .mock-field,
+      .mock-card {
+        border: 1px solid rgba(81, 20, 37, 0.12);
+        background: rgba(255, 250, 242, 0.8);
+      }
+
+      .mock-nav span {
+        min-height: 56px;
+        padding: 17px 14px;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .mock-nav span:first-child {
+        color: var(--cream);
+        background: var(--beet);
+      }
+
+      .mock-work {
+        display: grid;
+        grid-template-columns: 210px 1fr;
+        gap: 14px;
+      }
+
+      .mock-list,
+      .mock-form {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+        padding: 16px;
+        border: 1px solid rgba(81, 20, 37, 0.12);
+        background: rgba(255, 248, 239, 0.72);
+      }
+
+      .mock-card {
+        min-height: 70px;
+      }
+
+      .mock-field {
+        min-height: 48px;
+      }
+
+      .mock-field.large {
+        min-height: 112px;
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 42px;
+      }
+
+      .timeline .step-card {
+        min-height: 240px;
+      }
+
+      .danger {
+        color: #ffced8;
+      }
+
+      .footer {
+        position: absolute;
+        left: 86px;
+        right: 86px;
+        bottom: 42px;
+        display: flex;
+        justify-content: space-between;
+        color: currentColor;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.62;
+      }
+
+      .plate {
+        position: absolute;
+        right: -80px;
+        bottom: -160px;
+        width: 640px;
+        opacity: 0.92;
+        filter: drop-shadow(0 32px 54px rgba(0, 0, 0, 0.38));
+      }
+
+      .bag {
+        position: absolute;
+        right: -40px;
+        bottom: -60px;
+        width: 620px;
+        opacity: 0.96;
+        filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.22));
+      }
+
+      .quote {
+        max-width: 940px;
+        margin-top: 38px;
+        padding-left: 30px;
+        border-left: 4px solid var(--beet);
+        color: rgba(244, 234, 219, 0.78);
+        font-size: 34px;
+        line-height: 1.24;
+      }
+
+      .light .quote {
+        color: rgba(23, 17, 12, 0.72);
+      }
+    </style>
+  </head>
+  <body>
+    <main id="deck"></main>
+
+    <script>
+      const assets = {
+        logo: "../../public/assets/fullness-lab-logo-horizontal-marfil.png",
+        plate: "../../src/assets/fullness-hero-plate-cutout.png",
+        bag: "../../src/assets/fullness-mealprep-band-label-fullness.png"
+      };
+
+      const slides = [
+        {
+          theme: "dark",
+          eyebrow: "Manual operativo",
+          title: "Backoffice Fullness Lab",
+          lead: "Guia visual para administrar meal preps, tienda, lightbox, comunidad y preparar Mercado Pago.",
+          aside: "Pensado para Cecilia: acciones claras, textos breves y controles agrupados por tarea.",
+          media: "plate"
+        },
+        {
+          theme: "light",
+          eyebrow: "Mapa del panel",
+          title: "Un backoffice separado por tareas",
+          lead: "La navegacion interna evita mezclar formularios largos y permite trabajar por modulo.",
+          modules: [
+            ["Meal preps", "Crear, editar, publicar y ordenar productos."],
+            ["Tienda", "Hero, CTAs, metricas y bloque de suscripcion."],
+            ["Lightbox", "Popup de campana, textos, botones e imagen."],
+            ["Comunidad", "Actividades visibles y proximas fechas."]
+          ]
+        },
+        {
+          theme: "light",
+          eyebrow: "Acceso",
+          title: "Entrar como administradora",
+          lead: "El panel solo aparece si la cuenta tiene permiso real de administracion.",
+          list: [
+            "Entrar al sitio e iniciar sesion.",
+            "Abrir Backoffice desde el menu o visitar /#backoffice.",
+            "Si no aparece, cerrar sesion y volver a entrar.",
+            "La cuenta debe tener profiles.is_admin = true en Supabase."
+          ],
+          visual: "mock"
+        },
+        {
+          theme: "dark",
+          eyebrow: "Meal preps",
+          title: "Crear o editar un producto",
+          lead: "Completa nombre, slug, tipo, precio, orden y estado. El switch Activo define si se publica.",
+          list: [
+            "Tipo: Plan o Familiar.",
+            "Slug: minusculas, sin espacios.",
+            "Precio CLP: solo numeros.",
+            "Orden: controla la posicion en listados."
+          ]
+        },
+        {
+          theme: "light",
+          eyebrow: "Fotos y nutricion",
+          title: "La ficha debe quedar completa antes de publicar",
+          lead: "Las fotos construyen confianza; la informacion nutricional ayuda a explicar el valor Fullness.",
+          modules: [
+            ["Principal", "Imagen base del producto."],
+            ["Hover", "Imagen secundaria o detalle visual."],
+            ["Ingredientes", "Lista clara por linea."],
+            ["JSON", "Si hay duda, dejar {}."]
+          ]
+        },
+        {
+          theme: "dark",
+          eyebrow: "Tienda",
+          title: "Editar la vitrina sin tocar codigo",
+          lead: "Desde Tienda se administran hero, imagen principal, botones, metricas y bloque de suscripcion.",
+          list: [
+            "Usar titulos breves y legibles.",
+            "Revisar mobile si el texto crece.",
+            "Mantener tono premium, claro y consciente.",
+            "Evitar prometer solo rapidez."
+          ],
+          media: "bag"
+        },
+        {
+          theme: "light",
+          eyebrow: "Lightbox",
+          title: "Activar campanas con cuidado",
+          lead: "El popup es mejor para momentos puntuales: lista de espera, lanzamiento, alianza o promocion.",
+          modules: [
+            ["Activo / Inactivo", "Controla si se muestra."],
+            ["Texto grande", "Debe ser corto y directo."],
+            ["Botones", "Define la accion principal."],
+            ["Fondo", "Usar imagen con buen contraste."]
+          ]
+        },
+        {
+          theme: "dark",
+          eyebrow: "Comunidad",
+          title: "Agregar actividades visibles",
+          lead: "La gestion actual permite cargar fecha y descripcion para comunicar proximas actividades.",
+          list: [
+            "Agregar fecha.",
+            "Escribir descripcion simple.",
+            "Eliminar si la actividad cambia.",
+            "Esta gestion es temporal hasta crear tabla dedicada en Supabase."
+          ]
+        },
+        {
+          theme: "light",
+          eyebrow: "Antes de publicar",
+          title: "Checklist rapido",
+          lead: "Una revision corta evita errores visibles y pedidos con informacion incompleta.",
+          modules: [
+            ["Activo", "Confirmar que el item esta encendido."],
+            ["Precio", "Validar monto final en CLP."],
+            ["Fotos", "Revisar principal y hover."],
+            ["Mobile", "Probar lectura en celular."]
+          ]
+        },
+        {
+          theme: "dark",
+          eyebrow: "Mercado Pago",
+          title: "Lo que falta para cobrar online",
+          lead: "La base de datos y variables estan previstas, pero el checkout real aun necesita API routes server-side.",
+          list: [
+            "Crear orden desde backend.",
+            "Crear preferencia o pago en Mercado Pago.",
+            "Registrar payments y payment_events.",
+            "Recibir y validar webhooks."
+          ]
+        },
+        {
+          theme: "light",
+          eyebrow: "Credenciales",
+          title: "Variables que deben vivir en produccion",
+          lead: "La public key puede usarse en frontend. El access token y webhook secret son privados.",
+          modules: [
+            ["Public key", "VITE_MERCADOPAGO_PUBLIC_KEY<br>Frontend / Bricks."],
+            ["Access token", "MERCADOPAGO_ACCESS_TOKEN<br>Solo backend."],
+            ["Webhook secret", "MERCADOPAGO_WEBHOOK_SECRET<br>Validacion webhook."],
+            ["Nunca compartir", "No pegar tokens en codigo visible."]
+          ]
+        },
+        {
+          theme: "dark",
+          eyebrow: "Paso a produccion",
+          title: "Probar antes de vender",
+          lead: "El flujo debe validarse completo: compra, pago, webhook, orden y conciliacion.",
+          timeline: [
+            ["1", "Credenciales de prueba"],
+            ["2", "Compra de prueba"],
+            ["3", "Webhook 200/201"],
+            ["4", "Supabase actualizado"],
+            ["5", "Compra real baja"]
+          ],
+          quote: "Primero probamos con ambiente test. Despues pasamos a credenciales productivas y validamos con una compra real de bajo monto."
+        }
+      ];
+
+      const params = new URLSearchParams(window.location.search);
+      const slideIndex = Math.max(0, Math.min(slides.length - 1, Number(params.get("slide") || 1) - 1));
+      const slide = slides[slideIndex];
+
+      function renderList(items) {
+        return `<div class="list">${items.map((item, index) => `
+          <div class="list-item"><span class="bullet">${index + 1}</span><span>${item}</span></div>
+        `).join("")}</div>`;
+      }
+
+      function renderModules(items) {
+        return `<div class="module-grid">${items.map(([title, body]) => `
+          <article class="module-card"><strong>${title}</strong><p>${body}</p></article>
+        `).join("")}</div>`;
+      }
+
+      function renderTimeline(items) {
+        return `<div class="timeline">${items.map(([number, body]) => `
+          <article class="step-card"><strong>${number}</strong><p>${body}</p></article>
+        `).join("")}</div>`;
+      }
+
+      function renderMock() {
+        return `
+          <div class="visual-panel">
+            <div class="mock-panel">
+              <nav class="mock-nav">
+                <span>Meal preps</span><span>Tienda</span><span>Lightbox</span><span>Comunidad</span>
+              </nav>
+              <div class="mock-work">
+                <div class="mock-list"><div class="mock-card"></div><div class="mock-card"></div><div class="mock-card"></div></div>
+                <div class="mock-form"><div class="mock-field"></div><div class="mock-field"></div><div class="mock-field large"></div><div class="mock-field"></div></div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      const isCover = slide.aside;
+      const themeClass = slide.theme === "light" ? "light" : "";
+      const mediaHtml = slide.media ? `<img class="${slide.media === "bag" ? "bag" : "plate"}" src="${assets[slide.media]}" alt="" />` : "";
+      const bodyHtml = slide.modules
+        ? renderModules(slide.modules)
+        : slide.timeline
+          ? renderTimeline(slide.timeline)
+          : slide.list
+            ? renderList(slide.list)
+            : "";
+
+      document.getElementById("deck").innerHTML = `
+        <section class="slide ${themeClass}">
+          <div class="brand"><span>Fullness Lab</span><img src="${assets.logo}" alt="" /></div>
+          ${isCover ? `
+            <div class="content cover-grid">
+              <div>
+                <p class="eyebrow">${slide.eyebrow}</p>
+                <h1>${slide.title}</h1>
+                <p class="lead">${slide.lead}</p>
+              </div>
+              <aside class="cover-card"><p>${slide.aside}</p></aside>
+            </div>
+          ` : `
+            <div class="content ${slide.visual ? "two-col" : ""}">
+              <div>
+                <p class="eyebrow">${slide.eyebrow}</p>
+                <h2>${slide.title}</h2>
+                <p class="lead">${slide.lead}</p>
+                ${bodyHtml}
+                ${slide.quote ? `<p class="quote">${slide.quote}</p>` : ""}
+              </div>
+              ${slide.visual === "mock" ? renderMock() : ""}
+            </div>
+          `}
+          ${mediaHtml}
+          <div class="footer"><span>Manual Cecilia</span><span>${String(slideIndex + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}</span></div>
+        </section>`;
+    </script>
+  </body>
+</html>

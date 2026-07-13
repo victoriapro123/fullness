@@ -81,6 +81,7 @@ La solucion actual incluye:
 - Ajuste composicion secciones 3/4 2026-07-02: en la capa `.philosophy-illustrations`, la col/planta (`planta30.png`) y la zanahoria (`zanahoria30.png`) deben leerse un 25% mas grandes y mas abajo que la version previa, siempre por debajo del plato editorial en stacking. Los tomates (`tomates30.png`) quedan en primer plano con `top: -10px` respecto a `.food-story-strip` / "Alimentarse es...".
 - Ajuste brocoli seccion filosofia 2026-07-02: `bocoli30.png` dentro de `.philosophy-illustration-broccoli` debe quedar mas bajo, cerca del ultimo cuarto vertical de la seccion `Nuestra filosofia`, usando `top` alto en desktop/tablet/mobile y conservando z-index de ilustracion para quedar siempre detras del plato.
 - Ajuste responsive premium 2026-07-02: la home debe priorizar una navegacion movil sin elementos funcionales montados ni fuera de cuadro. En breakpoints `<= 860px`, reforzar al final de `src/styles.css` que header, CTAs, beneficios, filosofia, meal prep, comunidad, oferta y footer usen `max-width: 100%`, grillas de una columna cuando corresponda y nombres reales del JSX (`header-actions`, `menu-toggle`, `footer-column`). Solo ilustraciones decorativas, platos y fotos editoriales pueden quedar fuera de cuadro para mantener la composicion visual premium.
+- Ajuste mobile editorial 2026-07-12: en movil/tablet (`<= 860px`) las ilustraciones botanicas deben conservar la atmosfera del desktop, pero siempre con baja opacidad, `mix-blend-mode: screen` y posiciones laterales o traseras para no competir con textos, CTAs, platos ni fotos. El hero, beneficios, filosofia/historia, meal prep, comunidad, oferta y footer deben evitar scroll horizontal y solapes; si algo debe sacrificarse, se sacrifica decoracion antes que legibilidad. La lightbox de suscripcion debe sentirse editorial flotante: bordes rectos, borde difuminado de 1px, glow externo suave y contenido completo dentro de la ventana.
 - Ajuste bolsas Meal Prep 2026-07-02: la imagen de bolsas de la seccion Meal Prep debe usar la etiqueta circular entregada por la clienta (`Etiqueta de bolsas Fullness.png`), no solo el isotipo oficial aislado ni una marca generica. El asset final conectado es `src/assets/fullness-mealprep-band-label-fullness.png`, construido como PNG RGBA transparente desde una base fotografica generada de 5 bolsas con comida preparada saludable; la etiqueta real se compone encima localmente. Evitar volver a versiones vectoriales/procedurales o con etiqueta negra rectangular.
 
 La app todavia funciona principalmente como demo visual en carrito y checkout. Hay base Supabase versionada y aplicada, cliente de lectura/escritura de menus y backoffice inicial de menus; falta persistir carrito/checkout desde la UI y completar el flujo productivo de compra.
@@ -627,6 +628,8 @@ Cambio:
 - Se reemplaza el plato de la escena editorial de secciones 3/4 por `fullness-story-plate-vegetable-cutout.png`, recortado desde la imagen final entregada por el usuario y guardado como PNG con fondo transparente.
 - QA visual posterior: el plato de la escena editorial no debe invadir la seccion clara de Meal Prep, porque se revelan detalles del recorte. Mantenerlo dentro del bloque oscuro con tamano y posicion responsiva. Los iconos del lightbox deben verse con contraste suficiente; la opacidad editorial no puede dejarlos ilegibles.
 - Ajuste editorial posterior: si la franja de beneficios del lightbox se siente como interfaz de app, eliminar los iconos visibles y resolverla como microtexto editorial light con separadores finos. El contenedor del popup debe sentirse como una pieza de campana visual: borde muy sutil, radio moderado, tipografia ligera y composicion proporcional, no como modal de software.
+- Ajuste de borde del lightbox: la ventana de campana debe evitar esquinas redondeadas de app. Usar esquinas rectas (`0px`), borde difuso muy sutil y una iluminacion externa calida para que se perciba flotando sobre el sitio, sin parecer una tarjeta de interfaz.
+- El borde difuso del lightbox debe mantener una suavidad cercana a `1px`, extendiendose levemente fuera del contenedor para evitar un filo digital duro.
 
 Impacto retroactivo:
 - La suscripcion general por correo del footer y la inscripcion de comunidad siguen separadas.
@@ -635,6 +638,21 @@ Impacto retroactivo:
 Impacto proactivo:
 - Cuando se cree persistencia definitiva, migrar `fullness_subscription_popup_subscribers` a una tabla de leads/suscripciones.
 - Si el lightbox se usa para alianzas, conviene agregar campos estructurados para logo aliado, lista de beneficios y enlace secundario en vez de dejarlos solo como texto.
+
+### Nota 2026-07-11
+
+Cambio:
+- El backoffice se reorganiza como panel modular con navegacion interna: `Meal preps`, `Tienda`, `Lightbox` y `Comunidad`. La logica de guardado existente se mantiene, pero los formularios secundarios dejan de convivir en una columna lateral larga y pasan a mostrarse por modulo activo.
+- Se agrega `demo-clienta/manual-cecilia-backoffice-mercadopago.md` como manual operativo para Cecilia. Incluye acceso al backoffice, uso de modulos, checklist de publicacion y pasos de configuracion Mercado Pago.
+- Se agrega una version visual en imagenes en `demo-clienta/manual-cecilia-presentacion/`: fuente editable `index.html`, exportador `export-slides.mjs`, README y 12 laminas PNG 1600x900 en `slides/`.
+
+Impacto retroactivo:
+- El backoffice sigue siendo una SPA protegida por `profiles.is_admin`; no se agregan permisos nuevos ni rutas separadas.
+- Mercado Pago continua documentado como pendiente de API routes server-side: existen variables y esquema de base, pero el checkout real aun no cobra online desde la UI.
+
+Impacto proactivo:
+- Si el backoffice sigue creciendo, separar el formulario de meal preps, los ajustes de tienda, el lightbox y comunidad en componentes propios para bajar el tamano de `src/main.jsx`.
+- Cuando se implemente Mercado Pago, actualizar el manual de Cecilia con la URL real de webhook, flujo de pruebas y pasos de conciliacion.
 
 ## Formato Recomendado Para Nuevas Notas
 
