@@ -19105,3 +19105,417 @@ main {
     width: 100% !important;
   }
 }
+
+/* Final responsive QA: prevent modal/section text collisions on laptop and mobile. */
+.meal-prep-feature,
+.fullness-offer,
+.offer-card {
+  color: var(--ink) !important;
+}
+
+.meal-prep-copy h2,
+.meal-prep-copy h2 span,
+.offer-card h3,
+.fullness-offer h2 {
+  color: var(--ink) !important;
+}
+
+.meal-prep-copy p,
+.meal-prep-copy li,
+.fullness-offer p,
+.offer-card p {
+  color: rgba(23, 17, 12, 0.78) !important;
+}
+
+.meal-prep-copy .eyebrow,
+.fullness-offer .eyebrow,
+.offer-card .eyebrow {
+  color: var(--editorial-copper) !important;
+}
+
+.subscription-lightbox {
+  width: min(82vw, 1180px) !important;
+  height: min(76svh, 760px) !important;
+  padding: clamp(22px, 4.4svh, 42px) clamp(28px, 4.8vw, 58px) !important;
+}
+
+.subscription-lightbox-content {
+  align-content: start !important;
+  gap: clamp(8px, 1.35svh, 16px) !important;
+}
+
+.subscription-lightbox-logo {
+  width: min(172px, 40%) !important;
+}
+
+.subscription-lightbox h2 {
+  font-size: clamp(2.25rem, min(5.2vw, 8.1svh), 4.9rem) !important;
+  line-height: 0.94 !important;
+}
+
+.subscription-lightbox-content > p:not(.eyebrow),
+.subscription-lightbox-success p:not(.eyebrow) {
+  max-width: 46ch !important;
+  font-size: clamp(0.88rem, min(1.18vw, 1.85svh), 1.05rem) !important;
+  line-height: 1.38 !important;
+}
+
+.subscription-lightbox-benefits {
+  width: min(620px, 100%) !important;
+  margin: clamp(2px, 0.8svh, 8px) 0 clamp(4px, 0.9svh, 10px) !important;
+  border-top-color: rgba(244, 234, 219, 0.28) !important;
+  border-bottom-color: rgba(244, 234, 219, 0.2) !important;
+}
+
+.subscription-lightbox-benefits span {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: clamp(6px, 0.9svh, 9px) clamp(6px, 0.8vw, 12px) !important;
+  gap: 5px !important;
+  color: rgba(244, 234, 219, 0.78) !important;
+  font-size: clamp(0.48rem, min(0.68vw, 0.95svh), 0.58rem) !important;
+  line-height: 1.12 !important;
+}
+
+.subscription-lightbox-benefits img {
+  width: clamp(22px, 2.7svh, 30px) !important;
+  height: clamp(22px, 2.7svh, 30px) !important;
+  opacity: 0.82 !important;
+  filter: sepia(0.42) saturate(0.8) hue-rotate(292deg) brightness(1.25) contrast(0.94) !important;
+}
+
+.subscription-lightbox-actions {
+  width: min(430px, 100%) !important;
+  gap: clamp(8px, 1svh, 12px) !important;
+}
+
+.subscription-lightbox-primary,
+.subscription-lightbox-secondary {
+  min-height: clamp(42px, 5.3svh, 56px) !important;
+}
+
+@media (max-height: 720px) and (min-width: 700px) {
+  .subscription-lightbox {
+    height: min(82svh, 700px) !important;
+    padding-block: clamp(18px, 3.4svh, 28px) !important;
+  }
+
+  .subscription-lightbox-logo {
+    width: min(148px, 36%) !important;
+  }
+
+  .subscription-lightbox h2 {
+    max-width: 14ch !important;
+    font-size: clamp(2.05rem, min(4.8vw, 7.2svh), 4.2rem) !important;
+  }
+
+  .subscription-lightbox-benefits {
+    margin-block: 2px 6px !important;
+  }
+}
+
+@media (max-height: 620px) and (min-width: 700px) {
+  .subscription-lightbox-benefits {
+    display: none !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .plate-hero-visual-stage {
+    width: min(132vw, 590px) !important;
+    margin: -10px -28vw 0 0 !important;
+  }
+
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip {
+    isolation: isolate !important;
+  }
+
+  .philosophy-story-combo .food-editorial::before,
+  .philosophy-story-combo .food-story-strip::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    display: block !important;
+    pointer-events: none !important;
+    background:
+      linear-gradient(90deg, rgba(9, 8, 6, 0.98) 0%, rgba(9, 8, 6, 0.92) 46%, rgba(9, 8, 6, 0.54) 74%, rgba(9, 8, 6, 0.18) 100%) !important;
+  }
+
+  .philosophy-story-combo .editorial-copy,
+  .philosophy-story-combo .food-story-strip a {
+    position: relative !important;
+    z-index: 4 !important;
+    max-width: min(88vw, 400px) !important;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.72) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    z-index: 2 !important;
+    right: -58vw !important;
+    width: min(150vw, 620px) !important;
+  }
+
+  .about-page {
+    padding-bottom: max(110px, calc(78px + env(safe-area-inset-bottom))) !important;
+  }
+
+  .about-story-body {
+    padding-bottom: max(96px, calc(64px + env(safe-area-inset-bottom))) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .plate-hero-visual-stage {
+    width: min(144vw, 520px) !important;
+    margin-right: -42vw !important;
+    margin-top: -2px !important;
+  }
+
+  .philosophy-story-combo .food-editorial::before,
+  .philosophy-story-combo .food-story-strip::before {
+    background:
+      linear-gradient(180deg, rgba(9, 8, 6, 0.98) 0%, rgba(9, 8, 6, 0.94) 54%, rgba(9, 8, 6, 0.52) 78%, rgba(9, 8, 6, 0.76) 100%) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-bottom: 238px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: -74vw !important;
+    bottom: 0 !important;
+    width: 158vw !important;
+  }
+
+  .meal-prep-feature {
+    padding-top: 42px !important;
+  }
+
+  .meal-prep-feature::after {
+    background:
+      linear-gradient(90deg, rgba(239, 231, 215, 0.98) 0%, rgba(239, 231, 215, 0.92) 52%, rgba(239, 231, 215, 0.5) 100%) !important;
+  }
+
+  .meal-prep-copy {
+    max-width: min(92vw, 420px) !important;
+    padding-right: 0 !important;
+  }
+
+  .subscription-lightbox {
+    height: min(84svh, 720px) !important;
+    padding: clamp(20px, 5.4svh, 34px) clamp(18px, 6vw, 28px) !important;
+  }
+}
+
+/* 2026-07-14 final responsive hardening: no mounted text, no clipped editorial content. */
+.subscription-lightbox,
+.subscription-lightbox * {
+  box-sizing: border-box !important;
+}
+
+.subscription-lightbox-overlay {
+  overscroll-behavior: contain !important;
+  overflow: hidden !important;
+}
+
+.subscription-lightbox {
+  max-width: calc(100vw - clamp(24px, 6vw, 84px)) !important;
+  max-height: calc(100svh - clamp(24px, 7svh, 76px)) !important;
+  overflow: hidden !important;
+  display: grid !important;
+  align-items: center !important;
+}
+
+.subscription-lightbox-content,
+.subscription-lightbox-form,
+.subscription-lightbox-success {
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.subscription-lightbox-content {
+  display: grid !important;
+  align-content: center !important;
+}
+
+.subscription-lightbox-benefits {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.subscription-lightbox-benefits span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-align: center !important;
+  text-wrap: balance !important;
+}
+
+@media (max-width: 1200px), (max-height: 760px) {
+  .subscription-lightbox {
+    width: min(86vw, 1060px) !important;
+    height: min(78svh, 690px) !important;
+  }
+
+  .subscription-lightbox h2 {
+    max-width: 13.5ch !important;
+    font-size: clamp(2.15rem, min(4.8vw, 8svh), 4.45rem) !important;
+  }
+
+  .subscription-lightbox-benefits {
+    display: none !important;
+  }
+
+  .subscription-lightbox-actions {
+    margin-top: clamp(2px, 1svh, 10px) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .subscription-lightbox {
+    width: min(92vw, 460px) !important;
+    height: auto !important;
+    max-height: calc(100svh - 30px) !important;
+    min-height: min(520px, calc(100svh - 30px)) !important;
+    padding: clamp(20px, 7vw, 32px) !important;
+  }
+
+  .subscription-lightbox h2 {
+    max-width: 11ch !important;
+    font-size: clamp(2.05rem, 10vw, 3.2rem) !important;
+  }
+
+  .subscription-lightbox-content > p:not(.eyebrow),
+  .subscription-lightbox-success p:not(.eyebrow) {
+    max-width: 30ch !important;
+    font-size: clamp(0.86rem, 3.5vw, 0.98rem) !important;
+  }
+
+  .subscription-lightbox-primary,
+  .subscription-lightbox-secondary {
+    min-height: 46px !important;
+  }
+}
+
+.hero-benefits {
+  overflow: hidden !important;
+}
+
+.hero-benefits article {
+  min-width: 0 !important;
+}
+
+.hero-benefits h2,
+.hero-benefits p {
+  max-width: 100% !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
+
+@media (max-width: 1180px) {
+  .hero-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    padding-inline: clamp(28px, 7vw, 88px) !important;
+  }
+
+  .hero-benefits article,
+  .hero-benefits article:nth-child(2n) {
+    border-right: 0 !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero-benefits {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+.meal-prep-feature,
+.fullness-offer,
+.offer-card {
+  color: var(--ink) !important;
+}
+
+.meal-prep-feature .meal-prep-copy,
+.fullness-offer .section-heading,
+.fullness-offer .offer-grid,
+.offer-card {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.meal-prep-feature .meal-prep-copy h2,
+.meal-prep-feature .meal-prep-copy h2 span,
+.fullness-offer h2,
+.offer-card h3 {
+  color: var(--ink) !important;
+}
+
+.meal-prep-feature .meal-prep-copy p,
+.meal-prep-feature .meal-prep-copy li,
+.fullness-offer p,
+.offer-card p {
+  color: rgba(23, 17, 12, 0.82) !important;
+}
+
+.meal-prep-feature::after {
+  z-index: 1 !important;
+  background:
+    linear-gradient(90deg, rgba(239, 231, 215, 0.98) 0%, rgba(239, 231, 215, 0.92) 31%, rgba(239, 231, 215, 0.52) 58%, rgba(239, 231, 215, 0.12) 100%) !important;
+}
+
+@media (max-width: 760px) {
+  .meal-prep-feature::after {
+    background:
+      linear-gradient(180deg, rgba(239, 231, 215, 0.99) 0%, rgba(239, 231, 215, 0.94) 48%, rgba(239, 231, 215, 0.68) 74%, rgba(239, 231, 215, 0.22) 100%) !important;
+  }
+}
+
+.about-page,
+.about-story {
+  overflow: visible !important;
+}
+
+.about-story {
+  padding-bottom: max(11rem, calc(8rem + env(safe-area-inset-bottom))) !important;
+}
+
+.about-story-body {
+  position: relative !important;
+  z-index: 3 !important;
+  padding-bottom: max(8rem, calc(6rem + env(safe-area-inset-bottom))) !important;
+}
+
+.about-story-body p {
+  overflow-wrap: break-word !important;
+}
+
+@media (max-width: 860px) {
+  .about-story {
+    padding-bottom: max(13rem, calc(9rem + env(safe-area-inset-bottom))) !important;
+  }
+
+  .about-story-body {
+    padding-bottom: max(10rem, calc(8rem + env(safe-area-inset-bottom))) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .philosophy-story-combo .food-editorial,
+  .philosophy-story-combo .food-story-strip {
+    min-height: auto !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-bottom: clamp(70px, 18vw, 130px) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-top: clamp(52px, 13vw, 82px) !important;
+  }
+}
