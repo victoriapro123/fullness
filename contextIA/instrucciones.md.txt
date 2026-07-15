@@ -655,6 +655,20 @@ Impacto proactivo:
 - Si el backoffice sigue creciendo, separar el formulario de meal preps, los ajustes de tienda, el lightbox y comunidad en componentes propios para bajar el tamano de `src/main.jsx`.
 - Cuando se implemente Mercado Pago, actualizar el manual de Cecilia con la URL real de webhook, flujo de pruebas y pasos de conciliacion.
 
+### Nota 2026-07-15
+
+Cambio:
+- En mobile/tablet, la franja clara `Meal Prep Antinflamatorio` debe mostrar las bolsas como imagen de producto en flujo, no como fondo absoluto recortado. El texto queda arriba con lectura limpia y la imagen queda abajo, levemente sobredimensionada y recortada solo lateralmente para que las bolsas se vean apetecibles.
+- En desktop/tablet, el plato del hero debe ocupar mejor el vacio central: se desplaza levemente hacia la izquierda y hacia arriba con reglas finales sobre `.plate-hero-visual-stage`, sin tocar el bloque de texto ni la composicion mobile.
+
+Impacto retroactivo:
+- Se corrige el comportamiento anterior donde la imagen de bolsas competia con el degradado claro y quedaba lavada, cortada o poco clara en version movil.
+- Se corrige la sensacion de exceso de aire entre copy y plato en el hero cuando el ancho permite acercar la imagen sin montar elementos.
+
+Impacto proactivo:
+- Si se vuelve a tocar `meal-prep-feature`, mantener la regla mobile al final del CSS o migrarla a un componente/hoja modular para no perder prioridad de cascada.
+- Si se vuelve a tocar el hero, priorizar `top/right/width` de `.plate-hero-visual-stage` por breakpoint antes de cambiar escala global del plato, porque la escala afecta el equilibrio con el texto.
+
 ## Formato Recomendado Para Nuevas Notas
 
 Usar este formato dentro del ambito correspondiente:

@@ -19519,3 +19519,122 @@ main {
     padding-top: clamp(52px, 13vw, 82px) !important;
   }
 }
+
+/* 2026-07-15: en mobile/tablet la franja clara debe vender las bolsas,
+   no esconderlas como textura de fondo ni taparlas con el degradado. */
+@media (max-width: 860px) {
+  .meal-prep-feature {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    min-height: auto !important;
+    padding: clamp(46px, 10vw, 70px) clamp(20px, 6vw, 42px) 0 !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at 82% 78%, rgba(111, 76, 64, 0.08), transparent 32%),
+      linear-gradient(180deg, #f4eadb 0%, #e9dece 100%) !important;
+  }
+
+  .meal-prep-feature::before {
+    z-index: 1 !important;
+    opacity: 0.08 !important;
+  }
+
+  .meal-prep-feature::after {
+    z-index: 2 !important;
+    pointer-events: none !important;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(244, 234, 219, 0.99) 0%,
+        rgba(244, 234, 219, 0.98) 42%,
+        rgba(244, 234, 219, 0.78) 56%,
+        rgba(244, 234, 219, 0.24) 74%,
+        rgba(244, 234, 219, 0) 100%
+      ) !important;
+  }
+
+  .meal-prep-copy {
+    position: relative !important;
+    z-index: 5 !important;
+    max-width: min(88vw, 430px) !important;
+    padding-right: 0 !important;
+  }
+
+  .meal-prep-visual-link {
+    position: relative !important;
+    inset: auto !important;
+    z-index: 3 !important;
+    display: block !important;
+    width: min(118vw, 680px) !important;
+    max-width: none !important;
+    margin: clamp(20px, 5vw, 34px) max(-46px, -6vw) 0 auto !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .meal-prep-visual-link img {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    opacity: 1 !important;
+    filter: saturate(1.04) contrast(1.04) brightness(1.01) !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .meal-prep-feature {
+    padding: 42px 20px 0 !important;
+  }
+
+  .meal-prep-feature::after {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(244, 234, 219, 0.995) 0%,
+        rgba(244, 234, 219, 0.98) 43%,
+        rgba(244, 234, 219, 0.72) 58%,
+        rgba(244, 234, 219, 0.2) 76%,
+        rgba(244, 234, 219, 0) 100%
+      ) !important;
+  }
+
+  .meal-prep-copy {
+    max-width: min(88vw, 390px) !important;
+  }
+
+  .meal-prep-visual-link {
+    width: min(124vw, 560px) !important;
+    margin: -6px -20vw 0 -11vw !important;
+  }
+}
+
+/* 2026-07-15: el plato del hero debe ocupar mejor el centro visual sin invadir el texto. */
+@media (min-width: 861px) {
+  .plate-hero-visual-stage {
+    top: 49% !important;
+    right: clamp(18px, 3vw, 52px) !important;
+    width: min(66vw, 1280px) !important;
+  }
+}
+
+@media (min-width: 1281px) {
+  .plate-hero-visual-stage {
+    top: 48% !important;
+    right: clamp(84px, 6vw, 150px) !important;
+  }
+}
+
+@media (min-width: 1680px) {
+  .plate-hero-visual-stage {
+    top: 47% !important;
+    right: clamp(110px, 7vw, 180px) !important;
+    width: min(66vw, 1360px) !important;
+  }
+}
