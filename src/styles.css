@@ -19638,3 +19638,350 @@ main {
     width: min(66vw, 1360px) !important;
   }
 }
+
+/* 2026-07-15: mobile hero plate must occupy the empty lower space, not wait at the fold. */
+@media (max-width: 860px) {
+  .plate-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+
+  .plate-hero-copy {
+    z-index: 5 !important;
+  }
+
+  .plate-hero-visual-stage {
+    position: absolute !important;
+    inset: auto auto -34px auto !important;
+    right: -34vw !important;
+    width: min(124vw, 700px) !important;
+    max-height: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 1 !important;
+    animation: none !important;
+  }
+
+  .intro-scroll-consumed .plate-hero-visual-stage {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .plate-hero-visual-stage {
+    bottom: -18px !important;
+    right: -50vw !important;
+    width: min(146vw, 574px) !important;
+  }
+}
+
+/* 2026-07-15: shop/mobile hero illustration belongs in the right-side empty space, lightly off-canvas. */
+@media (max-width: 760px) {
+  .route-shop .shop-hero-showcase {
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .route-shop .shop-hero-copy,
+  .route-shop .shop-hero-actions,
+  .route-shop .shop-hero-metrics {
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  .route-shop .shop-hero-botanical {
+    left: auto !important;
+    right: -15vw !important;
+    top: clamp(190px, 30svh, 300px) !important;
+    width: min(62vw, 300px) !important;
+    max-width: none !important;
+    opacity: 0.22 !important;
+    z-index: 0 !important;
+    transform: none !important;
+    filter: sepia(1) saturate(1.55) hue-rotate(302deg) brightness(0.62) !important;
+  }
+}
+
+/* 2026-07-15: mobile subscription comparison must fit the viewport without horizontal table scroll. */
+@media (max-width: 680px) {
+  .route-shop .shop-subscription-panel {
+    gap: 22px !important;
+    padding: 46px clamp(18px, 5.4vw, 24px) 52px !important;
+  }
+
+  .route-shop .shop-subscription-copy {
+    gap: 12px !important;
+  }
+
+  .route-shop .shop-subscription-copy h2 {
+    max-width: 11.8ch !important;
+    font-size: clamp(1.72rem, 9vw, 2.44rem) !important;
+    line-height: 1.04 !important;
+  }
+
+  .route-shop .shop-subscription-copy p:not(.eyebrow) {
+    max-width: 31ch !important;
+    overflow-wrap: normal !important;
+  }
+
+  .route-shop .shop-subscription-copy .shop-solid-button {
+    width: min(100%, 430px) !important;
+    min-width: 0 !important;
+  }
+
+  .route-shop .shop-subscription-benefits {
+    gap: 12px !important;
+  }
+
+  .route-shop .shop-subscription-benefits li {
+    grid-template-columns: 24px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    font-size: clamp(0.92rem, 4vw, 1.04rem) !important;
+  }
+
+  .route-shop .shop-comparison-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 4px 0 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .route-shop .shop-comparison-table table,
+  .route-shop .shop-comparison-table thead,
+  .route-shop .shop-comparison-table tbody,
+  .route-shop .shop-comparison-table tr,
+  .route-shop .shop-comparison-table th,
+  .route-shop .shop-comparison-table td {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .route-shop .shop-comparison-table table,
+  .route-shop .shop-comparison-table thead,
+  .route-shop .shop-comparison-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .route-shop .shop-comparison-table table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+  }
+
+  .route-shop .shop-comparison-table thead {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+  }
+
+  .route-shop .shop-comparison-table tbody {
+    display: grid !important;
+    gap: 10px !important;
+  }
+
+  .route-shop .shop-comparison-table tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    border: 1px solid rgba(184, 120, 120, 0.3) !important;
+    background: rgba(244, 234, 219, 0.032) !important;
+  }
+
+  .route-shop .shop-comparison-table tr::before {
+    content: attr(data-label);
+    grid-column: 1 / -1;
+    padding: 10px 12px 8px !important;
+    color: var(--fullness-highlight, #b87878) !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.12) !important;
+    font-family: var(--font-display) !important;
+    font-size: 0.66rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.17em !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+  }
+
+  .route-shop .shop-comparison-table tbody th {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  .route-shop .shop-comparison-table td {
+    display: block !important;
+    padding: 12px 11px 13px !important;
+    color: rgba(244, 234, 219, 0.82) !important;
+    border: 0 !important;
+    font-size: clamp(0.82rem, 3.65vw, 0.96rem) !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .route-shop .shop-comparison-table td + td {
+    border-left: 1px solid rgba(244, 234, 219, 0.13) !important;
+  }
+
+  .route-shop .shop-comparison-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 7px;
+    color: rgba(244, 234, 219, 0.5);
+    font-family: var(--font-display);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
+  .route-shop .shop-comparison-table .shop-solid-button {
+    width: 100% !important;
+    min-height: 54px !important;
+    margin-top: 10px !important;
+    padding: 13px 12px !important;
+    white-space: normal !important;
+    font-size: clamp(0.78rem, 3.35vw, 0.92rem) !important;
+    letter-spacing: 0.14em !important;
+    line-height: 1.18 !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .route-shop .shop-comparison-table tr {
+    grid-template-columns: 1fr !important;
+  }
+
+  .route-shop .shop-comparison-table td + td {
+    border-top: 1px solid rgba(244, 234, 219, 0.13) !important;
+    border-left: 0 !important;
+  }
+}
+
+/* 2026-07-15: shop process list uses the full mobile width instead of a long narrow column. */
+@media (max-width: 680px) {
+  .route-shop .shop-process-band {
+    gap: 18px !important;
+    padding: 38px clamp(16px, 4.9vw, 22px) 40px !important;
+  }
+
+  .route-shop .shop-process-band h2 {
+    text-align: left !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .route-shop .shop-process-band ol {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .route-shop .shop-process-band li {
+    min-height: 142px !important;
+    display: grid !important;
+    grid-template-columns: min-content 30px minmax(0, 1fr) !important;
+    gap: 8px 8px !important;
+    align-content: start !important;
+    align-items: center !important;
+    padding: 13px 11px 14px !important;
+    border: 1px solid rgba(184, 120, 120, 0.22) !important;
+    background: rgba(244, 234, 219, 0.028) !important;
+  }
+
+  .route-shop .shop-process-band li:last-child {
+    grid-column: 1 / -1 !important;
+    min-height: 0 !important;
+    grid-template-columns: min-content 30px minmax(0, 1fr) !important;
+  }
+
+  .route-shop .shop-process-band li > span {
+    align-self: center !important;
+    font-size: 0.82rem !important;
+    line-height: 1 !important;
+  }
+
+  .route-shop .shop-process-band svg {
+    width: 26px !important;
+    height: 26px !important;
+    stroke-width: 1.45 !important;
+  }
+
+  .route-shop .shop-process-band strong {
+    grid-column: 1 / -1 !important;
+    margin-top: 2px !important;
+    font-size: clamp(0.72rem, 3.35vw, 0.84rem) !important;
+    letter-spacing: 0.055em !important;
+    line-height: 1.15 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  .route-shop .shop-process-band small {
+    grid-column: 1 / -1 !important;
+    color: rgba(244, 234, 219, 0.62) !important;
+    font-size: clamp(0.72rem, 3.25vw, 0.86rem) !important;
+    line-height: 1.34 !important;
+  }
+
+  .route-shop .shop-process-band li:last-child strong {
+    grid-column: 3 !important;
+    margin-top: 0 !important;
+  }
+
+  .route-shop .shop-process-band li:last-child small {
+    grid-column: 3 !important;
+  }
+
+  .route-shop .shop-process-features {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+    gap: 10px 12px !important;
+    padding-top: 18px !important;
+  }
+
+  .route-shop .shop-process-features span {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    font-size: clamp(0.78rem, 3.45vw, 0.92rem) !important;
+    line-height: 1.18 !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 370px) {
+  .route-shop .shop-process-band ol,
+  .route-shop .shop-process-features {
+    grid-template-columns: 1fr !important;
+  }
+
+  .route-shop .shop-process-band li,
+  .route-shop .shop-process-band li:last-child {
+    min-height: 0 !important;
+    grid-template-columns: min-content 30px minmax(0, 1fr) !important;
+  }
+
+  .route-shop .shop-process-band li strong,
+  .route-shop .shop-process-band li small,
+  .route-shop .shop-process-band li:last-child strong,
+  .route-shop .shop-process-band li:last-child small {
+    grid-column: 1 / -1 !important;
+  }
+}

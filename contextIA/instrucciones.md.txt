@@ -660,14 +660,26 @@ Impacto proactivo:
 Cambio:
 - En mobile/tablet, la franja clara `Meal Prep Antinflamatorio` debe mostrar las bolsas como imagen de producto en flujo, no como fondo absoluto recortado. El texto queda arriba con lectura limpia y la imagen queda abajo, levemente sobredimensionada y recortada solo lateralmente para que las bolsas se vean apetecibles.
 - En desktop/tablet, el plato del hero debe ocupar mejor el vacio central: se desplaza levemente hacia la izquierda y hacia arriba con reglas finales sobre `.plate-hero-visual-stage`, sin tocar el bloque de texto ni la composicion mobile.
+- En mobile, el plato del hero tambien debe estar posicionado de forma absoluta dentro de `.plate-hero`, no como elemento en flujo. Debe asomar desde la zona de bajada/CTA y llenar el vacio inferior del primer viewport sin ensuciar la lectura del texto.
+- En mobile de tienda/planes (`.route-shop .shop-hero-showcase`), la ilustracion botanica de fondo debe ocupar el vacio lateral derecho, con cerca de 15% fuera del viewport hacia la derecha. No debe quedar detras del texto principal ni competir con los CTAs.
+- En mobile de tienda/planes, el cuadro comparativo de suscripcion vs compra semanal no debe mantenerse como tabla rigida ni generar scroll horizontal. Usar `data-label` en filas/celdas y CSS responsive para convertirlo en filas/tarjetas compactas dentro del ancho disponible.
+- En mobile de tienda/planes, la lista `Como funciona` debe usar el ancho real de pantalla. Evitar una columna vertical angosta; usar una grilla compacta de dos columnas para los pasos y otra grilla para los sellos de servicio, bajando a una columna solo en telefonos muy estrechos.
 
 Impacto retroactivo:
 - Se corrige el comportamiento anterior donde la imagen de bolsas competia con el degradado claro y quedaba lavada, cortada o poco clara en version movil.
 - Se corrige la sensacion de exceso de aire entre copy y plato en el hero cuando el ancho permite acercar la imagen sin montar elementos.
+- Se corrige el hero movil donde el plato quedaba casi fuera de pantalla, dejando un bloque negro excesivo entre el CTA y la siguiente seccion.
+- Se corrige la portada movil de planes donde la ilustracion quedaba a la izquierda y ensuciaba el titular, cuando el cliente la quiere como textura editorial en el espacio derecho.
+- Se corrige la comparacion de suscripcion que antes forzaba un ancho minimo de tabla y se veia como un bloque demasiado grande en telefono.
+- Se corrige la lista `Como funciona`, que antes consumia demasiada altura en mobile y no aprovechaba el ancho disponible.
 
 Impacto proactivo:
 - Si se vuelve a tocar `meal-prep-feature`, mantener la regla mobile al final del CSS o migrarla a un componente/hoja modular para no perder prioridad de cascada.
 - Si se vuelve a tocar el hero, priorizar `top/right/width` de `.plate-hero-visual-stage` por breakpoint antes de cambiar escala global del plato, porque la escala afecta el equilibrio con el texto.
+- En mobile, mantener la regla final de `.plate-hero-visual-stage` con `position:absolute`; si se cambia a `relative` reaparece el vacio inferior que molesta en iPhone.
+- En la portada movil de planes, preservar la regla final de `.shop-hero-botanical` con `left:auto` y `right:-15vw`; si se vuelve a usar `left`, la ilustracion se monta sobre el texto.
+- Si se vuelve a tocar `.shop-comparison-table`, mantener la transformacion mobile al final de la cascada para que gane sobre reglas antiguas que aplican `min-width` y `overflow-x`.
+- Si se vuelve a tocar `.shop-process-band`, mantener la grilla mobile al final de la cascada; hay reglas antiguas para `ol` y `li` que vuelven a dejar la lista larga si ganan prioridad.
 
 ## Formato Recomendado Para Nuevas Notas
 

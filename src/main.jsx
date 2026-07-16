@@ -1661,10 +1661,10 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
                 </thead>
                 <tbody>
                   {comparisonRows.map((row) => (
-                    <tr key={row.label}>
+                    <tr key={row.label} data-label={row.label}>
                       <th scope="row">{row.label}</th>
-                      <td>{row.subscription}</td>
-                      <td>{row.weekly}</td>
+                      <td data-label="Suscripción">{row.subscription}</td>
+                      <td data-label="Compra semanal">{row.weekly}</td>
                     </tr>
                   ))}
                 </tbody>
