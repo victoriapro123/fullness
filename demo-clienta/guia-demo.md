@@ -11,10 +11,10 @@ npm run dev
 Luego abrir:
 
 ```text
-http://localhost:3100
+http://localhost:3101
 ```
 
-Si el puerto esta ocupado, Vite mostrara otro `localhost` disponible en la terminal.
+Usar siempre este puerto para presentar y revisar la demo local.
 
 ## 2. Mostrar La Portada
 

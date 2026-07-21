@@ -128,8 +128,8 @@ Para cobrar online en produccion falta conectar API routes server-side que:
 Documentacion oficial de referencia:
 
 - [Credenciales Mercado Pago](https://www.mercadopago.com.ar/developers/es/docs/your-integrations/credentials)
-- [Checkout Bricks](https://www.mercadopago.com.ar/developers/en/docs/checkout-bricks/overview)
-- [Panel de desarrollador](https://www.mercadopago.com.ar/developers/en/docs/checkout-bricks/additional-content/your-integrations/dashboard)
+- [Checkout Pro](https://www.mercadopago.cl/developers/es/docs/checkout-pro/overview)
+- [Cuentas de prueba](https://www.mercadopago.cl/developers/es/docs/checkout-pro/test-accounts)
 - [Webhooks](https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks)
 
 ### 5.1 Crear Aplicacion
@@ -145,18 +145,20 @@ Documentacion oficial de referencia:
 En Vercel o el entorno de produccion deben existir:
 
 ```bash
-VITE_MERCADOPAGO_PUBLIC_KEY=APP_USR...
 MERCADOPAGO_ACCESS_TOKEN=APP_USR...
 MERCADOPAGO_WEBHOOK_SECRET=...
+MERCADOPAGO_TEST_MODE=false
+VITE_CHECKOUT_TEST_MODE=false
 ```
 
 Uso correcto:
 
-- `VITE_MERCADOPAGO_PUBLIC_KEY`: puede vivir en frontend. Sirve para inicializar Mercado Pago Bricks.
 - `MERCADOPAGO_ACCESS_TOKEN`: privado. Solo backend/API routes.
 - `MERCADOPAGO_WEBHOOK_SECRET`: privado. Sirve para validar que los webhooks vienen realmente desde Mercado Pago.
+- `MERCADOPAGO_TEST_MODE`: usa el sandbox solo durante pruebas.
+- `VITE_CHECKOUT_TEST_MODE`: prerrellena datos de QA; debe quedar en `false` para clientes reales.
 
-Nunca pegar `MERCADOPAGO_ACCESS_TOKEN` en el codigo frontend, en capturas, en WhatsApp ni en documentos compartidos.
+Checkout Pro ya esta implementado en `/api/mercadopago/preferences`, `/api/mercadopago/payments` y `/api/mercadopago/webhook`. Nunca pegar `MERCADOPAGO_ACCESS_TOKEN` en el codigo frontend, en capturas, en WhatsApp ni en documentos compartidos.
 
 ### 5.3 Webhook
 

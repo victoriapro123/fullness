@@ -57,6 +57,10 @@ import philosophyPlantIllustrationSrc from "./assets/ilustraciones-fondo/editori
 import philosophyBroccoliIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png";
 import philosophyCarrotIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png";
 import storyTomatoesIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png";
+import consciousFoodIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hojas_natural_v1.png";
+import functionalNutritionIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brazo_fuerte_nutrientes_v1.png";
+import fullnessExperienceIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hoja_v1.png";
+import fullnessCommunityIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brote_raices_v1.png";
 import "./styles.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -693,11 +697,13 @@ const subscriptionPopupStorageKey = "fullness_subscription_popup_settings";
 const subscriptionPopupSubscribersStorageKey = "fullness_subscription_popup_subscribers";
 const adminAccessModeStorageKey = "fullness_carlos_access_mode";
 const adminPersonaEmail = "carlos@prof3sional.com";
+const checkoutCartStorageKey = "fullness_checkout_cart";
+const checkoutTestMode = import.meta.env.VITE_CHECKOUT_TEST_MODE === "true";
 const subscriptionLightboxHighlights = [
-  { label: "Alimentación consciente", image: philosophyPlantIllustrationSrc },
-  { label: "Nutrición funcional", image: philosophyBroccoliIllustrationSrc },
-  { label: "Experiencias Fullness", image: philosophyCarrotIllustrationSrc },
-  { label: "Comunidad", image: storyTomatoesIllustrationSrc }
+  { label: "Alimentación consciente", image: consciousFoodIconSrc },
+  { label: "Nutrición funcional", image: functionalNutritionIconSrc },
+  { label: "Experiencias Fullness", image: fullnessExperienceIconSrc },
+  { label: "Comunidad", image: fullnessCommunityIconSrc }
 ];
 
 function createDefaultSubscriptionPopupSettings() {
@@ -1366,12 +1372,12 @@ function getBenefitTags(product) {
 function createDefaultCheckoutForm() {
   return {
     mode: "delivery",
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    comuna: "",
-    instructions: ""
+    name: checkoutTestMode ? "Carlos Rodriguez" : "",
+    email: checkoutTestMode ? "carlos@prof3sional.com" : "",
+    phone: checkoutTestMode ? "+56 9 1234 5678" : "",
+    address: checkoutTestMode ? "Av. Providencia 1234" : "",
+    comuna: checkoutTestMode ? "Providencia" : "",
+    instructions: checkoutTestMode ? "Compra de prueba Fullness Lab" : ""
   };
 }
 
@@ -1380,40 +1386,57 @@ function loadStoredCheckoutForm() {
 
   try {
     const stored = JSON.parse(window.localStorage.getItem("fullness_checkout_form") || "null");
+    const storedValues = stored && typeof stored === "object"
+      ? Object.fromEntries(
+          Object.entries(stored).filter(([key, value]) => key === "mode" || !checkoutTestMode || String(value || "").trim())
+        )
+      : {};
+
     return {
       ...createDefaultCheckoutForm(),
-      ...(stored && typeof stored === "object" ? stored : {})
+      ...storedValues
     };
   } catch {
     return createDefaultCheckoutForm();
   }
 }
 
-function buildOrderMessage(cart, total, checkoutForm) {
-  const lines = [
-    "Hola Fullness Lab, quiero continuar este pedido:",
-    "",
-    ...cart.map((item) => `- ${item.qty} x ${item.name} (${formatPrice(item.price * item.qty)})`),
-    "",
-    `Total: ${formatPrice(total)}`,
-    "",
-    checkoutForm.mode === "pickup"
-      ? "Modalidad: retiro en local"
-      : "Modalidad: despacho",
-    `Nombre: ${checkoutForm.name}`,
-    `Correo: ${checkoutForm.email}`,
-    `Teléfono: ${checkoutForm.phone}`
-  ];
+function loadStoredCart() {
+  if (typeof window === "undefined") return [];
 
-  if (checkoutForm.mode === "delivery") {
-    lines.push(`Dirección: ${checkoutForm.address}`, `Comuna: ${checkoutForm.comuna}`);
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(checkoutCartStorageKey) || "[]");
+    if (!Array.isArray(stored)) return [];
+
+    return stored
+      .filter((item) => item?.id && item?.slug && Number(item?.qty) > 0)
+      .map((item) => ({...item, qty: Math.max(1, Math.round(Number(item.qty)))}));
+  } catch {
+    return [];
   }
+}
 
-  if (checkoutForm.instructions) {
-    lines.push(`Notas: ${checkoutForm.instructions}`);
-  }
+function readCheckoutReturnState() {
+  if (typeof window === "undefined") return null;
 
-  return lines.join("\n");
+  const params = new URLSearchParams(window.location.search);
+  const returnStatus = params.get("checkout_status") || params.get("status") || params.get("collection_status");
+  const paymentId = params.get("payment_id") || params.get("collection_id") || "";
+  const orderId = params.get("order_id") || params.get("external_reference") || "";
+
+  if (!returnStatus && !paymentId && !orderId) return null;
+
+  return {
+    orderId,
+    paymentId,
+    status: returnStatus || "pending",
+    syncing: Boolean(paymentId),
+    message: paymentId
+      ? "Estamos confirmando tu pago con Mercado Pago."
+      : returnStatus === "failure"
+        ? "No se realizo el cobro. Tu carrito sigue disponible."
+        : "El pago quedo pendiente de confirmacion."
+  };
 }
 
 function ProductNutritionFacts({ product }) {
@@ -2871,7 +2894,7 @@ function FaqPage({ onNavigateToShop }) {
 
 function App() {
   const appRef = useRef(null);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(loadStoredCart);
   const [accountOpen, setAccountOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -2890,6 +2913,8 @@ function App() {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [checkoutForm, setCheckoutForm] = useState(loadStoredCheckoutForm);
   const [checkoutMessage, setCheckoutMessage] = useState("");
+  const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
+  const [checkoutResult, setCheckoutResult] = useState(readCheckoutReturnState);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [initialAuthRedirect] = useState(() => readAuthRedirectState());
@@ -3004,6 +3029,65 @@ function App() {
       // Local checkout persistence is best-effort.
     }
   }, [checkoutForm]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(checkoutCartStorageKey, JSON.stringify(cart));
+    } catch {
+      // Local cart persistence is best-effort.
+    }
+  }, [cart]);
+
+  useEffect(() => {
+    const checkoutReturn = readCheckoutReturnState();
+    if (!checkoutReturn?.paymentId) return undefined;
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      payment_id: checkoutReturn.paymentId,
+      order_id: checkoutReturn.orderId
+    });
+
+    async function confirmPayment() {
+      try {
+        const response = await fetch(`/api/mercadopago/payments?${params.toString()}`, {
+          headers: {Accept: "application/json"},
+          signal: controller.signal
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload.error?.message || "No pudimos confirmar el pago.");
+        }
+
+        const approved = payload.data?.status === "approved";
+        setCheckoutResult({
+          ...checkoutReturn,
+          ...payload.data,
+          syncing: false,
+          message: approved
+            ? "Recibimos tu pago y registramos los datos de entrega indicados."
+            : "Mercado Pago dejo la operacion pendiente. Te avisaremos cuando cambie de estado."
+        });
+
+        if (approved) {
+          setCart([]);
+          window.localStorage.removeItem("fullness_pending_order");
+        }
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        setCheckoutResult({
+          ...checkoutReturn,
+          syncing: false,
+          status: "pending",
+          message: error.message || "No pudimos confirmar el pago todavia."
+        });
+      }
+    }
+
+    confirmPayment();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (!subscriptionPopupSettings.enabled) return undefined;
@@ -3963,25 +4047,57 @@ function App() {
     setCheckoutMessage("");
   }
 
-  function submitCheckout(event) {
+  async function submitCheckout(event) {
     event.preventDefault();
-    if (cart.length === 0) return;
+    if (cart.length === 0 || checkoutSubmitting) return;
 
-    const order = {
-      items: cart,
-      total: cartTotal,
-      fulfillment: checkoutForm,
-      createdAt: new Date().toISOString()
-    };
+    setCheckoutSubmitting(true);
+    setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
     try {
-      window.localStorage.setItem("fullness_last_order", JSON.stringify(order));
-    } catch {
-      // Local order persistence is best-effort.
-    }
+      const response = await fetch("/api/mercadopago/preferences", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          cart: cart.map((item) => ({slug: item.slug, quantity: item.qty})),
+          fulfillment: checkoutForm
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
 
-    setCheckoutMessage("Pedido preparado. Te abrimos WhatsApp para coordinar el pago y la entrega.");
-    window.open(createWhatsappUrl(buildOrderMessage(cart, cartTotal, checkoutForm)), "_blank", "noopener,noreferrer");
+      if (!response.ok || !payload.data?.initPoint) {
+        throw new Error(payload.error?.message || "No pudimos iniciar el pago.");
+      }
+
+      const pendingOrder = {
+        items: cart,
+        total: payload.data.amount,
+        fulfillment: checkoutForm,
+        orderId: payload.data.orderId,
+        preferenceId: payload.data.preferenceId,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        window.localStorage.setItem("fullness_last_order", JSON.stringify(pendingOrder));
+        window.localStorage.setItem("fullness_pending_order", JSON.stringify(pendingOrder));
+      } catch {
+        // Checkout can continue when browser storage is unavailable.
+      }
+      window.location.assign(payload.data.initPoint);
+    } catch (error) {
+      setCheckoutMessage(error.message || "No pudimos iniciar el pago. Intenta nuevamente.");
+      setCheckoutSubmitting(false);
+    }
+  }
+
+  function closeCheckoutResult() {
+    setCheckoutResult(null);
+    window.history.replaceState(null, "", shopPath);
+    setCurrentPath(window.location.pathname);
   }
 
   function submitSubscription(event) {
@@ -4610,6 +4726,7 @@ function App() {
     menuOpen ||
     passwordSetupOpen ||
     subscriptionPopupOpen ||
+    Boolean(checkoutResult) ||
     Boolean(productPreview) ||
     Boolean(mealPreviewItem);
 
@@ -4689,6 +4806,7 @@ function App() {
             className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`}
             type="button"
             onClick={() => setCartOpen(true)}
+            data-testid="open-cart"
             aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
           >
             <ShoppingBag size={20} />
@@ -5814,7 +5932,7 @@ function App() {
                 <span>Total</span>
                 <strong>{formatPrice(cartTotal)}</strong>
               </div>
-              <form className="checkout-form" onSubmit={submitCheckout}>
+              <form className="checkout-form" data-testid="checkout-form" onSubmit={submitCheckout}>
                 <fieldset className="checkout-mode">
                   <legend>Modalidad</legend>
                   <label>
@@ -5872,12 +5990,65 @@ function App() {
 
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
 
-                <button className="primary-button full" type="submit">
-                  Continuar pedido
+                <button
+                  className="primary-button full checkout-submit"
+                  type="submit"
+                  data-testid="checkout-submit"
+                  disabled={checkoutSubmitting}
+                  aria-busy={checkoutSubmitting}
+                >
+                  <ShieldCheck size={18} />
+                  {checkoutSubmitting ? "Abriendo Mercado Pago..." : "Pagar con Mercado Pago"}
                 </button>
               </form>
             </>
           )}
+        </div>
+      )}
+
+      {checkoutResult && (
+        <div className="checkout-result-overlay" role="presentation">
+          <section
+            className={`checkout-result checkout-result-${checkoutResult.status}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="checkout-result-title"
+            data-testid="checkout-result"
+          >
+            <button className="icon-button close" type="button" onClick={closeCheckoutResult} aria-label="Cerrar confirmacion">
+              <X size={22} />
+            </button>
+            <span className="checkout-result-icon" aria-hidden="true">
+              {checkoutResult.syncing ? (
+                <RefreshCw size={28} />
+              ) : checkoutResult.status === "approved" ? (
+                <CheckCircle2 size={30} />
+              ) : checkoutResult.status === "failure" ? (
+                <X size={30} />
+              ) : (
+                <Timer size={30} />
+              )}
+            </span>
+            <p className="eyebrow">{checkoutResult.syncing ? "Validando pago" : "Estado de tu compra"}</p>
+            <h2 id="checkout-result-title">
+              {checkoutResult.syncing
+                ? "Un momento"
+                : checkoutResult.status === "approved"
+                  ? "Compra confirmada"
+                  : checkoutResult.status === "failure"
+                    ? "Pago no realizado"
+                    : "Pago pendiente"}
+            </h2>
+            <p>{checkoutResult.message}</p>
+            {checkoutResult.orderId && (
+              <small>Orden Fullness {checkoutResult.orderId.slice(0, 8).toUpperCase()}</small>
+            )}
+            {!checkoutResult.syncing && (
+              <button className="primary-button" type="button" onClick={closeCheckoutResult}>
+                Volver a la tienda
+              </button>
+            )}
+          </section>
         </div>
       )}
     </main>
