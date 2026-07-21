@@ -12757,6 +12757,11 @@ footer::before {
   width: clamp(145px, 15vw, 245px);
   opacity: 0.22;
   pointer-events: none;
+  object-fit: contain;
+  object-position: center;
+  rotate: 0deg;
+  scale: 1 1;
+  transform-origin: center;
 }
 
 .shop-hero-copy {
@@ -19817,6 +19822,10 @@ main {
     opacity: 0.22 !important;
     z-index: 0 !important;
     transform: none !important;
+    rotate: 0deg !important;
+    scale: 1 1 !important;
+    object-fit: contain !important;
+    object-position: center !important;
     filter: sepia(1) saturate(1.55) hue-rotate(302deg) brightness(0.62) !important;
   }
 }

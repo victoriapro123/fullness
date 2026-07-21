@@ -211,7 +211,7 @@ Archivos principales:
 Contexto actual:
 
 - La aplicacion esta concentrada en un solo componente `App`.
-- El desarrollo local y la revision en navegador deben correr siempre en `http://localhost:3101`; los scripts `dev` y `preview` de `package.json` fijan ese puerto con `--strictPort` para evitar cambios automaticos de puerto.
+- El desarrollo local y la revision en navegador deben correr siempre en `http://localhost:3019`; los scripts `dev` y `preview` de `package.json` fijan ese puerto con `--strictPort` para evitar cambios automaticos de puerto.
 - `src/main.jsx` mantiene `demoProducts` como fallback local para rutas de producto, carrito, backoffice y futuras piezas de e-commerce. La vitrina publica `#productos` fue retirada de la home; no reinsertarla salvo nueva instruccion explicita.
 - El carrito se guarda solo en estado React.
 - La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`.
@@ -721,3 +721,11 @@ Despues de trabajar:
 - Agregar impactos proactivos si corresponde.
 - Ejecutar build si hubo cambios de codigo.
 - Actualizar documentos de demo si cambio algo visible.
+
+## Ajuste 2026-07-21 - Planes Movil
+
+Decision:
+- En la ventana/pagina de planes movil, la betarraga decorativa debe mantenerse vertical, sin rotacion ni espejo. Usar `betarraga_con_raiz_v1.png` como imagen especifica para `.shop-hero-botanical`, no la silueta generica `fullness-silhouette-root-1.png`.
+
+Impacto:
+- La ilustracion queda en el espacio derecho de la portada de planes y no debe volver a montarse sobre el texto. Si se modifica el responsive, preservar `right:-15vw`, `transform:none`, `rotate:0deg` y `scale:1 1`.

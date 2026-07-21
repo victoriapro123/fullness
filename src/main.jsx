@@ -57,6 +57,7 @@ import philosophyPlantIllustrationSrc from "./assets/ilustraciones-fondo/editori
 import philosophyBroccoliIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png";
 import philosophyCarrotIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png";
 import storyTomatoesIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png";
+import shopPlansBeetIllustrationSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png";
 import consciousFoodIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hojas_natural_v1.png";
 import functionalNutritionIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brazo_fuerte_nutrientes_v1.png";
 import fullnessExperienceIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hoja_v1.png";
@@ -1609,7 +1610,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
   return (
     <section className="meal-prep-shop shop-commerce-page" id="oferta">
       <section className="shop-hero-showcase" aria-labelledby="shop-hero-title">
-        <img className="shop-hero-botanical" src={silhouetteRootOneSrc} alt="" aria-hidden="true" />
+        <img className="shop-hero-botanical" src={shopPlansBeetIllustrationSrc} alt="" aria-hidden="true" />
         <div className="shop-hero-copy">
           <p className="eyebrow">{settings.heroEyebrow}</p>
           <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
