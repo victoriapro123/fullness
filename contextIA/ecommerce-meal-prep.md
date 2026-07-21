@@ -44,3 +44,10 @@
 - El recorrido visual de usuario queda documentado en `qa/manual-compra/`: entrada, pop-up, formulario, agradecimiento, selección de plan y carrito con retiro/despacho.
 - La inscripción del pop-up confirma en UI y persiste en el navegador; no tiene proveedor de email transaccional ni tabla remota asociada. No describirla como suscripción con correo automático hasta implementar ambos elementos.
 - El manual debe mantener separada la evidencia del Checkout Pro (capturas ya disponibles) de una compra aprobada. Sólo añadir retorno aprobado, email de compra y conciliación de `orders`/`payments` después de completar los dos hitos externos pendientes.
+
+### Correo transaccional 2026-07-21
+
+- Resend es el proveedor elegido para los correos de Fullness Lab. El dominio `fullnesslab.com` se agregó en la región São Paulo y se configuraron en Squarespace los registros DKIM, MX de retorno, SPF de subdominio `send` y DMARC. Google Workspace y Vercel se mantienen sin cambios.
+- Mientras Resend termina de propagar el DNS, el dominio puede figurar como `pending`; no crear ni usar la clave API hasta que el panel lo marque verificado.
+- La migración `20260721001000_transactional_email.sql` crea suscriptores y bitácora de entregas idempotente. El backend usa `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO` y opcionalmente `EMAIL_TEST_RECIPIENT`; esas credenciales son sólo de servidor y no se deben exponer en React, commits ni Production antes de QA.
+- La suscripción del lightbox queda persistida y dispara bienvenida; una orden sólo dispara su confirmación cuando Mercado Pago devuelve estado `approved`. Los reintentos de retorno/webhook reutilizan la misma clave de entrega para no duplicar correos.

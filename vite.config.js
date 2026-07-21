@@ -4,6 +4,7 @@ import mediaHandler from "./api/media.js";
 import mercadoPagoPaymentsHandler from "./api/mercadopago/payments.js";
 import mercadoPagoPreferencesHandler from "./api/mercadopago/preferences.js";
 import mercadoPagoWebhookHandler from "./api/mercadopago/webhook.js";
+import subscriptionsHandler from "./api/subscriptions.js";
 import uploadMediaHandler from "./api/upload-media.js";
 
 function mountApiHandler(server, path, handler) {
@@ -23,6 +24,7 @@ function apiDevServer() {
       mountApiHandler(server, "/api/mercadopago/preferences", mercadoPagoPreferencesHandler);
       mountApiHandler(server, "/api/mercadopago/payments", mercadoPagoPaymentsHandler);
       mountApiHandler(server, "/api/mercadopago/webhook", mercadoPagoWebhookHandler);
+      mountApiHandler(server, "/api/subscriptions", subscriptionsHandler);
     }
   };
 }

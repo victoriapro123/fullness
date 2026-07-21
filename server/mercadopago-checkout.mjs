@@ -1,6 +1,7 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 import {loadEnvFile} from "./r2-media.mjs";
+import {sendOrderConfirmationEmail} from "./transactional-email.mjs";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
@@ -292,6 +293,17 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
 
   if (orderUpdateError) {
     throw statusError(502, "No pudimos actualizar el estado de la orden.", orderUpdateError);
+  }
+
+  if (paymentStatus === "approved") {
+    const {data: emailItems, error: emailItemsError} = await supabase
+      .from("order_items")
+      .select("product_name,quantity")
+      .eq("order_id", order.id);
+
+    if (!emailItemsError) {
+      await sendOrderConfirmationEmail({order, items: emailItems || [], supabase});
+    }
   }
 
   return {

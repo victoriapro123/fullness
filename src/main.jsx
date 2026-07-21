@@ -772,6 +772,7 @@ function SubscriptionLightbox({
   settings,
   mode,
   message,
+  isSubmitting,
   onClose,
   onOpenForm,
   onSubmit,
@@ -844,8 +845,8 @@ function SubscriptionLightbox({
               <input required name="subscriberEmail" type="email" autoComplete="email" placeholder="nombre@dominio.cl…" />
             </label>
             {message && <p className="subscription-lightbox-message" role="status">{message}</p>}
-            <button className="subscription-lightbox-primary" type="submit">
-              Suscribirme
+            <button className="subscription-lightbox-primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Inscribiendo..." : "Suscribirme"}
               <ArrowUpRight size={18} aria-hidden="true" />
             </button>
           </form>
@@ -2948,6 +2949,7 @@ function App() {
   const [subscriptionPopupMode, setSubscriptionPopupMode] = useState("intro");
   const [subscriptionPopupDismissed, setSubscriptionPopupDismissed] = useState(false);
   const [subscriptionPopupMessage, setSubscriptionPopupMessage] = useState("");
+  const [subscriptionPopupSubmitting, setSubscriptionPopupSubmitting] = useState(false);
   const [subscriptionPopupUploading, setSubscriptionPopupUploading] = useState(false);
   const [subscriptionPopupAdminMessage, setSubscriptionPopupAdminMessage] = useState("");
   const [subscriptionPopupAdminError, setSubscriptionPopupAdminError] = useState("");
@@ -4138,7 +4140,7 @@ function App() {
     openShopPage(event);
   }
 
-  function submitPopupSubscription(event) {
+  async function submitPopupSubscription(event) {
     event.preventDefault();
 
     const form = event.currentTarget;
@@ -4151,6 +4153,9 @@ function App() {
       setSubscriptionPopupMessage("Completa nombre, teléfono y mail para suscribirte.");
       return;
     }
+
+    setSubscriptionPopupSubmitting(true);
+    setSubscriptionPopupMessage("");
 
     try {
       const stored = window.localStorage.getItem(subscriptionPopupSubscribersStorageKey);
@@ -4175,9 +4180,23 @@ function App() {
       // Local demo persistence is best-effort.
     }
 
-    setSubscriptionPopupMode("success");
-    setSubscriptionPopupMessage("");
-    form.reset();
+    try {
+      const response = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({name, phone, email})
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error?.message || "No pudimos registrar tu suscripción.");
+
+      setSubscriptionPopupMode("success");
+      form.reset();
+    } catch (error) {
+      setSubscriptionPopupMessage(error.message || "No pudimos registrar tu suscripción.");
+    } finally {
+      setSubscriptionPopupSubmitting(false);
+    }
   }
 
   function updateSubscriptionPopupForm(event) {
@@ -4877,6 +4896,7 @@ function App() {
           settings={subscriptionPopupSettings}
           mode={subscriptionPopupMode}
           message={subscriptionPopupMessage}
+          isSubmitting={subscriptionPopupSubmitting}
           onClose={closeSubscriptionPopup}
           onOpenForm={openSubscriptionPopupForm}
           onSubmit={submitPopupSubscription}
