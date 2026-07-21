@@ -38,3 +38,9 @@
 - El token sandbox debe pertenecer a la misma aplicacion que genera las preferencias. Al corregirlo, la creacion de preferencias en Vercel Preview funciono nuevamente; Production permanece sin credenciales de prueba.
 - No declarar una compra sandbox como aprobada por el mero retorno visual. Debe existir el pago aprobado en Mercado Pago y su conciliacion en `orders` y `payments` antes de enviar cualquier correo de confirmacion.
 - El navegador interno encontro `ERR_TOO_MANY_REDIRECTS` al pasar desde una sesion personal a `sandbox.mercadopago.cl`; el tokenizado API de tarjeta oficial de prueba devolvio `G001`. Esta es una dependencia externa pendiente con Mercado Pago, no una aprobacion de compra ni un error que deba ocultarse con estados simulados.
+
+### Manual de compra 2026-07-21
+
+- El recorrido visual de usuario queda documentado en `qa/manual-compra/`: entrada, pop-up, formulario, agradecimiento, selección de plan y carrito con retiro/despacho.
+- La inscripción del pop-up confirma en UI y persiste en el navegador; no tiene proveedor de email transaccional ni tabla remota asociada. No describirla como suscripción con correo automático hasta implementar ambos elementos.
+- El manual debe mantener separada la evidencia del Checkout Pro (capturas ya disponibles) de una compra aprobada. Sólo añadir retorno aprobado, email de compra y conciliación de `orders`/`payments` después de completar los dos hitos externos pendientes.
