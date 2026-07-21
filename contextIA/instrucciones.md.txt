@@ -52,7 +52,7 @@ La solucion actual incluye:
 - Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, caracteristicas nutricionales, receta resumida, pasos de preparacion, alergenos, estado activo y orden.
 - Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
-- Logos oficiales entregados por Cecilia: `public/assets/fullness-lab-logo-horizontal-marfil.png` y `public/assets/fullness-lab-logo-vertical-marfil.png`, sincronizados a Cloudflare R2 bajo `assets/fullness-lab-logo-horizontal-marfil.png` y `assets/fullness-lab-logo-vertical-marfil.png`. El color del logo es marfil `rgb(244, 234, 219)`; no se debe volver a usar blanco puro ni filtros que lo alteren hacia blanco.
+- La fuente oficial de marca entregada por Cecilia es `Logo Fullness final sobre blanco y negro_v2.ai`, `Logo Fullness final sobre blanco y negro_sin la bajada.ai` y las alternativas finales PNG. Las variantes web derivadas viven en `public/assets/brand/` y en R2 bajo `assets/brand/`: horizontal para header, footer y correos; vertical para composiciones editoriales; isotipo para favicon y usos compactos. El marfil aprobado es `rgb(244, 234, 219)` y el acento oficial es `#803f47`; no usar blanco puro ni reconstrucciones tipograficas del logo.
 - Ilustraciones de fondo exportadas desde Illustrator (`iconografía Marca F.ps`) quedaron en `src/assets/ilustraciones-fondo/linea-gris-transparente/`, organizadas por `iconos`, `hierbas-raices`, `brassicas-legumbres` y `vegetales-frutas-tuberculos`. Son PNG transparentes a 300 ppi, con nombres descriptivos en snake_case y sufijo `_v1`, porque esta tanda corresponde a version con linea gris y relleno transparente. Cuando se apruebe el diseño final, subir solo las ilustraciones realmente usadas en fondos a Cloudflare R2.
 - Actualizacion 2026-06-27: se agrego una ultima capa CSS de ilustraciones editoriales al final de `src/styles.css`, sin cambiar JSX ni contenido de secciones. La regla usa PNG de `src/assets/ilustraciones-fondo/linea-gris-transparente/` en hero, beneficios, filosofia/historia, meal prep, comunidad, oferta y footer, respetando el orden visual fondo -> ilustraciones -> elementos. En desktop, `meal-prep-visual-link` debe mantenerse `position: absolute`; en mobile debe volver a flujo relativo para no tapar texto. En comunidad, las ilustraciones van detras de los degradados para no invadir las caras de la foto. Si se sigue refinando, ajustar solo opacidad, posicion y tamano de esas capas antes de modificar estructura.
 - Ajuste posterior 2026-06-27: en el hero se retiro el boton `Volver a la animacion` para eliminar ruido visual y cualquier marco residual. Esa limpieza sigue vigente; la ilustracion protagonista del hero fue reemplazada despues por `hoja_col_grande_v1.png`.
@@ -277,15 +277,20 @@ Archivos y recursos:
 - `src/assets/fullness-beet-roots-continuum.jpg`
 - `src/assets/fullness-hero-plate-cutout.png` (plato generado y recortado con transparencia para el hero estable posterior al video)
 - `src/assets/fullness-philosophy-botanical-vector.png` (fondo botanico editorial para la seccion `Asi como es por fuera, es por dentro`: fondo solido `rgb(12, 11, 7)`, margen interno amplio, zona izquierda limpia para texto y solo hoja, alcachofa y umbela en linea gris/marfil; no agregar zanahorias ni otros vegetales)
-- `public/assets/fullness-lab-logo-horizontal-marfil.png`
-- `public/assets/fullness-lab-logo-horizontal-oficial.png`
-- `public/assets/fullness-lab-logo-vertical-marfil.png`
+- `public/assets/brand/fullness-lab-horizontal-marfil-2026.png`
+- `public/assets/brand/fullness-lab-horizontal-color-2026.png`
+- `public/assets/brand/fullness-lab-vertical-marfil-2026.png`
+- `public/assets/brand/fullness-lab-isotipo-color-2026.png`
+- `public/assets/brand/favicon-32.png`, `favicon-192.png`, `favicon-512.png` y `apple-touch-icon-180.png`
 - R2 `images/menu-samples/lentejas-hojas.jpeg`
 - R2 `images/menu-samples/pollo-camote-hojas.jpeg`
 - R2 `images/menu-samples/salmon-arroz-avocado.jpeg`
 - R2 `images/fullness-heating-bag-realistic-v2.png`
-- R2 `assets/fullness-lab-logo-horizontal-marfil.png`
-- R2 `assets/fullness-lab-logo-vertical-marfil.png`
+- R2 `assets/brand/fullness-lab-horizontal-marfil-2026.png`
+- R2 `assets/brand/fullness-lab-horizontal-color-2026.png`
+- R2 `assets/brand/fullness-lab-vertical-marfil-2026.png`
+- R2 `assets/brand/fullness-lab-isotipo-color-2026.png`
+- R2 `assets/brand/favicon-32.png`, `favicon-192.png`, `favicon-512.png`, `apple-touch-icon-180.png` y `fullness-lab-og-2026.png`
 - R2 `assets/fullness-silhouette-botanical.png`
 - R2 `assets/fullness-silhouette-root-1.png`
 - R2 `assets/fullness-silhouette-root-2.png`
@@ -294,7 +299,7 @@ Archivos y recursos:
 
 Contexto actual:
 
-- El logo horizontal oficial definitivo entregado por Cecilia en 600ppi (`Logo marfil horizontal.png`) se normalizo en `public/assets/fullness-lab-logo-horizontal-oficial.png` y tambien en `public/assets/fullness-lab-logo-horizontal-marfil.png`; se sirve desde R2 bajo `assets/fullness-lab-logo-horizontal-oficial.png` para header, footer y lightbox. El logo oficial vertical marfil se usa en favicon, intro, separadores y marcas de agua suaves fuera del hero. El color aprobado base es `rgb(244, 234, 219)`. Nunca usar logos blancos puros; segun el fondo, usar marfil oficial o una version color basada en la silueta oficial.
+- La identidad oficial vigente desde 2026-07-21 se deriva exclusivamente de los archivos finales de Cecilia. `assets/brand/fullness-lab-horizontal-marfil-2026.png` se usa en header, footer, lightbox y correos; el formato horizontal conserva el isotipo oficial, un divisor fino y el wordmark oficial para funcionar en espacios laterales. `assets/brand/fullness-lab-isotipo-color-2026.png` alimenta favicon y usos compactos. No volver a los assets `fullness-lab-logo-*-oficial.png` anteriores ni construir la marca con texto HTML.
 - El logo oficial vertical debe aparecer como marca editorial grande en secciones clave: centrado en `#calentar`, a la derecha en `#oferta` y a la derecha en `#proposito`, usando el recorte superior de betarraga/isotipo desde el asset oficial para evitar texto de logo dentro de las secciones. El tamano debe ser cercano al 50% de la columna/espacio asignado. En fondos oscuros usar marfil oficial; en fondos claros, usar color o mezcla que no lea blanco. En `#proposito`, sobre raices oscuras, debe mantenerse marfil al 90% de opacidad, sin filtros que lo aclaren hacia blanco y con color forzado por mascara CSS (`rgb(244, 234, 219)`) para evitar que se perciba o cargue como blanco. En mobile solo deben quedar visibles los logos de header, `#calentar` y footer; ocultar las marcas de hero, `#proposito` y `#oferta` para evitar saturacion.
 - La intro sigue usando `assets/scroll-intro/fullness-intro-final.jpg` como frame final del video, pero el hero estable posterior ya no usa ese frame como foto completa. El hero queda sobre negro editorial: mantiene medio segundo de negro al terminar el video, entra el plato recortado `src/assets/fullness-hero-plate-cutout.png` desde la derecha y luego entra el texto desde la izquierda. El fondo usa la betarraga original extraida desde el archivo de iconografia de marca (`src/assets/fullness-original-vector-hero-beet.png`), centrada y suavizada desde CSS para que actue como ilustracion botanica de fondo sin simbolo de Gemini. Por solicitud posterior de la clienta, no usar mujer, figura humana, ave ni animal en el hero. El hero no lleva marca de agua del logo.
 - Las tarjetas de productos de muestra usan tres fotos recortadas desde WhatsApp en `public/images/menu-samples`, sincronizadas a Cloudflare R2 bajo `images/menu-samples/...` y servidas por `/api/media?key=images%2Fmenu-samples%2F...`. Si Supabase devuelve productos con la foto generica `fullness-food-crop.jpeg`, la UI reemplaza visualmente esa foto por estas muestras segun el orden de la grilla.
@@ -414,8 +419,8 @@ Contexto actual:
 - El backoffice inicial de menus quedo implementado en la SPA. Se accede por `#backoffice` o por el enlace visible para administradores, exige Supabase Auth y valida `profiles.is_admin` antes de listar o escribir.
 - Guardar o borrar menus desde backoffice refresca la lista administrativa y la tienda publica. Si Supabase esta configurado y no hay menus activos, la tienda queda sin productos activos en vez de volver a datos demo.
 - La subida de fotos usa el bucket publico `menu-photos`; tambien se puede pegar una URL externa en el campo de foto.
-- `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, variables oficiales de Supabase y una marca Fullness Lab hecha con HTML/texto inline, sin `<img>` ni logos remotos, para evitar imagenes rotas o bloqueadas por clientes de correo como Outlook.
-- La URL productiva de Auth es `https://fullness-taupe.vercel.app`. En Supabase Auth URL Configuration, el Site URL debe apuntar a esa URL y Redirect URLs debe permitir la URL productiva y las URLs locales usadas para pruebas.
+- `supabase/auth-email-templates/` contiene las plantillas HTML de correos de Supabase Auth para Fullness Lab: confirmacion de registro, invitacion, magic link/OTP, cambio de correo, reset de password, reautenticacion y notificaciones de seguridad. Usan estilos inline, variables oficiales de Supabase y el logo horizontal oficial servido desde Cloudflare R2 mediante una URL absoluta; el texto alternativo mantiene legibilidad cuando un cliente de correo bloquea imagenes.
+- La URL productiva canonica de Auth y del sitio es `https://fullnesslab.com`. En Supabase Auth URL Configuration, el Site URL debe apuntar a esa URL y Redirect URLs debe permitir `https://fullnesslab.com/**` y las URLs locales usadas para pruebas.
 - La SPA captura el estado inicial de redirect de Supabase antes de inicializar el cliente, porque `detectSessionInUrl` puede limpiar el hash o query despues de procesarlo. Luego limpia la URL visible para no dejar tokens en el navegador.
 
 Reglas al modificar:
@@ -491,7 +496,7 @@ Reglas al modificar:
 
 Pendientes proactivos:
 
-- Probar en produccion el enlace real de invitacion/reset con dominio final `https://fullness-taupe.vercel.app` y redirect allowlist de Supabase.
+- Probar en produccion el enlace real de invitacion/reset con dominio final `https://fullnesslab.com` y redirect allowlist de Supabase.
 - Evaluar OAuth mas robusto si se retoma acceso con proveedores externos.
 
 ## Ambito: Comunidad Y Programas
@@ -685,6 +690,17 @@ Impacto proactivo:
 - Si se vuelve a tocar `.shop-comparison-table`, mantener la transformacion mobile al final de la cascada para que gane sobre reglas antiguas que aplican `min-width` y `overflow-x`.
 - Si se vuelve a tocar `.shop-process-band`, mantener la grilla mobile al final de la cascada; hay reglas antiguas para `ol` y `li` que vuelven a dejar la lista larga si ganan prioridad.
 
+### Nota 2026-07-21
+
+Cambio:
+- En el lightbox de suscripcion, la fila de beneficios debe funcionar como marcadores editoriales sin lineas horizontales ni divisores verticales. Las lineas se perciben descuadradas y vuelven el bloque demasiado "app"; mantener iconos, textos y aire visual.
+
+Impacto retroactivo:
+- Se eliminan los bordes de `.subscription-lightbox-benefits` y de sus items para que no aparezcan trazos sobre la fotografia ni entre iconos.
+
+Impacto proactivo:
+- Si se vuelve a ajustar el lightbox, no reintroducir `border-top`, `border-bottom` ni `border-left` en los beneficios. Si hace falta estructura, usar espaciado, opacidad o jerarquia tipografica.
+
 ## Formato Recomendado Para Nuevas Notas
 
 Usar este formato dentro del ambito correspondiente:
@@ -729,3 +745,17 @@ Decision:
 
 Impacto:
 - La ilustracion queda en el espacio derecho de la portada de planes y no debe volver a montarse sobre el texto. Si se modifica el responsive, preservar `right:-15vw`, `transform:none`, `rotate:0deg` y `scale:1 1`.
+
+## Identidad Oficial 2026-07-21
+
+Decision:
+- Los archivos `Logo Fullness final...` entregados por la marca son la unica fuente oficial del logotipo. No redibujar ni reinterpretar el isotipo, las proporciones del nombre o la composicion vertical.
+- Las variantes web viven en `public/assets/brand/`: horizontal para header, footer y correos; vertical para composiciones editoriales; isotipo para marcas de agua y favicon.
+- Sobre fondos oscuros se usa marfil `rgb(244, 234, 219)`. Sobre fondos claros se puede usar la version bicolor oficial. El favicon usa el isotipo bicolor oficial sobre marfil.
+- La composicion horizontal conserva el isotipo oficial, una linea divisoria fina y el wordmark oficial, siguiendo el uso lateral aprobado para espacios de poca altura.
+- El dominio canonico y de contacto es `https://fullnesslab.com`; los correos visibles y transaccionales terminan en `@fullnesslab.com`.
+
+Impacto:
+- Header, footer, lightbox, correos, metadatos sociales y favicon deben referenciar exclusivamente `assets/brand/`.
+- Los activos de correo deben usar URL publica absoluta de R2; nunca una ruta relativa del sitio.
+- Si llega una nueva entrega de marca, versionar los archivos dentro de `assets/brand/` y actualizar todas las superficies en conjunto para evitar identidades mezcladas.

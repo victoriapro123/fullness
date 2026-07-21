@@ -1,4 +1,4 @@
-# Presentacion En Imagenes: Manual Cecilia
+# Presentacion En Imagenes: Operaciones Cecilia
 
 Carpeta de laminas:
 
@@ -8,7 +8,7 @@ Formato:
 
 - PNG
 - 1600 x 900 px
-- 12 laminas
+- 12 laminas sobre exportaciones CSV, recuperacion de acceso y limites de operacion.
 
 ## Orden
 

@@ -393,7 +393,7 @@
 
     <script>
       const assets = {
-        logo: "../../public/assets/fullness-lab-logo-horizontal-marfil.png",
+        logo: "../../public/assets/brand/fullness-lab-horizontal-marfil-2026.png",
         plate: "../../src/assets/fullness-hero-plate-cutout.png",
         bag: "../../src/assets/fullness-mealprep-band-label-fullness.png"
       };
@@ -402,146 +402,146 @@
         {
           theme: "dark",
           eyebrow: "Manual operativo",
-          title: "Backoffice Fullness Lab",
-          lead: "Guia visual para administrar meal preps, tienda, lightbox, comunidad y preparar Mercado Pago.",
-          aside: "Pensado para Cecilia: acciones claras, textos breves y controles agrupados por tarea.",
+          title: "Operaciones Fullness Lab",
+          lead: "Guia visual para descargar listados autorizados y ayudar a las personas a recuperar su acceso.",
+          aside: "Pensado para Cecilia: acciones claras, archivos ordenados y proteccion de los datos de clientes.",
           media: "plate"
         },
         {
           theme: "light",
-          eyebrow: "Mapa del panel",
-          title: "Un backoffice separado por tareas",
-          lead: "La navegacion interna evita mezclar formularios largos y permite trabajar por modulo.",
+          eyebrow: "Alcance",
+          title: "Un modulo para operaciones",
+          lead: "La cuenta de Cecilia abre unicamente Operaciones. Asi cada tarea queda clara y el acceso se mantiene acotado.",
           modules: [
-            ["Meal preps", "Crear, editar, publicar y ordenar productos."],
-            ["Tienda", "Hero, CTAs, metricas y bloque de suscripcion."],
-            ["Lightbox", "Popup de campana, textos, botones e imagen."],
-            ["Comunidad", "Actividades visibles y proximas fechas."]
+            ["Suscritos", "Exportar personas inscritas y su estado."],
+            ["Clientes", "Exportar historial consolidado de compra."],
+            ["Ventas", "Exportar ordenes, estados y montos."],
+            ["Recuperacion", "Enviar enlace seguro de nueva contrasena."]
           ]
         },
         {
           theme: "light",
           eyebrow: "Acceso",
-          title: "Entrar como administradora",
-          lead: "El panel solo aparece si la cuenta tiene permiso real de administracion.",
+          title: "Entrar al backoffice",
+          lead: "La cuenta asignada lleva directamente al modulo Operaciones.",
           list: [
             "Entrar al sitio e iniciar sesion.",
             "Abrir Backoffice desde el menu o visitar /#backoffice.",
             "Si no aparece, cerrar sesion y volver a entrar.",
-            "La cuenta debe tener profiles.is_admin = true en Supabase."
+            "Usar siempre la cuenta asignada para esta tarea."
           ],
           visual: "mock"
         },
         {
           theme: "dark",
-          eyebrow: "Meal preps",
-          title: "Crear o editar un producto",
-          lead: "Completa nombre, slug, tipo, precio, orden y estado. El switch Activo define si se publica.",
+          eyebrow: "Exportaciones",
+          title: "Descargar el listado correcto",
+          lead: "Cada boton prepara un CSV completo, listo para abrir con Excel, Numbers o Google Sheets.",
           list: [
-            "Tipo: Plan o Familiar.",
-            "Slug: minusculas, sin espacios.",
-            "Precio CLP: solo numeros.",
-            "Orden: controla la posicion en listados."
+            "Elegir Suscritos, Clientes o Ventas historicas.",
+            "Esperar a que termine la descarga.",
+            "Abrir el archivo desde Descargas.",
+            "Guardar una copia solo en una ubicacion autorizada."
           ]
         },
         {
           theme: "light",
-          eyebrow: "Fotos y nutricion",
-          title: "La ficha debe quedar completa antes de publicar",
-          lead: "Las fotos construyen confianza; la informacion nutricional ayuda a explicar el valor Fullness.",
+          eyebrow: "Suscritos",
+          title: "Contactos de suscripcion",
+          lead: "Este archivo sirve para trabajar comunicaciones con las personas que dejaron sus datos en el sitio.",
           modules: [
-            ["Principal", "Imagen base del producto."],
-            ["Hover", "Imagen secundaria o detalle visual."],
-            ["Ingredientes", "Lista clara por linea."],
-            ["JSON", "Si hay duda, dejar {}."]
+            ["Nombre", "Identificar a la persona."],
+            ["Correo", "Canal principal de contacto."],
+            ["Telefono", "Dato entregado al suscribirse."],
+            ["Estado", "Fecha de alta y eventual baja."]
           ]
         },
         {
           theme: "dark",
-          eyebrow: "Tienda",
-          title: "Editar la vitrina sin tocar codigo",
-          lead: "Desde Tienda se administran hero, imagen principal, botones, metricas y bloque de suscripcion.",
+          eyebrow: "Clientes",
+          title: "Ver la relacion completa",
+          lead: "El archivo de Clientes combina los datos de contacto con su comportamiento de compra.",
           list: [
-            "Usar titulos breves y legibles.",
-            "Revisar mobile si el texto crece.",
-            "Mantener tono premium, claro y consciente.",
-            "Evitar prometer solo rapidez."
+            "Cantidad de compras por persona.",
+            "Total historico en pesos chilenos.",
+            "Primera y ultima compra.",
+            "Fecha de creacion de cuenta cuando exista."
           ],
           media: "bag"
         },
         {
           theme: "light",
-          eyebrow: "Lightbox",
-          title: "Activar campanas con cuidado",
-          lead: "El popup es mejor para momentos puntuales: lista de espera, lanzamiento, alianza o promocion.",
+          eyebrow: "Ventas historicas",
+          title: "Consultar ventas sin modificar ordenes",
+          lead: "El CSV entrega la informacion necesaria para seguimiento y conciliacion, en formato de solo lectura.",
           modules: [
-            ["Activo / Inactivo", "Controla si se muestra."],
-            ["Texto grande", "Debe ser corto y directo."],
-            ["Botones", "Define la accion principal."],
-            ["Fondo", "Usar imagen con buen contraste."]
+            ["Orden", "Identificador y fecha de compra."],
+            ["Estados", "Pedido, pago y despacho."],
+            ["Cliente", "Datos para seguimiento."],
+            ["Monto", "Total y moneda de la venta."]
           ]
         },
         {
           theme: "dark",
-          eyebrow: "Comunidad",
-          title: "Agregar actividades visibles",
-          lead: "La gestion actual permite cargar fecha y descripcion para comunicar proximas actividades.",
+          eyebrow: "Abrir CSV",
+          title: "Mantener los datos legibles",
+          lead: "Los archivos se exportan en UTF-8 y con separador de coma para conservar tildes, montos y columnas.",
           list: [
-            "Agregar fecha.",
-            "Escribir descripcion simple.",
-            "Eliminar si la actividad cambia.",
-            "Esta gestion es temporal hasta crear tabla dedicada en Supabase."
+            "En Excel elegir UTF-8 si pregunta por el formato.",
+            "Mantener el separador coma.",
+            "No cambiar ID de ordenes antes de guardar una copia.",
+            "No reenviar los archivos fuera de los canales autorizados."
           ]
         },
         {
           theme: "light",
-          eyebrow: "Antes de publicar",
-          title: "Checklist rapido",
-          lead: "Una revision corta evita errores visibles y pedidos con informacion incompleta.",
+          eyebrow: "Ayuda de acceso",
+          title: "Enviar una recuperacion segura",
+          lead: "Cecilia no modifica contrasenas: solo solicita el enlace seguro para la persona que lo necesita.",
           modules: [
-            ["Activo", "Confirmar que el item esta encendido."],
-            ["Precio", "Validar monto final en CLP."],
-            ["Fotos", "Revisar principal y hover."],
-            ["Mobile", "Probar lectura en celular."]
+            ["Confirmar", "Revisar el correo con la persona."],
+            ["Escribir", "Ingresarlo en el formulario."],
+            ["Enviar", "Solicitar el enlace de recuperacion."],
+            ["Avisar", "Pedir revisar inbox y spam."]
           ]
         },
         {
           theme: "dark",
           eyebrow: "Mercado Pago",
-          title: "Lo que falta para cobrar online",
-          lead: "La base de datos y variables estan previstas, pero el checkout real aun necesita API routes server-side.",
+          title: "Consultar, no configurar",
+          lead: "Cecilia ve los estados de pago dentro de Ventas historicas. La configuracion de cobros permanece protegida.",
           list: [
-            "Crear orden desde backend.",
-            "Crear preferencia o pago en Mercado Pago.",
-            "Registrar payments y payment_events.",
-            "Recibir y validar webhooks."
+            "Usar estado de pago para responder consultas.",
+            "No editar ordenes, pagos ni webhooks.",
+            "No solicitar access tokens ni secretos.",
+            "Escalar cualquier problema de cobro al administrador propietario."
           ]
         },
         {
           theme: "light",
-          eyebrow: "Credenciales",
-          title: "Variables que deben vivir en produccion",
-          lead: "La public key puede usarse en frontend. El access token y webhook secret son privados.",
+          eyebrow: "Cuidado de datos",
+          title: "Limites que protegen a clientes y negocio",
+          lead: "El acceso esta deliberadamente acotado: no hay panel de base de datos, configuracion de pagos ni edicion de cuentas.",
           modules: [
-            ["Public key", "VITE_MERCADOPAGO_PUBLIC_KEY<br>Frontend / Bricks."],
-            ["Access token", "MERCADOPAGO_ACCESS_TOKEN<br>Solo backend."],
-            ["Webhook secret", "MERCADOPAGO_WEBHOOK_SECRET<br>Validacion webhook."],
-            ["Nunca compartir", "No pegar tokens en codigo visible."]
+            ["No contrasenas", "Nunca pedirlas ni recibirlas."],
+            ["No credenciales", "Nunca compartir tokens o secretos."],
+            ["No edicion", "No alterar pedidos ni pagos."],
+            ["Solo CSV", "Compartirlos por canales autorizados."]
           ]
         },
         {
           theme: "dark",
-          eyebrow: "Paso a produccion",
-          title: "Probar antes de vender",
-          lead: "El flujo debe validarse completo: compra, pago, webhook, orden y conciliacion.",
+          eyebrow: "Rutina diaria",
+          title: "Un flujo breve y ordenado",
+          lead: "Trabajar en pasos simples ayuda a mantener los listados actualizados y responder rapido a quienes necesiten apoyo.",
           timeline: [
-            ["1", "Credenciales de prueba"],
-            ["2", "Compra de prueba"],
-            ["3", "Webhook 200/201"],
-            ["4", "Supabase actualizado"],
-            ["5", "Compra real baja"]
+            ["1", "Entrar al backoffice"],
+            ["2", "Descargar el CSV necesario"],
+            ["3", "Trabajar en una copia autorizada"],
+            ["4", "Enviar recuperacion si corresponde"],
+            ["5", "Escalar cualquier excepcion"]
           ],
-          quote: "Primero probamos con ambiente test. Despues pasamos a credenciales productivas y validamos con una compra real de bajo monto."
+          quote: "Cuidar los datos tambien es parte de la experiencia Fullness: cada acceso tiene un proposito claro."
         }
       ];
 
@@ -572,7 +572,7 @@
           <div class="visual-panel">
             <div class="mock-panel">
               <nav class="mock-nav">
-                <span>Meal preps</span><span>Tienda</span><span>Lightbox</span><span>Comunidad</span>
+                <span>Operaciones</span>
               </nav>
               <div class="mock-work">
                 <div class="mock-list"><div class="mock-card"></div><div class="mock-card"></div><div class="mock-card"></div></div>

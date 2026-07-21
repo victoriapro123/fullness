@@ -1,227 +1,117 @@
-# Manual Para Cecilia: Backoffice Fullness Lab
+# Manual Para Cecilia: Operaciones Fullness Lab
 
-Actualizado: 2026-07-11
+Actualizado: 2026-07-21
 
-Este manual explica como usar el backoffice de Fullness Lab y que se necesita para dejar Mercado Pago listo para operar.
+Este manual cubre el acceso operativo de Cecilia. Su cuenta no entrega acceso al panel de Supabase ni permite navegar tablas de datos. Desde el backoffice puede descargar los tres listados autorizados y asistir a personas que necesiten restablecer su contraseña.
 
-## 1. Acceso Al Backoffice
+## 1. Entrar Al Backoffice
 
-1. Entrar al sitio.
-2. Iniciar sesion con el correo autorizado.
-3. Abrir `Backoffice` desde el menu o entrar directo a `/#backoffice`.
-4. Si el panel no aparece, cerrar sesion y volver a entrar. La cuenta debe estar marcada como administradora en Supabase (`profiles.is_admin = true`).
+1. Entrar al sitio e iniciar sesion con el correo asignado.
+2. Abrir `Backoffice` desde el menu o visitar `/#backoffice`.
+3. Se abrira directamente el modulo `Operaciones`.
 
-## 2. Modulos Del Panel
+Si no aparece el boton `Backoffice`, cerrar sesion, volver a entrar y confirmar que se esta usando la cuenta asignada.
 
-El panel esta separado en cuatro modulos para trabajar sin mezclar tareas.
+## 2. Alcance Del Acceso
 
-### Meal Preps
+Cecilia puede:
 
-Sirve para crear, editar, activar o desactivar planes y opciones familiares.
+- Exportar el listado de usuarios suscritos.
+- Exportar el listado consolidado de clientes.
+- Exportar el historial de ventas.
+- Enviar un correo de recuperacion de contraseña a una persona que lo necesite.
 
-Campos principales:
+El modulo no muestra tablas navegables ni permite editar cuentas, pedidos, pagos, configuracion de Mercado Pago o credenciales.
 
-- `Tipo`: plan o familiar.
-- `Frecuencia`: semanal o mensual, solo para planes.
-- `Nombre`: titulo visible.
-- `Slug`: URL interna del producto. Usar minusculas, sin espacios, por ejemplo `plan-semanal-antinflamatorio`.
-- `SKU`: codigo interno opcional.
-- `Etiqueta`: frase corta visible, por ejemplo `5 meal preps / 1 semana`.
-- `Precio CLP`: precio sin puntos ni simbolo.
-- `Orden`: define la posicion en listados.
-- `Activo`: si esta encendido, el item queda disponible en el catalogo.
+## 3. Exportar Listados CSV
 
-Fotos:
+En `Operaciones` hay tres botones. Cada descarga genera un archivo `.csv`, compatible con Excel, Numbers y Google Sheets.
 
-- `Subir principal`: imagen principal del producto.
-- `Subir hover`: imagen secundaria para estados visuales.
-- Tambien se puede pegar una URL manual en los campos de imagen.
+### Suscritos
 
-Contenido nutricional:
+Incluye:
 
-- `Ingredientes`, `Alergenos`, `Descripcion nutricional`, `Caracteristicas nutricionales`, `Receta resumida`, `Detalle nutricional` y `Pasos` alimentan la ficha del producto.
-- `Datos nutricionales JSON` debe mantenerse como JSON valido. Si hay duda, dejar `{}`.
+- Nombre.
+- Correo.
+- Telefono.
+- Origen de la suscripcion.
+- Fecha de alta y eventual baja.
 
-Planes:
+Usarlo para comunicaciones con personas que se registraron en el popup o formulario de suscripcion.
 
-- Cuando el tipo es `Plan`, aparece `Platos del plan`.
-- Cada plato incluido puede tener nombre, etiqueta, descripcion, fotos, beneficios, ingredientes, descripcion nutricional, alergeno y datos nutricionales.
+### Clientes
 
-Para publicar:
+Incluye:
 
-1. Completar campos obligatorios.
-2. Revisar que `Activo` este encendido.
-3. Guardar.
-4. Abrir la pagina publica del producto y revisar texto, precio y fotos.
+- Nombre, correo y telefono.
+- Cantidad de compras.
+- Total historico en CLP.
+- Primera y ultima compra.
+- Fecha de creacion de cuenta cuando exista.
 
-### Tienda
+Usarlo para seguimiento comercial, recompra y atencion de clientes.
 
-Controla los textos y visuales principales de la pagina de tienda.
+### Ventas Historicas
 
-Permite editar:
+Incluye:
 
-- Hero de tienda: eyebrow, titulo, bajada, imagen y botones.
-- Metricas del hero.
-- Bloque de suscripcion: titulo, bajada, boton, beneficios y tabla comparativa.
+- Numero de orden y fecha.
+- Estado del pedido, pago y despacho.
+- Datos de contacto del cliente.
+- Monto y moneda.
 
-Recomendacion:
+Usarlo para conciliacion, seguimiento de ventas y reportes historicos.
 
-- Usar textos breves.
-- Revisar en mobile despues de cambiar titulos largos.
-- Mantener el tono Fullness: premium, claro, consciente y sin prometer solo rapidez.
+### Recomendacion Al Abrir Un CSV
 
-### Lightbox
+1. Abrir el archivo con Excel, Numbers o Google Sheets.
+2. Si Excel pregunta por el formato, elegir `UTF-8` y separador `coma`.
+3. No cambiar identificadores de orden ni montos antes de guardar una copia.
+4. Guardar el archivo solo en las ubicaciones autorizadas por Fullness Lab.
 
-Controla el popup de suscripcion.
+## 4. Ayudar A Recuperar Una Cuenta
 
-Permite editar:
+Cuando una persona no logra recuperar su acceso:
 
-- Activo / inactivo.
-- Titulo pequeno.
-- Texto grande.
-- Bajada.
-- Botones.
-- Imagen de fondo.
+1. Ir a `Operaciones`.
+2. En `Enviar recuperacion de contrasena`, escribir su correo.
+3. Presionar `Enviar recuperacion`.
+4. Informar que recibira un enlace seguro para crear una nueva contrasena.
 
-Uso recomendado:
+Buenas practicas:
 
-- Activarlo solo cuando haya una campana o llamado importante.
-- Mantener el texto corto.
-- Usar una imagen con buen contraste para que el texto sea legible.
+- Confirmar el correo antes de enviarlo.
+- No solicitar ni recibir contrasenas por WhatsApp, correo o llamadas.
+- No enviar enlaces de recuperacion a un correo que no haya sido confirmado por la persona.
+- Si no llega el correo, pedir que revise spam y vuelva a solicitarlo despues de algunos minutos.
 
-### Comunidad
+El sistema responde de forma segura: no confirma desde el panel si un correo tiene o no una cuenta registrada.
 
-Permite agregar actividades visibles de Comunidad Fullness.
+## 5. Mercado Pago
 
-Campos:
+El checkout y las notificaciones de pago se gestionan por los servicios protegidos del sitio. Cecilia puede consultar los estados de pago dentro del CSV de `Ventas historicas`, pero no configura Mercado Pago ni maneja credenciales.
 
-- Fecha.
-- Descripcion.
-
-Nota importante:
-
-- Esta gestion de comunidad todavia es simple y temporal. Actualmente se guarda localmente mientras no exista una tabla Supabase especifica para actividades.
-
-## 3. Checklist Antes De Publicar Cambios
-
-- Revisar que el item este activo.
-- Confirmar que el precio esta correcto.
-- Revisar fotos principal y hover.
-- Abrir el producto desde el sitio publico.
-- Probar mobile.
-- Si se cambio una campana, revisar tambien el lightbox.
-
-## 4. Mercado Pago: Estado Actual
-
-El proyecto ya contempla variables de entorno y tablas para pagos (`orders`, `payments`, `payment_events`), pero el flujo productivo de pago todavia no esta conectado de punta a punta. Hoy el checkout funciona como flujo comercial por WhatsApp.
-
-Para cobrar online en produccion falta conectar API routes server-side que:
-
-- creen una orden,
-- creen la preferencia o pago en Mercado Pago,
-- registren el resultado en Supabase,
-- reciban y validen webhooks,
-- actualicen el estado de la orden.
-
-## 5. Mercado Pago: Configuracion Necesaria
-
-Documentacion oficial de referencia:
-
-- [Credenciales Mercado Pago](https://www.mercadopago.com.ar/developers/es/docs/your-integrations/credentials)
-- [Checkout Pro](https://www.mercadopago.cl/developers/es/docs/checkout-pro/overview)
-- [Cuentas de prueba](https://www.mercadopago.cl/developers/es/docs/checkout-pro/test-accounts)
-- [Webhooks](https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks)
-
-### 5.1 Crear Aplicacion
-
-1. Entrar a Mercado Pago Developers.
-2. Ir a `Tus integraciones`.
-3. Crear una aplicacion para Fullness Lab.
-4. Usar credenciales de prueba para validar el flujo.
-5. Activar credenciales de produccion cuando el sitio y el checkout esten listos.
-
-### 5.2 Variables De Entorno
-
-En Vercel o el entorno de produccion deben existir:
-
-```bash
-MERCADOPAGO_ACCESS_TOKEN=APP_USR...
-MERCADOPAGO_WEBHOOK_SECRET=...
-MERCADOPAGO_TEST_MODE=false
-VITE_CHECKOUT_TEST_MODE=false
-```
-
-Uso correcto:
-
-- `MERCADOPAGO_ACCESS_TOKEN`: privado. Solo backend/API routes.
-- `MERCADOPAGO_WEBHOOK_SECRET`: privado. Sirve para validar que los webhooks vienen realmente desde Mercado Pago.
-- `MERCADOPAGO_TEST_MODE`: usa el sandbox solo durante pruebas.
-- `VITE_CHECKOUT_TEST_MODE`: prerrellena datos de QA; debe quedar en `false` para clientes reales.
-
-Checkout Pro ya esta implementado en `/api/mercadopago/preferences`, `/api/mercadopago/payments` y `/api/mercadopago/webhook`. Nunca pegar `MERCADOPAGO_ACCESS_TOKEN` en el codigo frontend, en capturas, en WhatsApp ni en documentos compartidos.
-
-### 5.3 Webhook
-
-Cuando exista la API route final, configurar en Mercado Pago una URL HTTPS similar a:
-
-```text
-https://fullnesslab.cl/api/mercadopago/webhook
-```
-
-Eventos recomendados:
-
-- `payment`
-
-La API debe:
-
-- validar la firma `x-signature`,
-- responder `200` o `201` rapido,
-- consultar el pago completo en Mercado Pago,
-- guardar el evento en `payment_events`,
-- actualizar `payments` y `orders`.
-
-### 5.4 Pruebas
-
-Antes de produccion:
-
-1. Usar credenciales de prueba.
-2. Crear compra de prueba.
-3. Confirmar que Mercado Pago responde correctamente.
-4. Confirmar que Supabase registra orden, pago y evento.
-5. Simular webhook.
-6. Revisar estados de orden: pendiente, aprobado, rechazado.
-
-### 5.5 Paso A Produccion
-
-1. Activar credenciales de produccion en Mercado Pago.
-2. Cargar variables de produccion en Vercel.
-3. Confirmar webhook productivo.
-4. Hacer una compra real de bajo monto.
-5. Revisar Mercado Pago, Supabase y correo/notificacion de confirmacion.
+Las credenciales privadas, el webhook y cualquier cambio de configuracion de Mercado Pago corresponden al responsable tecnico o administrador propietario. Nunca se deben compartir access tokens, secretos de webhook ni capturas que los muestren.
 
 ## 6. Problemas Frecuentes
 
 ### No Puedo Entrar Al Backoffice
 
-- Confirmar que el correo existe en Supabase Auth.
-- Confirmar que `profiles.is_admin` esta en `true`.
-- Cerrar sesion y volver a entrar.
+- Confirmar que se uso el correo asignado.
+- Cerrar sesion y volver a iniciar sesion.
+- Abrir `/#backoffice` nuevamente.
+- Si persiste, pedir revision al administrador propietario.
 
-### Guarde Un Producto Y No Se Ve
+### El CSV No Se Descarga
 
-- Revisar que `Activo` este encendido.
-- Revisar que el producto tenga precio y nombre.
-- Refrescar la pagina publica.
+- Revisar la carpeta `Descargas` del navegador.
+- Permitir descargas para el sitio si el navegador las bloqueo.
+- Recargar la pagina e intentar una vez mas.
+- Si persiste, cerrar sesion y volver a entrar.
 
-### La Foto No Carga
+### La Persona No Recibe La Recuperacion
 
-- Revisar si la URL abre en una pestana.
-- Si fue subida desde el backoffice, esperar unos segundos y guardar otra vez.
-- Evitar archivos demasiado pesados.
-
-### Mercado Pago No Notifica
-
-- Confirmar que el webhook usa HTTPS.
-- Confirmar que la URL configurada corresponde al dominio productivo.
-- Revisar que el backend responde `200` o `201`.
-- Revisar que `MERCADOPAGO_WEBHOOK_SECRET` coincide con la firma generada en Mercado Pago.
+- Confirmar que el correo fue escrito correctamente.
+- Pedir que revise spam, promociones y papelera.
+- Solicitar el envio nuevamente despues de algunos minutos.
+- No cambiar contrasenas por cuenta propia ni pedir datos sensibles.

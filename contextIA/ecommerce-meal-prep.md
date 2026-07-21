@@ -47,7 +47,26 @@
 
 ### Correo transaccional 2026-07-21
 
-- Resend es el proveedor elegido para los correos de Fullness Lab. El dominio `fullnesslab.com` se agregó en la región São Paulo y se configuraron en Squarespace los registros DKIM, MX de retorno, SPF de subdominio `send` y DMARC. Google Workspace y Vercel se mantienen sin cambios.
-- Mientras Resend termina de propagar el DNS, el dominio puede figurar como `pending`; no crear ni usar la clave API hasta que el panel lo marque verificado.
-- La migración `20260721001000_transactional_email.sql` crea suscriptores y bitácora de entregas idempotente. El backend usa `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO` y opcionalmente `EMAIL_TEST_RECIPIENT`; esas credenciales son sólo de servidor y no se deben exponer en React, commits ni Production antes de QA.
+- Resend es el proveedor elegido para los correos de Fullness Lab. El dominio `fullnesslab.com` se agregó en la región São Paulo, se configuraron en Squarespace los registros DKIM, MX de retorno, SPF de subdominio `send` y DMARC, y Resend lo marcó como verificado. Google Workspace y Vercel se mantienen sin cambios.
+- En Vercel, `RESEND_API_KEY`, `EMAIL_FROM=Fullness Lab <hola@fullnesslab.com>` y `EMAIL_REPLY_TO=hola@fullnesslab.com` están configurados como secretos de Production y Preview. La clave tiene sólo permiso de envío y queda restringida a `fullnesslab.com`; nunca copiarla a la repo, React ni documentación.
+- La versión `3f0e1a1` (`feat: add transactional email delivery`) fue desplegada manualmente a Production desde Vercel porque la integración Git no había creado el despliegue automático. El endpoint público `/api/subscriptions` responde y valida entradas en producción.
+- La migración `20260721001000_transactional_email.sql` ya fue aplicada mediante la API de gestión de Supabase y verificada por la existencia de `email_subscribers` y `email_deliveries`. No reutilizar una pestaña de SQL que tenga una consulta ajena seleccionada.
+- Supabase Auth usa SMTP personalizado de Resend: `smtp.resend.com`, puerto `465`, usuario `resend`, remitente `hola@fullnesslab.com` y nombre `Fullness Lab`. El panel enviaba erróneamente el puerto como número; la API de gestión lo aceptó como texto (`"465"`) y se verificó por lectura posterior de la configuración.
+- Se creó una clave de envío dedicada para el SMTP de Supabase y los tokens temporales de Supabase usados para configuración y migración se revocaron al terminar. Las claves no se registran en código ni documentación.
+- La prueba de alta real en producción para `carlos@prof3sional.com` devolvió `201` desde `/api/subscriptions`; Resend registró el asunto `Bienvenida a Fullness Lab` con estado `delivered`.
+- Para revisión de diseño se enviaron a `carlos@prof3sional.com` 15 muestras con estado `delivered`: bienvenida, confirmación de pedido y las 13 plantillas de Supabase Auth. Las muestras están rotuladas como tales y sus URLs/códigos son de demostración; no corresponden a operaciones reales ni deben reutilizarse como mecanismo de prueba funcional de Auth.
+- Incidente a recordar: el editor SQL de Supabase cambió a una consulta previa sin título durante el primer intento y ejecutó una modificación existente sobre `orders`. Se dejó de usar ese editor, se aplicó la migración correcta mediante API y no se revirtió la consulta ajena. Revisar el esquema de `orders.client_id` y su clave foránea antes de asumir su estado en trabajo futuro.
 - La suscripción del lightbox queda persistida y dispara bienvenida; una orden sólo dispara su confirmación cuando Mercado Pago devuelve estado `approved`. Los reintentos de retorno/webhook reutilizan la misma clave de entrega para no duplicar correos.
+
+### QA backoffice 2026-07-21
+
+- Se validó desde UI con una cuenta administrativa temporal: acceso al Backoffice, carga del catálogo, edición del formulario, cambio de tipo a `Familiar`, guardado de Tienda y toggle/guardado/reversión de Lightbox. La cuenta temporal se eliminó al terminar.
+- La subida se comprobó contra el endpoint real autenticado que consume la UI (`/api/upload-media`): cuatro imágenes de prueba llegaron a R2 y sus URLs se ingresaron en el formulario. Los cuatro objetos se eliminaron al finalizar. El selector nativo de archivos no se pudo accionar desde la automatización del navegador, por lo que aún requiere un smoke test manual en una sesión administrativa normal.
+- Hallazgo bloqueante: al cargar/guardar `menu_items`, Supabase responde que no encuentra `nutrition_detail` en su schema cache. El catálogo muestra tres ítems de ejemplo y el plan QA no persistió, por lo que crear/editar/eliminar meal preps no puede aprobarse hasta aplicar `20260609001000_menu_item_product_detail.sql` al proyecto correcto o recargar el esquema PostgREST después de confirmar que ya está aplicada.
+- Comunidad permite ingresar una actividad en el estado de UI, pero no persistió de forma durable durante el QA (volvió a las cinco actividades iniciales). Revisar si esa sección debe persistir remotamente antes de considerarla un backoffice operativo.
+
+### Revalidación backoffice 2026-07-21
+
+- Después de aplicar la migración/corrección del esquema, `menu_items` dejó de devolver el error de `nutrition_detail`. Se aprobó por UI el flujo crear, refrescar catálogo, editar y eliminar un producto familiar; el registro temporal apareció como cuarto producto, se actualizó y se retiró nuevamente desde el panel.
+- El precio CLP del Backoffice ahora permite cualquier peso entero (`step="1"`); no debe exigir múltiplos de $100. Se verificó que `$12.345` persiste y se presenta como tal.
+- Las imágenes se volvieron a verificar contra R2 usando el endpoint autenticado de la UI. Las URLs principal y hover se guardaron en el producto de QA y los cinco objetos generados durante la prueba se eliminaron; la cuenta administrativa temporal también fue eliminada.

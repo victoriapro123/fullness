@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -9,8 +9,13 @@ const htmlUrl = pathToFileURL(path.join(root, "index.html")).href;
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const slideCount = 12;
 
-rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(outputDir, { recursive: true });
+
+for (const entry of readdirSync(outputDir)) {
+  if (/^manual-cecilia-\d{2}\.png$/i.test(entry)) {
+    rmSync(path.join(outputDir, entry), { force: true });
+  }
+}
 
 for (let slide = 1; slide <= slideCount; slide += 1) {
   const fileName = `manual-cecilia-${String(slide).padStart(2, "0")}.png`;

@@ -3,6 +3,8 @@ import {loadEnvFile} from "./r2-media.mjs";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const RESEND_API_URL = "https://api.resend.com";
+const DEFAULT_SITE_URL = "https://fullnesslab.com";
+const DEFAULT_EMAIL_LOGO_URL = "https://pub-16818329ca464c2e9bff6605b2f520f4.r2.dev/assets/brand/fullness-lab-horizontal-marfil-2026.png";
 let supabaseAdmin;
 
 export async function registerEmailSubscriber({email, name, phone}) {
@@ -45,7 +47,7 @@ export async function registerEmailSubscriber({email, name, phone}) {
       eyebrow: "Experiencia Fullness",
       title: `Hola, ${subscriber.name}.`,
       body: "Gracias por ser parte de Fullness Lab. Te iremos compartiendo novedades, planes y experiencias pensadas para nutrirte desde la raíz.",
-      ctaHref: "https://fullnesslab.com/tienda",
+      ctaHref: siteUrl("/tienda"),
       ctaLabel: "Descubrir planes"
     })
   });
@@ -91,7 +93,7 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
         `Total: ${amount}`,
         deliveryMode
       ],
-      ctaHref: "https://fullnesslab.com/tienda",
+      ctaHref: siteUrl("/tienda"),
       ctaLabel: "Ver planes"
     })
   });
@@ -221,10 +223,16 @@ function resolveRecipient(email) {
 
 function renderEmail({eyebrow, title, body, details = [], ctaHref, ctaLabel}) {
   const detailList = details.length
-    ? `<ul style="margin:24px 0;padding:0;list-style:none;color:#34251f;line-height:1.6;">${details.map((detail) => `<li style="padding:8px 0;border-bottom:1px solid #e6d8c6;">${escapeHtml(detail)}</li>`).join("")}</ul>`
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0;border-top:1px solid #3a302b;">${details.map((detail) => `<tr><td style="padding:11px 0;border-bottom:1px solid #3a302b;color:#d8cfc3;font-size:15px;line-height:1.55;">${escapeHtml(detail)}</td></tr>`).join("")}</table>`
     : "";
+  const logoUrl = cleanText(process.env.EMAIL_LOGO_URL) || DEFAULT_EMAIL_LOGO_URL;
 
-  return `<!doctype html><html lang="es"><body style="margin:0;background:#f4eadb;color:#34251f;font-family:Arial,sans-serif;"><main style="max-width:560px;margin:0 auto;padding:40px 24px;"><p style="margin:0 0 16px;color:#8b2735;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">${escapeHtml(eyebrow)}</p><h1 style="margin:0 0 20px;font-size:32px;line-height:1.1;font-weight:500;">${escapeHtml(title)}</h1><p style="margin:0;font-size:16px;line-height:1.7;">${escapeHtml(body)}</p>${detailList}<a href="${escapeHtml(ctaHref)}" style="display:inline-block;margin-top:20px;padding:14px 20px;background:#8b2735;color:#fff;text-decoration:none;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(ctaLabel)}</a><p style="margin:36px 0 0;color:#6b5547;font-size:13px;line-height:1.6;">Fullness Lab<br>Nutrirse desde la raíz</p></main></body></html>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#030405;color:#f4eadb;font-family:'Avenir Next',Avenir,'Helvetica Neue',Arial,sans-serif;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#030405;"><tr><td align="center" style="padding:28px 16px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;border:1px solid #302724;background:#080808;"><tr><td style="padding:34px 34px 26px;border-bottom:1px solid #302724;"><a href="${escapeHtml(siteUrl("/"))}" style="text-decoration:none;"><img src="${escapeHtml(logoUrl)}" width="260" alt="Fullness Lab" style="display:block;width:260px;max-width:72%;height:auto;border:0;"></a></td></tr><tr><td style="padding:38px 34px 42px;"><p style="margin:0 0 18px;color:#a95b65;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">${escapeHtml(eyebrow)}</p><h1 style="margin:0 0 22px;color:#f4eadb;font-size:34px;line-height:1.15;font-weight:400;letter-spacing:0;">${escapeHtml(title)}</h1><p style="margin:0;color:#d8cfc3;font-size:16px;line-height:1.75;font-weight:400;">${escapeHtml(body)}</p>${detailList}<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:26px;"><tr><td style="background:#803f47;border:1px solid #a95b65;"><a href="${escapeHtml(ctaHref)}" style="display:inline-block;padding:15px 24px;color:#fff7ed;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;">${escapeHtml(ctaLabel)} &nbsp;↗</a></td></tr></table></td></tr><tr><td style="padding:24px 34px;border-top:1px solid #302724;color:#8f8379;font-size:12px;line-height:1.65;"><a href="${escapeHtml(siteUrl("/"))}" style="color:#bda89a;text-decoration:none;">fullnesslab.com</a><br>Nutrirse desde la raíz</td></tr></table></td></tr></table></body></html>`;
+}
+
+function siteUrl(path = "/") {
+  const base = (cleanText(process.env.SITE_URL) || DEFAULT_SITE_URL).replace(/\/+$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function formatClp(value) {

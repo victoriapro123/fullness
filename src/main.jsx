@@ -10,9 +10,11 @@ import {
   CookingPot,
   Eye,
   EyeOff,
+  FileDown,
   Heart,
   Home,
   ImagePlus,
+  KeyRound,
   Leaf,
   Lock,
   LogOut,
@@ -67,8 +69,8 @@ import "./styles.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
-const logoHeaderFooterSrc = mediaSrc("assets/fullness-lab-logo-horizontal-oficial.png");
-const logoVerticalSrc = mediaSrc("assets/fullness-lab-logo-vertical-marfil.png");
+const logoHeaderFooterSrc = mediaSrc("assets/brand/fullness-lab-horizontal-marfil-2026.png");
+const logoVerticalSrc = mediaSrc("assets/brand/fullness-lab-vertical-marfil-2026.png");
 const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
@@ -255,7 +257,7 @@ const faqGroups = [
       },
       {
         question: "Contacto por pedidos o despachos",
-        answer: ["Para cualquier consulta relacionada con pedidos o despachos: contacto@fullnesslab.cl · WhatsApp: +56 9 9658 8199."]
+        answer: ["Para cualquier consulta relacionada con pedidos o despachos: contacto@fullnesslab.com · WhatsApp: +56 9 9658 8199."]
       }
     ]
   },
@@ -2880,8 +2882,8 @@ function FaqPage({ onNavigateToShop }) {
             WhatsApp
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
-          <a href="mailto:contacto@fullnesslab.cl">
-            contacto@fullnesslab.cl
+          <a href="mailto:contacto@fullnesslab.com">
+            contacto@fullnesslab.com
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
           <a href={shopPath} onClick={onNavigateToShop}>
@@ -2926,6 +2928,11 @@ function App() {
   const [passwordSetupSaving, setPasswordSetupSaving] = useState(false);
   const [passwordSetupMessage, setPasswordSetupMessage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [operationsExporting, setOperationsExporting] = useState("");
+  const [operationsMessage, setOperationsMessage] = useState("");
+  const [operationsError, setOperationsError] = useState("");
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recoverySending, setRecoverySending] = useState(false);
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
@@ -2967,6 +2974,8 @@ function App() {
   const normalizedAuthEmail = authUser?.email?.toLowerCase() || "";
   const canChooseAccessMode = isAdmin && normalizedAuthEmail === adminPersonaEmail;
   const activeIsAdmin = isAdmin && (!canChooseAccessMode || accessMode === "admin");
+  const isBackofficeOperator = String(authUser?.app_metadata?.backoffice_role || "").toLowerCase() === "operator";
+  const hasBackofficeAccess = activeIsAdmin || isBackofficeOperator;
 
   useLayoutEffect(() => {
     const sectionHashes = new Set(["#programa", "#plato", "#filosofia", "#proposito", "#calentar", "#comunidad", "#contacto"]);
@@ -3387,6 +3396,94 @@ function App() {
     if (!silent) setAdminLoading(false);
   }
 
+  async function getBackofficeAccessToken() {
+    if (!isSupabaseConfigured) throw new Error("El backoffice no está disponible en este entorno.");
+
+    const supabase = await getSupabaseClient();
+    const {data, error} = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+
+    if (error || !token) {
+      throw error || new Error("Tu sesión venció. Vuelve a iniciar sesión.");
+    }
+
+    return token;
+  }
+
+  async function downloadBackofficeCsv(type, label) {
+    setOperationsExporting(type);
+    setOperationsError("");
+    setOperationsMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch(`/api/backoffice/exports?type=${encodeURIComponent(type)}`, {
+        headers: {authorization: `Bearer ${token}`}
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "No pudimos preparar el CSV.");
+      }
+
+      const file = await response.blob();
+      const objectUrl = window.URL.createObjectURL(file);
+      const link = document.createElement("a");
+      const disposition = response.headers.get("content-disposition") || "";
+      const fileName = disposition.match(/filename=\"?([^\";]+)\"?/i)?.[1] || `fullness-${type}.csv`;
+
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 0);
+      setOperationsMessage(`${label} descargado.`);
+    } catch (error) {
+      setOperationsError(getSupabaseErrorMessage(error, "No pudimos descargar el CSV."));
+    } finally {
+      setOperationsExporting("");
+    }
+  }
+
+  async function sendAssistedPasswordRecovery(event) {
+    event.preventDefault();
+    const email = recoveryEmail.trim().toLowerCase();
+
+    if (!email) {
+      setOperationsError("Ingresa el correo de la persona que necesita ayuda.");
+      return;
+    }
+
+    setRecoverySending(true);
+    setOperationsError("");
+    setOperationsMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/password-recovery", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({email})
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "No pudimos solicitar la recuperación.");
+      }
+
+      setRecoveryEmail("");
+      setOperationsMessage(payload.data?.message || "Solicitamos el correo de recuperación.");
+    } catch (error) {
+      setOperationsError(getSupabaseErrorMessage(error, "No pudimos enviar la recuperación."));
+    } finally {
+      setRecoverySending(false);
+    }
+  }
+
   async function signOut() {
     if (!isSupabaseConfigured) return;
 
@@ -3401,12 +3498,13 @@ function App() {
   }
 
   function openBackoffice() {
-    if (!activeIsAdmin) {
+    if (!hasBackofficeAccess) {
       setAdminOpen(false);
       setAccountOpen(true);
       return;
     }
 
+    if (!activeIsAdmin) setActiveBackofficeModule("operations");
     setAccountOpen(false);
     setMenuOpen(false);
     setAdminOpen(true);
@@ -3628,7 +3726,7 @@ function App() {
     const syncBackofficeHash = () => {
       if (window.location.hash !== "#backoffice") return;
 
-      if (activeIsAdmin) {
+      if (hasBackofficeAccess) {
         setAdminOpen(true);
         setAccountOpen(false);
       } else if (!authLoading) {
@@ -3642,7 +3740,13 @@ function App() {
     return () => {
       window.removeEventListener("hashchange", syncBackofficeHash);
     };
-  }, [activeIsAdmin, authLoading]);
+  }, [hasBackofficeAccess, authLoading]);
+
+  useEffect(() => {
+    if (isBackofficeOperator && !activeIsAdmin && activeBackofficeModule !== "operations") {
+      setActiveBackofficeModule("operations");
+    }
+  }, [activeBackofficeModule, activeIsAdmin, isBackofficeOperator]);
 
   useEffect(() => {
     if (adminOpen && activeIsAdmin) {
@@ -4671,7 +4775,7 @@ function App() {
     { href: "/comunidad", label: "Comunidad" },
     { href: aboutPath, label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
-    ...(activeIsAdmin ? [{ href: "#backoffice", label: "Backoffice" }] : [])
+    ...(hasBackofficeAccess ? [{ href: "#backoffice", label: "Backoffice" }] : [])
   ];
 
   const nav = navItems.map((item) => (
@@ -4712,29 +4816,39 @@ function App() {
 
   const activeMealPrepCount = adminItems.filter((item) => item.isActive).length;
   const adminModuleItems = [
+    ...(activeIsAdmin
+      ? [
+          {
+            id: "meal-preps",
+            label: "Meal preps",
+            description: `${adminItems.length} configurados · ${activeMealPrepCount} activos`,
+            Icon: Utensils
+          },
+          {
+            id: "shop",
+            label: "Tienda",
+            description: "Hero, CTA y bloque de suscripción",
+            Icon: Store
+          },
+          {
+            id: "lightbox",
+            label: "Lightbox",
+            description: subscriptionPopupForm.enabled ? "Popup activo" : "Popup inactivo",
+            Icon: Sparkles
+          },
+          {
+            id: "community",
+            label: "Comunidad",
+            description: `${communityActivities.length} actividades`,
+            Icon: Users
+          }
+        ]
+      : []),
     {
-      id: "meal-preps",
-      label: "Meal preps",
-      description: `${adminItems.length} configurados · ${activeMealPrepCount} activos`,
-      Icon: Utensils
-    },
-    {
-      id: "shop",
-      label: "Tienda",
-      description: "Hero, CTA y bloque de suscripción",
-      Icon: Store
-    },
-    {
-      id: "lightbox",
-      label: "Lightbox",
-      description: subscriptionPopupForm.enabled ? "Popup activo" : "Popup inactivo",
-      Icon: Sparkles
-    },
-    {
-      id: "community",
-      label: "Comunidad",
-      description: `${communityActivities.length} actividades`,
-      Icon: Users
+      id: "operations",
+      label: "Operaciones",
+      description: "Exportaciones y recuperación",
+      Icon: FileDown
     }
   ];
   const currentAdminModule =
@@ -4780,7 +4894,7 @@ function App() {
       <address className="footer-column footer-contact">
         <h3>Contacto</h3>
         <a href={whatsappUrl} target="_blank" rel="noreferrer">+56 9 9658 8199</a>
-        <a href="mailto:hola@fullnesslab.cl">hola@fullnesslab.cl</a>
+        <a href="mailto:hola@fullnesslab.com">hola@fullnesslab.com</a>
         <span>Vitacura, Santiago</span>
       </address>
       <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados • By Prof3sional.com</p>
@@ -5188,7 +5302,7 @@ function App() {
                     </div>
                   </div>
                 )}
-                {activeIsAdmin && (
+                {hasBackofficeAccess && (
                   <button className="primary-button full" type="button" onClick={openBackoffice}>
                     <ShieldCheck size={18} />
                     Abrir backoffice
@@ -5261,7 +5375,11 @@ function App() {
               <div>
                 <p className="eyebrow">Backoffice</p>
                 <h2 id="backoffice-title">Panel Fullness</h2>
-                <p className="backoffice-header-subtitle">Gestiona contenido, tienda y comunidad desde un solo lugar.</p>
+                <p className="backoffice-header-subtitle">
+                  {activeIsAdmin
+                    ? "Gestiona contenido, tienda, comunidad y operaciones desde un solo lugar."
+                    : "Exporta listados y ayuda a las personas a recuperar su acceso."}
+                </p>
               </div>
               <div className="backoffice-header-actions">
                 {activeIsAdmin && (
@@ -5281,7 +5399,7 @@ function App() {
               </div>
             </header>
 
-            {!activeIsAdmin ? (
+            {!hasBackofficeAccess ? (
               <div className="backoffice-state">
                 <ShieldCheck size={34} />
                 <h3>Acceso administrador</h3>
@@ -5429,7 +5547,7 @@ function App() {
                       </label>
                       <label>
                         Precio CLP
-                        <input required name="priceClp" type="number" min="0" step="100" value={menuForm.priceClp} onChange={updateMenuForm} placeholder="8990…" />
+                        <input required name="priceClp" type="number" min="0" step="1" value={menuForm.priceClp} onChange={updateMenuForm} placeholder="8990…" />
                       </label>
                       <label>
                         Orden
@@ -5898,6 +6016,82 @@ function App() {
                       })}
                     </div>
                     </section>
+                    )}
+
+                    {activeBackofficeModule === "operations" && (
+                      <section className="backoffice-side-panel backoffice-module-panel backoffice-operations-panel" aria-labelledby="operations-title">
+                        <div className="backoffice-list-top">
+                          <div>
+                            <p className="eyebrow">Operaciones</p>
+                            <h3 id="operations-title">Listados y recuperación</h3>
+                          </div>
+                        </div>
+
+                        <div className="operations-export-grid" aria-label="Exportar listados en CSV">
+                          <button
+                            type="button"
+                            onClick={() => downloadBackofficeCsv("subscribers", "Listado de suscritos")}
+                            disabled={Boolean(operationsExporting)}
+                          >
+                            <FileDown size={20} />
+                            <span>
+                              <strong>Suscritos</strong>
+                              <small>Nombre, correo, teléfono y estado de suscripción.</small>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadBackofficeCsv("customers", "Listado de clientes")}
+                            disabled={Boolean(operationsExporting)}
+                          >
+                            <FileDown size={20} />
+                            <span>
+                              <strong>Clientes</strong>
+                              <small>Datos de contacto, compras y total histórico.</small>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadBackofficeCsv("sales", "Ventas históricas")}
+                            disabled={Boolean(operationsExporting)}
+                          >
+                            <FileDown size={20} />
+                            <span>
+                              <strong>Ventas históricas</strong>
+                              <small>Órdenes, estados, fechas y montos.</small>
+                            </span>
+                          </button>
+                        </div>
+
+                        <form className="operations-recovery-form" onSubmit={sendAssistedPasswordRecovery}>
+                          <div>
+                            <p className="eyebrow">Ayuda de acceso</p>
+                            <h4>Enviar recuperación de contraseña</h4>
+                            <p>La persona recibirá un enlace seguro para crear una nueva contraseña.</p>
+                          </div>
+                          <label>
+                            Correo de la persona
+                            <input
+                              type="email"
+                              value={recoveryEmail}
+                              onChange={(event) => setRecoveryEmail(event.target.value)}
+                              placeholder="nombre@correo.com"
+                              autoComplete="email"
+                              required
+                            />
+                          </label>
+                          <button className="primary-button" type="submit" disabled={recoverySending}>
+                            {recoverySending ? <RefreshCw size={18} /> : <KeyRound size={18} />}
+                            {recoverySending ? "Enviando..." : "Enviar recuperación"}
+                          </button>
+                        </form>
+
+                        {(operationsError || operationsMessage) && (
+                          <p className={`backoffice-alert ${operationsError ? "is-error" : "is-success"}`} role="status">
+                            {operationsError || operationsMessage}
+                          </p>
+                        )}
+                      </section>
                     )}
                   </div>
                 </div>

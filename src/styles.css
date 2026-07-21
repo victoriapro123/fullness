@@ -1030,6 +1030,127 @@ footer {
   }
 }
 
+/* Operaciones: exports and customer access assistance. */
+.backoffice-operations-panel {
+  align-content: start;
+  max-width: 920px;
+}
+
+.operations-export-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.operations-export-grid > button {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 112px;
+  padding: 16px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(81, 20, 37, 0.14);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.operations-export-grid > button:hover:not(:disabled) {
+  border-color: rgba(142, 38, 60, 0.38);
+  box-shadow: 0 10px 22px rgba(53, 22, 31, 0.08);
+  transform: translateY(-1px);
+}
+
+.operations-export-grid > button:disabled {
+  cursor: wait;
+  opacity: 0.56;
+}
+
+.operations-export-grid > button > svg {
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  color: var(--beet);
+  background: rgba(146, 50, 71, 0.09);
+  border-radius: 50%;
+}
+
+.operations-export-grid span {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.operations-export-grid strong {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.operations-export-grid small,
+.operations-recovery-form p {
+  color: rgba(23, 17, 12, 0.62);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.operations-recovery-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.9fr) auto;
+  align-items: end;
+  gap: 16px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(81, 20, 37, 0.12);
+}
+
+.operations-recovery-form h4 {
+  margin: 4px 0 6px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.06rem;
+}
+
+.operations-recovery-form p {
+  margin: 0;
+}
+
+.operations-recovery-form label {
+  display: grid;
+  gap: 7px;
+  color: rgba(23, 17, 12, 0.76);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.operations-recovery-form .primary-button {
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+.backoffice-operations-panel .backoffice-alert {
+  margin: 0;
+}
+
+@media (max-width: 920px) {
+  .operations-export-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-export-grid > button {
+    min-height: 82px;
+  }
+
+  .operations-recovery-form {
+    grid-template-columns: 1fr;
+  }
+
+  .operations-recovery-form .primary-button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 620px) {
   .brand-reference-logo {
     width: 158px;
@@ -3412,8 +3533,8 @@ h3 {
   max-height: 74%;
   opacity: 0.9;
   background: rgb(244, 234, 219);
-  -webkit-mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
-  mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
+  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
+  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
   transform: translateY(-50%);
   filter: none;
 }
@@ -3440,8 +3561,8 @@ h3 {
   width: min(21vw, 310px);
   aspect-ratio: 879 / 1240;
   background: linear-gradient(180deg, rgba(125, 46, 61, 0.96) 0%, rgba(143, 47, 69, 0.9) 43%, rgba(160, 117, 70, 0.94) 100%);
-  -webkit-mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
-  mask: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center top / 100% auto no-repeat;
+  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
+  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
 }
 
 .offer-brand-mark img {
@@ -5185,7 +5306,7 @@ footer::before {
   width: clamp(120px, 15vw, 230px);
   aspect-ratio: 879 / 1525;
   pointer-events: none;
-  background: url("/api/media?key=assets%2Ffullness-lab-logo-vertical-marfil.png") center / contain no-repeat;
+  background: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center / contain no-repeat;
   opacity: 0.06;
   transform: translateY(-50%);
 }
@@ -20190,4 +20311,16 @@ main {
   .route-shop .shop-process-band li:last-child small {
     grid-column: 1 / -1 !important;
   }
+}
+
+/* Final lightbox QA: benefits read as editorial markers, without misaligned separators. */
+.subscription-lightbox-benefits {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+.subscription-lightbox-benefits span,
+.subscription-lightbox-benefits span + span {
+  border: 0 !important;
 }
