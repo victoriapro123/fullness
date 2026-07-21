@@ -32,3 +32,9 @@
 - El token del vendedor de prueba no puede crear cuentas `Comprador` por API (`40311`); para generarla o consultar sus credenciales es necesario iniciar sesion con la cuenta productiva en Mercado Pago Developers.
 - Antes de produccion: configurar `MERCADOPAGO_WEBHOOK_SECRET`, registrar el webhook HTTPS, cambiar a credenciales productivas, desactivar el prellenado QA y ejecutar una compra real de bajo monto.
 - El correo pedido en QA se envia manualmente desde Outlook conectado; el sitio no promete correo transaccional automatico hasta incorporar un proveedor backend.
+
+### Incidencia sandbox 2026-07-21
+
+- El token sandbox debe pertenecer a la misma aplicacion que genera las preferencias. Al corregirlo, la creacion de preferencias en Vercel Preview funciono nuevamente; Production permanece sin credenciales de prueba.
+- No declarar una compra sandbox como aprobada por el mero retorno visual. Debe existir el pago aprobado en Mercado Pago y su conciliacion en `orders` y `payments` antes de enviar cualquier correo de confirmacion.
+- El navegador interno encontro `ERR_TOO_MANY_REDIRECTS` al pasar desde una sesion personal a `sandbox.mercadopago.cl`; el tokenizado API de tarjeta oficial de prueba devolvio `G001`. Esta es una dependencia externa pendiente con Mercado Pago, no una aprobacion de compra ni un error que deba ocultarse con estados simulados.
