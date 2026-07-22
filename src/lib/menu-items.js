@@ -3,6 +3,8 @@ import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 const MENU_ITEM_COLUMNS = "*";
 const SHOP_SETTINGS_COLUMNS = "*";
 const SHOP_SETTINGS_ID = "main";
+const MEAL_LIBRARY_COLUMNS = "*";
+const CUSTOMER_SUBSCRIPTION_COLUMNS = "*, plan:menu_items(id,name,plan_frequency)";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -76,6 +78,7 @@ function normalizeIncludedItems(value) {
 
       return {
         id: cleanText(item?.id) || `meal-${index + 1}`,
+        libraryMealId: cleanText(item?.libraryMealId || item?.library_meal_id),
         name,
         tag: cleanText(item?.tag),
         description,
@@ -147,6 +150,41 @@ export function mapMenuItem(row) {
   };
 }
 
+export function mapMealLibraryItem(row) {
+  return {
+    id: row.id,
+    name: row.name || "",
+    tag: row.tag || "",
+    description: row.description || "",
+    photoUrl: row.photo_url || "",
+    photoStoragePath: row.photo_storage_path || "",
+    secondaryPhotoUrl: row.secondary_photo_url || "",
+    secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
+    benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
+    ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
+    nutritionDescription: row.nutrition_description || "",
+    nutritionHighlights: Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
+    nutritionFacts: row.nutrition_facts || {},
+    allergens: Array.isArray(row.allergens) ? row.allergens : [],
+    isActive: Boolean(row.is_active),
+    updatedAt: row.updated_at || ""
+  };
+}
+
+export function mapCustomerSubscription(row) {
+  return {
+    id: row.id,
+    customerName: row.customer_name || "",
+    customerEmail: row.customer_email || "",
+    frequency: row.frequency || "weekly",
+    status: row.status || "active",
+    nextDeliveryAt: row.next_delivery_at || "",
+    planName: row.plan?.name || "Plan sin asignar",
+    planFrequency: row.plan?.plan_frequency || "",
+    startsAt: row.starts_at || ""
+  };
+}
+
 export function mapShopSettings(row) {
   return {
     id: row.id || SHOP_SETTINGS_ID,
@@ -199,6 +237,25 @@ function buildMenuItemPayload(input) {
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
     display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order)
+  };
+}
+
+function buildMealLibraryPayload(input) {
+  return {
+    name: cleanText(input.name),
+    tag: nullableText(input.tag),
+    description: cleanText(input.description),
+    photo_url: nullableText(input.photoUrl || input.photo_url),
+    photo_storage_path: nullableText(input.photoStoragePath || input.photo_storage_path),
+    secondary_photo_url: nullableText(input.secondaryPhotoUrl || input.secondary_photo_url),
+    secondary_photo_storage_path: nullableText(input.secondaryPhotoStoragePath || input.secondary_photo_storage_path),
+    benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
+    ingredients: normalizeTextList(input.ingredients),
+    nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
+    nutrition_highlights: normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
+    nutrition_facts: normalizeJsonObject(input.nutritionFacts || input.nutrition_facts),
+    allergens: normalizeTextList(input.allergens),
+    is_active: Boolean(input.isActive ?? input.is_active)
   };
 }
 
@@ -277,6 +334,58 @@ export async function listAdminMenuItems() {
     error: null,
     configured: true
   };
+}
+
+export async function listMealLibraryItems() {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return { data: [], error: null, configured: false };
+
+  const { data, error } = await supabase
+    .from("meal_library_items")
+    .select(MEAL_LIBRARY_COLUMNS)
+    .order("name", { ascending: true });
+
+  if (error) return { data: [], error, configured: true };
+
+  return { data: (data || []).map(mapMealLibraryItem), error: null, configured: true };
+}
+
+export async function saveMealLibraryItem(input) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const payload = buildMealLibraryPayload(input);
+  const query = input.id
+    ? supabase.from("meal_library_items").update(payload).eq("id", input.id)
+    : supabase.from("meal_library_items").insert(payload);
+  const { data, error } = await query.select(MEAL_LIBRARY_COLUMNS).single();
+
+  if (error) return { data: null, error, configured: true };
+
+  return { data: mapMealLibraryItem(data), error: null, configured: true };
+}
+
+export async function deleteMealLibraryItem(id) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const { error } = await supabase.from("meal_library_items").delete().eq("id", id);
+  return { data: error ? null : id, error, configured: true };
+}
+
+export async function listAdminCustomerSubscriptions() {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return { data: [], error: null, configured: false };
+
+  const { data, error } = await supabase
+    .from("customer_subscriptions")
+    .select(CUSTOMER_SUBSCRIPTION_COLUMNS)
+    .order("next_delivery_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  if (error) return { data: [], error, configured: true };
+
+  return { data: (data || []).map(mapCustomerSubscription), error: null, configured: true };
 }
 
 export async function getShopSettings() {

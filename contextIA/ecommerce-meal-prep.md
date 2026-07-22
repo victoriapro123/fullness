@@ -70,3 +70,18 @@
 - Después de aplicar la migración/corrección del esquema, `menu_items` dejó de devolver el error de `nutrition_detail`. Se aprobó por UI el flujo crear, refrescar catálogo, editar y eliminar un producto familiar; el registro temporal apareció como cuarto producto, se actualizó y se retiró nuevamente desde el panel.
 - El precio CLP del Backoffice ahora permite cualquier peso entero (`step="1"`); no debe exigir múltiplos de $100. Se verificó que `$12.345` persiste y se presenta como tal.
 - Las imágenes se volvieron a verificar contra R2 usando el endpoint autenticado de la UI. Las URLs principal y hover se guardaron en el producto de QA y los cinco objetos generados durante la prueba se eliminaron; la cuenta administrativa temporal también fue eliminada.
+
+### Backoffice: suscripciones y biblioteca 2026-07-21
+
+- El Backoffice debe tener una vista de clientes con suscripción operativa, filtrable por estado (`Activa`, `Pausada`, `Cancelada`) y frecuencia (`Semanal`, `Mensual`), sin mezclar esos clientes con personas inscritas solamente al lightbox/newsletter.
+- Los platos reutilizables viven en una biblioteca propia. Al cargarlos dentro de un plan se copian todos sus datos de ficha, fotos, tags e información nutricional y se guarda la referencia de biblioteca en el JSON del plan; así un mismo plato puede incorporarse a varios meal preps sin volver a escribirlo.
+- La migración requerida es `20260721002000_backoffice_subscriptions_and_meal_library.sql`. Crea `meal_library_items` y `customer_subscriptions` con RLS sólo para administradores.
+- QA posterior a aplicar la migración: creación de plato de biblioteca, carga en un plan y persistencia del plan aprobadas por UI. Se creó una suscripción semanal y una mensual de QA; la vista las cargó y el filtro semanal dejó visible sólo la semanal. Todas las filas y la cuenta administrativa temporal se eliminaron al terminar. El cuadro nativo de confirmación impidió automatizar el último click de borrado del plan, por lo que se limpió directamente por Supabase; el botón sí abrió el diálogo de confirmación.
+
+### Mercado Pago producción 2026-07-21
+
+- La aplicación oficial `Fullness Lab - Tienda` usa Checkout Pro y credenciales productivas. Sus secretos se guardan exclusivamente en Vercel Production; no registrarlos ni exponerlos en cliente, repo, documentación o Preview.
+- Production tiene `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `VITE_MERCADOPAGO_PUBLIC_KEY`, `MERCADOPAGO_TEST_MODE=false`, `VITE_CHECKOUT_TEST_MODE=false` y `CHECKOUT_SITE_URL=https://www.fullnesslab.com`. Preview conserva sus credenciales sandbox y flags de QA.
+- El dominio canónico productivo es `https://www.fullnesslab.com`; `fullnesslab.com` redirige con 308. El webhook de Mercado Pago se registró en `https://www.fullnesslab.com/api/mercadopago/webhook` para el evento `Pagos (legacy)` (`payment`).
+- La configuración de webhook generó una firma secreta, se cargó en Production y se reimplementó el deployment productivo `7bq4ooNkuzudAakK2Gg6pT56rbMU`. La prueba sin firma devolvió `401`, verificando que el runtime reconoce el secreto sin crear orden, pago ni cobro.
+- Antes de declarar la pasarela plenamente validada de cara al negocio, realizar una compra real controlada de bajo monto y confirmar la conciliación, el webhook y el correo de confirmación. No ejecutar esa compra automáticamente.

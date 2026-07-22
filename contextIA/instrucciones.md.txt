@@ -759,3 +759,8 @@ Impacto:
 - Header, footer, lightbox, correos, metadatos sociales y favicon deben referenciar exclusivamente `assets/brand/`.
 - Los activos de correo deben usar URL publica absoluta de R2; nunca una ruta relativa del sitio.
 - Si llega una nueva entrega de marca, versionar los archivos dentro de `assets/brand/` y actualizar todas las superficies en conjunto para evitar identidades mezcladas.
+## Ajuste editorial Nuestra historia (2026-07-21)
+
+- En la pagina `Quienes somos`, la alcachofa pertenece visualmente al encabezado `Nuestra historia`.
+- La planta de umbela debe aparecer mas abajo, acompañando el relato largo, nunca montada sobre la alcachofa.
+- Las ilustraciones botanicas funcionan como fondo secundario: baja opacidad, sin competir con la lectura y con posicion independiente por breakpoint.

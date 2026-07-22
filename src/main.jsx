@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   FileDown,
+  Filter,
   Heart,
   Home,
   ImagePlus,
@@ -43,9 +44,13 @@ import {
 } from "lucide-react";
 import {
   deleteMenuItem,
+  deleteMealLibraryItem,
   getShopSettings,
+  listAdminCustomerSubscriptions,
   listActiveMenuItems,
   listAdminMenuItems,
+  listMealLibraryItems,
+  saveMealLibraryItem,
   saveMenuItem,
   saveShopSettings,
   uploadMenuPhoto
@@ -1135,6 +1140,15 @@ function formatCommunityActivityDate(value) {
   };
 }
 
+function formatSubscriptionDate(value) {
+  if (!value) return "Sin fecha";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+}
+
 function slugifyMenuName(value) {
   return String(value || "")
     .normalize("NFD")
@@ -1153,6 +1167,7 @@ function createIncludedMealForm(index = 0) {
 
   return {
     id,
+    libraryMealId: "",
     name: "",
     tag: "",
     description: "",
@@ -1172,6 +1187,7 @@ function createIncludedMealForm(index = 0) {
 function includedMealToForm(item, index = 0) {
   return {
     id: item.id || `meal-${index + 1}`,
+    libraryMealId: item.libraryMealId || item.library_meal_id || "",
     name: item.name || "",
     tag: item.tag || "",
     description: item.description || "",
@@ -1185,6 +1201,33 @@ function includedMealToForm(item, index = 0) {
     nutritionHighlights: (item.nutritionHighlights || item.nutrition_highlights || []).join("\n"),
     nutritionFacts: JSON.stringify(item.nutritionFacts || item.nutrition_facts || {}, null, 2),
     allergens: (item.allergens || []).join("\n")
+  };
+}
+
+function mealLibraryItemToForm(item) {
+  return {
+    id: item.id || "",
+    name: item.name || "",
+    tag: item.tag || "",
+    description: item.description || "",
+    photoUrl: item.photoUrl || "",
+    photoStoragePath: item.photoStoragePath || "",
+    secondaryPhotoUrl: item.secondaryPhotoUrl || "",
+    secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
+    benefitTags: (item.benefitTags || []).join("\n"),
+    ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || "",
+    nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
+    nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
+    allergens: (item.allergens || []).join("\n"),
+    isActive: Boolean(item.isActive)
+  };
+}
+
+function createMealLibraryForm() {
+  return {
+    ...mealLibraryItemToForm({ isActive: true }),
+    isActive: true
   };
 }
 
@@ -1285,6 +1328,7 @@ function parseIncludedMealsFromForm(items) {
 
       return {
         id: item.id || `meal-${index + 1}`,
+        libraryMealId: item.libraryMealId || "",
         name: item.name,
         tag: item.tag,
         description: item.description,
@@ -2946,6 +2990,17 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
+  const [mealLibrary, setMealLibrary] = useState([]);
+  const [mealLibraryForm, setMealLibraryForm] = useState(createMealLibraryForm);
+  const [mealLibraryLoading, setMealLibraryLoading] = useState(false);
+  const [mealLibrarySaving, setMealLibrarySaving] = useState(false);
+  const [mealLibraryMessage, setMealLibraryMessage] = useState("");
+  const [mealLibraryError, setMealLibraryError] = useState("");
+  const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
+  const [subscriptionCustomers, setSubscriptionCustomers] = useState([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
+  const [subscriptionsError, setSubscriptionsError] = useState("");
+  const [subscriptionFilter, setSubscriptionFilter] = useState({ frequency: "all", query: "", status: "active" });
   const [communityActivities, setCommunityActivities] = useState(loadStoredCommunityActivities);
   const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
@@ -3396,6 +3451,142 @@ function App() {
     if (!silent) setAdminLoading(false);
   }
 
+  async function refreshMealLibrary({ silent = false } = {}) {
+    if (!activeIsAdmin) return;
+
+    if (!silent) {
+      setMealLibraryLoading(true);
+      setMealLibraryError("");
+    }
+
+    const result = await listMealLibraryItems();
+    if (result.error) {
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos cargar la biblioteca de platos."));
+    } else {
+      setMealLibrary(result.data);
+    }
+
+    if (!silent) setMealLibraryLoading(false);
+  }
+
+  async function refreshSubscriptionCustomers() {
+    if (!activeIsAdmin) return;
+
+    setSubscriptionsLoading(true);
+    setSubscriptionsError("");
+    const result = await listAdminCustomerSubscriptions();
+
+    if (result.error) {
+      setSubscriptionsError(getSupabaseErrorMessage(result.error, "No pudimos cargar las suscripciones."));
+    } else {
+      setSubscriptionCustomers(result.data);
+    }
+
+    setSubscriptionsLoading(false);
+  }
+
+  function updateMealLibraryForm(event) {
+    const { checked, name, type, value } = event.target;
+    setMealLibraryForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  }
+
+  function resetMealLibraryForm() {
+    setMealLibraryForm(createMealLibraryForm());
+    setMealLibraryError("");
+    setMealLibraryMessage("");
+  }
+
+  async function submitMealLibraryItem(event) {
+    event.preventDefault();
+    setMealLibrarySaving(true);
+    setMealLibraryError("");
+    setMealLibraryMessage("");
+
+    let nutritionFacts = {};
+    try {
+      nutritionFacts = parseJsonObject(mealLibraryForm.nutritionFacts);
+    } catch (error) {
+      setMealLibrarySaving(false);
+      setMealLibraryError(error.message);
+      return;
+    }
+
+    const result = await saveMealLibraryItem({ ...mealLibraryForm, nutritionFacts });
+    if (result.error || !result.configured) {
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos guardar el plato."));
+    } else {
+      setMealLibraryForm(mealLibraryItemToForm(result.data));
+      setMealLibraryMessage("Plato guardado en biblioteca.");
+      await refreshMealLibrary({ silent: true });
+    }
+
+    setMealLibrarySaving(false);
+  }
+
+  async function removeMealLibraryItem(item) {
+    if (!window.confirm(`¿Eliminar "${item.name}" de la biblioteca?`)) return;
+
+    setMealLibrarySaving(true);
+    setMealLibraryError("");
+    setMealLibraryMessage("");
+    const result = await deleteMealLibraryItem(item.id);
+
+    if (result.error || !result.configured) {
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el plato."));
+    } else {
+      if (mealLibraryForm.id === item.id) resetMealLibraryForm();
+      setMealLibraryMessage("Plato eliminado de biblioteca.");
+      await refreshMealLibrary({ silent: true });
+    }
+
+    setMealLibrarySaving(false);
+  }
+
+  async function handleMealLibraryPhotoChange(event, target = "primary") {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setMealLibrarySaving(true);
+    setMealLibraryError("");
+    const result = await uploadMenuPhoto(file);
+
+    if (result.error || !result.configured) {
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
+    } else {
+      setMealLibraryForm((current) => target === "secondary"
+        ? { ...current, secondaryPhotoUrl: result.data.photoUrl, secondaryPhotoStoragePath: result.data.photoStoragePath }
+        : { ...current, photoUrl: result.data.photoUrl, photoStoragePath: result.data.photoStoragePath });
+      setMealLibraryMessage("Foto cargada.");
+    }
+
+    setMealLibrarySaving(false);
+    event.target.value = "";
+  }
+
+  function addSelectedLibraryMealToPlan() {
+    const libraryItem = mealLibrary.find((item) => item.id === selectedLibraryMealId);
+    if (!libraryItem) return;
+
+    setMenuForm((current) => {
+      const draft = createIncludedMealForm(current.includedItems.length);
+      const includedMeal = {
+        ...draft,
+        ...mealLibraryItemToForm(libraryItem),
+        id: draft.id,
+        libraryMealId: libraryItem.id
+      };
+      const hasEmptyDraft = current.includedItems.length === 1 && !current.includedItems[0].name && !current.includedItems[0].description;
+      return {
+        ...current,
+        includedItems: hasEmptyDraft ? [includedMeal] : [...current.includedItems, includedMeal]
+      };
+    });
+    setSelectedLibraryMealId("");
+  }
+
   async function getBackofficeAccessToken() {
     if (!isSupabaseConfigured) throw new Error("El backoffice no está disponible en este entorno.");
 
@@ -3751,6 +3942,8 @@ function App() {
   useEffect(() => {
     if (adminOpen && activeIsAdmin) {
       refreshAdminItems();
+      refreshMealLibrary({ silent: true });
+      refreshSubscriptionCustomers();
     }
   }, [activeIsAdmin, adminOpen]);
 
@@ -4815,6 +5008,19 @@ function App() {
   ));
 
   const activeMealPrepCount = adminItems.filter((item) => item.isActive).length;
+  const activeSubscriptionCount = subscriptionCustomers.filter((item) => item.status === "active").length;
+  const filteredSubscriptions = useMemo(() => {
+    const query = subscriptionFilter.query.trim().toLowerCase();
+
+    return subscriptionCustomers.filter((subscription) => {
+      if (subscriptionFilter.status !== "all" && subscription.status !== subscriptionFilter.status) return false;
+      if (subscriptionFilter.frequency !== "all" && subscription.frequency !== subscriptionFilter.frequency) return false;
+      if (!query) return true;
+
+      return [subscription.customerName, subscription.customerEmail, subscription.planName]
+        .some((value) => String(value || "").toLowerCase().includes(query));
+    });
+  }, [subscriptionCustomers, subscriptionFilter]);
   const adminModuleItems = [
     ...(activeIsAdmin
       ? [
@@ -4823,6 +5029,18 @@ function App() {
             label: "Meal preps",
             description: `${adminItems.length} configurados · ${activeMealPrepCount} activos`,
             Icon: Utensils
+          },
+          {
+            id: "meal-library",
+            label: "Biblioteca de platos",
+            description: `${mealLibrary.length} reutilizables`,
+            Icon: CookingPot
+          },
+          {
+            id: "subscriptions",
+            label: "Clientes",
+            description: `${activeSubscriptionCount} suscripciones activas`,
+            Icon: Users
           },
           {
             id: "shop",
@@ -5659,10 +5877,26 @@ function App() {
                       <section className="backoffice-included-editor">
                         <div className="backoffice-list-top">
                           <h3>Platos del plan</h3>
-                          <button className="backoffice-command" type="button" onClick={addIncludedMeal}>
-                            <Plus size={17} />
-                            Agregar plato
-                          </button>
+                          <div className="included-editor-actions">
+                            <select
+                              aria-label="Plato desde biblioteca"
+                              value={selectedLibraryMealId}
+                              onChange={(event) => setSelectedLibraryMealId(event.target.value)}
+                            >
+                              <option value="">Biblioteca de platos</option>
+                              {mealLibrary.filter((item) => item.isActive).map((item) => (
+                                <option key={item.id} value={item.id}>{item.name}</option>
+                              ))}
+                            </select>
+                            <button className="backoffice-command" type="button" onClick={addSelectedLibraryMealToPlan} disabled={!selectedLibraryMealId}>
+                              <Plus size={17} />
+                              Cargar plato
+                            </button>
+                            <button className="backoffice-command" type="button" onClick={addIncludedMeal}>
+                              <Plus size={17} />
+                              Nuevo plato
+                            </button>
+                          </div>
                         </div>
 
                         {menuForm.includedItems.length === 0 ? (
@@ -5675,6 +5909,7 @@ function App() {
                                   <div>
                                     <p className="eyebrow">Plato {mealIndex + 1}</p>
                                     <h4>{meal.name || "Meal prep incluido"}</h4>
+                                    {meal.libraryMealId && <small>Biblioteca de platos</small>}
                                   </div>
                                   <button
                                     type="button"
@@ -5791,6 +6026,135 @@ function App() {
                     </div>
                   </form>
                       </div>
+                    )}
+
+                    {activeBackofficeModule === "meal-library" && (
+                      <div className="backoffice-layout backoffice-library-layout">
+                        <aside className="backoffice-list" aria-label="Biblioteca de platos">
+                          <div className="backoffice-list-top">
+                            <h3>Platos</h3>
+                            <button className="backoffice-command" type="button" onClick={resetMealLibraryForm}>
+                              <Plus size={17} />
+                              Nuevo
+                            </button>
+                          </div>
+                          {mealLibraryLoading ? (
+                            <p className="backoffice-muted">Cargando platos…</p>
+                          ) : mealLibrary.length ? (
+                            <div className="backoffice-menu-stack">
+                              {mealLibrary.map((item) => (
+                                <article className={`backoffice-menu-card ${mealLibraryForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
+                                  <button className="backoffice-menu-main" type="button" onClick={() => setMealLibraryForm(mealLibraryItemToForm(item))}>
+                                    <img src={item.photoUrl || placeholderProductImage} alt="" aria-hidden="true" />
+                                    <span>
+                                      <strong>{item.name}</strong>
+                                      <small>{item.tag || "Sin etiqueta"}</small>
+                                    </span>
+                                  </button>
+                                  <div className="backoffice-card-meta">
+                                    <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
+                                      {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                      {item.isActive ? "Activo" : "Inactivo"}
+                                    </span>
+                                  </div>
+                                  <div className="backoffice-card-actions">
+                                    <button type="button" onClick={() => setMealLibraryForm(mealLibraryItemToForm(item))} aria-label={`Editar ${item.name}`}>
+                                      <Pencil size={16} />
+                                    </button>
+                                    <button type="button" onClick={() => removeMealLibraryItem(item)} aria-label={`Eliminar ${item.name}`} disabled={mealLibrarySaving}>
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="backoffice-muted">Sin platos en biblioteca.</p>
+                          )}
+                        </aside>
+
+                        <form className="backoffice-form" onSubmit={submitMealLibraryItem}>
+                          <div className="backoffice-form-head">
+                            <div>
+                              <p className="eyebrow">{mealLibraryForm.id ? "Editar" : "Nuevo"}</p>
+                              <h3>{mealLibraryForm.name || "Plato reutilizable"}</h3>
+                            </div>
+                            <label className="backoffice-switch">
+                              <input name="isActive" type="checkbox" checked={mealLibraryForm.isActive} onChange={updateMealLibraryForm} />
+                              <span>{mealLibraryForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.isActive ? "Activo" : "Inactivo"}</span>
+                            </label>
+                          </div>
+                          {(mealLibraryError || mealLibraryMessage) && (
+                            <p className={`backoffice-alert ${mealLibraryError ? "is-error" : "is-success"}`} role="status">
+                              {mealLibraryError || mealLibraryMessage}
+                            </p>
+                          )}
+                          <div className="backoffice-grid">
+                            <label>Nombre<input required name="name" value={mealLibraryForm.name} onChange={updateMealLibraryForm} placeholder="Pollo, camote y cúrcuma…" /></label>
+                            <label>Etiqueta<input name="tag" value={mealLibraryForm.tag} onChange={updateMealLibraryForm} placeholder="Energético…" /></label>
+                          </div>
+                          <label className="backoffice-wide">Descripción<textarea required name="description" rows="3" value={mealLibraryForm.description} onChange={updateMealLibraryForm} placeholder="Describe el plato reutilizable…" /></label>
+                          <div className="backoffice-photo-row backoffice-photo-row-double">
+                            <div className="backoffice-photo-block">
+                              <div className="backoffice-photo-preview">{mealLibraryForm.photoUrl ? <img src={mealLibraryForm.photoUrl} alt="" aria-hidden="true" /> : <UploadCloud size={30} />}</div>
+                              <label className="upload-control"><UploadCloud size={18} />Subir principal<input type="file" accept="image/*" onChange={(event) => handleMealLibraryPhotoChange(event)} disabled={mealLibrarySaving} /></label>
+                              <label className="backoffice-wide">URL principal<input name="photoUrl" value={mealLibraryForm.photoUrl} onChange={updateMealLibraryForm} placeholder="/api/media?key=images/meal-preps/…" /></label>
+                            </div>
+                            <div className="backoffice-photo-block">
+                              <div className="backoffice-photo-preview">{mealLibraryForm.secondaryPhotoUrl ? <img src={mealLibraryForm.secondaryPhotoUrl} alt="" aria-hidden="true" /> : <ImagePlus size={30} />}</div>
+                              <label className="upload-control"><ImagePlus size={18} />Subir hover<input type="file" accept="image/*" onChange={(event) => handleMealLibraryPhotoChange(event, "secondary")} disabled={mealLibrarySaving} /></label>
+                              <label className="backoffice-wide">URL hover<input name="secondaryPhotoUrl" value={mealLibraryForm.secondaryPhotoUrl} onChange={updateMealLibraryForm} placeholder="/api/media?key=images/meal-preps/…" /></label>
+                            </div>
+                          </div>
+                          <div className="backoffice-grid">
+                            <label>Tags de beneficios<textarea name="benefitTags" rows="4" value={mealLibraryForm.benefitTags} onChange={updateMealLibraryForm} placeholder={"Antioxidante\nEnergético…"} /></label>
+                            <label>Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
+                          </div>
+                          <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
+                          <div className="backoffice-grid">
+                            <label>Características nutricionales<textarea name="nutritionHighlights" rows="4" value={mealLibraryForm.nutritionHighlights} onChange={updateMealLibraryForm} placeholder={"Alto en proteína\nFibra vegetal…"} /></label>
+                            <label>Datos nutricionales JSON<textarea name="nutritionFacts" rows="4" value={mealLibraryForm.nutritionFacts} onChange={updateMealLibraryForm} spellCheck={false} /></label>
+                          </div>
+                          <label className="backoffice-wide">Alérgenos<textarea name="allergens" rows="3" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder={"Pescado\nFrutos secos…"} /></label>
+                          <div className="backoffice-form-actions">
+                            <button className="google-button" type="button" onClick={resetMealLibraryForm} disabled={mealLibrarySaving}><Plus size={18} />Nuevo</button>
+                            <button className="primary-button" type="submit" disabled={mealLibrarySaving}>{mealLibrarySaving ? <RefreshCw size={18} /> : <Save size={18} />}{mealLibrarySaving ? "Guardando…" : "Guardar plato"}</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {activeBackofficeModule === "subscriptions" && (
+                      <section className="backoffice-side-panel backoffice-module-panel subscriptions-panel" aria-labelledby="subscriptions-title">
+                        <div className="backoffice-list-top">
+                          <h3 id="subscriptions-title">Clientes con suscripción</h3>
+                          <button className="icon-button" type="button" onClick={refreshSubscriptionCustomers} aria-label="Actualizar suscripciones" disabled={subscriptionsLoading}><RefreshCw size={18} /></button>
+                        </div>
+                        <div className="subscription-filters" aria-label="Filtros de suscripciones">
+                          <label><Filter size={16} /><span>Estado</span><select value={subscriptionFilter.status} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, status: event.target.value }))}><option value="all">Todos</option><option value="active">Activas</option><option value="paused">Pausadas</option><option value="cancelled">Canceladas</option></select></label>
+                          <label><span>Frecuencia</span><select value={subscriptionFilter.frequency} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, frequency: event.target.value }))}><option value="all">Semanal y mensual</option><option value="weekly">Semanal</option><option value="monthly">Mensual</option></select></label>
+                          <label><span>Buscar</span><input value={subscriptionFilter.query} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, query: event.target.value }))} placeholder="Nombre, correo o plan…" /></label>
+                        </div>
+                        {subscriptionsError && <p className="backoffice-alert is-error" role="status">{subscriptionsError}</p>}
+                        {subscriptionsLoading ? (
+                          <p className="backoffice-muted">Cargando suscripciones…</p>
+                        ) : filteredSubscriptions.length ? (
+                          <div className="subscription-customer-table" role="table" aria-label="Clientes con suscripción">
+                            <div className="subscription-customer-row is-header" role="row"><span>Cliente</span><span>Plan</span><span>Frecuencia</span><span>Estado</span><span>Próximo despacho</span></div>
+                            {filteredSubscriptions.map((subscription) => (
+                              <div className="subscription-customer-row" key={subscription.id} role="row">
+                                <span><strong>{subscription.customerName}</strong><small>{subscription.customerEmail}</small></span>
+                                <span>{subscription.planName}</span>
+                                <span>{subscription.frequency === "monthly" ? "Mensual" : "Semanal"}</span>
+                                <span><b className={`subscription-status is-${subscription.status}`}>{subscription.status === "active" ? "Activa" : subscription.status === "paused" ? "Pausada" : "Cancelada"}</b></span>
+                                <span>{formatSubscriptionDate(subscription.nextDeliveryAt)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="backoffice-muted">Sin clientes para estos filtros.</p>
+                        )}
+                      </section>
                     )}
 
                     {activeBackofficeModule === "shop" && (
