@@ -85,3 +85,7 @@
 - El dominio canónico productivo es `https://www.fullnesslab.com`; `fullnesslab.com` redirige con 308. El webhook de Mercado Pago se registró en `https://www.fullnesslab.com/api/mercadopago/webhook` para el evento `Pagos (legacy)` (`payment`).
 - La configuración de webhook generó una firma secreta, se cargó en Production y se reimplementó el deployment productivo `7bq4ooNkuzudAakK2Gg6pT56rbMU`. La prueba sin firma devolvió `401`, verificando que el runtime reconoce el secreto sin crear orden, pago ni cobro.
 - Antes de declarar la pasarela plenamente validada de cara al negocio, realizar una compra real controlada de bajo monto y confirmar la conciliación, el webhook y el correo de confirmación. No ejecutar esa compra automáticamente.
+
+### Acceso Backoffice 2026-07-22
+
+- La cuenta de prueba `cecilia.prueba@fullnesslab.com` tiene `profiles.is_admin=true`. Es una administradora completa: puede usar el Backoffice, gestionar catálogo, planes, biblioteca, suscripciones, ajustes e imágenes. Mantenerla fuera de la segmentación de clientes y revocar el permiso cambiando ese campo a `false` cuando deje de necesitarse.

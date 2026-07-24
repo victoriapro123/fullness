@@ -1,0 +1,145 @@
+/* Direccion visual final de la pagina Nosotros. */
+.about-portrait-hero,
+.about-origin {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* El hero conserva el retrato aprobado y usa ilustracion solo a la izquierda. */
+.about-portrait-hero::before {
+  content: none !important;
+}
+
+.about-portrait-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: -2%;
+  bottom: -8%;
+  width: clamp(380px, 42vw, 790px);
+  height: 88%;
+  background: url("./assets/about/nosotros-hero-ilustracion.png") left bottom / contain no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.about-portrait-copy,
+.about-portrait-media {
+  position: relative;
+  z-index: 2;
+}
+
+.about-portrait-copy {
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.38);
+}
+
+.about-portrait-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(8, 8, 7, 0.96) 0%,
+      rgba(8, 8, 7, 0.72) 14%,
+      rgba(8, 8, 7, 0.35) 31%,
+      rgba(8, 8, 7, 0.06) 54%,
+      transparent 70%
+    ),
+    linear-gradient(0deg, rgba(8, 8, 7, 0.34) 0%, transparent 34%);
+  pointer-events: none;
+}
+
+/* Bloque claro: fotografia real y betarraga editorial al extremo derecho. */
+.about-origin::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: -3%;
+  bottom: -4%;
+  width: clamp(320px, 33vw, 660px);
+  height: 94%;
+  background: url("./assets/about/betarraga-nosotros.png") right bottom / contain no-repeat;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.about-origin-media,
+.about-origin-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.about-origin-media img {
+  content: url("./assets/about/cecilia-cooking.jpeg");
+  object-position: 42% center;
+}
+
+.about-origin-copy {
+  padding-right: clamp(120px, 18vw, 340px);
+}
+
+@media (max-width: 1100px) {
+  .about-portrait-hero::after {
+    left: -9%;
+    width: 54vw;
+    opacity: 0.13;
+  }
+
+  .about-origin::after {
+    right: -10%;
+    width: 42vw;
+    opacity: 0.5;
+  }
+
+  .about-origin-copy {
+    padding-right: clamp(70px, 13vw, 150px);
+  }
+}
+
+@media (max-width: 900px) {
+  .about-portrait-hero::after {
+    left: -18%;
+    bottom: -2%;
+    width: 74vw;
+    height: 62%;
+    opacity: 0.11;
+  }
+
+  .about-origin::after {
+    right: -14%;
+    bottom: -2%;
+    width: 52vw;
+    height: 60%;
+    opacity: 0.38;
+  }
+
+  .about-origin-copy {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .about-portrait-hero::after {
+    left: -34%;
+    bottom: 0;
+    width: 102vw;
+    height: 46%;
+    opacity: 0.09;
+  }
+
+  .about-portrait-media::after {
+    background:
+      linear-gradient(0deg, rgba(8, 8, 7, 0.64) 0%, transparent 50%),
+      linear-gradient(90deg, rgba(8, 8, 7, 0.5) 0%, transparent 58%);
+  }
+
+  .about-origin::after {
+    right: -28%;
+    bottom: -1%;
+    width: 72vw;
+    height: 44%;
+    opacity: 0.24;
+  }
+}
