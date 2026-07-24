@@ -237,6 +237,12 @@ Contexto actual:
 - Ajuste Comunidad landing 2026-07-02: la sombra/degradado de `.membership::after` es funcional y debe mantenerse aunque se limpien fondos de otras secciones; evita que la foto se lea partida en columnas y da contraste a los conceptos inferiores. No agregar ilustraciones botanicas ni plantas dentro de `.membership::after`; Comunidad debe ser solo fondo negro/base, foto, sombra organica y contenido.
 - La clienta aprobo como formato base de secciones el patron del hero: eyebrow/titulo pequeno en malva betarraga, titular grande en marfil o ink segun fondo con una palabra destacada en malva, linea fina con rombo/acento, explicacion breve y CTA con borde malva. Mantener el sistema en dos colores principales por seccion: base legible y acento malva; no volver a usar cafe/cobre para destacados, CTAs ni acceso miembros. Por solicitud de revision visual, el termino visible debe escribirse como `ANTINFLAMATORIO` / `Antinflamatorio`, sin doble vocal despues de `anti`.
 - La pagina `/quienes-somos` usa el contenido biografico entregado por Cecilia de forma textual. No resumirlo ni reescribirlo en la UI; si se modifica el layout, conservar el texto completo y priorizar lectura comoda de relato largo.
+- En la pagina Planes (`/tienda`), incluidos sus controles de header en esa ruta, no usar negritas. La jerarquia se resuelve con escala, espaciado, color y mayusculas; titulares y copy usan peso 300, mientras precios, botones y encabezados de tabla pueden usar como maximo peso 400.
+- Hero de Planes: la coliflor central debe empezar 10 puntos porcentuales mas a la izquierda que la primera composicion, para que se reconozca completa entre el copy y la caja. Mantener la betarraga fuera de esta pantalla.
+- El hero de Planes (`/tienda`) usa la caja abierta Fullness recortada (`images/ecommerce/fullness-hero-box-dark-cutout-15bfb5ebf321.png`) como producto principal y `src/assets/coliflor-hero-planes.png` como ilustracion botanica central, detras de la caja. La betarraga ya no se usa en ese hero. En movil, la coliflor baja al borde inferior con opacidad reducida para no competir con copy ni producto.
+- Landing: reemplazar las ilustraciones anteriores por el set aprobado en `src/assets/landing-illustrations/`. La hoja queda solo a la izquierda del hero, detras del copy; el apio del hero vive a la derecha detras del plato. Jengibre y zanahoria comparten unicamente el bloque filosofico y pueden cruzar sus dos momentos internos. El apio y los porotos de Meal Prep quedan contenidos dentro de esa franja y no pasan a Comunidad. En tablet/movil se reduce su opacidad y se recortan antes de competir con copy, CTAs, platos o bolsas.
+- Ajuste Meal Prep: los porotos ilustrados del borde inferior derecho se reducen un 30% en desktop, tablet y movil; mantener su anclaje, no volver a crecerlos para llenar espacio.
+- Ajuste hero Landing: el apio derecho sube 30% visualmente en cada breakpoint para que su follaje respire por encima y el tallo no quede anclado demasiado bajo junto al plato.
 - El backoffice incluye una gestion simple de actividades de Comunidad con solo fecha y descripcion, tambien persistida en `localStorage` mientras no exista tabla Supabase especifica.
 - No usar `overflow-x: clip` en `html` ni `body`: en el navegador embebido puede dejar el root sin desplazamiento vertical usable despues de colapsar el intro. Usar `overflow-x: hidden` para cortar desborde horizontal sin bloquear el scroll del hero hacia las secciones inferiores.
 - En mobile/tablet, priorizar lectura y fluidez por sobre decoracion: ocultar replay de intro, toggle de fondo y slugs secundarios del hero; apilar beneficios, proposito, meal prep, comunidad, oferta y footer; reducir opacidad de vectores botanicos; y usar `mix-blend-mode: screen` para ilustraciones PNG con fondo negro, de modo que no aparezcan rectangulos oscuros sobre fondos de color.
@@ -764,3 +770,19 @@ Impacto:
 - En la pagina `Quienes somos`, la alcachofa pertenece visualmente al encabezado `Nuestra historia`.
 - La planta de umbela debe aparecer mas abajo, acompañando el relato largo, nunca montada sobre la alcachofa.
 - Las ilustraciones botanicas funcionan como fondo secundario: baja opacidad, sin competir con la lectura y con posicion independiente por breakpoint.
+
+### Nota 2026-07-24 — Sistema móvil editorial
+
+Cambio:
+- Landing: la cinta de beneficios usa una retícula 2×2 desde 361 px para reducir altura sin sacrificar texto; Meal Prep compacta su lista en dos columnas y mantiene sus bolsas como remate visual en flujo.
+- Nosotros (`.about-v2`): el hero prioriza contraste en el lado del texto sin oscurecer artificialmente a Cecilia; el bloque de origen reduce la altura de la fotografía, los pilares pasan a 2×2 y el relato conserva una única columna legible.
+- Planes/e-commerce: el hero elimina aire vertical sobrante, resume métricas en una franja de tres columnas, compacta suscripción/tabla y mantiene el proceso en una grilla táctil. Bajo 360 px las grillas vuelven a una sola columna.
+
+Impacto retroactivo:
+- Se reemplaza el criterio de apilar por defecto todo el contenido móvil. La jerarquía ahora usa grillas cuando mantienen tamaños de lectura y áreas táctiles adecuadas.
+- Las ilustraciones siguen siendo decorativas: no condicionan el alto, ni pueden competir con copy, CTA o información transaccional.
+
+Impacto proactivo:
+- Si se añade contenido a beneficios, pilares, suscripción o proceso, revisar primero la altura real a 390×844 y 360×800; no reintroducir columnas angostas ni scroll horizontal.
+- Mantener CTAs con altura mínima cercana a 44–48 px y preservar `touch-action: manipulation` en los controles de navegación y compra.
+- Si Supabase responde sin ítems activos, conservar el catálogo demo como fallback público: los CTAs de compra no pueden quedar deshabilitados o perder contraste por una ausencia temporal de datos.

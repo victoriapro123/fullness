@@ -60,11 +60,13 @@ import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png"
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
 import storyPlateCutoutSrc from "./assets/fullness-story-plate-vegetable-cutout.png";
 import philosophySceneBgSrc from "./assets/fullness-beet-roots-continuum.jpg";
-import philosophyPlantIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/planta30.png";
-import philosophyBroccoliIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/bocoli30.png";
-import philosophyCarrotIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/zanahoria30.png";
-import storyTomatoesIllustrationSrc from "./assets/ilustraciones-fondo/editorial-600ppi/tomates30.png";
-import shopPlansBeetIllustrationSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/hierbas-raices/betarraga_con_raiz_v1.png";
+import landingHeroLeafSrc from "./assets/landing-illustrations/hoja-hero-izquierda.png";
+import landingHeroCelerySrc from "./assets/landing-illustrations/apio-hero-derecho.png";
+import landingGingerSrc from "./assets/landing-illustrations/jengibre.png";
+import landingCarrotSrc from "./assets/landing-illustrations/zanahoria.png";
+import landingMealPrepCelerySrc from "./assets/landing-illustrations/apio-meal-prep.png";
+import landingMealPrepBeansSrc from "./assets/landing-illustrations/porotos-meal-prep.png";
+import shopPlansCauliflowerIllustrationSrc from "./assets/coliflor-hero-planes.png";
 import consciousFoodIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hojas_natural_v1.png";
 import functionalNutritionIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brazo_fuerte_nutrientes_v1.png";
 import fullnessExperienceIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hoja_v1.png";
@@ -82,12 +84,12 @@ const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
 const logoHeaderFooterSrc = mediaSrc("assets/brand/fullness-lab-horizontal-marfil-2026.png");
 const logoVerticalSrc = mediaSrc("assets/brand/fullness-lab-vertical-marfil-2026.png");
 const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
-const silhouetteRootTwoSrc = mediaSrc("assets/fullness-silhouette-root-2.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
 const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.png");
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const shopPlanBoxCardSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-87fca2f2a7cf.png");
 const shopPlanBoxCardHoverSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-hover-70f16092b298.png");
+const shopHeroBoxDarkCutoutSrc = mediaSrc("images/ecommerce/fullness-hero-box-dark-cutout-15bfb5ebf321.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -1002,7 +1004,7 @@ function createDefaultShopSettings() {
     heroEyebrow: "Nutrir desde la raíz",
     heroTitle: "Alimentación consciente, organizada para toda la semana.",
     heroBody: "Platos diseñados por chef y nutricionista para que comer bien sea simple, práctico y delicioso.",
-    heroImageUrl: mealPrepBandSrc,
+    heroImageUrl: shopHeroBoxDarkCutoutSrc,
     heroImageStoragePath: "",
     heroPrimaryLabel: "Ver planes semanales",
     heroSecondaryLabel: "Suscribirme",
@@ -1644,13 +1646,14 @@ function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
 
 function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
-  const monthlyPlan = plans.find((product) => product.planFrequency === "monthly");
-  const subscriptionProduct = monthlyPlan || plans[0] || null;
-  const heroFallbackProduct = plans[0] || familyProducts[0] || demoProducts[0];
+  const catalogPlans = plans.length > 0 ? plans : demoProducts.filter((product) => getProductType(product) === "plan");
+  const monthlyPlan = catalogPlans.find((product) => product.planFrequency === "monthly");
+  const subscriptionProduct = monthlyPlan || catalogPlans[0] || null;
+  const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || demoProducts[0];
   const heroImage = settings.heroImageUrl || getProductImage(heroFallbackProduct, 0);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
-  const planHeading = plans.some((product) => product.planFrequency === "monthly")
+  const planHeading = catalogPlans.some((product) => product.planFrequency === "monthly")
     ? "Planes semanales y mensuales"
     : "Planes semanales";
 
@@ -1662,7 +1665,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
   return (
     <section className="meal-prep-shop shop-commerce-page" id="oferta">
       <section className="shop-hero-showcase" aria-labelledby="shop-hero-title">
-        <img className="shop-hero-botanical" src={shopPlansBeetIllustrationSrc} alt="" aria-hidden="true" />
+        <img className="shop-hero-botanical" src={shopPlansCauliflowerIllustrationSrc} alt="" aria-hidden="true" />
         <div className="shop-hero-copy">
           <p className="eyebrow">{settings.heroEyebrow}</p>
           <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
@@ -1763,9 +1766,9 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
               <h2 id="shop-plans-title">{planHeading}</h2>
               <p>Cada semana un propósito distinto. Nosotros hacemos la selección por ti.</p>
             </div>
-            {plans.length > 0 ? (
+            {catalogPlans.length > 0 ? (
               <div className="shop-plan-grid">
-                {plans.map((product, index) => (
+                {catalogPlans.map((product, index) => (
                   <ShopPlanCard
                     key={product.id}
                     product={product}
@@ -1819,7 +1822,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
                   <ShopFamilyCard
                     key={product.id}
                     product={product}
-                    index={index + plans.length}
+                    index={index + catalogPlans.length}
                     onAdd={onAdd}
                     onOpenProduct={onOpenProduct}
                   />
@@ -3868,7 +3871,7 @@ function App() {
         return;
       }
 
-      setProducts(result.data.map(applySampleProduct));
+      setProducts(result.data.length > 0 ? result.data.map(applySampleProduct) : demoProducts);
       setProductsLoading(false);
     }
 
@@ -5404,7 +5407,10 @@ function App() {
             id="programa"
           >
         <div className="plate-hero-blackout" aria-hidden="true" />
-        <div className="plate-hero-vectors" aria-hidden="true" />
+        <div className="plate-hero-vectors" aria-hidden="true">
+          <img className="plate-hero-illustration plate-hero-illustration--left" src={landingHeroLeafSrc} alt="" />
+          <img className="plate-hero-illustration plate-hero-illustration--right" src={landingHeroCelerySrc} alt="" />
+        </div>
         <div className="plate-hero-copy">
           <p className="eyebrow">Nutrir desde la raíz</p>
           <h1>Comida consciente para tu bienestar <span>diario.</span></h1>
@@ -5456,15 +5462,13 @@ function App() {
         style={{
           "--philosophy-scene-bg": `url("${philosophySceneBgSrc}")`,
           "--silhouette-root-one": `url("${silhouetteRootOneSrc}")`,
-          "--silhouette-root-two": `url("${silhouetteRootTwoSrc}")`,
           "--silhouette-root-three": `url("${silhouetteRootThreeSrc}")`,
           "--silhouette-botanical": `url("${silhouetteBotanicalSrc}")`
         }}
       >
         <div className="philosophy-illustrations" aria-hidden="true">
-          <img className="philosophy-illustration philosophy-illustration-plant" src={philosophyPlantIllustrationSrc} alt="" />
-          <img className="philosophy-illustration philosophy-illustration-broccoli" src={philosophyBroccoliIllustrationSrc} alt="" />
-          <img className="philosophy-illustration philosophy-illustration-carrot" src={philosophyCarrotIllustrationSrc} alt="" />
+          <img className="philosophy-illustration philosophy-illustration--ginger" src={landingGingerSrc} alt="" />
+          <img className="philosophy-illustration philosophy-illustration--carrot" src={landingCarrotSrc} alt="" />
         </div>
         <section className="food-editorial" id="proposito">
           <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
@@ -5487,7 +5491,6 @@ function App() {
               <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>
-          <img className="food-editorial-beet" src={silhouetteRootTwoSrc} alt="" aria-hidden="true" />
         </section>
 
         <section className="food-story-strip">
@@ -5506,11 +5509,14 @@ function App() {
             </span>
           </a>
           <img className="philosophy-story-plate" src={storyPlateCutoutSrc} alt="" aria-hidden="true" />
-          <img className="philosophy-story-tomatoes" src={storyTomatoesIllustrationSrc} alt="" aria-hidden="true" />
         </section>
       </div>
 
       <section className="meal-prep-feature" id="calentar">
+        <div className="meal-prep-illustrations" aria-hidden="true">
+          <img className="meal-prep-illustration meal-prep-illustration--celery" src={landingMealPrepCelerySrc} alt="" />
+          <img className="meal-prep-illustration meal-prep-illustration--beans" src={landingMealPrepBeansSrc} alt="" />
+        </div>
         <div className="meal-prep-copy">
           <p className="eyebrow">Tu semana resuelta</p>
           <h2>Meal Prep <span>Antinflamatorio</span></h2>

@@ -21422,3 +21422,646 @@ main {
   }
 }
 /* End Nosotros editorial refresh */
+
+/* Planes: jerarquia editorial sin negritas. */
+.route-shop .shop-commerce-page {
+  font-synthesis: none;
+}
+
+.route-shop .site-header :is(a, button, span) {
+  font-weight: 400 !important;
+}
+
+.route-shop .shop-commerce-page :is(
+  h1,
+  h2,
+  h3,
+  p,
+  span,
+  small,
+  strong,
+  li,
+  th,
+  td,
+  button,
+  a
+) {
+  font-weight: 300 !important;
+}
+
+.route-shop .shop-commerce-page :is(
+  .shop-solid-link,
+  .shop-outline-link,
+  .shop-solid-button,
+  .shop-outline-button,
+  .shop-plan-footer > strong,
+  .shop-family-footer > strong,
+  .shop-comparison-table thead th,
+  .shop-comparison-table tbody th
+) {
+  font-weight: 400 !important;
+}
+
+/* Planes: coliflor central como puente visual; la betarraga lateral queda fuera de esta composicion. */
+.route-shop .shop-hero-botanical {
+  left: clamp(17%, 25vw, 32%) !important;
+  right: auto !important;
+  top: 52% !important;
+  bottom: auto !important;
+  width: clamp(350px, 39vw, 730px) !important;
+  max-width: none !important;
+  opacity: 0.42 !important;
+  filter: grayscale(1) brightness(0.42) contrast(1.08) !important;
+  transform: translate(-8%, -50%) !important;
+  rotate: 0deg !important;
+  scale: 1 1 !important;
+}
+
+@media (max-width: 760px) {
+  .route-shop .shop-hero-botanical {
+    left: 12vw !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: -13vw !important;
+    width: min(86vw, 480px) !important;
+    opacity: 0.2 !important;
+    transform: none !important;
+  }
+}
+
+/* Landing: set editorial de ilustraciones aprobado. Cada grupo se contiene en su propia seccion. */
+.plate-hero-vectors {
+  inset: 0 !important;
+  z-index: 2 !important;
+  display: block !important;
+  overflow: hidden !important;
+  background: none !important;
+  pointer-events: none !important;
+}
+
+.plate-hero-vectors::before,
+.plate-hero-vectors::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.plate-hero-illustration {
+  position: absolute !important;
+  display: block !important;
+  max-width: none !important;
+  height: auto !important;
+  pointer-events: none !important;
+  filter: grayscale(1) brightness(0.48) contrast(1.1) !important;
+  opacity: 0.62 !important;
+}
+
+.plate-hero-illustration--left {
+  left: clamp(-180px, -9vw, -72px) !important;
+  top: 8% !important;
+  width: clamp(420px, 36vw, 740px) !important;
+}
+
+.plate-hero-illustration--right {
+  right: clamp(-155px, -7.8vw, -62px) !important;
+  top: -8% !important;
+  width: clamp(460px, 37vw, 780px) !important;
+}
+
+.philosophy-story-combo::before,
+.philosophy-story-combo::after,
+.philosophy-story-combo .food-editorial::before,
+.philosophy-story-combo .food-editorial::after,
+.philosophy-story-combo .food-story-strip::before,
+.philosophy-story-combo .food-story-strip::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.philosophy-illustrations {
+  inset: 0 !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+}
+
+.philosophy-illustration {
+  display: block !important;
+  max-width: none !important;
+  height: auto !important;
+  pointer-events: none !important;
+  filter: grayscale(1) brightness(0.48) contrast(1.08) !important;
+  mix-blend-mode: normal !important;
+  opacity: 0.5 !important;
+}
+
+.philosophy-illustration--ginger {
+  left: clamp(-100px, -5.5vw, -32px) !important;
+  top: clamp(430px, 35vw, 590px) !important;
+  width: min(52vw, 800px) !important;
+}
+
+.philosophy-illustration--carrot {
+  right: clamp(-310px, -17vw, -110px) !important;
+  top: clamp(24px, 3.8vw, 72px) !important;
+  width: min(59vw, 920px) !important;
+}
+
+.meal-prep-feature::before {
+  display: none !important;
+  background: none !important;
+}
+
+.meal-prep-illustrations {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+.meal-prep-illustration {
+  position: absolute !important;
+  display: block !important;
+  max-width: none !important;
+  height: auto !important;
+  pointer-events: none !important;
+  filter: grayscale(1) brightness(0.5) contrast(1.08) !important;
+  opacity: 0.5 !important;
+}
+
+.meal-prep-illustration--celery {
+  left: clamp(-165px, -8vw, -58px) !important;
+  top: clamp(-84px, -5vw, -28px) !important;
+  width: min(28vw, 440px) !important;
+}
+
+.meal-prep-illustration--beans {
+  right: clamp(-220px, -11vw, -88px) !important;
+  bottom: clamp(-112px, -6vw, -46px) !important;
+  width: min(37.1vw, 574px) !important;
+}
+
+@media (max-width: 1040px) {
+  .plate-hero-illustration--left {
+    left: -19vw !important;
+    top: 14% !important;
+    width: min(56vw, 530px) !important;
+  }
+
+  .plate-hero-illustration--right {
+    right: -18vw !important;
+    top: -4% !important;
+    width: min(58vw, 570px) !important;
+  }
+
+  .philosophy-illustration--ginger {
+    left: -14vw !important;
+    top: clamp(410px, 43vw, 520px) !important;
+    width: min(67vw, 650px) !important;
+  }
+
+  .philosophy-illustration--carrot {
+    right: -32vw !important;
+    top: 4vw !important;
+    width: min(74vw, 720px) !important;
+  }
+
+  .meal-prep-illustration--celery {
+    left: -14vw !important;
+    width: min(38vw, 370px) !important;
+  }
+
+  .meal-prep-illustration--beans {
+    right: -18vw !important;
+    width: min(46.2vw, 476px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .plate-hero-illustration {
+    opacity: 0.22 !important;
+  }
+
+  .plate-hero-illustration--left {
+    left: -38vw !important;
+    top: 17% !important;
+    width: min(96vw, 420px) !important;
+  }
+
+  .plate-hero-illustration--right {
+    right: -43vw !important;
+    top: 27% !important;
+    width: min(104vw, 450px) !important;
+    opacity: 0.14 !important;
+  }
+
+  .philosophy-illustrations {
+    overflow: hidden !important;
+  }
+
+  .philosophy-illustration {
+    opacity: 0.16 !important;
+  }
+
+  .philosophy-illustration--ginger {
+    left: -30vw !important;
+    top: 53svh !important;
+    width: min(105vw, 500px) !important;
+  }
+
+  .philosophy-illustration--carrot {
+    right: -60vw !important;
+    top: 2svh !important;
+    width: min(118vw, 560px) !important;
+    opacity: 0.1 !important;
+  }
+
+  .meal-prep-illustrations {
+    z-index: 2 !important;
+  }
+
+  .meal-prep-illustration {
+    opacity: 0.17 !important;
+  }
+
+  .meal-prep-illustration--celery {
+    left: -26vw !important;
+    top: -4vw !important;
+    width: min(72vw, 330px) !important;
+  }
+
+  .meal-prep-illustration--beans {
+    right: -43vw !important;
+    bottom: -10vw !important;
+    width: min(88.2vw, 399px) !important;
+  }
+}
+
+/* Mobile UX pass: preserve the editorial language while giving copy and actions the first claim on space. */
+@media (max-width: 760px) {
+  :root {
+    --mobile-page-inline: clamp(18px, 5vw, 24px);
+  }
+
+  .site-header :is(a, button),
+  .route-shop :is(.shop-solid-link, .shop-outline-link, .shop-solid-button, .shop-outline-button) {
+    touch-action: manipulation;
+  }
+
+  .site-header .cart-button,
+  .site-header .menu-toggle {
+    flex: 0 0 44px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Landing: the benefits become a compact editorial index instead of a long vertical list. */
+  .hero-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    padding: 0 var(--mobile-page-inline) !important;
+  }
+
+  .hero-benefits article,
+  .hero-benefits article:nth-child(2n) {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+    gap: 9px !important;
+    min-height: 132px !important;
+    padding: 17px 10px !important;
+    border-bottom: 1px solid rgba(184, 120, 120, 0.22) !important;
+  }
+
+  .hero-benefits article:nth-child(odd) {
+    border-right: 1px solid rgba(184, 120, 120, 0.22) !important;
+  }
+
+  .hero-benefits article:nth-last-child(-n + 2) {
+    border-bottom: 0 !important;
+  }
+
+  .hero-benefits svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .hero-benefits h2 {
+    font-size: 0.66rem !important;
+    letter-spacing: 0.09em !important;
+    line-height: 1.25 !important;
+    overflow-wrap: normal !important;
+  }
+
+  .hero-benefits p {
+    font-size: 0.76rem !important;
+    line-height: 1.42 !important;
+  }
+
+  .philosophy-story-combo .food-editorial {
+    padding-top: 38px !important;
+    padding-bottom: 22px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip {
+    padding-top: 24px !important;
+    padding-bottom: 158px !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: -30vw !important;
+    bottom: 8px !important;
+    width: min(118vw, 540px) !important;
+  }
+
+  .meal-prep-feature {
+    padding: 42px var(--mobile-page-inline) 0 !important;
+  }
+
+  .meal-prep-copy ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 14px !important;
+    margin: 18px 0 22px !important;
+  }
+
+  .meal-prep-copy li {
+    font-size: 0.84rem !important;
+  }
+
+  .meal-prep-visual-link {
+    width: 126% !important;
+    min-height: 0 !important;
+    margin: 8px -22% 0 -4% !important;
+  }
+
+  /* Planes: retain the product story but remove the unused vertical air. */
+  .route-shop .shop-hero-showcase {
+    gap: 16px !important;
+    min-height: 0 !important;
+    padding: calc(var(--site-header-height) + 18px) var(--mobile-page-inline) 24px !important;
+  }
+
+  .route-shop .shop-hero-copy {
+    gap: 12px !important;
+  }
+
+  .route-shop .shop-hero-copy h1 {
+    max-width: 12.6ch !important;
+    font-size: clamp(2rem, 10.2vw, 2.6rem) !important;
+    letter-spacing: 0.035em !important;
+    line-height: 1.06 !important;
+  }
+
+  .route-shop .shop-hero-copy > p:not(.eyebrow) {
+    font-size: 0.88rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .route-shop .shop-hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 9px !important;
+  }
+
+  .route-shop .shop-hero-actions :is(.shop-solid-link, .shop-outline-link) {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding-inline: 10px !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.095em !important;
+  }
+
+  .route-shop .shop-hero-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+  }
+
+  .route-shop .shop-hero-metrics li {
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+    align-items: start !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.065em !important;
+    line-height: 1.28 !important;
+  }
+
+  .route-shop .shop-hero-metrics svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .route-shop .shop-hero-media {
+    width: min(100%, 330px) !important;
+    justify-self: center !important;
+    transform: none !important;
+  }
+
+  .route-shop .shop-hero-media img {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .route-shop .shop-subscription-panel {
+    gap: 24px !important;
+    padding: 38px var(--mobile-page-inline) 42px !important;
+  }
+
+  .route-shop .shop-subscription-copy h2 {
+    max-width: 13.5ch !important;
+    font-size: clamp(1.68rem, 8.2vw, 2.2rem) !important;
+    line-height: 1.1 !important;
+  }
+
+  .route-shop .shop-subscription-copy p:not(.eyebrow) {
+    font-size: 0.9rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .route-shop .shop-subscription-copy .shop-solid-button {
+    min-height: 48px !important;
+  }
+
+  .route-shop .shop-subscription-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px 12px !important;
+  }
+
+  .route-shop .shop-subscription-benefits li {
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    gap: 7px !important;
+    align-items: start !important;
+    font-size: 0.78rem !important;
+    line-height: 1.38 !important;
+  }
+
+  .route-shop .shop-subscription-benefits svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .route-shop .shop-comparison-table tbody {
+    display: grid !important;
+    gap: 0 !important;
+    border: 1px solid rgba(184, 120, 120, 0.28) !important;
+  }
+
+  .route-shop .shop-comparison-table thead {
+    position: static !important;
+    display: grid !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+  }
+
+  .route-shop .shop-comparison-table thead tr,
+  .route-shop .shop-comparison-table tbody tr {
+    display: grid !important;
+    grid-template-columns: minmax(88px, 0.86fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .route-shop .shop-comparison-table tr::before,
+  .route-shop .shop-comparison-table td::before {
+    content: none !important;
+  }
+
+  .route-shop .shop-comparison-table thead th {
+    display: block !important;
+    padding: 9px 8px !important;
+    color: rgba(244, 234, 219, 0.74) !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.15) !important;
+    background: transparent !important;
+    font-size: 0.51rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+  }
+
+  .route-shop .shop-comparison-table thead th:first-child {
+    color: transparent !important;
+  }
+
+  .route-shop .shop-comparison-table tbody th {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 10px 8px !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    color: var(--fullness-highlight, #d58a91) !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.11) !important;
+    font-size: 0.64rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.075em !important;
+    line-height: 1.25 !important;
+    text-align: left !important;
+    text-transform: uppercase !important;
+  }
+
+  .route-shop .shop-comparison-table td {
+    display: block !important;
+    padding: 10px 8px !important;
+    color: rgba(244, 234, 219, 0.88) !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(244, 234, 219, 0.11) !important;
+    font-size: 0.74rem !important;
+    line-height: 1.28 !important;
+    text-align: left !important;
+  }
+
+  .route-shop .shop-comparison-table td + td {
+    border-left: 1px solid rgba(244, 234, 219, 0.1) !important;
+  }
+
+  .route-shop .shop-comparison-table .shop-solid-button {
+    min-height: 48px !important;
+    margin-top: 8px !important;
+  }
+
+  .route-shop .shop-plans-section,
+  .route-shop .shop-family-section {
+    gap: 18px !important;
+    padding: 38px var(--mobile-page-inline) !important;
+  }
+
+  .route-shop .shop-section-heading {
+    gap: 6px !important;
+  }
+
+  .route-shop .shop-section-heading h2,
+  .route-shop .shop-section-heading.is-left h2 {
+    font-size: clamp(1.55rem, 7.6vw, 2rem) !important;
+    letter-spacing: 0.07em !important;
+    line-height: 1.16 !important;
+  }
+
+  .route-shop .shop-section-heading p:not(.eyebrow) {
+    font-size: 0.88rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .route-shop .shop-plan-meals {
+    gap: 6px !important;
+    padding: 12px 14px 0 !important;
+  }
+
+  .route-shop .shop-plan-meals button {
+    min-height: 102px !important;
+    padding: 9px 7px !important;
+  }
+
+  .route-shop .shop-process-band {
+    padding: 30px var(--mobile-page-inline) 34px !important;
+  }
+
+  .route-shop .shop-process-band li {
+    min-height: 128px !important;
+    padding: 11px 10px 12px !important;
+  }
+
+  .route-shop .shop-process-features {
+    gap: 8px 10px !important;
+    padding-top: 14px !important;
+  }
+
+  .route-shop .shop-process-features span {
+    font-size: 0.72rem !important;
+  }
+
+  .route-shop .shop-community-band {
+    min-height: 350px !important;
+    padding: 38px var(--mobile-page-inline) 42px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-benefits,
+  .about-v2__values,
+  .route-shop .shop-subscription-benefits {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-benefits article:nth-child(odd) {
+    border-right: 0 !important;
+  }
+
+  .hero-benefits article:nth-last-child(-n + 2) {
+    border-bottom: 1px solid rgba(184, 120, 120, 0.22) !important;
+  }
+
+  .hero-benefits article:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .route-shop .shop-hero-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
