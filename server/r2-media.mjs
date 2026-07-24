@@ -69,7 +69,7 @@ export function getR2Config(env = process.env) {
   return config;
 }
 
-export function normalizeMediaKey(input) {
+export function normalizeR2Key(input) {
   const key = String(input || "")
     .replace(/\\/g, "/")
     .replace(/^\/+/, "");
@@ -79,11 +79,31 @@ export function normalizeMediaKey(input) {
     throw new Error("Invalid media key");
   }
 
+  return key;
+}
+
+export function normalizeMediaKey(input) {
+  const key = normalizeR2Key(input);
+
   if (!key.startsWith("assets/") && !key.startsWith("images/")) {
     throw new Error("Unsupported media key");
   }
 
   return key;
+}
+
+export function normalizeR2Prefix(input) {
+  const prefix = String(input || "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "");
+
+  if (!prefix) return "";
+
+  if (prefix.split("/").some((part) => part === "..")) {
+    throw new Error("Invalid R2 prefix");
+  }
+
+  return prefix;
 }
 
 export function contentTypeForPath(filePath) {
@@ -109,12 +129,13 @@ export async function putR2Object({body, cacheControl = MEDIA_CACHE_CONTROL, con
   });
 }
 
-export function headR2Object({config, key}) {
-  return r2Request({config, key, method: "HEAD"});
+export function headR2Object({config, key, allowAnyKey = false}) {
+  return r2Request({allowAnyKey, config, key, method: "HEAD"});
 }
 
-export function getR2Object({config, key, range}) {
+export function getR2Object({config, key, range, allowAnyKey = false}) {
   return r2Request({
+    allowAnyKey,
     config,
     headers: range ? {range} : undefined,
     key,
@@ -122,8 +143,48 @@ export function getR2Object({config, key, range}) {
   });
 }
 
-export function r2Request({body, config, headers = {}, key, method, payloadHash = sha256Hex("")}) {
-  const url = buildObjectUrl(config, normalizeMediaKey(key));
+export function listR2Objects({config, continuationToken = "", maxKeys = 25, prefix = ""}) {
+  const normalizedPrefix = normalizeR2Prefix(prefix);
+  const normalizedMaxKeys = Math.min(Math.max(Number(maxKeys) || 25, 1), 100);
+  const query = {
+    "list-type": "2",
+    "max-keys": String(normalizedMaxKeys)
+  };
+
+  if (normalizedPrefix) query.prefix = normalizedPrefix;
+  if (continuationToken) query["continuation-token"] = String(continuationToken);
+
+  return r2BucketRequest({config, method: "GET", query});
+}
+
+export function r2Request({
+  allowAnyKey = false,
+  body,
+  config,
+  headers = {},
+  key,
+  method,
+  payloadHash = sha256Hex("")
+}) {
+  const normalizedKey = allowAnyKey ? normalizeR2Key(key) : normalizeMediaKey(key);
+  const url = buildObjectUrl(config, normalizedKey);
+  const signedHeaders = signRequest({
+    config,
+    headers,
+    method,
+    payloadHash,
+    url
+  });
+
+  return fetch(url, {
+    body,
+    headers: signedHeaders,
+    method
+  });
+}
+
+function r2BucketRequest({body, config, headers = {}, method, payloadHash = sha256Hex(""), query = {}}) {
+  const url = buildBucketUrl(config, query);
   const signedHeaders = signRequest({
     config,
     headers,
@@ -146,6 +207,14 @@ function buildObjectUrl(config, key) {
   return new URL(`${config.endpoint}/${encodedBucket}/${encodedKey}`);
 }
 
+function buildBucketUrl(config, query) {
+  const url = new URL(`${config.endpoint}/${encodeURIComponent(config.bucket)}`);
+  const search = canonicalQueryString(Object.entries(query));
+
+  if (search) url.search = search;
+  return url;
+}
+
 function signRequest({config, headers, method, payloadHash, url}) {
   const now = new Date();
   const amzDate = toAmzDate(now);
@@ -162,7 +231,7 @@ function signRequest({config, headers, method, payloadHash, url}) {
   const canonicalRequest = [
     method,
     url.pathname,
-    "",
+    canonicalQueryString(url.searchParams),
     canonicalHeaders,
     signedHeaderNames,
     payloadHash
@@ -184,6 +253,24 @@ function signRequest({config, headers, method, payloadHash, url}) {
       `Signature=${signature}`
     ].join(", ")
   };
+}
+
+function canonicalQueryString(entries) {
+  return [...entries]
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([name, value]) => [awsEncode(name), awsEncode(value)])
+    .sort(([leftName, leftValue], [rightName, rightValue]) => {
+      if (leftName === rightName) return leftValue.localeCompare(rightValue);
+      return leftName.localeCompare(rightName);
+    })
+    .map(([name, value]) => `${name}=${value}`)
+    .join("&");
+}
+
+function awsEncode(value) {
+  return encodeURIComponent(String(value)).replace(/[!'()*]/g, (character) =>
+    `%${character.charCodeAt(0).toString(16).toUpperCase()}`
+  );
 }
 
 function normalizeHeaders(headers) {

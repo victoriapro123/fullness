@@ -46,6 +46,16 @@ export async function assertBackofficeRequest(req) {
   };
 }
 
+export async function assertOwnerBackofficeRequest(req) {
+  const access = await assertBackofficeRequest(req);
+
+  if (access.role !== "owner") {
+    throw statusError(403, "Esta herramienta está disponible sólo para la cuenta propietaria.");
+  }
+
+  return access;
+}
+
 export function getSupabaseAdmin() {
   if (supabaseAdmin) return supabaseAdmin;
 

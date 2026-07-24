@@ -8,10 +8,15 @@ import {
   CalendarDays,
   CheckCircle2,
   CookingPot,
+  Database,
+  Download,
   Eye,
   EyeOff,
   FileDown,
+  FileText,
   Filter,
+  FolderOpen,
+  HardDrive,
   Heart,
   Home,
   ImagePlus,
@@ -110,6 +115,57 @@ const legacyPlaceholderProductSlugs = new Set([
 const shopPath = "/tienda";
 const faqPath = "/preguntas-frecuentes";
 const aboutPath = "/quienes-somos";
+
+function downloadBlob(file, disposition, fallbackName) {
+  const objectUrl = window.URL.createObjectURL(file);
+  const link = document.createElement("a");
+  const fileName = disposition?.match(/filename\*=(?:UTF-8'')?([^;]+)/i)?.[1]
+    ? decodeURIComponent(disposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i)[1].replace(/^"|"$/g, ""))
+    : disposition?.match(/filename="?([^";]+)"?/i)?.[1] || fallbackName;
+
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 0);
+}
+
+function r2AssetKind(key) {
+  const extension = String(key || "").split(".").pop().toLowerCase();
+
+  if (["avif", "gif", "jpeg", "jpg", "png", "svg", "webp"].includes(extension)) return "image";
+  if (["mov", "mp4", "webm"].includes(extension)) return "video";
+  if (["mp3", "ogg", "wav"].includes(extension)) return "audio";
+  if (extension === "pdf") return "pdf";
+  return "file";
+}
+
+function canPreviewR2Asset(key) {
+  return r2AssetKind(key) !== "file";
+}
+
+function formatR2Bytes(value) {
+  const bytes = Number(value || 0);
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const amount = bytes / (1024 ** index);
+
+  return `${amount >= 10 || index === 0 ? Math.round(amount) : amount.toFixed(1)} ${units[index]}`;
+}
+
+function formatR2Date(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+
+  return new Intl.DateTimeFormat("es-CL", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Santiago"
+  }).format(date);
+}
 
 const faqGroups = [
   {
@@ -3091,6 +3147,20 @@ function App() {
   const [operationsError, setOperationsError] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoverySending, setRecoverySending] = useState(false);
+  const [technicalTables, setTechnicalTables] = useState([]);
+  const [technicalTablesLoading, setTechnicalTablesLoading] = useState(false);
+  const [technicalExporting, setTechnicalExporting] = useState("");
+  const [technicalMessage, setTechnicalMessage] = useState("");
+  const [technicalError, setTechnicalError] = useState("");
+  const [r2Prefix, setR2Prefix] = useState("");
+  const [r2Objects, setR2Objects] = useState([]);
+  const [r2Cursor, setR2Cursor] = useState("");
+  const [r2Loading, setR2Loading] = useState(false);
+  const [r2ObjectLoading, setR2ObjectLoading] = useState("");
+  const [r2Preview, setR2Preview] = useState(null);
+  const r2PreviewUrlRef = useRef("");
+  const [dnsLookup, setDnsLookup] = useState(null);
+  const [dnsLoading, setDnsLoading] = useState(false);
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
@@ -3789,6 +3859,160 @@ function App() {
     }
   }
 
+  async function loadTechnicalTables() {
+    if (!activeIsAdmin) return;
+
+    setTechnicalTablesLoading(true);
+    setTechnicalError("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/data-export", {
+        headers: {authorization: `Bearer ${token}`}
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos cargar las tablas.");
+
+      setTechnicalTables(payload.data?.tables || []);
+    } catch (error) {
+      setTechnicalError(getSupabaseErrorMessage(error, "No pudimos cargar las tablas."));
+    } finally {
+      setTechnicalTablesLoading(false);
+    }
+  }
+
+  async function downloadTechnicalTable(table) {
+    setTechnicalExporting(table.key);
+    setTechnicalError("");
+    setTechnicalMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch(`/api/backoffice/data-export?table=${encodeURIComponent(table.key)}`, {
+        headers: {authorization: `Bearer ${token}`}
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "No pudimos preparar el respaldo.");
+      }
+
+      downloadBlob(await response.blob(), response.headers.get("content-disposition"), `fullness-${table.key}.csv`);
+      setTechnicalMessage(`${table.label} descargada.`);
+      await loadTechnicalTables();
+    } catch (error) {
+      setTechnicalError(getSupabaseErrorMessage(error, "No pudimos descargar la tabla."));
+    } finally {
+      setTechnicalExporting("");
+    }
+  }
+
+  async function loadR2Objects({ append = false } = {}) {
+    setR2Loading(true);
+    setTechnicalError("");
+    setTechnicalMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const search = new URLSearchParams();
+      if (r2Prefix) search.set("prefix", r2Prefix);
+      if (append && r2Cursor) search.set("cursor", r2Cursor);
+      const response = await fetch(`/api/backoffice/r2-assets?${search.toString()}`, {
+        headers: {authorization: `Bearer ${token}`}
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos listar los archivos de R2.");
+
+      const nextObjects = payload.data?.objects || [];
+      setR2Objects((current) => append ? [...current, ...nextObjects] : nextObjects);
+      setR2Cursor(payload.data?.isTruncated ? payload.data?.cursor || "" : "");
+    } catch (error) {
+      setTechnicalError(getSupabaseErrorMessage(error, "No pudimos listar los archivos de R2."));
+    } finally {
+      setR2Loading(false);
+    }
+  }
+
+  function clearR2Preview() {
+    if (r2PreviewUrlRef.current) {
+      window.URL.revokeObjectURL(r2PreviewUrlRef.current);
+      r2PreviewUrlRef.current = "";
+    }
+    setR2Preview(null);
+  }
+
+  function handleR2PrefixChange(event) {
+    setR2Prefix(event.target.value);
+    setR2Objects([]);
+    setR2Cursor("");
+    clearR2Preview();
+  }
+
+  async function fetchR2Asset(asset, { download = false } = {}) {
+    setR2ObjectLoading(asset.key);
+    setTechnicalError("");
+    setTechnicalMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const search = new URLSearchParams({key: asset.key});
+      if (download) search.set("download", "1");
+      const response = await fetch(`/api/backoffice/r2-assets?${search.toString()}`, {
+        headers: {authorization: `Bearer ${token}`}
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "No pudimos obtener el archivo de R2.");
+      }
+
+      const file = await response.blob();
+
+      if (download) {
+        downloadBlob(file, response.headers.get("content-disposition"), asset.key.split("/").pop() || "archivo");
+        setTechnicalMessage("Archivo descargado.");
+        return;
+      }
+
+      clearR2Preview();
+      const objectUrl = window.URL.createObjectURL(file);
+      r2PreviewUrlRef.current = objectUrl;
+      setR2Preview({
+        key: asset.key,
+        kind: r2AssetKind(asset.key),
+        url: objectUrl
+      });
+    } catch (error) {
+      setTechnicalError(getSupabaseErrorMessage(error, "No pudimos obtener el archivo de R2."));
+    } finally {
+      setR2ObjectLoading("");
+    }
+  }
+
+  async function loadDnsRecords() {
+    setDnsLoading(true);
+    setTechnicalError("");
+    setTechnicalMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/dns", {
+        headers: {authorization: `Bearer ${token}`}
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos consultar los registros DNS.");
+
+      setDnsLookup(payload.data || null);
+    } catch (error) {
+      setTechnicalError(getSupabaseErrorMessage(error, "No pudimos consultar los registros DNS."));
+    } finally {
+      setDnsLoading(false);
+    }
+  }
+
   async function signOut() {
     if (!isSupabaseConfigured) return;
 
@@ -4060,6 +4284,18 @@ function App() {
       refreshSubscriptionCustomers();
     }
   }, [activeIsAdmin, adminOpen]);
+
+  useEffect(() => {
+    if (adminOpen && activeIsAdmin && activeBackofficeModule === "site-tools") {
+      loadTechnicalTables();
+    }
+  }, [activeBackofficeModule, activeIsAdmin, adminOpen]);
+
+  useEffect(() => () => {
+    if (r2PreviewUrlRef.current) {
+      window.URL.revokeObjectURL(r2PreviewUrlRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (currentPath !== "/" || currentProductSlug) return undefined;
@@ -5173,6 +5409,12 @@ function App() {
             label: "Comunidad",
             description: `${communityActivities.length} actividades`,
             Icon: Users
+          },
+          {
+            id: "site-tools",
+            label: "Respaldo y conexión",
+            description: "Datos, R2 y DNS",
+            Icon: Database
           }
         ]
       : []),
@@ -6497,6 +6739,185 @@ function App() {
                       })}
                     </div>
                     </section>
+                    )}
+
+                    {activeBackofficeModule === "site-tools" && activeIsAdmin && (
+                      <section className="backoffice-side-panel backoffice-module-panel technical-tools-panel" aria-labelledby="technical-tools-title">
+                        <div className="backoffice-list-top technical-tools-heading">
+                          <div>
+                            <p className="eyebrow">Administración técnica</p>
+                            <h3 id="technical-tools-title">Respaldo y conexión</h3>
+                          </div>
+                        </div>
+
+                        <section className="technical-tool-section" aria-labelledby="technical-data-title">
+                          <div className="technical-tool-header">
+                            <div>
+                              <span className="technical-tool-icon"><Database size={18} /></span>
+                              <h4 id="technical-data-title">Tablas de datos</h4>
+                            </div>
+                            <button
+                              className="icon-button"
+                              type="button"
+                              onClick={loadTechnicalTables}
+                              disabled={technicalTablesLoading}
+                              aria-label="Actualizar tablas disponibles"
+                              title="Actualizar"
+                            >
+                              <RefreshCw size={18} />
+                            </button>
+                          </div>
+
+                          {technicalTablesLoading && technicalTables.length === 0 ? (
+                            <p className="backoffice-muted">Cargando tablas...</p>
+                          ) : (
+                            <div className="technical-table-list" aria-label="Tablas disponibles para respaldo">
+                              {technicalTables.map((table) => (
+                                <div className="technical-table-row" key={table.key}>
+                                  <span className="technical-table-glyph"><FileText size={17} /></span>
+                                  <div>
+                                    <strong>{table.label}</strong>
+                                    <small>{table.description}</small>
+                                  </div>
+                                  <span className={`technical-availability ${table.available ? "is-available" : "is-locked"}`}>
+                                    {table.available ? "Disponible" : "Mañana"}
+                                  </span>
+                                  <button
+                                    className="icon-button"
+                                    type="button"
+                                    onClick={() => downloadTechnicalTable(table)}
+                                    disabled={!table.available || technicalExporting === table.key}
+                                    aria-label={`Descargar ${table.label} en CSV`}
+                                    title="Descargar CSV"
+                                  >
+                                    {technicalExporting === table.key ? <RefreshCw size={18} /> : <FileDown size={18} />}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </section>
+
+                        <section className="technical-tool-section" aria-labelledby="technical-r2-title">
+                          <div className="technical-tool-header">
+                            <div>
+                              <span className="technical-tool-icon"><HardDrive size={18} /></span>
+                              <h4 id="technical-r2-title">Archivos R2</h4>
+                            </div>
+                            <div className="technical-tool-actions">
+                              <label className="visually-hidden" htmlFor="r2-prefix">Carpeta de R2</label>
+                              <select id="r2-prefix" value={r2Prefix} onChange={handleR2PrefixChange}>
+                                <option value="">Todo el bucket</option>
+                                <option value="assets/">Assets</option>
+                                <option value="images/">Imágenes</option>
+                                <option value="images/meal-preps/">Meal preps</option>
+                              </select>
+                              <button className="backoffice-command" type="button" onClick={() => loadR2Objects()} disabled={r2Loading}>
+                                {r2Loading ? <RefreshCw size={17} /> : <FolderOpen size={17} />}
+                                {r2Loading ? "Cargando..." : "Cargar archivos"}
+                              </button>
+                            </div>
+                          </div>
+
+                          {r2Objects.length > 0 && (
+                            <div className="technical-r2-layout">
+                              <div className="technical-r2-list" aria-label="Archivos de R2">
+                                {r2Objects.map((asset) => {
+                                  const previewable = canPreviewR2Asset(asset.key);
+                                  const isLoadingAsset = r2ObjectLoading === asset.key;
+
+                                  return (
+                                    <article key={asset.key} className={`technical-r2-row ${r2Preview?.key === asset.key ? "is-selected" : ""}`}>
+                                      <div>
+                                        <strong>{asset.key.split("/").pop()}</strong>
+                                        <small>{asset.key} · {formatR2Bytes(asset.size)} · {formatR2Date(asset.lastModified)}</small>
+                                      </div>
+                                      <div className="technical-r2-row-actions">
+                                        <button
+                                          className="icon-button"
+                                          type="button"
+                                          onClick={() => fetchR2Asset(asset)}
+                                          disabled={!previewable || isLoadingAsset}
+                                          aria-label={`Vista previa de ${asset.key}`}
+                                          title={previewable ? "Vista previa" : "Sin vista previa"}
+                                        >
+                                          <Eye size={17} />
+                                        </button>
+                                        <button
+                                          className="icon-button"
+                                          type="button"
+                                          onClick={() => fetchR2Asset(asset, {download: true})}
+                                          disabled={isLoadingAsset}
+                                          aria-label={`Descargar ${asset.key}`}
+                                          title="Descargar"
+                                        >
+                                          {isLoadingAsset ? <RefreshCw size={17} /> : <Download size={17} />}
+                                        </button>
+                                      </div>
+                                    </article>
+                                  );
+                                })}
+                                {r2Cursor && (
+                                  <button className="technical-load-more" type="button" onClick={() => loadR2Objects({append: true})} disabled={r2Loading}>
+                                    <FolderOpen size={17} />
+                                    Cargar más
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="technical-r2-preview" aria-live="polite">
+                                {r2Preview?.kind === "image" && <img src={r2Preview.url} alt={`Vista previa de ${r2Preview.key}`} />}
+                                {r2Preview?.kind === "video" && <video src={r2Preview.url} controls preload="metadata" />}
+                                {r2Preview?.kind === "audio" && <audio src={r2Preview.url} controls preload="metadata" />}
+                                {r2Preview?.kind === "pdf" && <iframe src={r2Preview.url} title={`Vista previa de ${r2Preview.key}`} />}
+                                {!r2Preview && <p>Selecciona la vista previa de un archivo.</p>}
+                              </div>
+                            </div>
+                          )}
+                        </section>
+
+                        <section className="technical-tool-section" aria-labelledby="technical-dns-title">
+                          <div className="technical-tool-header">
+                            <div>
+                              <span className="technical-tool-icon"><HardDrive size={18} /></span>
+                              <h4 id="technical-dns-title">Registros DNS</h4>
+                            </div>
+                            <button className="backoffice-command" type="button" onClick={loadDnsRecords} disabled={dnsLoading}>
+                              {dnsLoading ? <RefreshCw size={17} /> : <RefreshCw size={17} />}
+                              {dnsLoading ? "Consultando..." : "Consultar DNS"}
+                            </button>
+                          </div>
+
+                          {dnsLookup && (
+                            <div className="technical-dns-results">
+                              <strong className="technical-dns-host">{dnsLookup.hostname}</strong>
+                              {dnsLookup.records.map((group) => (
+                                <article className="technical-dns-group" key={group.type}>
+                                  <span>{group.type}</span>
+                                  {group.records.length > 0 ? (
+                                    <ul>
+                                      {group.records.map((record) => (
+                                        <li key={`${record.name}-${record.value}`}>
+                                          <code>{record.value}</code>
+                                          <small>TTL {record.ttl}s</small>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p>{group.error || "Sin registros publicados."}</p>
+                                  )}
+                                </article>
+                              ))}
+                            </div>
+                          )}
+                        </section>
+
+                        {(technicalError || technicalMessage) && (
+                          <p className={`backoffice-alert ${technicalError ? "is-error" : "is-success"}`} role="status">
+                            {technicalError || technicalMessage}
+                          </p>
+                        )}
+                      </section>
                     )}
 
                     {activeBackofficeModule === "operations" && (
