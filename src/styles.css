@@ -3871,8 +3871,8 @@ h3 {
   max-height: 74%;
   opacity: 0.9;
   background: rgb(244, 234, 219);
-  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
-  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
+  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-contrast-2026.png") center top / 100% auto no-repeat;
+  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-contrast-2026.png") center top / 100% auto no-repeat;
   transform: translateY(-50%);
   filter: none;
 }
@@ -3899,8 +3899,8 @@ h3 {
   width: min(21vw, 310px);
   aspect-ratio: 879 / 1240;
   background: linear-gradient(180deg, rgba(125, 46, 61, 0.96) 0%, rgba(143, 47, 69, 0.9) 43%, rgba(160, 117, 70, 0.94) 100%);
-  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
-  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center top / 100% auto no-repeat;
+  -webkit-mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-contrast-2026.png") center top / 100% auto no-repeat;
+  mask: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-contrast-2026.png") center top / 100% auto no-repeat;
 }
 
 .offer-brand-mark img {
@@ -5644,7 +5644,7 @@ footer::before {
   width: clamp(120px, 15vw, 230px);
   aspect-ratio: 879 / 1525;
   pointer-events: none;
-  background: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-marfil-2026.png") center / contain no-repeat;
+  background: url("/api/media?key=assets%2Fbrand%2Ffullness-lab-isotipo-contrast-2026.png") center / contain no-repeat;
   opacity: 0.06;
   transform: translateY(-50%);
 }

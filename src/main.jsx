@@ -86,7 +86,7 @@ import "./about-nosotros.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
-const logoHeaderFooterSrc = mediaSrc("assets/brand/fullness-lab-horizontal-marfil-2026.png");
+const logoHeaderFooterSrc = mediaSrc("assets/brand/fullness-lab-horizontal-contrast-2026.png");
 const logoVerticalSrc = mediaSrc("assets/brand/fullness-lab-vertical-marfil-2026.png");
 const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");

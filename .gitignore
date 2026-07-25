@@ -4,6 +4,17 @@ dist
 public/assets/*
 !public/assets/
 !public/assets/fullness-beet-isotype.svg
+!public/assets/brand/
+public/assets/brand/*
+!public/assets/brand/fullness-lab-horizontal-contrast-2026.png
+!public/assets/brand/fullness-lab-horizontal-color-2026.png
+!public/assets/brand/fullness-lab-isotipo-contrast-2026.png
+!public/assets/brand/fullness-lab-isotipo-color-2026.png
+!public/assets/brand/favicon-32.png
+!public/assets/brand/favicon-192.png
+!public/assets/brand/favicon-512.png
+!public/assets/brand/apple-touch-icon-180.png
+!public/assets/brand/fullness-lab-og-2026.png
 public/images/*
 !public/images/menu-samples/
 !public/images/menu-samples/*.jpeg

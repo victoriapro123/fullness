@@ -23,6 +23,6 @@ Plantillas HTML para los correos de Supabase Auth de Fullness Lab.
 
 Variables usadas segun Supabase: `{{ .ConfirmationURL }}`, `{{ .Token }}`, `{{ .SiteURL }}`, `{{ .Email }}`, `{{ .NewEmail }}`, `{{ .OldEmail }}`, `{{ .Phone }}`, `{{ .OldPhone }}`, `{{ .Provider }}` y `{{ .FactorType }}`.
 
-Identidad oficial: los templates usan el logo horizontal marfil desde Cloudflare R2 (`assets/brand/fullness-lab-horizontal-marfil-2026.png`) con URL absoluta y texto alternativo. Los enlaces visibles y el dominio canonico apuntan a `https://fullnesslab.com`.
+Identidad oficial: los templates usan el logo horizontal de contraste desde Cloudflare R2 (`assets/brand/fullness-lab-horizontal-contrast-2026.png`) con URL absoluta y texto alternativo. Los enlaces visibles y el dominio canonico apuntan a `https://fullnesslab.com`.
 
 Nota de compatibilidad: el contenido, los CTA y el texto alternativo siguen siendo legibles si un cliente de correo bloquea imagenes remotas.

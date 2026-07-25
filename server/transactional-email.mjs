@@ -4,7 +4,7 @@ import {loadEnvFile} from "./r2-media.mjs";
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const RESEND_API_URL = "https://api.resend.com";
 const DEFAULT_SITE_URL = "https://fullnesslab.com";
-const DEFAULT_EMAIL_LOGO_URL = "https://pub-16818329ca464c2e9bff6605b2f520f4.r2.dev/assets/brand/fullness-lab-horizontal-marfil-2026.png";
+const DEFAULT_EMAIL_LOGO_URL = "https://pub-16818329ca464c2e9bff6605b2f520f4.r2.dev/assets/brand/fullness-lab-horizontal-contrast-2026.png";
 let supabaseAdmin;
 
 export async function registerEmailSubscriber({email, name, phone}) {
