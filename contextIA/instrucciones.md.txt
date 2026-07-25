@@ -792,3 +792,15 @@ Impacto proactivo:
 - Si se añade contenido a beneficios, pilares, suscripción o proceso, revisar primero la altura real a 390×844 y 360×800; no reintroducir columnas angostas ni scroll horizontal.
 - Mantener CTAs con altura mínima cercana a 44–48 px y preservar `touch-action: manipulation` en los controles de navegación y compra.
 - Si Supabase responde sin ítems activos, conservar el catálogo demo como fallback público: los CTAs de compra no pueden quedar deshabilitados o perder contraste por una ausencia temporal de datos.
+
+### Nota 2026-07-25 - Ilustracion de jengibre
+
+Cambio:
+- `src/assets/landing-illustrations/jengibre.png` fue reemplazado por la entrega `Jengibre 40op.png` de 600 ppi. Conserva las mismas dimensiones y transparencia, pero eleva la opacidad incorporada de 20% a 40%.
+- Se mantiene el uso actual de `.philosophy-illustration--ginger` en la seccion `Nuestra filosofia`, incluyendo sus posiciones y limites responsivos.
+
+Impacto retroactivo:
+- No se modifica JSX ni la composicion del bloque filosofico; la clase comun de ilustraciones sigue aportando la capa editorial final mediante CSS.
+
+Impacto proactivo:
+- Si se vuelve a ajustar la intensidad visual del jengibre, revisar primero su opacidad CSS junto con la transparencia ya incorporada en el PNG, para no atenuar inadvertidamente la nueva entrega.
