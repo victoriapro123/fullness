@@ -21897,12 +21897,14 @@ main {
   left: clamp(-100px, -5.5vw, -32px) !important;
   top: clamp(430px, 35vw, 590px) !important;
   width: min(52vw, 800px) !important;
+  transform: translate(20%, -10%) !important;
 }
 
 .philosophy-illustration--carrot {
   right: clamp(-310px, -17vw, -110px) !important;
   top: clamp(24px, 3.8vw, 72px) !important;
-  width: min(59vw, 920px) !important;
+  width: min(70.8vw, 1104px) !important;
+  transform: translateX(-5vw) !important;
 }
 
 .meal-prep-feature::before {
@@ -21962,7 +21964,7 @@ main {
   .philosophy-illustration--carrot {
     right: -32vw !important;
     top: 4vw !important;
-    width: min(74vw, 720px) !important;
+    width: min(88.8vw, 864px) !important;
   }
 
   .meal-prep-illustration--celery {
@@ -22011,7 +22013,7 @@ main {
   .philosophy-illustration--carrot {
     right: -60vw !important;
     top: 2svh !important;
-    width: min(118vw, 560px) !important;
+    width: min(141.6vw, 672px) !important;
     opacity: 0.1 !important;
   }
 

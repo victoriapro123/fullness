@@ -797,7 +797,8 @@ Impacto proactivo:
 
 Cambio:
 - `src/assets/landing-illustrations/jengibre.png` fue reemplazado por la entrega `Jengibre 40op.png` de 600 ppi. Conserva las mismas dimensiones y transparencia, pero eleva la opacidad incorporada de 20% a 40%.
-- Se mantiene el uso actual de `.philosophy-illustration--ginger` en la seccion `Nuestra filosofia`, incluyendo sus posiciones y limites responsivos.
+- `src/assets/landing-illustrations/zanahoria.png` fue reemplazado por la entrega `Zanahoria 40op.png` de 600 ppi.
+- En `Nuestra filosofia`, el jengibre se desplaza 20% a la derecha y 10% hacia arriba; la zanahoria crece 20% y se mueve 5vw hacia la izquierda. Los desplazamientos se conservan por breakpoint mediante transformaciones y escalas relativas.
 
 Impacto retroactivo:
 - No se modifica JSX ni la composicion del bloque filosofico; la clase comun de ilustraciones sigue aportando la capa editorial final mediante CSS.
