@@ -559,7 +559,9 @@ function applySampleProduct(product, index) {
     ...product,
     name: sample.name,
     tag: sample.tag,
-    price: sample.price,
+    // The sample only supplies presentation content for a legacy placeholder.
+    // Commercial data, especially the price managed in Backoffice, always wins.
+    price: product.price,
     description: sample.description,
     image: sample.image,
     secondaryImage: sample.secondaryImage,
