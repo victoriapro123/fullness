@@ -11,7 +11,7 @@
 - La migración `20260709001000_ecommerce_shop_settings.sql` quedó aplicada y la fila `main` de `ecommerce_shop_settings` responde desde Supabase.
 - No usar un vector plano para el hero del e-commerce: se ve poco realista y no calza con la estética del sitio.
 - Para el hero del e-commerce, usar fotografia de producto realista, con etiqueta circular `FULLNESS LAB` como la de los pouches de la seccion meal prep del landing, fondo transparente para vivir sobre el hero oscuro y sombra natural aplicada por CSS.
-- El hero activo del e-commerce esta en R2: `images/ecommerce/fullness-hero-box-dark-cutout-15bfb5ebf321.png`.
+- El hero activo de Tienda es `src/assets/ecommerce/fullness-hero-box-dark-cutout-v2.png`, sincronizado en R2 como `images/ecommerce/fullness-hero-box-dark-cutout-v2.png` y configurado en `ecommerce_shop_settings`. Es una caja abierta y bolsas sobre transparencia real. No usar una fotografia con rectangulo crema/blanco de fondo ni añadir un panel detras de la caja.
 - La tienda debe mantener persistencia tipografica con el landing usando `Avenir Next`; el tratamiento visual puede adaptarse al prototipo e-commerce, pero sin cambiar la familia tipografica del sitio.
 - Direccion visual aprobada para la tienda: hero y suscripcion en negro premium, crema para planes/packs, CTAs burdeos, iconografia cobre/dorada, y una banda de comunidad oscura antes del footer. No cambiar la familia tipografica del sitio.
 - En las cards de planes semanales/mensuales se debe mostrar una caja abierta Fullness con bolsitas adentro, no fotos de platos. Los platos quedan para el detalle de meal preps incluidos y para la seccion/packs familiares.
@@ -69,6 +69,7 @@
 
 - Después de aplicar la migración/corrección del esquema, `menu_items` dejó de devolver el error de `nutrition_detail`. Se aprobó por UI el flujo crear, refrescar catálogo, editar y eliminar un producto familiar; el registro temporal apareció como cuarto producto, se actualizó y se retiró nuevamente desde el panel.
 - El precio CLP del Backoffice ahora permite cualquier peso entero (`step="1"`); no debe exigir múltiplos de $100. Se verificó que `$12.345` persiste y se presenta como tal.
+- Un producto que conserva una imagen placeholder heredada puede tomar contenido visual de muestra, pero nunca puede reemplazar sus datos comerciales. El precio mostrado y usado en carrito/checkout debe ser siempre `menu_items.price_clp` gestionado desde Backoffice.
 - Las imágenes se volvieron a verificar contra R2 usando el endpoint autenticado de la UI. Las URLs principal y hover se guardaron en el producto de QA y los cinco objetos generados durante la prueba se eliminaron; la cuenta administrativa temporal también fue eliminada.
 
 ### Backoffice: suscripciones y biblioteca 2026-07-21

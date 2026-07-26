@@ -54,7 +54,7 @@ La solucion actual incluye:
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
 - La fuente oficial de marca entregada por Cecilia son los PNG finales `Logo fullnesslab contraste.png` y `Logo fullnesslab color.png`. Las variantes web derivadas viven en `public/assets/brand/` y en R2 bajo `assets/brand/`: horizontal de contraste para header, footer, lightbox y correos sobre fondo oscuro; horizontal color para superficies claras; vertical existente para composiciones editoriales; isotipo derivado de los mismos PNG para favicon y usos compactos. No usar blanco puro ni reconstrucciones tipograficas del logo.
 - Ilustraciones de fondo exportadas desde Illustrator (`iconografía Marca F.ps`) quedaron en `src/assets/ilustraciones-fondo/linea-gris-transparente/`, organizadas por `iconos`, `hierbas-raices`, `brassicas-legumbres` y `vegetales-frutas-tuberculos`. Son PNG transparentes a 300 ppi, con nombres descriptivos en snake_case y sufijo `_v1`, porque esta tanda corresponde a version con linea gris y relleno transparente. Cuando se apruebe el diseño final, subir solo las ilustraciones realmente usadas en fondos a Cloudflare R2.
-- Actualizacion 2026-06-27: se agrego una ultima capa CSS de ilustraciones editoriales al final de `src/styles.css`, sin cambiar JSX ni contenido de secciones. La regla usa PNG de `src/assets/ilustraciones-fondo/linea-gris-transparente/` en hero, beneficios, filosofia/historia, meal prep, comunidad, oferta y footer, respetando el orden visual fondo -> ilustraciones -> elementos. En desktop, `meal-prep-visual-link` debe mantenerse `position: absolute`; en mobile debe volver a flujo relativo para no tapar texto. En comunidad, las ilustraciones van detras de los degradados para no invadir las caras de la foto. Si se sigue refinando, ajustar solo opacidad, posicion y tamano de esas capas antes de modificar estructura.
+- Actualizacion 2026-06-27, consolidada 2026-07-25: las ilustraciones editoriales respetan el orden fondo -> ilustraciones -> contenido. Sus reglas activas viven hoy en el modulo de cada dominio (`landing.css`, `landing-meal-prep.css` o `community.css`), no al final de `styles.css`. En desktop, `meal-prep-visual-link` debe mantenerse `position: absolute`; en mobile vuelve a flujo relativo para no tapar texto. En comunidad, las ilustraciones van detras de los degradados para no invadir las caras de la foto.
 - Ajuste posterior 2026-06-27: en el hero se retiro el boton `Volver a la animacion` para eliminar ruido visual y cualquier marco residual. Esa limpieza sigue vigente; la ilustracion protagonista del hero fue reemplazada despues por `hoja_col_grande_v1.png`.
 - Ajuste responsive posterior 2026-06-27: en el hero, al reducir ancho entre desktop amplio y tablet horizontal, el vector botanico debe quedarse centrado y estable; lo que puede correrse hacia la izquierda es el bloque de copy y el plato para conservar margen izquierdo y evitar que el plato se corte. El titular debe priorizar quiebres mas equilibrados antes que columnas demasiado angostas; ajustar ancho util del copy, `text-wrap` y posicion X del plato antes de tocar el contenido.
 - Ajuste fino posterior 2026-06-27: los separadores cortos con rombo y linea (`.section-rule`, `.story-rule`) deben centrarse por geometria absoluta, no solo por flex, porque el rombo rotado puede verse desalineado aunque tecnicamente este centrado. Si se retocan, mantener la linea cruzando el eje medio del rombo.
@@ -80,7 +80,7 @@ La solucion actual incluye:
 - Plato editorial secciones 3/4 2026-07-02: se genero `src/assets/fullness-story-plate-croquettes-cutout.png` como PNG RGBA sin fondo, con bowl negro mate, luz calida tipo hero y croquetas/lentejas como ingredientes distintos. Este asset reemplaza al antiguo `fullness-story-plate-cutout.png` en `.philosophy-story-plate`. La ilustracion `tomates30.png` debe ir como `<img class="philosophy-story-tomatoes">` encima del plato, en la parte baja/derecha, no como fondo.
 - Ajuste composicion secciones 3/4 2026-07-02: en la capa `.philosophy-illustrations`, la col/planta (`planta30.png`) y la zanahoria (`zanahoria30.png`) deben leerse un 25% mas grandes y mas abajo que la version previa, siempre por debajo del plato editorial en stacking. Los tomates (`tomates30.png`) quedan en primer plano con `top: -10px` respecto a `.food-story-strip` / "Alimentarse es...".
 - Ajuste brocoli seccion filosofia 2026-07-02: `bocoli30.png` dentro de `.philosophy-illustration-broccoli` debe quedar mas bajo, cerca del ultimo cuarto vertical de la seccion `Nuestra filosofia`, usando `top` alto en desktop/tablet/mobile y conservando z-index de ilustracion para quedar siempre detras del plato.
-- Ajuste responsive premium 2026-07-02: la home debe priorizar una navegacion movil sin elementos funcionales montados ni fuera de cuadro. En breakpoints `<= 860px`, reforzar al final de `src/styles.css` que header, CTAs, beneficios, filosofia, meal prep, comunidad, oferta y footer usen `max-width: 100%`, grillas de una columna cuando corresponda y nombres reales del JSX (`header-actions`, `menu-toggle`, `footer-column`). Solo ilustraciones decorativas, platos y fotos editoriales pueden quedar fuera de cuadro para mantener la composicion visual premium.
+- Ajuste responsive premium 2026-07-02, consolidado 2026-07-25: la home debe priorizar una navegacion movil sin elementos funcionales montados ni fuera de cuadro. En breakpoints `<= 860px`, editar la regla del modulo responsable; no crear un bloque correctivo global al final de `styles.css`. Header/footer quedan en `styles.css`; landing, Meal Prep, Comunidad y comercio mantienen sus breakpoints en sus propias hojas. Solo ilustraciones decorativas, platos y fotos editoriales pueden quedar fuera de cuadro.
 - Ajuste mobile editorial 2026-07-12: en movil/tablet (`<= 860px`) las ilustraciones botanicas deben conservar la atmosfera del desktop, pero siempre con baja opacidad, `mix-blend-mode: screen` y posiciones laterales o traseras para no competir con textos, CTAs, platos ni fotos. El hero, beneficios, filosofia/historia, meal prep, comunidad, oferta y footer deben evitar scroll horizontal y solapes; si algo debe sacrificarse, se sacrifica decoracion antes que legibilidad. La lightbox de suscripcion debe sentirse editorial flotante: bordes rectos, borde difuminado de 1px, glow externo suave y contenido completo dentro de la ventana.
 - Ajuste QA responsive 2026-07-14: si una ventana, seccion o cinta editorial no cabe en laptop, iPad o mobile, no se permite scroll interno ni textos montados. En la lightbox de suscripcion, ocultar la fila secundaria de iconos/beneficios en alturas o anchos restringidos antes de permitir que choque con los CTAs. En paginas largas como `/quienes-somos`, dejar padding inferior suficiente para que el boton flotante de WhatsApp no tape el texto final. En secciones claras, el texto debe usar `--ink` y un velo marfil organico solo cuando haga falta legibilidad; en secciones oscuras, el plato/foto puede respirar, pero el copy siempre gana por z-index y sombra/scrim.
 - Ajuste bolsas Meal Prep 2026-07-02: la imagen de bolsas de la seccion Meal Prep debe usar la etiqueta circular entregada por la clienta (`Etiqueta de bolsas Fullness.png`), no solo el isotipo oficial aislado ni una marca generica. El asset final conectado es `src/assets/fullness-mealprep-band-label-fullness.png`, construido como PNG RGBA transparente desde una base fotografica generada de 5 bolsas con comida preparada saludable; la etiqueta real se compone encima localmente. Evitar volver a versiones vectoriales/procedurales o con etiqueta negra rectangular.
@@ -204,7 +204,15 @@ Archivos principales:
 - `src/main.jsx`: componentes, estado, datos de demo, carrito, cuenta con Supabase Auth y backoffice de menus.
 - `src/lib/supabase.js`: cliente publico Supabase para React, usando variables `VITE_SUPABASE_*` o `NEXT_PUBLIC_SUPABASE_*`.
 - `src/lib/menu-items.js`: consulta, normalizacion, CRUD y subida de fotos para menus desde `menu_items` y `menu-photos`.
-- `src/styles.css`: estilos globales, layout responsive, modales, carrito, backoffice y animaciones.
+- `src/styles.css`: tokens, reset, header, menu movil, footer y utilidades globales compartidas.
+- `src/landing.css`: landing principal, excepto la franja Meal Prep.
+- `src/landing-meal-prep.css`: fuente unica de la franja `#calentar`.
+- `src/commerce.css`: Planes, catalogo, fichas de producto, checkout y comercio.
+- `src/community.css`: pagina Comunidad.
+- `src/account-backoffice.css`: cuenta, backoffice y herramientas tecnicas.
+- `src/overlays.css`: lightboxes y capas modales.
+- `src/about-nosotros.css`: fuente unica de la pagina Nosotros activa.
+- `src/faq.css`: Preguntas frecuentes.
 - `index.html`: punto de entrada Vite y fuentes externas.
 - `vite.config.js`: configura React en Vite, expone prefijos `VITE_`/`NEXT_PUBLIC_` y enruta `/api/media` en desarrollo local para poder probar los assets R2 sin overlay de importacion.
 
@@ -405,7 +413,8 @@ Archivos relacionados:
 - `supabase/seed.sql`
 - `supabase/README.md`
 - `src/main.jsx`
-- `src/styles.css`
+- `src/account-backoffice.css`
+- `src/commerce.css`
 - `src/lib/supabase.js`
 - `src/lib/menu-items.js`
 - `.env.example`
@@ -509,8 +518,8 @@ Pendientes proactivos:
 
 Ubicacion actual:
 
-- Secciones `programas` y `comunidad` en `src/main.jsx`.
-- Estilos asociados en `src/styles.css`.
+- Secciones y paginas de oferta/comunidad en `src/main.jsx`.
+- Estilos asociados en `src/commerce.css` y `src/community.css`; no volver a duplicarlos en `src/styles.css`.
 
 Contexto actual:
 
@@ -805,3 +814,26 @@ Impacto retroactivo:
 
 Impacto proactivo:
 - Si se vuelve a ajustar la intensidad visual del jengibre, revisar primero su opacidad CSS junto con la transparencia ya incorporada en el PNG, para no atenuar inadvertidamente la nueva entrega.
+
+### Nota 2026-07-25 - Capas botanicas 40% restantes
+
+Cambio:
+- `src/assets/coliflor-hero-planes.png` usa `Bocoli 40op.png` como ilustracion activa de la portada de Planes.
+- `src/assets/landing-illustrations/hoja-hero-izquierda.png` usa `Hoja Hero 40op.png` y `src/assets/landing-illustrations/apio-hero-derecho.png` usa `ApioHero 40op.png`.
+- `src/assets/landing-illustrations/zanahoria.png` usa `Zanahoria 40op.png` y `src/assets/landing-illustrations/jengibre.png` usa `Jengibre 40op.png`.
+- Los cinco archivos activos son copias exactas de los PNG oficiales y traen alfa maximo `102/255`, equivalente a 40% de opacidad incorporada.
+- Las clases que muestran estas cinco piezas usan `opacity: 1`; no volver a atenuarlas por CSS, porque eso reduciria la opacidad efectiva bajo el 40% solicitado.
+- Se conservan composicion, escalas y posiciones responsive aprobadas del landing y de Planes.
+
+Impacto proactivo:
+- Si se modifica la intensidad de estas capas, hacerlo desde una nueva entrega del PNG o una decision explicita de la clienta. No combinar alfa incorporada con otra opacidad CSS.
+
+### Regla operativa 2026-07-25 — Cambios visuales acotados
+
+- Cada instruccion nueva y concreta de diseno reemplaza el objetivo visual activo; no se deben ejecutar ni mezclar solicitudes pendientes de prompts anteriores.
+- Antes de modificar una vista, confirmar la ruta y el elemento exacto afectados, y revisar los cambios locales sin consolidar. No convertir una peticion de ajuste visual en una mejora funcional, de backoffice o de encuadre no solicitada.
+- Si hay trabajo de diseno concurrente o contexto historico ambiguo, detenerse en el ultimo pedido del usuario y pedir o verificar el estado actual antes de añadir capas, paneles, fondos o controles.
+
+### Ajuste Planes 2026-07-25 — Col decorativa en pantallas angostas
+
+- En `/tienda`, bajo 760 px, `shop-hero-botanical` (la col) queda arriba a la derecha y sale desde ese borde. Su ancho y desplazamiento horizontal deben dejar visible aproximadamente el 50% de la ilustracion; permanece por debajo del copy como decoracion tenue.

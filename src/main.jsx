@@ -72,6 +72,7 @@ import landingCarrotSrc from "./assets/landing-illustrations/zanahoria.png";
 import landingMealPrepCelerySrc from "./assets/landing-illustrations/apio-meal-prep.png";
 import landingMealPrepBeansSrc from "./assets/landing-illustrations/porotos-meal-prep.png";
 import shopPlansCauliflowerIllustrationSrc from "./assets/coliflor-hero-planes.png";
+import shopHeroBoxDarkCutoutSrc from "./assets/ecommerce/fullness-hero-box-dark-cutout-v2.png";
 import consciousFoodIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hojas_natural_v1.png";
 import functionalNutritionIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brazo_fuerte_nutrientes_v1.png";
 import fullnessExperienceIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hoja_v1.png";
@@ -81,7 +82,14 @@ import aboutHeroBotanicalSrc from "./assets/about/nosotros-hero-ilustracion-alph
 import aboutBeetSrc from "./assets/about/betarraga-nosotros-alpha.png";
 import aboutCookingSrc from "./assets/about/cecilia-cooking-final.jpeg";
 import "./styles.css";
+import "./landing.css";
+import "./landing-meal-prep.css";
+import "./commerce.css";
+import "./community.css";
+import "./account-backoffice.css";
+import "./overlays.css";
 import "./about-nosotros.css";
+import "./faq.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -94,7 +102,6 @@ const silhouetteBotanicalSrc = mediaSrc("assets/fullness-silhouette-botanical.pn
 const communitySceneSrc = mediaSrc("images/community/comunidad-landing-cecilia.jpeg");
 const shopPlanBoxCardSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-87fca2f2a7cf.png");
 const shopPlanBoxCardHoverSrc = mediaSrc("images/ecommerce/fullness-plan-box-card-hover-70f16092b298.png");
-const shopHeroBoxDarkCutoutSrc = mediaSrc("images/ecommerce/fullness-hero-box-dark-cutout-15bfb5ebf321.png");
 const placeholderProductImage = mediaSrc("assets/fullness-food-crop.jpeg");
 const sampleProductImages = [
   mediaSrc("images/menu-samples/lentejas-hojas.jpeg"),
@@ -3031,87 +3038,6 @@ function FaqPage({ onNavigateToShop }) {
   );
 }
 
-function NosotrosEditorialPage() {
-  const aboutValues = [
-    'Desde ingredientes reales y locales',
-    'Preparaciones funcionales',
-    'Nutrición que te hace bien',
-    'Comunidad que te acompaña',
-  ]
-
-  const storyParagraphs = [
-    'Soy Cecilia Salas, chef, emprendedora y creadora de Fullness Lab.',
-    'Mi camino en la gastronomía comenzó hace más de quince años, impartiendo clases de cocina para pequeños grupos en mi propia casa. Lo que nació como una instancia para compartir conocimientos y experiencias fue creciendo hasta convertirse en una empresa dedicada a la producción gastronómica y eventos, desarrollando proyectos para clientes particulares y para importantes marcas nacionales e internacionales.',
-    'Durante años tuve el privilegio de participar en lanzamientos, experiencias de marca, celebraciones y eventos de gran escala. Fue una etapa de mucho aprendizaje, crecimiento y desarrollo profesional. Sin embargo, con el tiempo comenzó a surgir una pregunta que no lograba ignorar: ¿cuál era el verdadero propósito detrás de lo que hacía?',
-    'Aunque disfrutaba profundamente la cocina, sentía que gran parte de la industria gastronómica y de eventos se había vuelto cada vez más rápida, comercial y repetitiva. Existía abundancia de estímulos, imágenes y experiencias efímeras, pero pocas veces un impacto real y duradero en la vida de las personas.',
-    'Paralelamente, algo me acompañaba desde mis inicios en la cocina. Siempre tuve una visión profundamente romántica de los alimentos. Me fascinaba buscar ingredientes de calidad, comprender su origen y trabajarlos de una manera que potenciara al máximo su sabor y valor nutricional, interviniéndolos lo menos posible. Sin saberlo, ya estaba buscando una forma más consciente de cocinar.',
-    'Fue mi propio proceso de búsqueda personal y sanación el que finalmente dio sentido a esa intuición. Comencé a profundizar en la relación entre alimentación, emociones, bienestar y propósito, descubriendo que la forma en que nos nutrimos tiene un impacto mucho más profundo de lo que solemos imaginar.',
-    'Ese camino me llevó a ampliar mi formación y actualmente me encuentro cursando un Diplomado en Nutrición Emocional, integrando herramientas que complementan mi experiencia gastronómica y enriquecen la visión que hoy sustenta este proyecto.',
-    'Así nació Fullness Lab.',
-    'Fullness Lab surge de la necesidad de volver a lo esencial. De recuperar una forma de alimentarnos más consciente, más humana y más conectada con nuestro bienestar integral. Es el encuentro entre la gastronomía, la nutrición funcional, el desarrollo personal y la convicción de que la comida puede ser una poderosa herramienta de transformación.',
-    'Creemos que alimentarse es mucho más que comer.',
-    'Creemos en ingredientes reales, en procesos respetuosos, en el placer de una buena mesa y en la profunda conexión entre cuerpo, mente y emociones.',
-    'Porque cuando aprendemos a nutrirnos desde la raíz, descubrimos que el bienestar no es algo que se busca afuera, sino algo que se construye desde dentro.',
-    'Como es adentro, es afuera',
-  ]
-
-  return (
-    <div className="about-editorial-page">
-      <section className="about-hero" aria-labelledby="about-hero-title">
-        <img className="about-hero__photo" src="/assets/nosotros-cecilia-hero.jpeg" alt="Cecilia Salas sosteniendo un plato Fullness Lab" />
-        <span className="about-hero__photo-light" aria-hidden="true" />
-        <span className="about-hero__shade" aria-hidden="true" />
-        <img className="about-hero__cilantro" src="/assets/nosotros-cilantro.png" alt="" aria-hidden="true" />
-        <div className="about-hero__copy">
-          <p className="about-kicker">Nuestra historia</p>
-          <h1 id="about-hero-title">
-            <span>Esto no comenzó</span>
-            <span>con una marca.</span>
-            <em>Comenzó con</em>
-            <em>una pregunta.</em>
-          </h1>
-          <div className="about-rule" aria-hidden="true"><span /><i /></div>
-          <p className="about-hero__question">¿Puede la forma en que nos alimentamos transformar también la manera en que nos sentimos?</p>
-        </div>
-      </section>
-
-      <section className="about-intro" aria-labelledby="about-intro-title">
-        <div className="about-intro__image-wrap">
-          <img className="about-intro__image" src="/assets/nosotros-cocina.jpeg" alt="Cecilia Salas cocinando en un taller" />
-        </div>
-        <div className="about-intro__copy">
-          <p className="about-kicker">El comienzo</p>
-          <h2 id="about-intro-title">Hace más de cinco años comenzó mi camino en la gastronomía.</h2>
-          <p>Lo que nació como una instancia para compartir conocimientos y experiencias fue creciendo hasta convertirse en una empresa dedicada a la producción gastronómica y eventos, desarrollando proyectos para clientes nacionales e internacionales.</p>
-          <p>A lo largo de este camino entendí que la cocina podía ser mucho más que técnica y creatividad: podía ser un puente hacia el bienestar y el equilibrio.</p>
-        </div>
-        <img className="about-intro__beet" src="/assets/nosotros-betarraga.png" alt="" aria-hidden="true" />
-      </section>
-
-      <section className="about-values" aria-label="Pilares Fullness Lab">
-        {aboutValues.map((value) => (
-          <div className="about-value" key={value}>
-            <span className="about-value__mark" aria-hidden="true">✦</span>
-            <p>{value}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="about-longform" aria-labelledby="about-story-title">
-        <div className="about-longform__header">
-          <p className="about-kicker">Nuestra historia</p>
-          <h2 id="about-story-title">Nutrirse desde la raíz.</h2>
-        </div>
-        <div className="about-longform__text">
-          {storyParagraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 32)}>{paragraph}</p>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
-}
-
 function App() {
   const appRef = useRef(null);
   const [cart, setCart] = useState(loadStoredCart);
@@ -4590,10 +4516,12 @@ function App() {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const productsBySlug = useMemo(() => {
     const map = new Map();
-    products.forEach((product) => {
+
+    [...demoProducts, ...products].forEach((product) => {
       const slug = getProductSlug(product);
       if (slug) map.set(slug, product);
     });
+
     return map;
   }, [products]);
   const currentProduct = currentProductSlug ? productsBySlug.get(currentProductSlug) : null;
