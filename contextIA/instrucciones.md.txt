@@ -837,3 +837,8 @@ Impacto proactivo:
 ### Ajuste Planes 2026-07-25 — Col decorativa en pantallas angostas
 
 - En `/tienda`, bajo 760 px, `shop-hero-botanical` (la col) queda arriba a la derecha y sale desde ese borde. Su ancho y desplazamiento horizontal deben dejar visible aproximadamente el 50% de la ilustracion; permanece por debajo del copy como decoracion tenue.
+
+### Correccion footer 2026-07-25
+
+- Los bloques `.footer-column` deben ser grillas verticales con `gap`, titulo separado y enlaces en bloque. No dejar los enlaces como elementos inline, pues se concatenan y pueden invadir columnas contiguas en escritorio.
+- El contacto conserva el mismo patron de lectura vertical y `overflow-wrap:anywhere` para email largo. En movil los enlaces mantienen una zona tactil de al menos 44 px.
