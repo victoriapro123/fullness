@@ -775,6 +775,7 @@ const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero inform
 const instagramUrl = "https://www.instagram.com/fullnesslab";
 const subscriptionPopupStorageKey = "fullness_subscription_popup_settings";
 const subscriptionPopupSubscribersStorageKey = "fullness_subscription_popup_subscribers";
+const menuFormDraftStorageKey = "fullness_menu_form_draft_v1";
 const adminAccessModeStorageKey = "fullness_carlos_access_mode";
 const adminPersonaEmail = "carlos@prof3sional.com";
 const checkoutCartStorageKey = "fullness_checkout_cart";
@@ -1333,6 +1334,24 @@ function createMenuForm(displayOrder = 0) {
     displayOrder: String(displayOrder),
     isActive: true
   };
+}
+
+function getStoredMenuFormDraft() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(menuFormDraftStorageKey) || "null");
+    if (!stored?.form || typeof stored.form !== "object") return null;
+
+    const defaults = createMenuForm(Number(stored.form.displayOrder) || 10);
+    return {
+      ...defaults,
+      ...stored.form,
+      includedItems: Array.isArray(stored.form.includedItems) ? stored.form.includedItems : defaults.includedItems
+    };
+  } catch {
+    return null;
+  }
 }
 
 function menuItemToForm(item) {
@@ -3102,6 +3121,8 @@ function App() {
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
+  const [menuFormHasUnsavedChanges, setMenuFormHasUnsavedChanges] = useState(false);
+  const menuFormDraftRestoredRef = useRef(false);
   const [mealLibrary, setMealLibrary] = useState([]);
   const [mealLibraryForm, setMealLibraryForm] = useState(createMealLibraryForm);
   const [mealLibraryLoading, setMealLibraryLoading] = useState(false);
@@ -3520,12 +3541,45 @@ function App() {
       ? member.name.split(" ")[0]
       : "Acceso miembros";
 
-  function resetMenuForm() {
+  function clearMenuFormDraft() {
+    setMenuFormHasUnsavedChanges(false);
+
+    try {
+      window.localStorage.removeItem(menuFormDraftStorageKey);
+    } catch {
+      // Draft recovery is best-effort when browser storage is unavailable.
+    }
+  }
+
+  function markMenuFormChanged() {
+    setMenuFormHasUnsavedChanges(true);
+    setAdminError("");
+    setAdminMessage("");
+  }
+
+  function confirmMenuFormDiscard() {
+    return !menuFormHasUnsavedChanges || window.confirm("Tienes cambios sin guardar. ¿Quieres descartarlos?");
+  }
+
+  function selectMenuItemForEditing(item) {
+    if (!confirmMenuFormDiscard()) return;
+
+    clearMenuFormDraft();
+    setMenuForm(menuItemToForm(item));
+    setAdminError("");
+    setAdminMessage("");
+  }
+
+  function resetMenuForm({ force = false } = {}) {
+    if (!force && !confirmMenuFormDiscard()) return false;
+
     const nextOrder =
       adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
+    clearMenuFormDraft();
     setMenuForm(createMenuForm(nextOrder));
     setAdminError("");
     setAdminMessage("");
+    return true;
   }
 
   async function refreshPublicProducts() {
@@ -3682,6 +3736,7 @@ function App() {
     const libraryItem = mealLibrary.find((item) => item.id === selectedLibraryMealId);
     if (!libraryItem) return;
 
+    markMenuFormChanged();
     setMenuForm((current) => {
       const draft = createIncludedMealForm(current.includedItems.length);
       const includedMeal = {
@@ -4212,6 +4267,28 @@ function App() {
       refreshSubscriptionCustomers();
     }
   }, [activeIsAdmin, adminOpen]);
+
+  useEffect(() => {
+    if (!activeIsAdmin || menuFormDraftRestoredRef.current) return;
+
+    menuFormDraftRestoredRef.current = true;
+    const draft = getStoredMenuFormDraft();
+    if (!draft) return;
+
+    setMenuForm(draft);
+    setMenuFormHasUnsavedChanges(true);
+    setAdminMessage("Recuperamos el borrador pendiente de este navegador.");
+  }, [activeIsAdmin]);
+
+  useEffect(() => {
+    if (!menuFormHasUnsavedChanges || typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(menuFormDraftStorageKey, JSON.stringify({ form: menuForm, savedAt: Date.now() }));
+    } catch {
+      // Draft recovery is best-effort when browser storage is unavailable.
+    }
+  }, [menuForm, menuFormHasUnsavedChanges]);
 
   useEffect(() => {
     if (adminOpen && activeIsAdmin && activeBackofficeModule === "site-tools") {
@@ -4990,6 +5067,7 @@ function App() {
   function updateMenuForm(event) {
     const { checked, name, type, value } = event.target;
 
+    markMenuFormChanged();
     setMenuForm((current) => {
       const next = {
         ...current,
@@ -5012,6 +5090,7 @@ function App() {
   }
 
   function updateIncludedMealForm(index, field, value) {
+    markMenuFormChanged();
     setMenuForm((current) => ({
       ...current,
       includedItems: current.includedItems.map((item, itemIndex) =>
@@ -5021,6 +5100,7 @@ function App() {
   }
 
   function addIncludedMeal() {
+    markMenuFormChanged();
     setMenuForm((current) => ({
       ...current,
       includedItems: [...current.includedItems, createIncludedMealForm(current.includedItems.length)]
@@ -5028,6 +5108,7 @@ function App() {
   }
 
   function removeIncludedMeal(indexToRemove) {
+    markMenuFormChanged();
     setMenuForm((current) => ({
       ...current,
       includedItems: current.includedItems.filter((_, index) => index !== indexToRemove)
@@ -5109,6 +5190,7 @@ function App() {
     if (result.error || !result.configured) {
       setAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
     } else {
+      markMenuFormChanged();
       setMenuForm((current) => {
         if (mealIndex !== null) {
           return {
@@ -5213,6 +5295,7 @@ function App() {
     if (result.error || !result.configured) {
       setAdminError(getSupabaseErrorMessage(result.error, "No pudimos guardar el meal prep."));
     } else {
+      clearMenuFormDraft();
       setMenuForm(menuItemToForm(result.data));
       setAdminMessage("Meal prep guardado.");
       await refreshAdminItems({ silent: true });
@@ -5234,13 +5317,17 @@ function App() {
     if (result.error || !result.configured) {
       setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el meal prep."));
     } else {
-      if (menuForm.id === item.id) resetMenuForm();
+      if (menuForm.id === item.id) resetMenuForm({ force: true });
       setAdminMessage("Meal prep eliminado.");
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
     }
 
     setAdminSaving(false);
+  }
+
+  function reportMenuFormInvalid() {
+    setAdminError("Completa los campos obligatorios antes de guardar. Tu borrador se mantiene protegido en este navegador.");
   }
 
   const navItems = [
@@ -5971,7 +6058,7 @@ function App() {
                       <div className="backoffice-menu-stack">
                         {adminItems.map((item) => (
                           <article className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
-                            <button className="backoffice-menu-main" type="button" onClick={() => setMenuForm(menuItemToForm(item))}>
+                            <button className="backoffice-menu-main" type="button" onClick={() => selectMenuItemForEditing(item)}>
                               <img src={item.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt="" aria-hidden="true" />
                               <span>
                                 <strong>{item.name}</strong>
@@ -5986,7 +6073,7 @@ function App() {
                               <span>Orden {item.displayOrder}</span>
                             </div>
                             <div className="backoffice-card-actions">
-                              <button type="button" onClick={() => setMenuForm(menuItemToForm(item))} aria-label={`Editar ${item.name}`}>
+                              <button type="button" onClick={() => selectMenuItemForEditing(item)} aria-label={`Editar ${item.name}`}>
                                 <Pencil size={16} />
                               </button>
                               <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} disabled={adminSaving}>
@@ -6001,7 +6088,7 @@ function App() {
                     )}
                   </aside>
 
-                  <form className="backoffice-form" onSubmit={submitMenuItem}>
+                  <form className="backoffice-form" onSubmit={submitMenuItem} onInvalid={reportMenuFormInvalid}>
                     <div className="backoffice-form-head">
                       <div>
                         <p className="eyebrow">{menuForm.id ? "Editar" : "Nuevo"}</p>
