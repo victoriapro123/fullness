@@ -4424,12 +4424,7 @@ function App() {
 
       if (ignore) return;
       setMenuFormDrafts(mergedDrafts);
-
-      const latestDraft = mergedDrafts[0];
-      if (latestDraft) {
-        restoreMenuFormDraft(latestDraft, { announce: false });
-        setAdminMessage(`Recuperamos el borrador pendiente: ${latestDraft.title}.`);
-      }
+      setMenuFormDraftStatus("idle");
     }
 
     void restoreNewestDraft();
