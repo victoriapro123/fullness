@@ -825,6 +825,90 @@
   padding-bottom: 4px;
 }
 
+.backoffice-form-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.backoffice-draft-status,
+.backoffice-draft-picker,
+.backoffice-draft-discard {
+  min-height: 38px;
+  border: 1px solid rgba(81, 20, 37, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 253, 248, 0.82);
+}
+
+.backoffice-draft-status,
+.backoffice-draft-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  color: rgba(23, 17, 12, 0.72);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.backoffice-draft-status.is-saving svg {
+  animation: backoffice-draft-spin 900ms linear infinite;
+}
+
+.backoffice-draft-status.is-synced {
+  color: #25523a;
+  border-color: rgba(74, 128, 91, 0.25);
+  background: rgba(74, 128, 91, 0.1);
+}
+
+.backoffice-draft-status.is-local {
+  color: #85364a;
+  border-color: rgba(142, 38, 60, 0.24);
+  background: rgba(142, 38, 60, 0.08);
+}
+
+.backoffice-draft-picker {
+  padding-right: 4px;
+}
+
+.backoffice-draft-picker select {
+  width: auto;
+  min-width: 140px;
+  min-height: 34px;
+  padding: 0 22px 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.backoffice-draft-discard {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  padding: 0;
+  color: #85364a;
+  cursor: pointer;
+}
+
+.backoffice-draft-discard:hover {
+  border-color: rgba(142, 38, 60, 0.42);
+  background: rgba(142, 38, 60, 0.1);
+}
+
+@keyframes backoffice-draft-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .backoffice-switch {
   position: relative;
   display: inline-flex;
@@ -1025,6 +1109,27 @@
   .backoffice-form-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .backoffice-form-head-actions {
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .backoffice-draft-status,
+  .backoffice-draft-picker,
+  .backoffice-switch {
+    width: 100%;
+  }
+
+  .backoffice-draft-picker select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .backoffice-switch span {
+    width: 100%;
+    justify-content: center;
   }
 
   .backoffice-grid,

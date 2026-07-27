@@ -7,6 +7,8 @@ import {
   ArrowUpRight,
   CalendarDays,
   CheckCircle2,
+  Cloud,
+  CloudOff,
   CookingPot,
   Database,
   Download,
@@ -18,6 +20,7 @@ import {
   FolderOpen,
   HardDrive,
   Heart,
+  History,
   Home,
   ImagePlus,
   KeyRound,
@@ -60,6 +63,11 @@ import {
   saveShopSettings,
   uploadMenuPhoto
 } from "./lib/menu-items.js";
+import {
+  deleteBackofficeDraft,
+  listBackofficeDrafts,
+  saveBackofficeDraft
+} from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
@@ -732,7 +740,9 @@ const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero inform
 const instagramUrl = "https://www.instagram.com/fullnesslab";
 const subscriptionPopupStorageKey = "fullness_subscription_popup_settings";
 const subscriptionPopupSubscribersStorageKey = "fullness_subscription_popup_subscribers";
-const menuFormDraftStorageKey = "fullness_menu_form_draft_v1";
+const menuFormDraftStorageKey = "fullness_menu_form_drafts_v2";
+const legacyMenuFormDraftStorageKey = "fullness_menu_form_draft_v1";
+const menuFormDraftScope = "meal-prep";
 const adminAccessModeStorageKey = "fullness_carlos_access_mode";
 const adminPersonaEmail = "carlos@prof3sional.com";
 const checkoutCartStorageKey = "fullness_checkout_cart";
@@ -1293,22 +1303,97 @@ function createMenuForm(displayOrder = 0) {
   };
 }
 
-function getStoredMenuFormDraft() {
-  if (typeof window === "undefined") return null;
+function createMenuFormDraftKey(menuItemId = "") {
+  if (menuItemId) return `item:${menuItemId}`;
+
+  const suffix =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  return `new:${suffix}`;
+}
+
+function normalizeMenuFormDraft(rawDraft) {
+  if (!rawDraft?.form || typeof rawDraft.form !== "object") return null;
+
+  const defaults = createMenuForm(Number(rawDraft.form.displayOrder) || 10);
+  const form = {
+    ...defaults,
+    ...rawDraft.form,
+    includedItems: Array.isArray(rawDraft.form.includedItems) ? rawDraft.form.includedItems : defaults.includedItems
+  };
+  const updatedAt = rawDraft.updatedAt || rawDraft.updated_at || rawDraft.savedAt || Date.now();
+
+  return {
+    id: rawDraft.id || "",
+    draftKey: rawDraft.draftKey || rawDraft.draft_key || (form.id ? createMenuFormDraftKey(form.id) : `legacy:${updatedAt}`),
+    title: rawDraft.title || form.name?.trim() || "Meal prep sin título",
+    form,
+    createdAt: rawDraft.createdAt || rawDraft.created_at || updatedAt,
+    updatedAt
+  };
+}
+
+function mergeMenuFormDrafts(...collections) {
+  const merged = new Map();
+
+  collections.flat().forEach((rawDraft) => {
+    const draft = normalizeMenuFormDraft(rawDraft);
+    if (!draft) return;
+
+    const previous = merged.get(draft.draftKey);
+    if (!previous || new Date(draft.updatedAt).getTime() >= new Date(previous.updatedAt).getTime()) {
+      merged.set(draft.draftKey, draft);
+    }
+  });
+
+  return [...merged.values()].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+}
+
+function getStoredMenuFormDrafts() {
+  if (typeof window === "undefined") return [];
 
   try {
-    const stored = JSON.parse(window.localStorage.getItem(menuFormDraftStorageKey) || "null");
-    if (!stored?.form || typeof stored.form !== "object") return null;
+    const stored = JSON.parse(window.localStorage.getItem(menuFormDraftStorageKey) || "[]");
+    const currentDrafts = Array.isArray(stored) ? stored : [];
+    const legacy = JSON.parse(window.localStorage.getItem(legacyMenuFormDraftStorageKey) || "null");
 
-    const defaults = createMenuForm(Number(stored.form.displayOrder) || 10);
-    return {
-      ...defaults,
-      ...stored.form,
-      includedItems: Array.isArray(stored.form.includedItems) ? stored.form.includedItems : defaults.includedItems
-    };
+    return mergeMenuFormDrafts(currentDrafts, legacy?.form ? [legacy] : []);
   } catch {
-    return null;
+    return [];
   }
+}
+
+function storeMenuFormDrafts(drafts) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (drafts.length) {
+      window.localStorage.setItem(menuFormDraftStorageKey, JSON.stringify(drafts));
+    } else {
+      window.localStorage.removeItem(menuFormDraftStorageKey);
+    }
+    window.localStorage.removeItem(legacyMenuFormDraftStorageKey);
+  } catch {
+    // The in-browser copy is best effort; the authenticated copy lives in Supabase.
+  }
+}
+
+function isMeaningfulMenuFormDraft(form) {
+  if (!form || typeof form !== "object") return false;
+
+  return Boolean(
+    form.name?.trim() ||
+    form.slug?.trim() ||
+    form.sku?.trim() ||
+    form.tag?.trim() ||
+    form.description?.trim() ||
+    form.priceClp?.trim() ||
+    form.photoUrl?.trim() ||
+    form.secondaryPhotoUrl?.trim() ||
+    form.includedItems?.some((item) => item.name?.trim() || item.description?.trim() || item.photoUrl?.trim())
+  );
 }
 
 function menuItemToForm(item) {
@@ -3079,7 +3164,12 @@ function App() {
   const [adminError, setAdminError] = useState("");
   const [menuForm, setMenuForm] = useState(() => createMenuForm(10));
   const [menuFormHasUnsavedChanges, setMenuFormHasUnsavedChanges] = useState(false);
+  const [menuFormDraftKey, setMenuFormDraftKey] = useState(() => createMenuFormDraftKey());
+  const [menuFormDrafts, setMenuFormDrafts] = useState([]);
+  const [menuFormDraftStatus, setMenuFormDraftStatus] = useState("idle");
   const menuFormDraftRestoredRef = useRef(false);
+  const menuFormDraftSyncTimerRef = useRef(null);
+  const menuFormDraftSyncVersionRef = useRef(0);
   const [mealLibrary, setMealLibrary] = useState([]);
   const [mealLibraryForm, setMealLibraryForm] = useState(createMealLibraryForm);
   const [mealLibraryLoading, setMealLibraryLoading] = useState(false);
@@ -3498,14 +3588,104 @@ function App() {
       ? member.name.split(" ")[0]
       : "Acceso miembros";
 
-  function clearMenuFormDraft() {
-    setMenuFormHasUnsavedChanges(false);
+  function buildMenuFormDraft(form = menuForm, draftKey = menuFormDraftKey) {
+    return normalizeMenuFormDraft({
+      draftKey,
+      title: form.name?.trim() || "Meal prep sin título",
+      form,
+      updatedAt: new Date().toISOString()
+    });
+  }
 
-    try {
-      window.localStorage.removeItem(menuFormDraftStorageKey);
-    } catch {
-      // Draft recovery is best-effort when browser storage is unavailable.
+  function persistMenuFormDraftLocally(form = menuForm, draftKey = menuFormDraftKey) {
+    if (!isMeaningfulMenuFormDraft(form)) return null;
+
+    const draft = buildMenuFormDraft(form, draftKey);
+    const nextDrafts = mergeMenuFormDrafts(
+      getStoredMenuFormDrafts().filter((item) => item.draftKey !== draft.draftKey),
+      [draft]
+    );
+
+    storeMenuFormDrafts(nextDrafts);
+    setMenuFormDrafts(nextDrafts);
+    return draft;
+  }
+
+  async function syncMenuFormDraft(draft, version) {
+    if (!draft || !authUser?.id || !activeIsAdmin) {
+      setMenuFormDraftStatus(draft ? "local" : "idle");
+      return;
     }
+
+    const result = await saveBackofficeDraft({
+      ownerId: authUser.id,
+      scope: menuFormDraftScope,
+      draftKey: draft.draftKey,
+      title: draft.title,
+      form: draft.form
+    });
+
+    if (menuFormDraftSyncVersionRef.current !== version) return;
+
+    if (result.error || !result.configured) {
+      setMenuFormDraftStatus("local");
+      return;
+    }
+
+    const nextDrafts = mergeMenuFormDrafts(
+      getStoredMenuFormDrafts().filter((item) => item.draftKey !== result.data.draftKey),
+      [result.data]
+    );
+    storeMenuFormDrafts(nextDrafts);
+    setMenuFormDrafts(nextDrafts);
+    setMenuFormDraftStatus("synced");
+  }
+
+  function protectCurrentMenuFormDraft() {
+    if (!menuFormHasUnsavedChanges) return;
+
+    const draft = persistMenuFormDraftLocally();
+    if (!draft || !authUser?.id || !activeIsAdmin) return;
+
+    const version = ++menuFormDraftSyncVersionRef.current;
+    void syncMenuFormDraft(draft, version);
+  }
+
+  function clearMenuFormDraft(draftKey = menuFormDraftKey) {
+    setMenuFormHasUnsavedChanges(false);
+    menuFormDraftSyncVersionRef.current += 1;
+    window.clearTimeout(menuFormDraftSyncTimerRef.current);
+
+    const nextDrafts = getStoredMenuFormDrafts().filter((draft) => draft.draftKey !== draftKey);
+    storeMenuFormDrafts(nextDrafts);
+    setMenuFormDrafts(nextDrafts);
+    setMenuFormDraftStatus("idle");
+
+    if (activeIsAdmin) {
+      void deleteBackofficeDraft({ draftKey, scope: menuFormDraftScope });
+    }
+  }
+
+  function restoreMenuFormDraft(draft, { announce = true } = {}) {
+    if (!draft) return;
+
+    setMenuForm(draft.form);
+    setMenuFormDraftKey(draft.draftKey);
+    setMenuFormHasUnsavedChanges(true);
+    setMenuFormDraftStatus("synced");
+    setAdminError("");
+    if (announce) setAdminMessage(`Borrador recuperado: ${draft.title}.`);
+  }
+
+  function discardCurrentMenuFormDraft() {
+    if (!menuFormHasUnsavedChanges || !window.confirm("¿Descartar este borrador? Esta acción no se puede deshacer.")) return;
+
+    const original = menuForm.id ? adminItems.find((item) => item.id === menuForm.id) : null;
+    clearMenuFormDraft();
+    setMenuForm(original ? menuItemToForm(original) : createMenuForm(10));
+    setMenuFormDraftKey(createMenuFormDraftKey(original?.id || ""));
+    setAdminMessage("Borrador descartado.");
+    setAdminError("");
   }
 
   function markMenuFormChanged() {
@@ -3514,26 +3694,25 @@ function App() {
     setAdminMessage("");
   }
 
-  function confirmMenuFormDiscard() {
-    return !menuFormHasUnsavedChanges || window.confirm("Tienes cambios sin guardar. ¿Quieres descartarlos?");
-  }
-
   function selectMenuItemForEditing(item) {
-    if (!confirmMenuFormDiscard()) return;
-
-    clearMenuFormDraft();
+    protectCurrentMenuFormDraft();
     setMenuForm(menuItemToForm(item));
+    setMenuFormDraftKey(createMenuFormDraftKey(item.id));
+    setMenuFormHasUnsavedChanges(false);
+    setMenuFormDraftStatus("idle");
     setAdminError("");
     setAdminMessage("");
   }
 
   function resetMenuForm({ force = false } = {}) {
-    if (!force && !confirmMenuFormDiscard()) return false;
+    if (!force) protectCurrentMenuFormDraft();
 
     const nextOrder =
       adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
-    clearMenuFormDraft();
     setMenuForm(createMenuForm(nextOrder));
+    setMenuFormDraftKey(createMenuFormDraftKey());
+    setMenuFormHasUnsavedChanges(false);
+    setMenuFormDraftStatus("idle");
     setAdminError("");
     setAdminMessage("");
     return true;
@@ -4226,26 +4405,80 @@ function App() {
   }, [activeIsAdmin, adminOpen]);
 
   useEffect(() => {
-    if (!activeIsAdmin || menuFormDraftRestoredRef.current) return;
+    if (!activeIsAdmin || menuFormDraftRestoredRef.current) return undefined;
 
+    let ignore = false;
     menuFormDraftRestoredRef.current = true;
-    const draft = getStoredMenuFormDraft();
-    if (!draft) return;
 
-    setMenuForm(draft);
-    setMenuFormHasUnsavedChanges(true);
-    setAdminMessage("Recuperamos el borrador pendiente de este navegador.");
-  }, [activeIsAdmin]);
+    async function restoreNewestDraft() {
+      const localDrafts = getStoredMenuFormDrafts();
+      let mergedDrafts = localDrafts;
+
+      if (authUser?.id) {
+        const result = await listBackofficeDrafts({ ownerId: authUser.id, scope: menuFormDraftScope });
+        if (!ignore && result.configured && !result.error) {
+          mergedDrafts = mergeMenuFormDrafts(localDrafts, result.data);
+          storeMenuFormDrafts(mergedDrafts);
+        }
+      }
+
+      if (ignore) return;
+      setMenuFormDrafts(mergedDrafts);
+
+      const latestDraft = mergedDrafts[0];
+      if (latestDraft) {
+        restoreMenuFormDraft(latestDraft, { announce: false });
+        setAdminMessage(`Recuperamos el borrador pendiente: ${latestDraft.title}.`);
+      }
+    }
+
+    void restoreNewestDraft();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeIsAdmin, authUser?.id]);
 
   useEffect(() => {
-    if (!menuFormHasUnsavedChanges || typeof window === "undefined") return;
+    if (!menuFormHasUnsavedChanges || typeof window === "undefined") return undefined;
 
-    try {
-      window.localStorage.setItem(menuFormDraftStorageKey, JSON.stringify({ form: menuForm, savedAt: Date.now() }));
-    } catch {
-      // Draft recovery is best-effort when browser storage is unavailable.
+    const draft = persistMenuFormDraftLocally();
+    if (!draft) return undefined;
+
+    if (!authUser?.id || !activeIsAdmin) {
+      setMenuFormDraftStatus("local");
+      return undefined;
     }
-  }, [menuForm, menuFormHasUnsavedChanges]);
+
+    const version = ++menuFormDraftSyncVersionRef.current;
+    setMenuFormDraftStatus("saving");
+    window.clearTimeout(menuFormDraftSyncTimerRef.current);
+    menuFormDraftSyncTimerRef.current = window.setTimeout(() => {
+      void syncMenuFormDraft(draft, version);
+    }, 600);
+
+    return () => window.clearTimeout(menuFormDraftSyncTimerRef.current);
+  }, [menuForm, menuFormDraftKey, menuFormHasUnsavedChanges, activeIsAdmin, authUser?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const persistBeforeExit = () => {
+      if (menuFormHasUnsavedChanges) persistMenuFormDraftLocally();
+    };
+
+    window.addEventListener("pagehide", persistBeforeExit);
+    document.addEventListener("visibilitychange", persistBeforeExit);
+
+    return () => {
+      window.removeEventListener("pagehide", persistBeforeExit);
+      document.removeEventListener("visibilitychange", persistBeforeExit);
+    };
+  }, [menuForm, menuFormDraftKey, menuFormHasUnsavedChanges]);
+
+  useEffect(() => () => {
+    window.clearTimeout(menuFormDraftSyncTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (adminOpen && activeIsAdmin && activeBackofficeModule === "site-tools") {
@@ -6050,18 +6283,63 @@ function App() {
                         <p className="eyebrow">{menuForm.id ? "Editar" : "Nuevo"}</p>
                         <h3>{menuForm.name || "Meal prep Fullness"}</h3>
                       </div>
-                      <label className="backoffice-switch">
-                        <input
-                          name="isActive"
-                          type="checkbox"
-                          checked={menuForm.isActive}
-                          onChange={updateMenuForm}
-                        />
-                        <span>
-                          {menuForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
-                          {menuForm.isActive ? "Activo" : "Inactivo"}
-                        </span>
-                      </label>
+                      <div className="backoffice-form-head-actions">
+                        <div className={`backoffice-draft-status is-${menuFormDraftStatus}`} aria-live="polite">
+                          {menuFormDraftStatus === "saving" ? <RefreshCw size={15} /> : menuFormDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
+                          <span>
+                            {menuFormDraftStatus === "saving"
+                              ? "Guardando borrador"
+                              : menuFormDraftStatus === "local"
+                                ? "Borrador en este equipo"
+                                : menuFormHasUnsavedChanges
+                                  ? "Borrador sincronizado"
+                                  : "Sin cambios pendientes"}
+                          </span>
+                        </div>
+                        {menuFormDrafts.length > 0 && (
+                          <label className="backoffice-draft-picker">
+                            <History size={16} aria-hidden="true" />
+                            <select
+                              aria-label="Recuperar borrador"
+                              value=""
+                              onChange={(event) => {
+                                const draft = menuFormDrafts.find((item) => item.draftKey === event.target.value);
+                                if (draft) restoreMenuFormDraft(draft);
+                              }}
+                            >
+                              <option value="">Borradores ({menuFormDrafts.length})</option>
+                              {menuFormDrafts.map((draft) => (
+                                <option key={draft.draftKey} value={draft.draftKey}>
+                                  {draft.title} · {formatR2Date(draft.updatedAt)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                        {menuFormHasUnsavedChanges && (
+                          <button
+                            className="backoffice-draft-discard"
+                            type="button"
+                            onClick={discardCurrentMenuFormDraft}
+                            title="Descartar borrador"
+                            aria-label="Descartar borrador"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                        <label className="backoffice-switch">
+                          <input
+                            name="isActive"
+                            type="checkbox"
+                            checked={menuForm.isActive}
+                            onChange={updateMenuForm}
+                          />
+                          <span>
+                            {menuForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
+                            {menuForm.isActive ? "Activo" : "Inactivo"}
+                          </span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="backoffice-grid">
