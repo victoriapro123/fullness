@@ -8,7 +8,7 @@ Cecilia opera como propietaria del backoffice mediante `profiles.is_admin = true
 
 ## Capacidades Permitidas
 
-- Gestionar meal preps, biblioteca de platos, clientes, tienda, lightbox y comunidad.
+- Gestionar meal preps, biblioteca de platos, clientes, tienda, lightbox y comunidad. Los platos nuevos de un plan se pueden guardar directamente en la Biblioteca antes de publicar el plan comercial.
 - Consultar suscriptores y ejecutar las operaciones de exportacion y recuperacion de acceso.
 - Usar el modulo Respaldo y conexion para exportaciones, recursos de R2 y DNS, dentro de los limites establecidos por la aplicacion.
 

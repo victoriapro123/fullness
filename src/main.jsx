@@ -1462,6 +1462,19 @@ function parseIncludedMealsFromForm(items) {
     .filter(Boolean);
 }
 
+function getMenuFormPublicationIssues(form) {
+  const issues = [];
+  const effectiveSlug = form.slug.trim() || slugifyMenuName(form.name);
+  const price = Number(form.priceClp);
+
+  if (!form.name.trim()) issues.push("nombre");
+  if (!effectiveSlug) issues.push("slug válido");
+  if (form.priceClp === "" || !Number.isFinite(price) || price < 0) issues.push("precio");
+  if (!form.description.trim()) issues.push("descripción");
+
+  return issues;
+}
+
 function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
   return error?.message || fallback;
 }
@@ -3127,6 +3140,7 @@ function App() {
   const [mealLibraryMessage, setMealLibraryMessage] = useState("");
   const [mealLibraryError, setMealLibraryError] = useState("");
   const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
+  const [includedMealSavingIndex, setIncludedMealSavingIndex] = useState(null);
   const [subscriptionCustomers, setSubscriptionCustomers] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [subscriptionsError, setSubscriptionsError] = useState("");
@@ -3795,6 +3809,65 @@ function App() {
     }
 
     setMealLibrarySaving(false);
+  }
+
+  async function saveIncludedMealToLibrary(index) {
+    if (!activeIsAdmin) {
+      setAdminError("Tu cuenta no tiene acceso de administración.");
+      return;
+    }
+
+    const meal = menuForm.includedItems[index];
+    if (!meal?.name.trim()) {
+      setAdminError(`Plato ${index + 1}: agrega un nombre antes de guardarlo en la biblioteca.`);
+      return;
+    }
+
+    let nutritionFacts = {};
+    try {
+      nutritionFacts = parseJsonObject(meal.nutritionFacts);
+    } catch (error) {
+      setAdminError(`Plato ${index + 1}: ${error.message}`);
+      return;
+    }
+
+    setIncludedMealSavingIndex(index);
+    setAdminError("");
+    setAdminMessage("");
+
+    const result = await saveMealLibraryItem({
+      name: meal.name,
+      tag: meal.tag,
+      description: meal.description,
+      photoUrl: meal.photoUrl,
+      photoStoragePath: meal.photoStoragePath,
+      secondaryPhotoUrl: meal.secondaryPhotoUrl,
+      secondaryPhotoStoragePath: meal.secondaryPhotoStoragePath,
+      benefitTags: meal.benefitTags,
+      ingredients: meal.ingredients,
+      nutritionDescription: meal.nutritionDescription,
+      nutritionHighlights: meal.nutritionHighlights,
+      nutritionFacts,
+      allergens: meal.allergens,
+      isActive: true
+    });
+
+    if (result.error || !result.configured) {
+      setAdminError(getSupabaseErrorMessage(result.error, `No pudimos guardar el plato ${index + 1} en la biblioteca.`));
+    } else {
+      markMenuFormChanged();
+      setMenuForm((current) => ({
+        ...current,
+        includedItems: current.includedItems.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, libraryMealId: result.data.id } : item
+        )
+      }));
+      setMealLibrary((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
+        .sort((left, right) => left.name.localeCompare(right.name, "es")));
+      setAdminMessage(`“${result.data.name}” quedó guardado en Biblioteca de platos.`);
+    }
+
+    setIncludedMealSavingIndex(null);
   }
 
   async function handleMealLibraryPhotoChange(event, target = "primary") {
@@ -5378,6 +5451,12 @@ function App() {
       return;
     }
 
+    const publicationIssues = getMenuFormPublicationIssues(menuForm);
+    if (publicationIssues.length > 0) {
+      setAdminError(`El meal prep sigue como borrador. Para guardarlo en el catálogo completa: ${publicationIssues.join(", ")}.`);
+      return;
+    }
+
     setAdminSaving(true);
     setAdminError("");
     setAdminMessage("");
@@ -5456,6 +5535,12 @@ function App() {
 
   function reportMenuFormInvalid() {
     setAdminError("Completa los campos obligatorios antes de guardar. Tu borrador se mantiene protegido en este navegador.");
+    const publicationIssues = getMenuFormPublicationIssues(menuForm);
+    if (publicationIssues.length > 0) {
+      setAdminError(`El meal prep sigue como borrador. Para guardarlo en el catálogo completa: ${publicationIssues.join(", ")}.`);
+      return;
+    }
+
   }
 
   const navItems = [
@@ -6281,6 +6366,8 @@ function App() {
                       </div>
                     </div>
 
+                    <p className="backoffice-muted">Los platos pueden guardarse primero en la Biblioteca. Para guardar este meal prep en el catálogo completa nombre, slug, precio y descripción.</p>
+
                     <div className="backoffice-grid">
                       <label>
                         Tipo
@@ -6439,6 +6526,17 @@ function App() {
                                     <h4>{meal.name || "Meal prep incluido"}</h4>
                                     {meal.libraryMealId && <small>Biblioteca de platos</small>}
                                   </div>
+                                   {!meal.libraryMealId && (
+                                     <button
+                                       className="backoffice-command"
+                                       type="button"
+                                       onClick={() => saveIncludedMealToLibrary(mealIndex)}
+                                       disabled={includedMealSavingIndex !== null}
+                                     >
+                                       {includedMealSavingIndex === mealIndex ? <RefreshCw size={16} /> : <Save size={16} />}
+                                       {includedMealSavingIndex === mealIndex ? "Guardando…" : "Guardar en biblioteca"}
+                                     </button>
+                                   )}
                                   <button
                                     type="button"
                                     onClick={() => removeIncludedMeal(mealIndex)}
