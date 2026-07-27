@@ -88,9 +88,6 @@ function normalizeIncludedItems(value) {
         secondaryPhotoStoragePath: cleanText(item?.secondaryPhotoStoragePath || item?.secondary_photo_storage_path),
         benefitTags: normalizeTextList(item?.benefitTags || item?.benefit_tags),
         ingredients: normalizeTextList(item?.ingredients),
-        nutritionDescription: cleanText(item?.nutritionDescription || item?.nutrition_description),
-        nutritionHighlights: normalizeTextList(item?.nutritionHighlights || item?.nutrition_highlights),
-        nutritionFacts: normalizeNutritionFacts(item?.nutritionFacts || item?.nutrition_facts),
         allergens: normalizeTextList(item?.allergens)
       };
     })
@@ -162,9 +159,6 @@ export function mapMealLibraryItem(row) {
     secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
     benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
-    nutritionDescription: row.nutrition_description || "",
-    nutritionHighlights: Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
-    nutritionFacts: row.nutrition_facts || {},
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
     isActive: Boolean(row.is_active),
     updatedAt: row.updated_at || ""
@@ -206,7 +200,7 @@ export function mapShopSettings(row) {
   };
 }
 
-function buildMenuItemPayload(input) {
+export function buildMenuItemPayload(input) {
   const productType = normalizeProductType(input.productType || input.product_type);
 
   return {
@@ -240,7 +234,7 @@ function buildMenuItemPayload(input) {
   };
 }
 
-function buildMealLibraryPayload(input) {
+export function buildMealLibraryPayload(input) {
   return {
     name: cleanText(input.name),
     tag: nullableText(input.tag),
@@ -251,9 +245,9 @@ function buildMealLibraryPayload(input) {
     secondary_photo_storage_path: nullableText(input.secondaryPhotoStoragePath || input.secondary_photo_storage_path),
     benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
     ingredients: normalizeTextList(input.ingredients),
-    nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
-    nutrition_highlights: normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
-    nutrition_facts: normalizeJsonObject(input.nutritionFacts || input.nutrition_facts),
+    nutrition_description: null,
+    nutrition_highlights: [],
+    nutrition_facts: {},
     allergens: normalizeTextList(input.allergens),
     is_active: Boolean(input.isActive ?? input.is_active)
   };

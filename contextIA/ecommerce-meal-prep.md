@@ -79,7 +79,8 @@
 ### Backoffice: suscripciones y biblioteca 2026-07-21
 
 - El Backoffice debe tener una vista de clientes con suscripción operativa, filtrable por estado (`Activa`, `Pausada`, `Cancelada`) y frecuencia (`Semanal`, `Mensual`), sin mezclar esos clientes con personas inscritas solamente al lightbox/newsletter.
-- Los platos reutilizables viven en una biblioteca propia. Al cargarlos dentro de un plan se copian todos sus datos de ficha, fotos, tags e información nutricional y se guarda la referencia de biblioteca en el JSON del plan; así un mismo plato puede incorporarse a varios meal preps sin volver a escribirlo.
+- Los platos reutilizables viven en una biblioteca propia. Al cargarlos dentro de un plan se copian sus datos de ficha, fotos, tags, ingredientes y alérgenos, y se guarda la referencia de biblioteca en el JSON del plan; así un mismo plato puede incorporarse a varios meal preps sin volver a escribirlo.
+- La información nutricional pertenece exclusivamente al meal prep o plan principal (`menu_items`). No se captura, guarda ni presenta en platos incluidos ni en la biblioteca reutilizable; al guardar un meal prep se eliminan automáticamente campos nutricionales antiguos de sus platos incluidos.
 - La migración requerida es `20260721002000_backoffice_subscriptions_and_meal_library.sql`. Crea `meal_library_items` y `customer_subscriptions` con RLS sólo para administradores.
 - QA posterior a aplicar la migración: creación de plato de biblioteca, carga en un plan y persistencia del plan aprobadas por UI. Se creó una suscripción semanal y una mensual de QA; la vista las cargó y el filtro semanal dejó visible sólo la semanal. Todas las filas y la cuenta administrativa temporal se eliminaron al terminar. El cuadro nativo de confirmación impidió automatizar el último click de borrado del plan, por lo que se limpió directamente por Supabase; el botón sí abrió el diálogo de confirmación.
 
