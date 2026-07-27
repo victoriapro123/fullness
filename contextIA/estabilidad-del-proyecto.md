@@ -7,7 +7,7 @@
 - Hacer una sola tarea visual acotada por turno: implementar, verificar en los breakpoints relevantes, compilar y recien despues aceptar otro ajuste.
 - No mezclar cambios visuales con modificaciones de datos, backoffice, migraciones o assets no relacionados en un mismo commit.
 - Si el hilo repite mensajes de reanudacion o no completa herramientas, detener la iteracion y abrir una tarea limpia con contexto resumido; no continuar agregando cambios sobre estado incierto.
-- Para cambios de precio, verificar el recorrido completo: formulario Backoffice -> persistencia Supabase -> recarga de datos publicos -> precio renderizado en tienda.
+- Para cualquier cambio de catálogo, verificar el recorrido completo: card publicada -> registro editable en Backoffice -> persistencia Supabase -> recarga pública -> valor e imagen renderizados. No aprobar si una card visible no tiene su fila real en `menu_items`.
 
 ## Arquitectura consolidada el 2026-07-25
 
@@ -34,7 +34,7 @@
 
 ## Correcciones funcionales detectadas durante la limpieza
 
-- La tienda puede mostrar planes demo cuando Supabase no entrega planes activos. Esos productos ahora tambien se indexan por slug, de modo que `Ver menu`, el lightbox y `/producto/:slug` siguen funcionando; un producto remoto con el mismo slug reemplaza al fallback.
+- Producción no puede mostrar productos, precios, fotos ni planes demo como fallback. La tienda pública usa únicamente filas activas de `menu_items`, y todo lo que se muestra debe aparecer también en Backoffice. Los fixtures sólo pueden existir para desarrollo local sin Supabase.
 - El lightbox de producto movil usa una sola superficie de scroll vertical y no crea scroll horizontal interno.
 - Menu movil, footer, acceso de miembros y formularios de suscripcion mantienen areas tactiles de al menos 44 px.
 - El carrusel familiar movil conserva tarjetas legibles sin provocar overflow del documento.

@@ -48,7 +48,7 @@ La solucion actual incluye:
 - Notificacion al agregar productos.
 - Modal de acceso para miembros con Supabase Auth por correo y contrasena.
 - Flujo de enlaces Supabase Auth: confirmacion de correo muestra un aviso claro al volver a la app; invitacion y recuperacion de contrasena abren un formulario para definir nueva contrasena.
-- Cliente Supabase para cargar menus activos desde `menu_items`; el fallback a productos de demo queda solo para entornos sin Supabase configurado o con error de conexion.
+- Cliente Supabase para cargar menus activos desde `menu_items`; en producción no hay fallback a productos demo. Los fixtures sólo pueden usarse en desarrollo local sin Supabase configurado.
 - Backoffice inicial de menus protegido por `profiles.is_admin`, con gestion de foto, descripcion, precio, ingredientes, descripcion nutricional, caracteristicas nutricionales, receta resumida, pasos de preparacion, alergenos, estado activo y orden.
 - Migracion Supabase versionada para menus, carritos, ventas, pagos Mercado Pago, clientes y permisos simples de administracion.
 - Assets nuevos de demo: `fullness-lab-hero-0513.mp4`, `fullness-lab-food-porn.png`, `fullness-lab-philosophy.png`, `fullness-lab-hero-video.mp4`, `fullness-lab-logo.png` y `fullness-lab-hero-reference.png`.
@@ -220,7 +220,7 @@ Contexto actual:
 
 - La aplicacion esta concentrada en un solo componente `App`.
 - El desarrollo local y la revision en navegador deben correr siempre en `http://localhost:3019`; los scripts `dev` y `preview` de `package.json` fijan ese puerto con `--strictPort` para evitar cambios automaticos de puerto.
-- `src/main.jsx` mantiene `demoProducts` como fallback local para rutas de producto, carrito, backoffice y futuras piezas de e-commerce. La vitrina publica `#productos` fue retirada de la home; no reinsertarla salvo nueva instruccion explicita.
+- `src/main.jsx` conserva fixtures de catálogo exclusivamente para desarrollo local sin Supabase. Producción usa sólo `menu_items` activos para tienda, rutas de producto y carrito; la vitrina publica `#productos` fue retirada de la home y no se reinsertará salvo nueva instrucción explícita.
 - El carrito se guarda solo en estado React.
 - La cuenta usa Supabase Auth por correo y contrasena para validar sesion; el permiso admin se lee desde `profiles.is_admin`.
 - Los enlaces de Supabase Auth se resuelven dentro de la SPA: `signup` abre el modal de cuenta con mensaje de correo confirmado; `invite` y `recovery` abren un modal para definir contrasena mediante `supabase.auth.updateUser({ password })`. La app guarda temporalmente un indicio local al pedir reset para reconocer la recuperacion incluso si Supabase vuelve sin `type=recovery`.
@@ -800,7 +800,7 @@ Impacto retroactivo:
 Impacto proactivo:
 - Si se añade contenido a beneficios, pilares, suscripción o proceso, revisar primero la altura real a 390×844 y 360×800; no reintroducir columnas angostas ni scroll horizontal.
 - Mantener CTAs con altura mínima cercana a 44–48 px y preservar `touch-action: manipulation` en los controles de navegación y compra.
-- Si Supabase responde sin ítems activos, conservar el catálogo demo como fallback público: los CTAs de compra no pueden quedar deshabilitados o perder contraste por una ausencia temporal de datos.
+- Si Supabase responde sin ítems activos, mostrar un estado vacío y mantener los CTAs de compra deshabilitados cuando no exista un producto real. Nunca publicar catálogo demo como reemplazo de datos administrables.
 
 ### Nota 2026-07-25 - Ilustracion de jengibre
 

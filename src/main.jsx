@@ -114,11 +114,6 @@ const communityGalleryImages = [
   mediaSrc("images/community/comunidad-3.jpeg"),
   mediaSrc("images/community/comunidad-4.jpeg")
 ];
-const legacyPlaceholderProductSlugs = new Set([
-  "trucha-betarraga-quinoa",
-  "pollo-curcuma-vegetales",
-  "legumbres-granos-oliva"
-]);
 const shopPath = "/tienda";
 const faqPath = "/preguntas-frecuentes";
 const aboutPath = "/quienes-somos";
@@ -422,28 +417,23 @@ const aboutStoryParagraphs = [
   "Como es adentro, es afuera"
 ];
 
-function getProductImage(product, index) {
-  const image = product.image || "";
-  if (!image || image === placeholderProductImage || image.includes("fullness-food-crop.jpeg")) {
-    return sampleProductImages[index % sampleProductImages.length];
-  }
-
-  return image;
+function getProductImage(product) {
+  return product?.image || product?.photoUrl || placeholderProductImage;
 }
 
-function getProductSecondaryImage(product, index) {
-  const secondaryImage = product.secondaryImage || product.secondaryPhotoUrl || "";
+function getProductSecondaryImage(product) {
+  const secondaryImage = product?.secondaryImage || product?.secondaryPhotoUrl || "";
   if (secondaryImage) return secondaryImage;
 
-  return sampleProductImages[(index + 1) % sampleProductImages.length];
+  return getProductImage(product);
 }
 
-function getMealImage(meal, index) {
-  return meal?.photoUrl || meal?.image || sampleProductImages[index % sampleProductImages.length];
+function getMealImage(meal) {
+  return meal?.photoUrl || meal?.image || placeholderProductImage;
 }
 
-function getMealSecondaryImage(meal, index) {
-  return meal?.secondaryPhotoUrl || meal?.secondaryImage || sampleProductImages[(index + 1) % sampleProductImages.length];
+function getMealSecondaryImage(meal) {
+  return meal?.secondaryPhotoUrl || meal?.secondaryImage || getMealImage(meal);
 }
 
 function getProductSlug(product) {
@@ -551,41 +541,6 @@ function cleanAuthRedirectUrl() {
   if (typeof window === "undefined") return;
 
   window.history.replaceState(null, "", window.location.pathname || "/");
-}
-
-function applySampleProduct(product, index) {
-  const image = product.image || "";
-  const isLegacyPlaceholder =
-    legacyPlaceholderProductSlugs.has(product.slug) &&
-    (image === placeholderProductImage || image.includes("fullness-food-crop.jpeg"));
-
-  if (!isLegacyPlaceholder) return product;
-
-  const sample = demoProducts[index % demoProducts.length];
-  return {
-    ...product,
-    name: sample.name,
-    tag: sample.tag,
-    // The sample only supplies presentation content for a legacy placeholder.
-    // Commercial data, especially the price managed in Backoffice, always wins.
-    price: product.price,
-    description: sample.description,
-    image: sample.image,
-    secondaryImage: sample.secondaryImage,
-    productType: sample.productType,
-    planFrequency: sample.planFrequency,
-    benefitTags: sample.benefitTags,
-    ingredients: sample.ingredients,
-    nutritionDescription: sample.nutritionDescription,
-    nutritionHighlights: sample.nutritionHighlights,
-    nutritionDetail: sample.nutritionDetail,
-    nutritionFacts: sample.nutritionFacts,
-    recipeSummary: sample.recipeSummary,
-    recipeSteps: sample.recipeSteps,
-    includedItems: sample.includedItems,
-    servingLabel: sample.servingLabel,
-    purchaseLabel: sample.purchaseLabel
-  };
 }
 
 const demoProducts = [
@@ -758,6 +713,8 @@ const demoProducts = [
     purchaseLabel: "Agregar familiar"
   }
 ];
+
+const localDevelopmentCatalog = import.meta.env.DEV && !isSupabaseConfigured ? demoProducts : [];
 
 const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequence.mp4");
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
@@ -1730,11 +1687,11 @@ function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
 
 function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
-  const catalogPlans = plans.length > 0 ? plans : demoProducts.filter((product) => getProductType(product) === "plan");
+  const catalogPlans = plans;
   const monthlyPlan = catalogPlans.find((product) => product.planFrequency === "monthly");
   const subscriptionProduct = monthlyPlan || catalogPlans[0] || null;
-  const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || demoProducts[0];
-  const heroImage = settings.heroImageUrl || getProductImage(heroFallbackProduct, 0);
+  const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || null;
+  const heroImage = settings.heroImageUrl || getProductImage(heroFallbackProduct);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
   const planHeading = catalogPlans.some((product) => product.planFrequency === "monthly")
@@ -3070,7 +3027,7 @@ function App() {
   const [cartNotice, setCartNotice] = useState(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [headerHiddenForHero, setHeaderHiddenForHero] = useState(false);
-  const [products, setProducts] = useState(demoProducts);
+  const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
   const [mealPreview, setMealPreview] = useState(null);
@@ -3586,7 +3543,7 @@ function App() {
     const result = await listActiveMenuItems();
     if (result.error || !result.configured) return;
 
-    setProducts(result.data.length > 0 ? result.data.map(applySampleProduct) : demoProducts);
+    setProducts(result.configured ? result.data : localDevelopmentCatalog);
   }
 
   async function refreshAdminItems({ silent = false } = {}) {
@@ -4078,7 +4035,7 @@ function App() {
         return;
       }
 
-      setProducts(result.data.length > 0 ? result.data.map(applySampleProduct) : demoProducts);
+      setProducts(result.configured ? result.data : localDevelopmentCatalog);
       setProductsLoading(false);
     }
 
@@ -4594,7 +4551,7 @@ function App() {
   const productsBySlug = useMemo(() => {
     const map = new Map();
 
-    [...demoProducts, ...products].forEach((product) => {
+    products.forEach((product) => {
       const slug = getProductSlug(product);
       if (slug) map.set(slug, product);
     });
@@ -4621,7 +4578,6 @@ function App() {
   const productPreviewIndex = productPreview
     ? Math.max(0, products.findIndex((product) => getProductSlug(product) === getProductSlug(productPreview)))
     : 0;
-  const singleDishProduct = familyProducts[0] || products[0] || demoProducts[0];
   const isCommunityPage = currentPath === "/comunidad" && !currentProductSlug;
   const isShopPage = currentPath === shopPath && !currentProductSlug;
   const isFaqPage = currentPath === faqPath && !currentProductSlug;

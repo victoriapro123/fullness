@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0 --port 3019 --strictPort",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 3019 --strictPort",
+    "qa:catalog": "node scripts/verify-catalog-integrity.mjs",
     "remotion:studio": "remotion studio src/remotion/index.jsx",
     "remotion:render:mobile": "remotion render src/remotion/index.jsx FullnessLabVacuumToPlateMobile public/assets/fullness/exports/fullness-lab-vacuum-to-plate-mobile.mp4 --codec=h264",
     "remotion:render:desktop": "remotion render src/remotion/index.jsx FullnessLabVacuumToPlateDesktop public/assets/fullness/exports/fullness-lab-vacuum-to-plate-desktop.mp4 --codec=h264",
