@@ -8,8 +8,8 @@ const mealPrepPayload = buildMenuItemPayload({
   planFrequency: "weekly",
   description: "Plan de prueba.",
   priceClp: 12345,
-  nutritionDescription: "Nutricion del meal prep principal.",
-  nutritionHighlights: ["Proteina", "Fibra"],
+  nutritionDescription: "No debe viajar con el meal prep.",
+  nutritionHighlights: ["No debe viajar"],
   nutritionFacts: { protein_g: 32, fiber_g: 8 },
   includedItems: [
     {
@@ -26,9 +26,10 @@ const mealPrepPayload = buildMenuItemPayload({
   ]
 });
 
-assert.equal(mealPrepPayload.nutrition_description, "Nutricion del meal prep principal.");
-assert.deepEqual(mealPrepPayload.nutrition_highlights, ["Proteina", "Fibra"]);
-assert.deepEqual(mealPrepPayload.nutrition_facts, { protein_g: 32, fiber_g: 8 });
+assert.equal("nutrition_description" in mealPrepPayload, false);
+assert.equal("nutrition_highlights" in mealPrepPayload, false);
+assert.equal("nutrition_detail" in mealPrepPayload, false);
+assert.equal("nutrition_facts" in mealPrepPayload, false);
 assert.deepEqual(mealPrepPayload.included_items, [
   {
     id: "plato-qa",
@@ -42,6 +43,9 @@ assert.deepEqual(mealPrepPayload.included_items, [
     secondaryPhotoStoragePath: "",
     benefitTags: ["Energetico"],
     ingredients: ["Quinoa"],
+    nutritionDescription: "No debe viajar con el plato.",
+    nutritionHighlights: ["No debe viajar"],
+    nutritionFacts: { protein_g: 99 },
     allergens: ["Frutos secos"]
   }
 ]);
@@ -49,13 +53,13 @@ assert.deepEqual(mealPrepPayload.included_items, [
 const libraryPayload = buildMealLibraryPayload({
   name: "Plato reutilizable QA",
   description: "Ficha del plato.",
-  nutritionDescription: "No debe persistir.",
-  nutritionHighlights: ["No debe persistir"],
+  nutritionDescription: "Nutricion del plato reutilizable.",
+  nutritionHighlights: ["Alto en proteina"],
   nutritionFacts: { protein_g: 99 }
 });
 
-assert.equal(libraryPayload.nutrition_description, null);
-assert.deepEqual(libraryPayload.nutrition_highlights, []);
-assert.deepEqual(libraryPayload.nutrition_facts, {});
+assert.equal(libraryPayload.nutrition_description, "Nutricion del plato reutilizable.");
+assert.deepEqual(libraryPayload.nutrition_highlights, ["Alto en proteina"]);
+assert.deepEqual(libraryPayload.nutrition_facts, { protein_g: 99 });
 
-console.log("Nutrición validada: se conserva en el meal prep y se excluye de platos reutilizables.");
+console.log("Nutrición validada: se conserva en platos y se excluye del meal prep principal.");

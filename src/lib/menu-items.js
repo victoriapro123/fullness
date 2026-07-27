@@ -88,6 +88,9 @@ function normalizeIncludedItems(value) {
         secondaryPhotoStoragePath: cleanText(item?.secondaryPhotoStoragePath || item?.secondary_photo_storage_path),
         benefitTags: normalizeTextList(item?.benefitTags || item?.benefit_tags),
         ingredients: normalizeTextList(item?.ingredients),
+        nutritionDescription: cleanText(item?.nutritionDescription || item?.nutrition_description),
+        nutritionHighlights: normalizeTextList(item?.nutritionHighlights || item?.nutrition_highlights),
+        nutritionFacts: normalizeNutritionFacts(item?.nutritionFacts || item?.nutrition_facts),
         allergens: normalizeTextList(item?.allergens)
       };
     })
@@ -131,10 +134,6 @@ export function mapMenuItem(row) {
     secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
     benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
-    nutritionDescription: row.nutrition_description || "",
-    nutritionHighlights: Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
-    nutritionDetail: row.nutrition_detail || "",
-    nutritionFacts: row.nutrition_facts || {},
     recipeSummary: row.recipe_summary || "",
     recipeSteps: Array.isArray(row.recipe_steps) ? row.recipe_steps : [],
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
@@ -159,6 +158,9 @@ export function mapMealLibraryItem(row) {
     secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
     benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
+    nutritionDescription: row.nutrition_description || "",
+    nutritionHighlights: Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
+    nutritionFacts: row.nutrition_facts || {},
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
     isActive: Boolean(row.is_active),
     updatedAt: row.updated_at || ""
@@ -219,10 +221,6 @@ export function buildMenuItemPayload(input) {
     currency: "CLP",
     benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
     ingredients: normalizeTextList(input.ingredients),
-    nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
-    nutrition_highlights: normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
-    nutrition_detail: nullableText(input.nutritionDetail || input.nutrition_detail),
-    nutrition_facts: normalizeJsonObject(input.nutritionFacts || input.nutrition_facts),
     recipe_summary: nullableText(input.recipeSummary || input.recipe_summary),
     recipe_steps: normalizeTextList(input.recipeSteps || input.recipe_steps),
     allergens: normalizeTextList(input.allergens),
@@ -245,9 +243,9 @@ export function buildMealLibraryPayload(input) {
     secondary_photo_storage_path: nullableText(input.secondaryPhotoStoragePath || input.secondary_photo_storage_path),
     benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
     ingredients: normalizeTextList(input.ingredients),
-    nutrition_description: null,
-    nutrition_highlights: [],
-    nutrition_facts: {},
+    nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
+    nutrition_highlights: normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
+    nutrition_facts: normalizeJsonObject(input.nutritionFacts || input.nutrition_facts),
     allergens: normalizeTextList(input.allergens),
     is_active: Boolean(input.isActive ?? input.is_active)
   };

@@ -565,10 +565,6 @@ const demoProducts = [
     secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Antioxidante", "Energético", "Digestivo"],
     ingredients: ["proteínas magras", "raíces", "legumbres", "hojas verdes", "aceite de oliva"],
-    nutritionDescription: "Plan equilibrado con proteína, fibra vegetal, grasas saludables y carbohidratos de energía estable.",
-    nutritionHighlights: ["Proteína diaria", "Fibra vegetal", "Energía estable", "Cocina antinflamatoria"],
-    nutritionDetail: "Diseñado para resolver almuerzos o cenas de una semana laboral con platos variados y funcionales.",
-    nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 17, fiber_g: 8 },
     recipeSummary: "Batch cooking Fullness con proteínas, vegetales y granos listos para calentar.",
     recipeSteps: ["Recibir refrigerado.", "Mantener entre 0 y 5 °C.", "Calentar y terminar con toppings frescos."],
     servingLabel: "5 porciones individuales",
@@ -583,6 +579,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[0],
         benefitTags: ["Energético", "Antinflamatorio"],
         ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes"],
+        nutritionDescription: "Proteína magra con carbohidrato complejo y especias cálidas.",
+        nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Saciedad prolongada"],
+        nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
         allergens: []
       },
       {
@@ -594,6 +593,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[2],
         benefitTags: ["Digestivo", "Fibra"],
         ingredients: ["lentejas", "hojas verdes", "aceite de oliva", "hierbas"],
+        nutritionDescription: "Fibra vegetal y energía amable para la tarde.",
+        nutritionHighlights: ["Fibra vegetal", "Hierro vegetal", "Energía estable"],
+        nutritionFacts: { protein_g: 24, carbs_g: 44, fat_g: 14, fiber_g: 12 },
         allergens: []
       },
       {
@@ -605,6 +607,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[1],
         benefitTags: ["Antioxidante", "Omega 3"],
         ingredients: ["salmón", "arroz verde", "palta", "cilantro"],
+        nutritionDescription: "Grasas saludables, proteína completa y carbohidrato de energía estable.",
+        nutritionHighlights: ["Omega 3 natural", "Proteína completa", "Grasas saludables"],
+        nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
         allergens: ["Pescado"]
       }
     ]
@@ -622,10 +627,6 @@ const demoProducts = [
     secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Balance", "Detox", "Energético"],
     ingredients: ["pescados", "pollo", "legumbres", "granos integrales", "vegetales de estación"],
-    nutritionDescription: "Rotación funcional para cubrir proteína, fibra, grasas saludables y micronutrientes durante el mes.",
-    nutritionHighlights: ["Rotación semanal", "Micronutrientes", "Saciedad", "Preparaciones listas"],
-    nutritionDetail: "Plan diseñado para mantener variedad, adherencia y bienestar a lo largo de cuatro semanas.",
-    nutritionFacts: { protein_g: 32, carbs_g: 40, fat_g: 18, fiber_g: 9 },
     recipeSummary: "Cuatro semanas de batch cooking Fullness con platos refrigerados y porcionados.",
     recipeSteps: ["Recibir una entrega semanal.", "Refrigerar cada porción.", "Calentar según el plato y servir."],
     servingLabel: "20 porciones individuales",
@@ -640,6 +641,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[2],
         benefitTags: ["Omega 3", "Fibra"],
         ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
+        nutritionDescription: "Proteína de calidad, omega 3 y fibra vegetal.",
+        nutritionHighlights: ["Omega 3 natural", "Fibra vegetal", "Proteína de calidad"],
+        nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 18, fiber_g: 9 },
         allergens: ["Pescado"]
       },
       {
@@ -651,6 +655,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[0],
         benefitTags: ["Antinflamatorio", "Energético"],
         ingredients: ["pollo", "betarraga", "camote", "hojas verdes"],
+        nutritionDescription: "Proteína magra y vegetales de alta densidad nutricional.",
+        nutritionHighlights: ["Alto en proteína", "Antioxidantes", "Energía estable"],
+        nutritionFacts: { protein_g: 36, carbs_g: 36, fat_g: 15, fiber_g: 8 },
         allergens: []
       },
       {
@@ -662,6 +669,9 @@ const demoProducts = [
         secondaryPhotoUrl: sampleProductImages[1],
         benefitTags: ["Detox", "Antioxidante"],
         ingredients: ["quinoa", "palta", "hojas verdes", "vegetales"],
+        nutritionDescription: "Fibra, grasas saludables y energía vegetal.",
+        nutritionHighlights: ["Fibra vegetal", "Grasas saludables", "Micronutrientes"],
+        nutritionFacts: { protein_g: 22, carbs_g: 48, fat_g: 18, fiber_g: 11 },
         allergens: []
       }
     ]
@@ -678,10 +688,6 @@ const demoProducts = [
     secondaryImage: sampleProductImages[1],
     benefitTags: ["Omega 3", "Antioxidante"],
     ingredients: ["salmón", "arroz verde", "palta", "hierbas frescas"],
-    nutritionDescription: "Proteína completa, grasas saludables y carbohidratos de energía estable.",
-    nutritionHighlights: ["Grasas saludables", "Proteína completa", "Energía estable"],
-    nutritionDetail: "Preparación familiar pensada para compartir sin perder balance nutricional.",
-    nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
     recipeSummary: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
     recipeSteps: ["Calentar la base.", "Agregar palta y hierbas al servir.", "Compartir al centro de la mesa."],
     servingLabel: "3 a 4 personas",
@@ -699,10 +705,6 @@ const demoProducts = [
     secondaryImage: sampleProductImages[0],
     benefitTags: ["Energético", "Antinflamatorio"],
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "aceite de oliva"],
-    nutritionDescription: "Plato alto en proteína con carbohidrato complejo y especias funcionales.",
-    nutritionHighlights: ["Alto en proteína", "Carbohidrato complejo", "Saciedad prolongada"],
-    nutritionDetail: "Preparación abundante para resolver una comida familiar con ingredientes reales.",
-    nutritionFacts: { protein_g: 38, carbs_g: 34, fat_g: 16, fiber_g: 7 },
     recipeSummary: "Pollo especiado, camote rústico y hojas verdes frescas.",
     recipeSteps: ["Calentar el pollo y camote.", "Terminar con hojas verdes.", "Servir en fuente familiar."],
     servingLabel: "3 a 4 personas",
@@ -1205,6 +1207,9 @@ function createIncludedMealForm(index = 0) {
     secondaryPhotoStoragePath: "",
     benefitTags: "",
     ingredients: "",
+    nutritionDescription: "",
+    nutritionHighlights: "",
+    nutritionFacts: "{}",
     allergens: ""
   };
 }
@@ -1222,6 +1227,9 @@ function includedMealToForm(item, index = 0) {
     secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     benefitTags: (item.benefitTags || item.benefit_tags || []).join("\n"),
     ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || item.nutrition_description || "",
+    nutritionHighlights: (item.nutritionHighlights || item.nutrition_highlights || []).join("\n"),
+    nutritionFacts: JSON.stringify(item.nutritionFacts || item.nutrition_facts || {}, null, 2),
     allergens: (item.allergens || []).join("\n")
   };
 }
@@ -1238,6 +1246,9 @@ function mealLibraryItemToForm(item) {
     secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     benefitTags: (item.benefitTags || []).join("\n"),
     ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || "",
+    nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
+    nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
     allergens: (item.allergens || []).join("\n"),
     isActive: Boolean(item.isActive)
   };
@@ -1267,10 +1278,6 @@ function createMenuForm(displayOrder = 0) {
     priceClp: "",
     benefitTags: "",
     ingredients: "",
-    nutritionDescription: "",
-    nutritionHighlights: "",
-    nutritionDetail: "",
-    nutritionFacts: "{}",
     recipeSummary: "",
     recipeSteps: "",
     allergens: "",
@@ -1392,10 +1399,6 @@ function menuItemToForm(item) {
     priceClp: String(item.price || 0),
     benefitTags: (item.benefitTags || []).join("\n"),
     ingredients: (item.ingredients || []).join("\n"),
-    nutritionDescription: item.nutritionDescription || "",
-    nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
-    nutritionDetail: item.nutritionDetail || "",
-    nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
     recipeSummary: item.recipeSummary || "",
     recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
@@ -1430,6 +1433,14 @@ function parseIncludedMealsFromForm(items) {
 
       if (!hasContent) return null;
 
+      let nutritionFacts = {};
+
+      try {
+        nutritionFacts = parseJsonObject(item.nutritionFacts);
+      } catch (error) {
+        throw new Error(`Plato ${index + 1}: ${error.message}`);
+      }
+
       return {
         id: item.id || `meal-${index + 1}`,
         libraryMealId: item.libraryMealId || "",
@@ -1442,6 +1453,9 @@ function parseIncludedMealsFromForm(items) {
         secondaryPhotoStoragePath: item.secondaryPhotoStoragePath,
         benefitTags: item.benefitTags,
         ingredients: item.ingredients,
+        nutritionDescription: item.nutritionDescription,
+        nutritionHighlights: item.nutritionHighlights,
+        nutritionFacts,
         allergens: item.allergens
       };
     })
@@ -1949,11 +1963,6 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
 }
 
 function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpenMeal }) {
-  const highlights = product?.nutritionHighlights?.length
-    ? product.nutritionHighlights
-    : product?.nutritionDescription
-      ? [product.nutritionDescription]
-      : [];
   const benefitTags = getBenefitTags(product);
   const includedItems = product?.includedItems || [];
 
@@ -1977,16 +1986,6 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpen
               {benefitTags.map((item) => <li key={item}>{item}</li>)}
             </ul>
           )}
-
-          <div className="product-lightbox-block">
-            <h3>Características nutricionales</h3>
-            {highlights.length > 0 && (
-              <ul className="product-pill-list">
-                {highlights.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            )}
-            <ProductNutritionFacts product={product} />
-          </div>
 
           <div className="product-lightbox-block">
             <h3>Receta resumida</h3>
@@ -2033,11 +2032,7 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpen
 }
 
 function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
-  const benefitTags = meal?.benefitTags?.length
-    ? meal.benefitTags
-    : meal?.tag
-      ? [meal.tag]
-      : [];
+  const benefitTags = getBenefitTags(meal);
 
   return (
     <div className="overlay meal-lightbox" role="dialog" aria-modal="true" aria-labelledby="meal-lightbox-title">
@@ -2058,6 +2053,17 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
               {benefitTags.map((item) => <li key={item}>{item}</li>)}
             </ul>
           )}
+
+          <div className="product-lightbox-block">
+            <h3>Información nutricional</h3>
+            {meal.nutritionDescription && <p>{meal.nutritionDescription}</p>}
+            {meal.nutritionHighlights?.length > 0 && (
+              <ul className="product-pill-list">
+                {meal.nutritionHighlights.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            )}
+            <ProductNutritionFacts product={meal} />
+          </div>
 
           {meal.ingredients?.length > 0 && (
             <div className="product-lightbox-block">
@@ -2106,11 +2112,6 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
     );
   }
 
-  const highlights = product.nutritionHighlights?.length
-    ? product.nutritionHighlights
-    : product.nutritionDescription
-      ? [product.nutritionDescription]
-      : [];
   const recipeSteps = product.recipeSteps?.length ? product.recipeSteps : [];
   const includedItems = product.includedItems || [];
 
@@ -2138,18 +2139,6 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
       </section>
 
       <section className="product-detail-content" aria-label="Detalle del meal prep">
-        <div className="product-detail-panel">
-          <h2>Nutrición</h2>
-          {product.nutritionDescription && <p>{product.nutritionDescription}</p>}
-          {highlights.length > 0 && (
-            <ul className="product-pill-list">
-              {highlights.map((item) => <li key={item}>{item}</li>)}
-            </ul>
-          )}
-          {product.nutritionDetail && <p>{product.nutritionDetail}</p>}
-          <ProductNutritionFacts product={product} />
-        </div>
-
         <div className="product-detail-panel">
           <h2>Receta</h2>
           <p>{product.recipeSummary || product.description}</p>
@@ -3768,7 +3757,16 @@ function App() {
     setMealLibraryError("");
     setMealLibraryMessage("");
 
-    const result = await saveMealLibraryItem(mealLibraryForm);
+    let nutritionFacts = {};
+    try {
+      nutritionFacts = parseJsonObject(mealLibraryForm.nutritionFacts);
+    } catch (error) {
+      setMealLibrarySaving(false);
+      setMealLibraryError(error.message);
+      return;
+    }
+
+    const result = await saveMealLibraryItem({ ...mealLibraryForm, nutritionFacts });
     if (result.error || !result.configured) {
       setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos guardar el plato."));
     } else {
@@ -5384,11 +5382,9 @@ function App() {
     setAdminError("");
     setAdminMessage("");
 
-    let nutritionFacts = {};
     let includedItems = [];
 
     try {
-      nutritionFacts = parseJsonObject(menuForm.nutritionFacts);
       includedItems = menuForm.productType === "plan"
         ? parseIncludedMealsFromForm(menuForm.includedItems)
         : [];
@@ -5414,10 +5410,6 @@ function App() {
       priceClp: menuForm.priceClp,
       benefitTags: menuForm.benefitTags,
       ingredients: menuForm.ingredients,
-      nutritionDescription: menuForm.nutritionDescription,
-      nutritionHighlights: menuForm.nutritionHighlights,
-      nutritionDetail: menuForm.nutritionDetail,
-      nutritionFacts,
       recipeSummary: menuForm.recipeSummary,
       recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
@@ -6400,34 +6392,13 @@ function App() {
                     </div>
 
                     <label className="backoffice-wide">
-                      Descripción nutricional
-                      <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Proteína de calidad, omega 3, fibra y antioxidantes naturales…" />
-                    </label>
-
-                    <div className="backoffice-grid">
-                      <label>
-                        Características nutricionales
-                        <textarea name="nutritionHighlights" rows="6" value={menuForm.nutritionHighlights} onChange={updateMenuForm} placeholder={"Omega 3 natural\nFibra vegetal\nEnergía estable…"} />
-                      </label>
-                      <label>
-                        Receta resumida
-                        <textarea name="recipeSummary" rows="6" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Salmón dorado al punto, lentejas especiadas y hojas verdes…" />
-                      </label>
-                    </div>
-
-                    <label className="backoffice-wide">
-                      Detalle nutricional
-                      <textarea name="nutritionDetail" rows="4" value={menuForm.nutritionDetail} onChange={updateMenuForm} placeholder="Explica por qué el plato funciona nutricionalmente y qué aporta al bienestar…" />
+                      Receta resumida
+                      <textarea name="recipeSummary" rows="4" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Salmón dorado al punto, lentejas especiadas y hojas verdes…" />
                     </label>
 
                     <label className="backoffice-wide">
                       Pasos de receta / preparación
                       <textarea name="recipeSteps" rows="5" value={menuForm.recipeSteps} onChange={updateMenuForm} placeholder={"Dorar el salmón con calor controlado.\nCalentar las lentejas especiadas.\nTerminar con hojas verdes frescas…"} />
-                    </label>
-
-                    <label className="backoffice-wide">
-                      Datos nutricionales JSON
-                      <textarea name="nutritionFacts" rows="6" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck={false} />
                     </label>
 
                     {menuForm.productType === "plan" && (
@@ -6485,6 +6456,22 @@ function App() {
                                   <label>
                                     Etiqueta
                                     <input value={meal.tag} onChange={(event) => updateIncludedMealForm(mealIndex, "tag", event.target.value)} placeholder="Energético…" />
+                                  </label>
+                                </div>
+
+                                <label className="backoffice-wide">
+                                  Descripción nutricional
+                                  <textarea rows="3" value={meal.nutritionDescription} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionDescription", event.target.value)} placeholder="Proteína magra, carbohidrato complejo y especias funcionales…" />
+                                </label>
+
+                                <div className="backoffice-grid">
+                                  <label>
+                                    Características nutricionales
+                                    <textarea rows="4" value={meal.nutritionHighlights} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionHighlights", event.target.value)} placeholder={"Alto en proteína\nFibra vegetal…"} />
+                                  </label>
+                                  <label>
+                                    Datos nutricionales JSON
+                                    <textarea rows="4" value={meal.nutritionFacts} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionFacts", event.target.value)} spellCheck={false} />
                                   </label>
                                 </div>
 
@@ -6650,6 +6637,11 @@ function App() {
                           <div className="backoffice-grid">
                             <label>Tags de beneficios<textarea name="benefitTags" rows="4" value={mealLibraryForm.benefitTags} onChange={updateMealLibraryForm} placeholder={"Antioxidante\nEnergético…"} /></label>
                             <label>Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
+                          </div>
+                          <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
+                          <div className="backoffice-grid">
+                            <label>Características nutricionales<textarea name="nutritionHighlights" rows="4" value={mealLibraryForm.nutritionHighlights} onChange={updateMealLibraryForm} placeholder={"Alto en proteína\nFibra vegetal…"} /></label>
+                            <label>Datos nutricionales JSON<textarea name="nutritionFacts" rows="4" value={mealLibraryForm.nutritionFacts} onChange={updateMealLibraryForm} spellCheck={false} /></label>
                           </div>
                           <label className="backoffice-wide">Alérgenos<textarea name="allergens" rows="3" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder={"Pescado\nFrutos secos…"} /></label>
                           <div className="backoffice-form-actions">
