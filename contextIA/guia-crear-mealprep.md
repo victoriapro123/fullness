@@ -11,7 +11,7 @@ Actualizado: 2026-07-28
 5. En `Completa`, ingresar ingredientes, descripción nutricional, al menos un valor nutricional, tags, beneficios y fotos. La segunda foto es opcional.
 6. Usar `Guardar mealprep` para guardarlo en la biblioteca de `Mealpreps`; al guardar el plan, el sistema también sincroniza automáticamente todos sus mealpreps para reutilizarlos.
 7. Volver al plan. Los cambios del mealprep quedan dentro del borrador.
-8. Revisar `Publicación` y guardar. El sistema genera los códigos automáticamente.
+8. Revisar `Publicación` y guardar. El sistema genera los códigos automáticamente y, al confirmar, vuelve al listado de `Planes`.
 
 ## Regla Principal
 

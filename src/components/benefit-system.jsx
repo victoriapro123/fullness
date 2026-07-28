@@ -250,7 +250,7 @@ function QuickParameterDialog({
             autoFocus
             disabled={saving || uploadingIcon}
             onChange={(event) => setName(event.target.value)}
-            placeholder={isBenefit ? "Antiinflamatorio..." : "Alto en hierro..."}
+            placeholder={isBenefit ? "Salud digestiva..." : "Alto en hierro..."}
             value={name}
           />
         </label>
@@ -425,21 +425,27 @@ export function BenefitAssignmentEditor({
 
       {assignments.length > 0 && (
         <div className="benefit-explanation-stack">
-          {assignments.map((assignment) => (
-            <label className="benefit-explanation-field" key={assignment.benefitId || assignment.slug}>
-              <img src={assignment.iconUrl} alt="" width="64" height="64" loading="lazy" />
-              <span>
-                <strong>{assignment.name}</strong>
-                <small>Por qué aplica en este mealprep</small>
-              </span>
-              <textarea
-                value={assignment.explanation}
-                onChange={(event) => updateExplanation(assignment.benefitId, event.target.value)}
-                placeholder={`Describe qué ingredientes hacen que este mealprep sea ${assignment.name.toLocaleLowerCase("es")} y por qué.`}
-                rows="3"
-              />
-            </label>
-          ))}
+          {assignments.map((assignment) => {
+            const assignmentKey = assignment.benefitId || assignment.slug;
+            const explanationLabelId = `${idPrefix}-${assignmentKey}-explanation-label`;
+
+            return (
+              <div className="benefit-explanation-field" key={assignmentKey}>
+                <img src={assignment.iconUrl} alt="" width="64" height="64" loading="lazy" />
+                <span id={explanationLabelId}>
+                  <strong>{assignment.name}</strong>
+                  <small>Por qué aplica en este mealprep</small>
+                </span>
+                <textarea
+                  aria-labelledby={explanationLabelId}
+                  value={assignment.explanation}
+                  onChange={(event) => updateExplanation(assignment.benefitId, event.target.value)}
+                  placeholder={`Describe qué ingredientes hacen que este mealprep sea ${assignment.name.toLocaleLowerCase("es")} y por qué.`}
+                  rows="3"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -838,20 +844,20 @@ export function CatalogParametersAdmin({
                   onChange={(event) => setBenefitForm((current) => ({
                     ...current,
                     name: event.target.value,
-                    slug: current.id || current.slug ? current.slug : slugify(event.target.value)
+                    slug: current.id ? current.slug : slugify(event.target.value)
                   }))}
-                  placeholder="Restaurador…"
+                  placeholder="Salud digestiva…"
                   autoComplete="off"
                 />
               </label>
               <label>
-                Slug
+                Código interno
                 <input
-                  required
                   name="benefitSlug"
                   value={benefitForm.slug}
-                  onChange={(event) => setBenefitForm((current) => ({ ...current, slug: slugify(event.target.value) }))}
-                  placeholder="restaurador…"
+                  readOnly
+                  aria-readonly="true"
+                  placeholder="Se genera desde el nombre"
                   autoComplete="off"
                 />
               </label>
@@ -981,20 +987,20 @@ export function CatalogParametersAdmin({
                 onChange={(event) => setTagForm((current) => ({
                   ...current,
                   name: event.target.value,
-                  slug: current.id || current.slug ? current.slug : slugify(event.target.value)
+                  slug: current.id ? current.slug : slugify(event.target.value)
                 }))}
                 placeholder="Fuente de hierro…"
                 autoComplete="off"
               />
             </label>
             <label>
-              Slug
+              Código interno
               <input
-                required
                 name="tagSlug"
                 value={tagForm.slug}
-                onChange={(event) => setTagForm((current) => ({ ...current, slug: slugify(event.target.value) }))}
-                placeholder="fuente-de-hierro…"
+                readOnly
+                aria-readonly="true"
+                placeholder="Se genera desde el nombre"
                 autoComplete="off"
               />
             </label>

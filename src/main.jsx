@@ -1114,6 +1114,7 @@ function renderShopHeroTitle(title) {
 
 function normalizeMealprepCopy(value) {
   return String(value || "")
+    .replace(/\b(M|m)ealpreap(s)?\b/g, (_, initial, plural = "") => `${initial === "M" ? "Mealprep" : "mealprep"}${plural}`)
     .replace(/\bMeal Preps?\b/g, "Mealpreps")
     .replace(/\bmeal preps?\b/g, "mealpreps")
     .replace(/Platos diseñados/g, "Mealpreps diseñados")
@@ -6917,8 +6918,8 @@ function App() {
         message: result.data.isActive
           ? `“${result.data.name}” ya está actualizado y visible en la tienda.`
           : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.`,
-        returnTo: isNewMenuItem ? (savingFamilyProduct ? "family-products" : "meal-preps") : undefined,
-        confirmLabel: isNewMenuItem ? (savingFamilyProduct ? "Ver mealpreps familiares" : "Ver planes") : undefined
+        returnTo: savingFamilyProduct ? (isNewMenuItem ? "family-products" : undefined) : "meal-preps",
+        confirmLabel: savingFamilyProduct ? (isNewMenuItem ? "Ver mealpreps familiares" : undefined) : "Ver planes"
       });
     }
 

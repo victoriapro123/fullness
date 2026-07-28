@@ -139,7 +139,7 @@
 - Todos los campos de texto y selectores de los formularios de Backoffice deben usar una altura visual fija de `48px`. No depender del alto nativo del navegador para los selectores ni permitir que un input quede más alto que el selector contiguo.
 - El menú lateral del Backoffice debe conservar margen respecto del área de trabajo: vive como columna contenida con borde completo, radio de `8px`, altura máxima y scroll propio. No debe pegarse al contenido, expandirse indefinidamente ni usar un `sticky` con un desplazamiento que deje espacio muerto al recorrer módulos largos.
 - Las cargas de foto en planes, mealpreps y mealpreps familiares deben reportar el error dentro del recuadro exacto que falló (`Foto principal` o `Segunda foto`), además del aviso general. Traducir tamaño excesivo, formato no admitido, sesión vencida, red y rechazo de R2 a mensajes accionables. Las fallas de lectura o red deben devolver un resultado controlado para restaurar el botón de carga.
-- Tras crear un plan, mealprep o mealprep familiar, la confirmación de guardado debe volver al catálogo correspondiente. Al guardar una ficha existente, se mantiene abierto el editor para permitir ajustes consecutivos.
+- Al guardar un plan, nuevo o existente, la confirmación debe volver al listado de `Planes`; nunca puede dejar abierto el lightbox del plan ni del mealprep interno. Las fichas existentes de mealprep individual o familiar pueden mantenerse abiertas para ajustes consecutivos.
 - `Parámetros` separa `Beneficios` y `Tags` en pestañas para que cada biblioteca y su formulario tenga ancho completo. `Contenido web` consolida los antiguos módulos `Tienda`, `Lightbox` y `Comunidad` bajo tres pestañas, conservando sus propios formularios y mecanismos de guardado.
 
 ### Alta rápida de beneficios y tags 2026-07-28
@@ -148,6 +148,7 @@
 - El alta rápida de un tag pide solamente su nombre. El alta de un beneficio pide nombre, una descripción general opcional y permite elegir una ilustración aprobada o subir una imagen personalizada a R2 desde ese mismo diálogo. El icono no se deja vacío ni se reemplaza por un pictograma genérico.
 - El diálogo de alta rápida incluye un prompt base copiable para generar una ilustración con IA. Debe mantenerse como apoyo operativo dentro del flujo de administración y no como contenido público.
 - Si el nombre ya existe, se usa el beneficio o tag existente en vez de crear un duplicado o mostrar un error técnico. Esta acción se ofrece al editar mealpreps individuales y familiares.
+- Los nombres visibles de beneficios y tags aceptan espacios y los conservan al publicar. El código interno se genera automáticamente a partir del nombre, con guiones, y no debe confundirse con el texto que verá la clienta.
 
 ### Recuperacion conservadora 2026-07-28
 
