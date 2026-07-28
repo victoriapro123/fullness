@@ -1178,6 +1178,14 @@
   background: rgba(230, 221, 204, 0.62);
 }
 
+.backoffice-form input:not([type="checkbox"]):not([type="file"]):not([type="radio"]):not([type="hidden"]),
+.backoffice-form select {
+  box-sizing: border-box;
+  height: 48px;
+  min-height: 48px;
+  line-height: 1.25;
+}
+
 .backoffice-photo-row.backoffice-photo-row-double {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1538,11 +1546,6 @@
   padding: 0;
 }
 
-.backoffice-library-layout {
-  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr);
-  padding: 0;
-}
-
 .included-editor-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1664,10 +1667,6 @@
 }
 
 @media (max-width: 980px) {
-  .backoffice-library-layout {
-    grid-template-columns: 1fr;
-  }
-
   .subscription-filters {
     grid-template-columns: 1fr 1fr;
   }
@@ -2761,7 +2760,7 @@
   background: #f1eee9;
 }
 
-.backoffice-form-actions {
+.backoffice-workspace-form .backoffice-form-actions {
   position: sticky;
   bottom: calc(clamp(18px, 2.4vw, 34px) * -1);
   z-index: 4;

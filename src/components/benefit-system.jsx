@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
+  Copy,
   ImagePlus,
   Pencil,
   Plus,
   RefreshCw,
   Save,
+  Search,
   Tags,
   Trash2,
   X
@@ -58,12 +60,15 @@ function findMatchingDefinition(definitions, name) {
   ));
 }
 
+const benefitImagePrompt = "Crea una ilustración cuadrada 1:1 de un símbolo para el beneficio '[NOMBRE DEL BENEFICIO]' de Fullness Lab. Estilo editorial botánico contemporáneo, línea fina y orgánica en burdeo #762531 sobre fondo transparente. Sin texto, letras, números, marco ni sombras. Composición centrada, alto contraste, trazos limpios y legibles a tamaño pequeño. Entrega la imagen como PNG.";
+
 function QuickParameterDialog({
   kind,
   definitions,
   onClose,
   onCreate,
-  onChoose
+  onChoose,
+  onUploadIcon
 }) {
   const closeRef = useRef(null);
   const [name, setName] = useState("");
@@ -73,6 +78,9 @@ function QuickParameterDialog({
     [definitions]
   );
   const [selectedIconId, setSelectedIconId] = useState("");
+  const [customIcon, setCustomIcon] = useState(null);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [promptCopyMessage, setPromptCopyMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const isBenefit = kind === "benefit";
@@ -83,6 +91,9 @@ function QuickParameterDialog({
     setName("");
     setDescription("");
     setSelectedIconId(iconOptions[0]?.id || "");
+    setCustomIcon(null);
+    setUploadingIcon(false);
+    setPromptCopyMessage("");
     setSaving(false);
     setError("");
     window.requestAnimationFrame(() => closeRef.current?.focus());
@@ -90,12 +101,60 @@ function QuickParameterDialog({
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !saving) onClose();
+      if (event.key === "Escape" && !saving && !uploadingIcon) onClose();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, saving]);
+  }, [onClose, saving, uploadingIcon]);
+
+  async function uploadCustomIcon(event) {
+    const file = event.target.files?.[0];
+    if (!file || !onUploadIcon) return;
+
+    setUploadingIcon(true);
+    setError("");
+
+    try {
+      const uploaded = await onUploadIcon(file);
+      if (!uploaded?.photoUrl) {
+        setError("No pudimos subir la imagen. Intenta nuevamente.");
+        return;
+      }
+
+      setCustomIcon({
+        iconUrl: uploaded.photoUrl,
+        iconStoragePath: uploaded.photoStoragePath || ""
+      });
+      setSelectedIconId("");
+    } catch {
+      setError("No pudimos subir la imagen. Intenta nuevamente.");
+    } finally {
+      setUploadingIcon(false);
+      event.target.value = "";
+    }
+  }
+
+  async function copyBenefitImagePrompt() {
+    let copied = false;
+
+    try {
+      await navigator.clipboard.writeText(benefitImagePrompt);
+      copied = true;
+    } catch {
+      const temporaryField = document.createElement("textarea");
+      temporaryField.value = benefitImagePrompt;
+      temporaryField.setAttribute("readonly", "");
+      temporaryField.style.position = "fixed";
+      temporaryField.style.opacity = "0";
+      document.body.appendChild(temporaryField);
+      temporaryField.select();
+      copied = document.execCommand("copy");
+      temporaryField.remove();
+    }
+
+    setPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
+  }
 
   async function submitQuickDefinition(event) {
     event.preventDefault();
@@ -113,9 +172,9 @@ function QuickParameterDialog({
       return;
     }
 
-    const selectedIcon = iconOptions.find((definition) => definition.id === selectedIconId);
+    const selectedIcon = customIcon || iconOptions.find((definition) => definition.id === selectedIconId);
     if (isBenefit && !selectedIcon) {
-      setError("Elige un simbolo ilustrado para continuar.");
+      setError("Elige o sube una imagen para continuar.");
       return;
     }
 
@@ -157,13 +216,13 @@ function QuickParameterDialog({
       aria-modal="true"
       aria-labelledby={dialogTitleId}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
+        if (event.target === event.currentTarget && !saving && !uploadingIcon) onClose();
       }}
     >
       <form className="quick-parameter-dialog" onSubmit={submitQuickDefinition}>
         <header>
           <div>
-            <p className="eyebrow">Mientras editas este plato</p>
+            <p className="eyebrow">Mientras editas este mealprep</p>
             <h3 id={dialogTitleId}>Nuevo {singular}</h3>
           </div>
           <button
@@ -172,7 +231,7 @@ function QuickParameterDialog({
             type="button"
             onClick={onClose}
             aria-label={`Cerrar nuevo ${singular}`}
-            disabled={saving}
+            disabled={saving || uploadingIcon}
           >
             <X size={19} />
           </button>
@@ -180,8 +239,8 @@ function QuickParameterDialog({
 
         <p>
           {isBenefit
-            ? "Quedara disponible para todos los platos. Puedes completar su iconografia o texto mas tarde en Parametros."
-            : "Quedara disponible para todos los platos y se agregara a este plato al guardarlo."}
+            ? "Quedará disponible para todos los mealpreps. Puedes completar su iconografía o texto más tarde en Parámetros."
+            : "Quedará disponible para todos los mealpreps y se agregará a este mealprep al guardarlo."}
         </p>
 
         <label>
@@ -189,7 +248,7 @@ function QuickParameterDialog({
           <input
             autoComplete="off"
             autoFocus
-            disabled={saving}
+            disabled={saving || uploadingIcon}
             onChange={(event) => setName(event.target.value)}
             placeholder={isBenefit ? "Antiinflamatorio..." : "Alto en hierro..."}
             value={name}
@@ -201,13 +260,38 @@ function QuickParameterDialog({
             <label>
               Descripcion general <small>(opcional)</small>
               <textarea
-                disabled={saving}
+                disabled={saving || uploadingIcon}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Explica brevemente por que este beneficio puede aplicar a un plato..."
+                placeholder="Explica brevemente por qué este beneficio puede aplicar a un mealprep..."
                 rows="3"
                 value={description}
               />
             </label>
+
+            <div className="quick-parameter-image-tools">
+              {onUploadIcon && (
+                <label className="quick-parameter-upload">
+                  <ImagePlus size={17} aria-hidden="true" />
+                  {uploadingIcon ? "Subiendo imagen..." : "Subir imagen personalizada"}
+                  <input type="file" accept="image/*" onChange={uploadCustomIcon} disabled={saving || uploadingIcon} />
+                </label>
+              )}
+              {customIcon && (
+                <div className="quick-parameter-custom-preview">
+                  <img src={customIcon.iconUrl} alt="Imagen personalizada seleccionada" width="52" height="52" />
+                  <span>Imagen personalizada seleccionada</span>
+                </div>
+              )}
+              <div className="quick-parameter-ai-prompt">
+                <p>Si vas a usar IA para la imagen, copia este prompt base</p>
+                <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={benefitImagePrompt} />
+                <button type="button" onClick={copyBenefitImagePrompt}>
+                  <Copy size={15} aria-hidden="true" />
+                  Copiar prompt
+                </button>
+                {promptCopyMessage && <span role="status">{promptCopyMessage}</span>}
+              </div>
+            </div>
 
             <fieldset className="quick-parameter-icons">
               <legend>Simbolo ilustrado</legend>
@@ -220,10 +304,13 @@ function QuickParameterDialog({
                     <label className={selected ? "is-selected" : ""} htmlFor={controlId} key={definition.id}>
                       <input
                         checked={selected}
-                        disabled={saving}
+                        disabled={saving || uploadingIcon}
                         id={controlId}
                         name="quickBenefitIcon"
-                        onChange={() => setSelectedIconId(definition.id)}
+                        onChange={() => {
+                          setCustomIcon(null);
+                          setSelectedIconId(definition.id);
+                        }}
                         type="radio"
                       />
                       <img src={definition.iconUrl} alt="" width="48" height="48" />
@@ -239,8 +326,8 @@ function QuickParameterDialog({
         {error && <p className="quick-parameter-error" role="alert">{error}</p>}
 
         <div className="quick-parameter-actions">
-          <button type="button" onClick={onClose} disabled={saving}>Cancelar</button>
-          <button className="primary-button" type="submit" disabled={saving}>
+          <button type="button" onClick={onClose} disabled={saving || uploadingIcon}>Cancelar</button>
+          <button className="primary-button" type="submit" disabled={saving || uploadingIcon}>
             {saving ? "Guardando..." : `Crear y agregar ${singular}`}
           </button>
         </div>
@@ -253,9 +340,10 @@ export function BenefitAssignmentEditor({
   definitions,
   value,
   onChange,
-  legend = "Beneficios del plato",
+  legend = "Beneficios del mealprep",
   idPrefix = "benefit",
-  onCreateQuick
+  onCreateQuick,
+  onUploadIcon
 }) {
   const activeDefinitions = definitions.filter((item) => item.isActive);
   const assignments = useMemo(
@@ -294,12 +382,12 @@ export function BenefitAssignmentEditor({
 
   function addQuickBenefit(definition) {
     if (selectedIds.has(definition.id)) {
-      setQuickNotice(`“${definition.name}” ya estaba aplicado a este plato.`);
+      setQuickNotice(`“${definition.name}” ya estaba aplicado a este mealprep.`);
       return;
     }
 
     toggleBenefit(definition);
-    setQuickNotice(`“${definition.name}” se agrego a este plato.`);
+    setQuickNotice(`“${definition.name}” se agregó a este mealprep.`);
   }
 
   return (
@@ -342,12 +430,12 @@ export function BenefitAssignmentEditor({
               <img src={assignment.iconUrl} alt="" width="64" height="64" loading="lazy" />
               <span>
                 <strong>{assignment.name}</strong>
-                <small>Por qué aplica en este plato</small>
+                <small>Por qué aplica en este mealprep</small>
               </span>
               <textarea
                 value={assignment.explanation}
                 onChange={(event) => updateExplanation(assignment.benefitId, event.target.value)}
-                placeholder={`Describe qué ingredientes hacen que este plato sea ${assignment.name.toLocaleLowerCase("es")} y por qué.`}
+                placeholder={`Describe qué ingredientes hacen que este mealprep sea ${assignment.name.toLocaleLowerCase("es")} y por qué.`}
                 rows="3"
               />
             </label>
@@ -362,6 +450,7 @@ export function BenefitAssignmentEditor({
           onChoose={addQuickBenefit}
           onClose={() => setQuickCreateOpen(false)}
           onCreate={onCreateQuick}
+          onUploadIcon={onUploadIcon}
         />
       )}
     </fieldset>
@@ -389,12 +478,12 @@ export function TagSelector({
 
   function addQuickTag(tag) {
     if (selectedIds.has(tag.id)) {
-      setQuickNotice(`“${tag.name}” ya estaba aplicado a este plato.`);
+      setQuickNotice(`“${tag.name}” ya estaba aplicado a este mealprep.`);
       return;
     }
 
     toggleTag(tag);
-    setQuickNotice(`“${tag.name}” se agrego a este plato.`);
+    setQuickNotice(`“${tag.name}” se agregó a este mealprep.`);
   }
 
   return (
@@ -455,7 +544,7 @@ export function BenefitIconList({
   if (visibleBenefits.length === 0) return null;
 
   return (
-    <div className={`benefit-icon-list ${compact ? "is-compact" : ""}`} aria-label="Beneficios del plato">
+    <div className={`benefit-icon-list ${compact ? "is-compact" : ""}`} aria-label="Beneficios del mealprep">
       {visibleBenefits.map((benefit) => (
         <button
           type="button"
@@ -521,7 +610,7 @@ export function BenefitDetailLightbox({ preview, onClose }) {
           <img src={benefit.iconUrl} alt="" width="320" height="320" />
         </figure>
         <div>
-          <p className="eyebrow">Beneficio del plato</p>
+          <p className="eyebrow">Beneficio del mealprep</p>
           <h2 id="benefit-detail-title">{benefit.name}</h2>
           {preview.contextTitle && <p className="benefit-detail-context">En {preview.contextTitle}</p>}
 
@@ -582,7 +671,24 @@ export function CatalogParametersAdmin({
 }) {
   const [benefitForm, setBenefitForm] = useState(() => createBenefitForm(benefits.length * 10 + 10));
   const [tagForm, setTagForm] = useState(() => createTagForm(tags.length * 10 + 10));
+  const [activeParameterTab, setActiveParameterTab] = useState("benefits");
+  const [benefitSearch, setBenefitSearch] = useState("");
+  const [tagSearch, setTagSearch] = useState("");
   const [uploading, setUploading] = useState(false);
+  const filteredBenefits = useMemo(() => {
+    const query = cleanText(benefitSearch).toLocaleLowerCase("es");
+    if (!query) return benefits;
+
+    return benefits.filter((benefit) => [benefit.name, benefit.slug, benefit.defaultDescription]
+      .some((value) => cleanText(value).toLocaleLowerCase("es").includes(query)));
+  }, [benefits, benefitSearch]);
+  const filteredTags = useMemo(() => {
+    const query = cleanText(tagSearch).toLocaleLowerCase("es");
+    if (!query) return tags;
+
+    return tags.filter((tag) => [tag.name, tag.slug]
+      .some((value) => cleanText(value).toLocaleLowerCase("es").includes(query)));
+  }, [tags, tagSearch]);
 
   function editBenefit(benefit) {
     setBenefitForm({
@@ -631,7 +737,7 @@ export function CatalogParametersAdmin({
     <section className="catalog-parameters-admin" aria-labelledby="catalog-parameters-title">
       <header className="catalog-parameters-heading">
         <div>
-          <p className="eyebrow">Parámetros de platos</p>
+          <p className="eyebrow">Parámetros de mealpreps</p>
           <h3 id="catalog-parameters-title">Beneficios y tags</h3>
         </div>
         <button className="icon-button" type="button" onClick={onRefresh} aria-label="Actualizar parámetros" disabled={loading}>
@@ -645,8 +751,31 @@ export function CatalogParametersAdmin({
         </p>
       )}
 
+      <div className="catalog-parameter-tabs" role="tablist" aria-label="Tipo de parámetro">
+        <button
+          className={activeParameterTab === "benefits" ? "is-active" : ""}
+          type="button"
+          role="tab"
+          aria-selected={activeParameterTab === "benefits"}
+          aria-controls="parameter-benefits"
+          onClick={() => setActiveParameterTab("benefits")}
+        >
+          Beneficios
+        </button>
+        <button
+          className={activeParameterTab === "tags" ? "is-active" : ""}
+          type="button"
+          role="tab"
+          aria-selected={activeParameterTab === "tags"}
+          aria-controls="parameter-tags"
+          onClick={() => setActiveParameterTab("tags")}
+        >
+          Tags
+        </button>
+      </div>
+
       <div className="catalog-parameters-layout">
-        <section className="parameter-section">
+        <section className="parameter-section" id="parameter-benefits" role="tabpanel" hidden={activeParameterTab !== "benefits"}>
           <div className="parameter-section-heading">
             <span><ImagePlus size={18} aria-hidden="true" /></span>
             <div>
@@ -655,8 +784,21 @@ export function CatalogParametersAdmin({
             </div>
           </div>
 
+          <label className="parameter-library-search">
+            <span>Buscar beneficio</span>
+            <div>
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={benefitSearch}
+                onChange={(event) => setBenefitSearch(event.target.value)}
+                placeholder="Nombre o descripción…"
+              />
+            </div>
+          </label>
+
           <div className="parameter-benefit-library" aria-label="Beneficios configurados">
-            {benefits.map((benefit) => (
+            {filteredBenefits.length ? filteredBenefits.map((benefit) => (
               <article className={!benefit.isActive ? "is-inactive" : ""} key={benefit.id}>
                 <button type="button" className="parameter-benefit-main" onClick={() => editBenefit(benefit)}>
                   <img src={benefit.iconUrl} alt="" width="92" height="92" loading="lazy" />
@@ -674,7 +816,9 @@ export function CatalogParametersAdmin({
                   </button>
                 </div>
               </article>
-            ))}
+            )) : (
+              <p className="parameter-library-empty">No encontramos beneficios con esa búsqueda.</p>
+            )}
           </div>
 
           <form className="parameter-form" onSubmit={submitBenefit}>
@@ -739,7 +883,7 @@ export function CatalogParametersAdmin({
                 name="benefitDescription"
                 value={benefitForm.defaultDescription}
                 onChange={(event) => setBenefitForm((current) => ({ ...current, defaultDescription: event.target.value }))}
-                placeholder="Texto general que verá el cliente si el plato aún no tiene una explicación específica…"
+                placeholder="Texto general que verá el cliente si el mealprep aún no tiene una explicación específica…"
                 rows="3"
               />
             </label>
@@ -778,7 +922,7 @@ export function CatalogParametersAdmin({
           </form>
         </section>
 
-        <section className="parameter-section">
+        <section className="parameter-section" id="parameter-tags" role="tabpanel" hidden={activeParameterTab !== "tags"}>
           <div className="parameter-section-heading">
             <span><Tags size={18} aria-hidden="true" /></span>
             <div>
@@ -787,8 +931,21 @@ export function CatalogParametersAdmin({
             </div>
           </div>
 
+          <label className="parameter-library-search">
+            <span>Buscar tag</span>
+            <div>
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={tagSearch}
+                onChange={(event) => setTagSearch(event.target.value)}
+                placeholder="Nombre del tag…"
+              />
+            </div>
+          </label>
+
           <div className="parameter-tag-library" aria-label="Tags configurados">
-            {tags.map((tag) => (
+            {filteredTags.length ? filteredTags.map((tag) => (
               <article className={!tag.isActive ? "is-inactive" : ""} key={tag.id}>
                 <button type="button" onClick={() => editTag(tag)}>
                   <span>{tag.name}</span>
@@ -803,7 +960,9 @@ export function CatalogParametersAdmin({
                   </button>
                 </div>
               </article>
-            ))}
+            )) : (
+              <p className="parameter-library-empty">No encontramos tags con esa búsqueda.</p>
+            )}
           </div>
 
           <form className="parameter-form" onSubmit={submitTag}>

@@ -16,7 +16,7 @@ function mapDraft(row) {
     ownerId: row.owner_id,
     scope: row.scope,
     draftKey: row.draft_key,
-    title: row.title || "Meal prep sin titulo",
+    title: row.title || "Mealprep sin título",
     form: row.payload?.form || {},
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || ""

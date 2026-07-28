@@ -9,7 +9,7 @@ const highFiber = tagPresets.find((item) => item.slug === "alto-en-fibra");
 const dish = {
   id: "dish-qa",
   name: "Pollo, camote y cúrcuma",
-  description: "Plato QA.",
+  description: "Mealprep QA.",
   benefitAssignments: [
     {
       ...antiInflammatory,
@@ -36,7 +36,7 @@ const planPayload = buildMenuItemPayload({
   name: "Plan QA",
   productType: "plan",
   planFrequency: "weekly",
-  description: "Plan compuesto por platos.",
+  description: "Plan compuesto por mealpreps.",
   priceClp: 58200,
   benefitAssignments: [
     {
@@ -96,4 +96,4 @@ assert.deepEqual(familyPayload.nutrition_facts, dish.nutritionFacts);
 assert.equal(familyPayload.benefit_assignments[0].benefitId, antiInflammatory.id);
 assert.deepEqual(familyPayload.tag_ids, [highProtein.id, highFiber.id]);
 
-console.log("Parámetros validados: platos conservan ficha propia y planes heredan sin duplicar.");
+console.log("Parámetros validados: mealpreps conservan ficha propia y planes heredan sin duplicar.");

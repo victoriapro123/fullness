@@ -1,46 +1,46 @@
 import assert from "node:assert/strict";
 import { buildMealLibraryPayload, buildMenuItemPayload } from "../src/lib/menu-items.js";
 
-const mealPrepPayload = buildMenuItemPayload({
+const planPayload = buildMenuItemPayload({
   slug: "plan-qa-nutricion",
   name: "Plan QA nutricion",
   productType: "plan",
   planFrequency: "weekly",
   description: "Plan de prueba.",
   priceClp: 12345,
-  nutritionDescription: "No debe viajar con el meal prep.",
+  nutritionDescription: "No debe viajar con el plan.",
   nutritionHighlights: ["No debe viajar"],
   nutritionFacts: { protein_g: 32, fiber_g: 8 },
   includedItems: [
     {
-      id: "plato-qa",
-      name: "Plato reutilizable QA",
-      description: "Ficha del plato.",
+      id: "mealprep-qa",
+      name: "Mealprep QA",
+      description: "Ficha del mealprep.",
       benefitTags: ["Energetico"],
       ingredients: ["Quinoa"],
-      allergens: ["Frutos secos"],
-      nutritionDescription: "Debe conservarse en el plato.",
+      allergens: "Frutos secos, puede contener trazas de sésamo",
+      nutritionDescription: "Debe conservarse en el mealprep.",
       nutritionHighlights: ["Alto en proteina"],
       nutritionFacts: { protein_g: 99 }
     }
   ]
 });
 
-assert.equal("nutrition_description" in mealPrepPayload, false);
-assert.equal("nutrition_highlights" in mealPrepPayload, false);
-assert.equal("nutrition_detail" in mealPrepPayload, false);
-assert.equal("nutrition_facts" in mealPrepPayload, false);
-assert.equal("benefit_assignments" in mealPrepPayload, false);
-assert.equal("benefit_tags" in mealPrepPayload, false);
-assert.equal("tag_ids" in mealPrepPayload, false);
-assert.deepEqual(mealPrepPayload.included_items, [
+assert.equal("nutrition_description" in planPayload, false);
+assert.equal("nutrition_highlights" in planPayload, false);
+assert.equal("nutrition_detail" in planPayload, false);
+assert.equal("nutrition_facts" in planPayload, false);
+assert.equal("benefit_assignments" in planPayload, false);
+assert.equal("benefit_tags" in planPayload, false);
+assert.equal("tag_ids" in planPayload, false);
+assert.deepEqual(planPayload.included_items, [
   {
-    id: "plato-qa",
-    sku: "PL-PLATOQA",
+    id: "mealprep-qa",
+    sku: "PL-MEALPREPQA",
     libraryMealId: "",
-    name: "Plato reutilizable QA",
+    name: "Mealprep QA",
     tag: "",
-    description: "Ficha del plato.",
+    description: "Ficha del mealprep.",
     photoUrl: "",
     photoStoragePath: "",
     secondaryPhotoUrl: "",
@@ -59,23 +59,35 @@ assert.deepEqual(mealPrepPayload.included_items, [
     benefitTags: ["Energético"],
     tagIds: ["20000000-0000-4000-8000-000000000001"],
     ingredients: ["Quinoa"],
-    nutritionDescription: "Debe conservarse en el plato.",
+    nutritionDescription: "Debe conservarse en el mealprep.",
     nutritionHighlights: ["Alto en proteína"],
     nutritionFacts: { protein_g: 99 },
-    allergens: ["Frutos secos"]
+    allergens: ["Frutos secos", "puede contener trazas de sésamo"]
   }
 ]);
 
-const libraryPayload = buildMealLibraryPayload({
-  name: "Plato reutilizable QA",
-  description: "Ficha del plato.",
-  nutritionDescription: "Nutricion del plato reutilizable.",
+const mealprepPayload = buildMealLibraryPayload({
+  name: "Mealprep QA",
+  description: "Ficha del mealprep.",
+  allergens: "Pescado\nElaborado en cocina compartida",
+  nutritionDescription: "Nutricion del mealprep.",
   nutritionHighlights: ["Alto en proteina"],
   nutritionFacts: { protein_g: 99 }
 });
 
-assert.equal(libraryPayload.nutrition_description, "Nutricion del plato reutilizable.");
-assert.deepEqual(libraryPayload.nutrition_highlights, ["Alto en proteína"]);
-assert.deepEqual(libraryPayload.nutrition_facts, { protein_g: 99 });
+assert.equal(mealprepPayload.nutrition_description, "Nutricion del mealprep.");
+assert.deepEqual(mealprepPayload.nutrition_highlights, ["Alto en proteína"]);
+assert.deepEqual(mealprepPayload.nutrition_facts, { protein_g: 99 });
+assert.deepEqual(mealprepPayload.allergens, ["Pescado", "Elaborado en cocina compartida"]);
 
-console.log("Nutrición validada: se conserva en platos y se excluye del meal prep principal.");
+const familyPayload = buildMenuItemPayload({
+  slug: "mealprep-familiar-qa",
+  name: "Mealprep familiar QA",
+  productType: "family",
+  description: "Formato familiar de prueba.",
+  allergens: "Mostaza, puede contener trazas de frutos secos"
+});
+
+assert.deepEqual(familyPayload.allergens, ["Mostaza", "puede contener trazas de frutos secos"]);
+
+console.log("Nutrición y alérgenos validados: los campos libres se conservan en cada mealprep.");

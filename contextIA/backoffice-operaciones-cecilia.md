@@ -8,7 +8,7 @@ Cecilia opera como propietaria del backoffice mediante `profiles.is_admin = true
 
 ## Capacidades Permitidas
 
-- Gestionar meal preps, biblioteca de platos, clientes, tienda, lightbox y comunidad. Los platos nuevos de un plan se pueden guardar directamente en la Biblioteca antes de publicar el plan comercial.
+- Gestionar planes, mealpreps, mealpreps familiares, clientes y contenido web. Los mealpreps nuevos de un plan se pueden guardar en su catálogo antes de publicar el plan.
 - Consultar suscriptores y ejecutar las operaciones de exportacion y recuperacion de acceso.
 - Usar el modulo Respaldo y conexion para exportaciones, recursos de R2 y DNS, dentro de los limites establecidos por la aplicacion.
 
@@ -27,5 +27,5 @@ El acceso completo se limita al backoffice de Fullness. No concede entrada al da
 
 - La URL publicada canonica es `https://www.fullnesslab.com/`; `https://fullnesslab.com/` redirige alli.
 - La entrada directa al panel es `https://www.fullnesslab.com/#backoffice`.
-- El 2026-07-24 se verifico en produccion que el panel muestra Meal preps, Biblioteca de platos, Clientes, Tienda, Lightbox, Comunidad, Respaldo y conexion y Operaciones para Cecilia.
+- La taxonomia definitiva del panel es `Mealpreps familiares`, `Planes` y `Mealpreps`, además de `Clientes`, `Parámetros`, `Contenido web`, `Respaldo y conexión` y `Operaciones`.
 - La contrasena temporal de la cuenta de prueba se roto el 2026-07-24 y se verifico su inicio de sesion; no registrar contrasenas en este documento.

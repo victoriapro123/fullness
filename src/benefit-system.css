@@ -355,6 +355,121 @@
   outline-color: rgba(142, 38, 60, 0.3);
 }
 
+.quick-parameter-image-tools {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(81, 20, 37, 0.12);
+}
+
+.quick-parameter-upload {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(142, 38, 60, 0.3);
+  color: #762531;
+  background: rgba(255, 250, 242, 0.82);
+  font-family: var(--font-display);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quick-parameter-upload:hover,
+.quick-parameter-upload:focus-within {
+  border-color: #8e263c;
+  background: rgba(142, 38, 60, 0.08);
+}
+
+.quick-parameter-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  opacity: 0;
+}
+
+.quick-parameter-custom-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(74, 128, 91, 0.28);
+  color: #315f42;
+  background: rgba(74, 128, 91, 0.08);
+  font-size: 0.82rem;
+}
+
+.quick-parameter-custom-preview img {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.quick-parameter-ai-prompt {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(81, 20, 37, 0.12);
+  background: rgba(255, 253, 248, 0.64);
+}
+
+.quick-parameter-ai-prompt p,
+.quick-parameter-ai-prompt span {
+  margin: 0;
+  color: rgba(23, 17, 12, 0.68);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.quick-parameter-ai-prompt textarea {
+  min-height: 116px;
+  color: rgba(23, 17, 12, 0.72);
+  background: #fff;
+  font-size: 0.82rem;
+  line-height: 1.48;
+}
+
+.quick-parameter-ai-prompt button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid rgba(142, 38, 60, 0.3);
+  color: #762531;
+  background: #fffaf2;
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quick-parameter-ai-prompt button:hover,
+.quick-parameter-ai-prompt button:focus-visible {
+  border-color: #8e263c;
+  background: rgba(142, 38, 60, 0.08);
+}
+
+.quick-parameter-ai-prompt button:focus-visible {
+  outline: 2px solid rgba(142, 38, 60, 0.36);
+  outline-offset: 2px;
+}
+
 .quick-parameter-icons {
   display: grid;
   gap: 9px;
@@ -674,9 +789,49 @@
 
 .catalog-parameters-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+.catalog-parameter-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(81, 20, 37, 0.14);
+}
+
+.catalog-parameter-tabs button {
+  position: relative;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  color: rgba(23, 17, 12, 0.58);
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.catalog-parameter-tabs button::after {
+  position: absolute;
+  right: 18px;
+  bottom: -1px;
+  left: 18px;
+  height: 2px;
+  content: "";
+  background: transparent;
+}
+
+.catalog-parameter-tabs button.is-active {
+  color: var(--ink);
+}
+
+.catalog-parameter-tabs button.is-active::after {
+  background: var(--beet);
+}
+
+.catalog-parameter-tabs button:focus-visible {
+  outline: 2px solid rgba(142, 38, 60, 0.46);
+  outline-offset: -3px;
 }
 
 .parameter-section {
@@ -708,6 +863,45 @@
   margin: 0;
   color: rgba(23, 17, 12, 0.52);
   font-size: 0.78rem;
+}
+
+.parameter-library-search {
+  display: grid;
+  gap: 6px;
+  color: rgba(23, 17, 12, 0.72);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.parameter-library-search > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid rgba(81, 20, 37, 0.14);
+  border-radius: 6px;
+  color: rgba(118, 37, 49, 0.64);
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.parameter-library-search input {
+  min-width: 0;
+  height: 42px;
+  padding: 0 9px;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+}
+
+.parameter-library-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed rgba(81, 20, 37, 0.2);
+  color: rgba(23, 17, 12, 0.58);
+  font-size: 0.86rem;
 }
 
 .parameter-benefit-library {

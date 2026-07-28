@@ -4,9 +4,9 @@
 - El desarrollo local de este proyecto debe servirse siempre en `http://localhost:3101`.
 - La tienda debe sentirse como un e-commerce editorial premium de meal preps, inspirado en un layout con hero grande, caja/meal kit protagonista, bloque de suscripción, planes semanales/mensuales, pasos de compra y packs familiares.
 - El hero, la imagen principal de tienda y el cuadro de suscripción deben ser autogestionables desde backoffice.
-- Los planes y packs familiares se gestionan como `menu_items`, con imágenes principal y hover en R2, precio, descripción, información nutricional, tags de beneficios y platos incluidos cuando corresponde.
-- En el e-commerce hay dos niveles de detalle: click en el plan abre el lightbox del plan completo; click en un meal prep incluido abre el detalle del plato.
-- El hover de plan, producto familiar o plato incluido debe mostrar la segunda foto cuando exista.
+- Los planes y mealpreps familiares se gestionan como `menu_items`, con imágenes principal y hover en R2, precio, descripción e información comercial. Los mealpreps individuales de un plan conservan su propia ficha nutricional, tags y beneficios.
+- En el e-commerce hay tres conceptos: `Planes` semanales o mensuales, `Mealpreps` individuales dentro de esos planes y `Mealpreps familiares` vendidos directamente.
+- El hover de plan, mealprep familiar o mealprep incluido debe mostrar la segunda foto cuando exista.
 - El checkout debe pedir despacho con dirección/comuna o retiro en local.
 - La migración `20260709001000_ecommerce_shop_settings.sql` quedó aplicada y la fila `main` de `ecommerce_shop_settings` responde desde Supabase.
 - No usar un vector plano para el hero del e-commerce: se ve poco realista y no calza con la estética del sitio.
@@ -14,9 +14,9 @@
 - El hero activo de Tienda es `src/assets/ecommerce/fullness-hero-box-dark-cutout-v2.png`, sincronizado en R2 como `images/ecommerce/fullness-hero-box-dark-cutout-v2.png` y configurado en `ecommerce_shop_settings`. Es una caja abierta y bolsas sobre transparencia real. No usar una fotografia con rectangulo crema/blanco de fondo ni añadir un panel detras de la caja.
 - La tienda debe mantener persistencia tipografica con el landing usando `Avenir Next`; el tratamiento visual puede adaptarse al prototipo e-commerce, pero sin cambiar la familia tipografica del sitio.
 - Direccion visual aprobada para la tienda: hero y suscripcion en negro premium, crema para planes/packs, CTAs burdeos, iconografia cobre/dorada, y una banda de comunidad oscura antes del footer. No cambiar la familia tipografica del sitio.
-- En las cards de planes semanales/mensuales se debe mostrar una caja abierta Fullness con bolsitas adentro, no fotos de platos. Los platos quedan para el detalle de meal preps incluidos y para la seccion/packs familiares.
+- En las cards de planes semanales/mensuales se debe mostrar una caja abierta Fullness con bolsitas adentro, no fotos de preparaciones. Las fotos gastronómicas quedan para el detalle de los mealpreps incluidos y para los mealpreps familiares.
 - Assets de plan card en R2: principal `images/ecommerce/fullness-plan-box-card-87fca2f2a7cf.png`; hover `images/ecommerce/fullness-plan-box-card-hover-70f16092b298.png`.
-- Las caracteristicas incluidas dentro de las cards de planes deben mostrarse como iconos/beneficios concordantes con la marca, no como fotos de platos. Las fotos de platos se reservan para packs familiares y detalles de meal preps.
+- Las caracteristicas incluidas dentro de las cards de planes deben mostrarse como iconos/beneficios concordantes con la marca. Las fotos gastronómicas se reservan para mealpreps familiares y detalles de mealpreps.
 - Regla reforzada 2026-07-10: no dejar elementos funcionales montados/solapados en ningun breakpoint. En lightboxes y popups hay que validar tambien viewports cuadrados o de poca altura, como 600x600; si falta espacio, compactar la reticula o esconder elementos secundarios antes que montar iconos, textos o botones.
 
 ## Checkout Mercado Pago - 2026-07-20
@@ -79,11 +79,11 @@
 ### Backoffice: suscripciones y biblioteca 2026-07-21
 
 - El Backoffice debe tener una vista de clientes con suscripción operativa, filtrable por estado (`Activa`, `Pausada`, `Cancelada`) y frecuencia (`Semanal`, `Mensual`), sin mezclar esos clientes con personas inscritas solamente al lightbox/newsletter.
-- Los platos reutilizables viven en una biblioteca propia. Al cargarlos dentro de un plan se copian sus datos de ficha, fotos, tags, ingredientes, información nutricional y alérgenos, y se guarda la referencia de biblioteca en el JSON del plan; así un mismo plato puede incorporarse a varios meal preps sin volver a escribirlo.
-- Corrección 2026-07-27: un plato creado dentro de un plan se puede guardar directamente en la Biblioteca con su propia acción, aun cuando el plan comercial esté incompleto. Queda enlazado a esa biblioteca y se puede reutilizar; esto no publica el plan.
+- Los mealpreps individuales viven en una biblioteca propia. Al cargarlos dentro de un plan se copian sus datos de ficha, fotos, tags, ingredientes, información nutricional y alérgenos, y se guarda la referencia en el JSON del plan; así un mismo mealprep puede incorporarse a varios planes sin volver a escribirlo.
+- Un mealprep creado dentro de un plan se puede guardar directamente en su catálogo aun cuando el plan esté incompleto. Esto no publica el plan.
 - Si un plan no se puede publicar, el backoffice debe indicar los campos que faltan (nombre, slug válido, precio o descripción) y conservarlo como borrador.
-- Corrección 2026-07-27: la información nutricional pertenece exclusivamente a cada plato reutilizable o incluido, no al meal prep o plan principal (`menu_items`). Se captura y presenta en la ficha del plato, y el formulario del meal prep principal no contiene campos nutricionales. Los campos históricos de `menu_items` se preservan fuera del flujo para evitar una nueva pérdida de datos.
-- La migración histórica `20260727003000_remove_dish_nutrition.sql` se aplicó antes de esta corrección y no debe ejecutarse nuevamente. Los seis platos activos de los planes semanal y mensual se recuperaron desde la versión de catálogo anterior, que coincidía por ID, nombre, descripción, tags e ingredientes; se restauraron sólo su descripción, beneficios y tabla nutricional.
+- Corrección semántica definitiva 2026-07-28: la información nutricional pertenece exclusivamente a cada mealprep individual o familiar, no al plan principal (`menu_items.product_type = plan`). Se captura y presenta en la ficha del mealprep; el plan sólo reúne las bolsas y administra frecuencia, precio, caja, descripción comercial y publicación.
+- La migración histórica `20260727003000_remove_dish_nutrition.sql` se aplicó con una interpretación incorrecta y no debe ejecutarse nuevamente. Eliminó nutrición de `meal_library_items` y de los elementos internos de planes. Cualquier recuperación debe validarse con Cecilia antes de escribir datos.
 - La migración requerida es `20260721002000_backoffice_subscriptions_and_meal_library.sql`. Crea `meal_library_items` y `customer_subscriptions` con RLS sólo para administradores.
 - QA posterior a aplicar la migración: creación de plato de biblioteca, carga en un plan y persistencia del plan aprobadas por UI. Se creó una suscripción semanal y una mensual de QA; la vista las cargó y el filtro semanal dejó visible sólo la semanal. Todas las filas y la cuenta administrativa temporal se eliminaron al terminar. El cuadro nativo de confirmación impidió automatizar el último click de borrado del plan, por lo que se limpió directamente por Supabase; el botón sí abrió el diálogo de confirmación.
 
@@ -99,8 +99,10 @@
 
 - La cuenta de prueba `cecilia.prueba@fullnesslab.com` tiene `profiles.is_admin=true`. Es una administradora completa: puede usar el Backoffice, gestionar catálogo, planes, biblioteca, suscripciones, ajustes e imágenes. Mantenerla fuera de la segmentación de clientes y revocar el permiso cambiando ese campo a `false` cuando deje de necesitarse.
 - Verificación 2026-07-27: el proyecto remoto respondió `PGRST205` para `backoffice_drafts`; la tabla no está aplicada o no está visible en el caché PostgREST. Por ello, un borrador de meal prep sólo queda en el navegador de Cecilia y no puede recuperarse ni publicarse desde otro dispositivo hasta aplicar `20260727001000_backoffice_drafts.sql` al proyecto Supabase `allyjctrrtvibwchjouu` y verificar su lectura autenticada. No sustituir ni recrear un borrador local sin abrirlo primero en la sesión de su autora.
+- Verificación con sesión owner 2026-07-28: Fullness está en plan Free y la pantalla `Database Backups` confirma `No backups`; el plan no incluye respaldos programados ni recuperación a un punto anterior. Los logs disponibles de `menu_items`, `meal_library_items` y `backoffice_drafts` conservan rutas, métodos y estados, pero no el cuerpo enviado por Cecilia, por lo que no permiten reconstruir fichas eliminadas. La recuperación debe apoyarse en datos vigentes, R2, grabaciones y aprobación de Cecilia, siempre de forma aditiva.
+- Regla de catálogo 2026-07-28: cada mealprep y cada mealprep familiar debe incluir `Alérgenos` como campo de texto libre. Debe estar disponible incluso en la edición rápida, ser buscable en Backoffice y mostrarse en la ficha de tienda; cuando no exista información se comunica `Por confirmar` en vez de ocultar el dato.
 - Conexión Supabase 2026-07-27: la credencial propia de Fullness confirmó que `menu_items` y `meal_library_items` están disponibles, pero `backoffice_drafts` no. La Biblioteca estaba vacía; los 2 planes activos contenían 3 platos cada uno y 0 referencias `libraryMealId`. Antes de cualquier recuperación, aprobar explícitamente el backfill de 6 registros de Biblioteca y la actualización de los 2 planes activos; verificar después los 6 enlaces y conservar el script idempotente para no duplicar platos.
-- Recuperación autorizada 2026-07-27: se crearon o reutilizaron 6 platos de Biblioteca y se enlazaron los 3 platos de cada plan activo con un `libraryMealId` válido. El Backoffice dispone además de `Guardar platos en Biblioteca`, que persiste todos los platos nuevos sin exigir publicar el meal prep; `Guardar meal prep` usa validación propia para explicar campos comerciales faltantes y el botón individual ya no se comprime a 36 px.
+- Recuperación autorizada 2026-07-27: se crearon o reutilizaron fichas en `meal_library_items` y se enlazaron elementos internos mediante `libraryMealId`. En la taxonomía definitiva esas fichas son mealpreps y los registros comerciales que los agrupan son planes.
 
 ### Parametros de catalogo y QA productivo 2026-07-28
 
@@ -120,19 +122,41 @@
 
 ### Arquitectura UX del Backoffice 2026-07-28
 
-- Un meal prep es un plan comercial compuesto por platos. El plan sólo administra sus datos comerciales, frecuencia, precio, descripción, fotos de la caja y publicación. La nutrición, ingredientes, tags y beneficios pertenecen a cada plato y el meal prep los hereda y deduplica.
+- `Mealprep` es el formato físico de entrega de una preparación: una bolsa que se conserva y calienta siguiendo sus indicaciones, incluido baño María cuando corresponda.
+- El Backoffice tiene tres catálogos: `Mealpreps familiares` para formatos grandes vendidos directamente, `Planes` semanales o mensuales compuestos por una caja de mealpreps y `Mealpreps` individuales disponibles para incorporar a esos planes.
+- Técnicamente se mantienen `menu_items.product_type = family` para mealpreps familiares, `menu_items.product_type = plan` para planes y `meal_library_items` para mealpreps individuales. No renombrar tablas, tipos, IDs ni referencias sólo por semántica.
+- El plan sólo administra frecuencia, precio, descripción, fotos de la caja y publicación. La nutrición, ingredientes, tags, beneficios, alérgenos y fotos gastronómicas pertenecen a cada mealprep.
 - El Backoffice usa navegación lateral en escritorio y navegación horizontal táctil en móvil. Cada módulo abre primero un catálogo con listado, buscador y acciones claras; no se abre directamente un formulario largo.
-- `Meal preps`, `Platos reutilizables` y `Platos familiares` son módulos distintos. Los productos familiares son platos comerciales con ficha nutricional propia y nunca deben aparecer mezclados en el listado de meal preps.
-- Crear o editar un meal prep abre un espacio de trabajo amplio con pestañas `Información general`, `Platos` y `Publicación`. El plan debe contener al menos un plato con nombre antes de poder guardarse en el catálogo.
-- Crear o editar un plato dentro del meal prep abre un segundo lightbox contextual. Debe mostrar siempre la ruta `Meal preps / plan / Plato N`, el nombre del plan y el código automático del plato.
-- La edición de platos ofrece modo `Rápida` para nombre, descripción y foto principal, y modo `Completa` para ingredientes, alérgenos, nutrición, tags, beneficios y ambas fotos. Volver al meal prep conserva los cambios en su borrador.
-- Los códigos se generan automáticamente y no se solicitan al usuario: `MP-` para meal preps, `PL-` para platos y `PF-` para platos familiares. Sólo se muestran como información interna de solo lectura.
+- Crear o editar un plan abre un espacio de trabajo amplio con pestañas `Información general`, `Mealpreps` y `Publicación`. El plan debe contener al menos un mealprep con nombre antes de poder guardarse.
+- Crear o editar un mealprep dentro del plan abre un segundo lightbox contextual con la ruta `Planes / plan / Mealprep N`.
+- La edición de mealpreps ofrece modo `Rápida` para nombre, descripción y foto principal, y modo `Completa` para ingredientes, alérgenos, nutrición, tags, beneficios y ambas fotos. Volver al plan conserva los cambios en su borrador.
+- Los códigos históricos se mantienen aunque sus prefijos respondan a la nomenclatura anterior. Son información interna de solo lectura y no justifican migrar registros existentes.
 - Guardar debe mostrar un lightbox de progreso y un resultado inequívoco. Los errores indican exactamente qué falta y recuerdan que el borrador sigue protegido.
 - La interfaz evita negritas pesadas: títulos en peso regular y controles en peso medio. La jerarquía se construye con tamaño, espacio, pestañas, color y contexto.
-- QA aprobado en `1440x1000` y `390x844`: catálogo, búsqueda, creación de meal prep, plato rápido/completo, ficha nutricional, platos familiares, validación de guardado, nombres largos y ausencia de desbordes horizontales.
+- QA aprobado en `1440x1000` y `390x844`: catálogo, búsqueda, creación de plan, mealprep rápido/completo, ficha nutricional, mealpreps familiares, validación de guardado, nombres largos y ausencia de desbordes horizontales.
+- `Planes`, `Mealpreps` y `Mealpreps familiares` comparten el patrón de catálogo: encabezado, acción de creación, buscador y resultados en filas combinadas.
+- Los listados de beneficios y tags en `Parámetros` conservan sus cuadros modulares y tienen buscadores independientes. Suscripciones mantiene su filtro y buscador propio, que cubren el mismo objetivo sin repetir una segunda interfaz de búsqueda.
+- Todos los campos de texto y selectores de los formularios de Backoffice deben usar una altura visual fija de `48px`. No depender del alto nativo del navegador para los selectores ni permitir que un input quede más alto que el selector contiguo.
+- Tras crear un plan, mealprep o mealprep familiar, la confirmación de guardado debe volver al catálogo correspondiente. Al guardar una ficha existente, se mantiene abierto el editor para permitir ajustes consecutivos.
+- `Parámetros` separa `Beneficios` y `Tags` en pestañas para que cada biblioteca y su formulario tenga ancho completo. `Contenido web` consolida los antiguos módulos `Tienda`, `Lightbox` y `Comunidad` bajo tres pestañas, conservando sus propios formularios y mecanismos de guardado.
 
 ### Alta rápida de beneficios y tags 2026-07-28
 
-- Mientras se edita la ficha nutricional de un plato, el administrador puede usar `Crear tag` o `Crear beneficio` sin abandonar el plato. Ambos se guardan como parámetros globales reutilizables en Supabase y se asignan automáticamente al plato abierto; el cambio permanece dentro del borrador del meal prep hasta que éste se publique.
-- El alta rápida de un tag pide solamente su nombre. El alta de un beneficio pide nombre, una descripción general opcional y elegir una ilustración ya aprobada del set editorial. El icono no se deja vacío ni se reemplaza por un pictograma genérico; la personalización completa de icono y texto sigue disponible en `Parámetros`.
-- Si el nombre ya existe, se usa el beneficio o tag existente en vez de crear un duplicado o mostrar un error técnico. Esta acción también se ofrece al editar un plato reutilizable o familiar, porque comparten la misma ficha de plato.
+- Mientras se edita la ficha nutricional de un mealprep, el administrador puede usar `Crear tag` o `Crear beneficio` sin abandonar la ficha. Ambos se guardan como parámetros globales reutilizables; si se edita dentro de un plan, el cambio permanece en el borrador hasta publicar el plan.
+- El alta rápida de un tag pide solamente su nombre. El alta de un beneficio pide nombre, una descripción general opcional y permite elegir una ilustración aprobada o subir una imagen personalizada a R2 desde ese mismo diálogo. El icono no se deja vacío ni se reemplaza por un pictograma genérico.
+- El diálogo de alta rápida incluye un prompt base copiable para generar una ilustración con IA. Debe mantenerse como apoyo operativo dentro del flujo de administración y no como contenido público.
+- Si el nombre ya existe, se usa el beneficio o tag existente en vez de crear un duplicado o mostrar un error técnico. Esta acción se ofrece al editar mealpreps individuales y familiares.
+
+### Recuperacion conservadora 2026-07-28
+
+- La lectura remota confirmó que `backoffice_drafts` no existe en el schema cache productivo (`PGRST205`). Los borradores nunca sincronizados sólo pueden recuperarse desde el `localStorage` del navegador y perfil donde Cecilia trabajó, salvo que exista un respaldo de base tomado mientras la tabla sí estuvo presente.
+- La clave `service_role` permite leer el estado actual, pero no listar ni restaurar respaldos históricos. Esa operación requiere acceso propietario al Dashboard o Management API del proyecto.
+- Si hay respaldo diario o PITR disponible, se debe restaurar a un proyecto nuevo de análisis. Nunca restaurar una versión anterior encima de producción sólo para buscar borradores.
+- El plan semanal actual conserva dos mealpreps avanzados dentro de `menu_items.included_items`: Apple Golden Chicken y Merluza austral con crispy quinoa salad, ambos con fotos, ingredientes, alérgenos y nutrición. Esos datos no deben sobrescribirse.
+- Antes de aplicar cualquier recuperación, producir un PDF para Cecilia con cada ficha candidata, su fuente, campos recuperados y casillas de aprobación.
+
+### Decision de QA y no recuperacion 2026-07-28
+
+- Carlos definio que no se recuperaran ni se reinsertaran borradores historicos. Las referencias encontradas quedan solo como antecedente; no deben volver a produccion sin una nueva autorizacion explicita.
+- Para QA productivo, crear exclusivamente registros con prefijo y fecha `QA YYYY-MM-DD`, validarlos por la interfaz y eliminarlos al terminar. La limpieza debe comprobarse con conteos finales de cero en las tablas afectadas.
+- La evidencia se entrega como PDF con capturas del flujo y una declaracion clara de alcance. No afirmar que una version local esta publicada: la version publicada usada en QA aun conserva etiquetas historicas del catalogo hasta que se realice un deploy separado.

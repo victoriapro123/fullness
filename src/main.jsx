@@ -356,19 +356,19 @@ const faqGroups = [
   },
   {
     id: "meal-prep",
-    eyebrow: "Meal Prep semanal",
+    eyebrow: "Mealprep semanal",
     title: "Cómo realizar tu pedido semanal.",
-    navLabel: "Meal Prep",
+    navLabel: "Mealprep",
     items: [
       {
-        question: "¿Cómo funciona el Meal Prep Semanal?",
-        answer: ["Cada semana preparamos una selección de platos elaborados con ingredientes naturales, técnicas de cocina saludables y porciones pensadas para facilitar tu alimentación durante la semana."]
+        question: "¿Cómo funciona el Mealprep Semanal?",
+        answer: ["Cada semana preparamos una selección de mealpreps elaborados con ingredientes naturales, técnicas de cocina saludables y porciones pensadas para facilitar tu alimentación durante la semana."]
       },
       {
         question: "¿Qué incluye?",
         answer: [
           "Cada box contiene:",
-          ["5 platos individuales.", "Proteínas y acompañamientos envasados por separado.", "Productos sellados al vacío.", "Instrucciones de conservación y regeneración."]
+          ["5 mealpreps individuales.", "Proteínas y acompañamientos envasados por separado.", "Productos sellados al vacío.", "Instrucciones de conservación y regeneración."]
         ]
       },
       {
@@ -380,7 +380,7 @@ const faqGroups = [
         answer: ["Las entregas se realizan los días lunes y martes de la semana siguiente, según la zona de despacho."]
       },
       {
-        question: "¿Puedo elegir los platos?",
+        question: "¿Puedo elegir los mealpreps?",
         answer: [
           "Dependiendo del programa contratado, podrás:",
           ["Elegir entre las opciones disponibles de la semana.", "Recibir el menú diseñado por nuestro equipo."]
@@ -391,7 +391,7 @@ const faqGroups = [
         answer: ["Algunos ingredientes pueden ajustarse según disponibilidad y restricciones alimentarias previamente informadas."]
       },
       {
-        question: "¿Los platos llegan congelados o refrigerados?",
+        question: "¿Los mealpreps llegan congelados o refrigerados?",
         answer: ["Dependiendo de la preparación, los productos pueden entregarse refrigerados o congelados para asegurar la mejor calidad y conservación."]
       },
       {
@@ -573,7 +573,7 @@ const demoProducts = [
     name: "Plan semanal antinflamatorio",
     productType: "plan",
     planFrequency: "weekly",
-    tag: "5 meal preps / 1 semana",
+    tag: "5 mealpreps / 1 semana",
     price: 44900,
     description: "Cinco preparaciones listas para calentar, pensadas para sostener energía, saciedad y una rutina más liviana durante la semana.",
     image: shopPlanBoxCardSrc,
@@ -635,15 +635,15 @@ const demoProducts = [
     name: "Plan mensual Fullness",
     productType: "plan",
     planFrequency: "monthly",
-    tag: "20 meal preps / 4 semanas",
+    tag: "20 mealpreps / 4 semanas",
     price: 169000,
-    description: "Plan mensual con entregas semanales y rotación de platos para sostener una alimentación funcional sin repetir decisiones cada día.",
+    description: "Plan mensual con entregas semanales y rotación de mealpreps para sostener una alimentación funcional sin repetir decisiones cada día.",
     image: shopPlanBoxCardSrc,
     secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Balance", "Detox", "Energético"],
     ingredients: ["pescados", "pollo", "legumbres", "granos integrales", "vegetales de estación"],
-    recipeSummary: "Cuatro semanas de batch cooking Fullness con platos refrigerados y porcionados.",
-    recipeSteps: ["Recibir una entrega semanal.", "Refrigerar cada porción.", "Calentar según el plato y servir."],
+    recipeSummary: "Cuatro semanas de mealpreps Fullness refrigerados y porcionados.",
+    recipeSteps: ["Recibir una entrega semanal.", "Refrigerar cada bolsa.", "Calentar a baño María según las indicaciones y servir."],
     servingLabel: "20 porciones individuales",
     purchaseLabel: "Agregar plan mensual",
     includedItems: [
@@ -705,6 +705,7 @@ const demoProducts = [
     ingredients: ["salmón", "arroz verde", "palta", "hierbas frescas"],
     recipeSummary: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
     recipeSteps: ["Calentar la base.", "Agregar palta y hierbas al servir.", "Compartir al centro de la mesa."],
+    allergens: ["Pescado"],
     servingLabel: "3 a 4 personas",
     purchaseLabel: "Agregar familiar"
   },
@@ -722,6 +723,7 @@ const demoProducts = [
     ingredients: ["pollo", "camote", "cúrcuma", "hojas verdes", "aceite de oliva"],
     recipeSummary: "Pollo especiado, camote rústico y hojas verdes frescas.",
     recipeSteps: ["Calentar el pollo y camote.", "Terminar con hojas verdes.", "Servir en fuente familiar."],
+    allergens: [],
     servingLabel: "3 a 4 personas",
     purchaseLabel: "Agregar familiar"
   }
@@ -739,7 +741,7 @@ const isMobileIntroViewport = () =>
 const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
-const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer el servicio de Meal Prep.");
+const mealPrepWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer el servicio de Mealprep.");
 const familyOptionsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero conocer las opciones familiares.");
 const workshopsWhatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero información sobre los talleres.");
 const instagramUrl = "https://www.instagram.com/fullnesslab";
@@ -945,7 +947,7 @@ const heroBenefitFeatures = [
   },
   {
     title: "Nutrición funcional",
-    text: "Platos balanceados que nutren de verdad.",
+    text: "Mealpreps balanceados que nutren de verdad.",
     icon: CookingPot
   },
   {
@@ -1041,7 +1043,7 @@ function createDefaultShopSettings() {
     id: "main",
     heroEyebrow: "Nutrir desde la raíz",
     heroTitle: "Alimentación consciente, organizada para toda la semana.",
-    heroBody: "Platos diseñados por chef y nutricionista para que comer bien sea simple, práctico y delicioso.",
+    heroBody: "Mealpreps diseñados por chef y nutricionista para que comer bien sea simple, práctico y delicioso.",
     heroImageUrl: shopHeroBoxDarkCutoutSrc,
     heroImageStoragePath: "",
     heroPrimaryLabel: "Ver planes semanales",
@@ -1105,6 +1107,20 @@ function renderShopHeroTitle(title) {
       {text.slice(end)}
     </>
   );
+}
+
+function normalizeMealprepCopy(value) {
+  return String(value || "")
+    .replace(/\bMeal Preps?\b/g, "Mealpreps")
+    .replace(/\bmeal preps?\b/g, "mealpreps")
+    .replace(/Platos diseñados/g, "Mealpreps diseñados")
+    .replace(/platos diseñados/g, "mealpreps diseñados")
+    .replace(/rotación de platos/gi, "rotación de mealpreps");
+}
+
+function formatAllergenCopy(allergens) {
+  const text = allergens?.length ? allergens.join(", ") : "Por confirmar";
+  return /[.!?]$/.test(text) ? text : `${text}.`;
 }
 
 function createShopSettingsForm(settings = createDefaultShopSettings()) {
@@ -1367,7 +1383,7 @@ function normalizeMenuFormDraft(rawDraft) {
     title:
       rawDraft.title ||
       form.name?.trim() ||
-      (form.productType === "family" ? "Plato familiar sin título" : "Meal prep sin título"),
+      (form.productType === "family" ? "Mealprep familiar sin título" : "Plan sin título"),
     form,
     createdAt: rawDraft.createdAt || rawDraft.created_at || updatedAt,
     updatedAt
@@ -1519,7 +1535,7 @@ function NutritionFactsEditor({ value, onChange, idPrefix }) {
   return (
     <fieldset className="backoffice-nutrition-editor">
       <legend>Información nutricional por porción</legend>
-      <p>Completa sólo los valores que quieras mostrar en la ficha del plato.</p>
+      <p>Completa sólo los valores que quieras mostrar en la ficha del mealprep.</p>
       <div className="backoffice-nutrition-grid">
         {nutritionFactEditorFields.map((field) => {
           const aliasValue = field.aliases?.map((alias) => facts[alias]).find((item) => item !== undefined);
@@ -1687,11 +1703,51 @@ function BackofficeSaveLightbox({ feedback, onClose }) {
         <p>{feedback.message}</p>
         {!isSaving && (
           <button ref={closeButtonRef} className="primary-button" type="button" onClick={onClose}>
-            {isSuccess ? "Volver al backoffice" : "Revisar formulario"}
+            {feedback.confirmLabel || (isSuccess ? "Volver al backoffice" : "Revisar formulario")}
           </button>
         )}
       </section>
     </div>
+  );
+}
+
+function WebsiteContentTabs({ activeTab, onChange }) {
+  const tabs = [
+    ["shop", "Tienda"],
+    ["lightbox", "Lightbox"],
+    ["community", "Comunidad"]
+  ];
+
+  return (
+    <div className="backoffice-editor-tabs" role="tablist" aria-label="Contenido del sitio">
+      {tabs.map(([id, label]) => (
+        <button
+          className={activeTab === id ? "is-active" : ""}
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === id}
+          aria-controls={`web-content-${id}`}
+          onClick={() => onChange(id)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function WebsiteContentHeading({ activeTab, onChange }) {
+  return (
+    <>
+      <div className="backoffice-list-top">
+        <div>
+          <p className="eyebrow">Contenido web</p>
+          <h3 id="web-content-title">Contenido del sitio</h3>
+        </div>
+      </div>
+      <WebsiteContentTabs activeTab={activeTab} onChange={onChange} />
+    </>
   );
 }
 
@@ -1711,7 +1767,7 @@ function parseIncludedMealsFromForm(items, tagDefinitions = []) {
       try {
         nutritionFacts = parseJsonObject(item.nutritionFacts);
       } catch (error) {
-        throw new Error(`Plato ${index + 1}: ${error.message}`);
+        throw new Error(`Mealprep ${index + 1}: ${error.message}`);
       }
 
       return {
@@ -1752,7 +1808,7 @@ function getMenuFormPublicationIssues(form) {
     form.productType === "plan" &&
     !form.includedItems?.some((item) => item.name?.trim())
   ) {
-    issues.push("al menos un plato");
+    issues.push("al menos un mealprep");
   }
 
   return issues;
@@ -1818,7 +1874,7 @@ function getProductTypeLabel(product) {
     return product.planFrequency === "monthly" ? "Plan mensual" : "Plan semanal";
   }
 
-  return "Familiar";
+  return "Mealprep familiar";
 }
 
 function getBenefitTags(product) {
@@ -1933,9 +1989,9 @@ function HoverImage({ alt, primary, secondary }) {
 const shopMetricIcons = [Leaf, CookingPot, Heart];
 const shopProcessSteps = [
   { icon: Leaf, title: "Elige tu objetivo", text: "Define energía, equilibrio o recuperación." },
-  { icon: CookingPot, title: "Selecciona tus favoritos", text: "Planes completos o packs familiares." },
-  { icon: PackageCheck, title: "Recibe tu box", text: "Cada plato llega listo y etiquetado." },
-  { icon: Timer, title: "Calienta en minutos", text: "Regeneración simple para tu rutina." },
+  { icon: CookingPot, title: "Selecciona tu formato", text: "Elige un plan o un mealprep familiar." },
+  { icon: PackageCheck, title: "Recibe tu box", text: "Cada mealprep llega en su bolsa, listo y etiquetado." },
+  { icon: Timer, title: "Calienta en minutos", text: "Lleva la bolsa a baño María siguiendo sus indicaciones." },
   { icon: Heart, title: "Disfruta tu semana", text: "Comida completa sin improvisar." }
 ];
 
@@ -1958,7 +2014,7 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
         <button className="shop-plan-title-button" type="button" onClick={() => onOpenProduct(product)}>
           <span>{isMonthly ? "Plan mensual" : "Semana"}</span>
           <h3>{product.name}</h3>
-          <p>{product.description}</p>
+          <p>{normalizeMealprepCopy(product.description)}</p>
         </button>
 
         {benefitTags.length > 0 && (
@@ -1970,7 +2026,7 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
       </div>
 
       {includedItems.length > 0 && (
-        <div className={`shop-plan-meals is-${Math.min(includedItems.length, 3)}`} aria-label={`Platos incluidos en ${product.name}`}>
+        <div className={`shop-plan-meals is-${Math.min(includedItems.length, 3)}`} aria-label={`Mealpreps incluidos en ${product.name}`}>
           {includedItems.slice(0, 3).map((meal) => (
             <article className="shop-plan-meal-card" key={meal.id || meal.name}>
               <button
@@ -1978,9 +2034,9 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
                 type="button"
                 onClick={(event) => onOpenMeal(product, meal, event)}
               >
-                <span className="shop-plan-meal-kicker">{meal.tag || "Plato Fullness"}</span>
+                <span className="shop-plan-meal-kicker">{normalizeMealprepCopy(meal.tag) || "Mealprep Fullness"}</span>
                 <strong>{meal.name}</strong>
-                <p>{meal.description}</p>
+                <p>{normalizeMealprepCopy(meal.description)}</p>
               </button>
               <BenefitIconList
                 benefits={getProductBenefits(meal)}
@@ -1995,7 +2051,7 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
       )}
 
       <div className="shop-plan-footer">
-        <small>{product.servingLabel || product.tag}</small>
+        <small>{normalizeMealprepCopy(product.servingLabel || product.tag)}</small>
         <strong>{formatPrice(product.price)}</strong>
         <div>
           <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
@@ -2023,9 +2079,9 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
       </button>
       <div className="shop-family-copy">
         <button className="shop-family-detail-button" type="button" onClick={() => onOpenProduct(product)}>
-          <span>{product.servingLabel || product.tag || "Para compartir"}</span>
+          <span>{normalizeMealprepCopy(product.servingLabel || product.tag) || "Para compartir"}</span>
           <h3>{product.name}</h3>
-          <p>{product.description}</p>
+          <p>{normalizeMealprepCopy(product.description)}</p>
         </button>
         {benefitTags.length > 0 && (
           <ul className="shop-benefit-tags" aria-label="Beneficios">
@@ -2081,7 +2137,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
         <div className="shop-hero-copy">
           <p className="eyebrow">{settings.heroEyebrow}</p>
           <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
-          <p>{settings.heroBody}</p>
+          <p>{normalizeMealprepCopy(settings.heroBody)}</p>
           <div className="shop-hero-actions">
             <a className="shop-solid-link" href="#shop-plans" onClick={(event) => scrollToBlock(event, "#shop-plans")}>
               {settings.heroPrimaryLabel}
@@ -2108,12 +2164,12 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
           )}
         </div>
         <figure className="shop-hero-media">
-          <img src={heroImage} alt="Meal prep Fullness" />
+          <img src={heroImage} alt="Mealprep Fullness" />
         </figure>
       </section>
 
       {loading ? (
-        <p className="products-empty">Cargando meal preps…</p>
+        <p className="products-empty">Cargando planes y mealpreps…</p>
       ) : (
         <>
           <section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
@@ -2174,9 +2230,9 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
 
           <section className="shop-plans-section" id="shop-plans" aria-labelledby="shop-plans-title">
             <div className="shop-section-heading">
-              <p className="eyebrow">Meal prep</p>
+              <p className="eyebrow">Planes</p>
               <h2 id="shop-plans-title">{planHeading}</h2>
-              <p>Cada semana un propósito distinto. Nosotros hacemos la selección por ti.</p>
+              <p>Cada plan reúne una caja de mealpreps individuales, listos para calentar.</p>
             </div>
             {catalogPlans.length > 0 ? (
               <div className="shop-plan-grid">
@@ -2225,9 +2281,9 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
 
           <section className="shop-family-section" aria-labelledby="shop-family-title">
             <div className="shop-section-heading is-left">
-              <p className="eyebrow">Packs familiares</p>
-              <h2 id="shop-family-title">Para compartir en casa.</h2>
-              <p>Proteínas y acompañamientos favoritos en porciones generosas para la familia.</p>
+              <p className="eyebrow">Mealpreps familiares</p>
+              <h2 id="shop-family-title">Formato familiar para compartir.</h2>
+              <p>Preparaciones en porciones generosas, listas para calentar y servir en casa.</p>
             </div>
             {familyProducts.length > 0 ? (
               <div className="shop-family-grid">
@@ -2243,7 +2299,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
                 ))}
               </div>
             ) : (
-              <p className="products-empty">Aún no hay opciones familiares activas.</p>
+              <p className="products-empty">Aún no hay mealpreps familiares activos.</p>
             )}
           </section>
 
@@ -2255,7 +2311,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
             <div>
               <p className="eyebrow">Comunidad Fullness</p>
               <h2 id="shop-community-title">Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.</h2>
-              <p>Encuentros, recetas y experiencias para acompañar tu rutina más allá del meal prep.</p>
+              <p>Encuentros, recetas y experiencias para acompañar tu rutina más allá de cada mealprep.</p>
             </div>
             <a href="/comunidad">
               Conoce la comunidad
@@ -2281,12 +2337,12 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
           <X size={22} />
         </button>
         <div className="product-lightbox-media">
-          <img src={image} alt={`Plato ${product.name}`} />
+          <img src={image} alt={product.name} />
         </div>
         <div className="product-lightbox-copy">
           <p className="eyebrow">{getProductTypeLabel(product)}</p>
           <h2 id="product-lightbox-title">{product.name}</h2>
-          <p>{product.description}</p>
+          <p>{normalizeMealprepCopy(product.description)}</p>
           <strong className="product-lightbox-price">{formatPrice(product.price)}</strong>
 
           {benefitTags.length > 0 && (
@@ -2310,14 +2366,21 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
             </div>
           )}
 
+          {isFamilyDish && (
+            <div className="product-lightbox-block">
+              <h3>Alérgenos</h3>
+              <p className="product-allergens">{formatAllergenCopy(product.allergens)}</p>
+            </div>
+          )}
+
           <div className="product-lightbox-block">
             <h3>Receta resumida</h3>
-            <p>{product.recipeSummary || product.description}</p>
+            <p>{normalizeMealprepCopy(product.recipeSummary || product.description)}</p>
           </div>
 
           {includedItems.length > 0 && (
             <div className="product-lightbox-block">
-              <h3>Meal preps incluidos</h3>
+              <h3>Mealpreps incluidos</h3>
               <div className="included-meals-grid">
                 {includedItems.map((meal, mealIndex) => (
                   <button
@@ -2330,7 +2393,7 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
                       secondary={getMealSecondaryImage(meal, mealIndex)}
                       alt={meal.name}
                     />
-                    <span>{meal.tag}</span>
+                    <span>{normalizeMealprepCopy(meal.tag)}</span>
                     <strong>{meal.name}</strong>
                   </button>
                 ))}
@@ -2361,16 +2424,16 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
   return (
     <div className="overlay meal-lightbox" role="dialog" aria-modal="true" aria-labelledby="meal-lightbox-title">
       <section className="product-lightbox-panel meal-lightbox-panel">
-        <button className="icon-button close" type="button" onClick={onClose} aria-label="Cerrar detalle del meal prep">
+        <button className="icon-button close" type="button" onClick={onClose} aria-label="Cerrar detalle del producto">
           <X size={22} />
         </button>
         <div className="product-lightbox-media">
           <img src={getMealImage(meal, 0)} alt={meal.name} />
         </div>
         <div className="product-lightbox-copy">
-          <p className="eyebrow">{meal.tag || parentProduct?.name}</p>
+          <p className="eyebrow">{normalizeMealprepCopy(meal.tag || parentProduct?.name)}</p>
           <h2 id="meal-lightbox-title">{meal.name}</h2>
-          <p>{meal.description}</p>
+          <p>{normalizeMealprepCopy(meal.description)}</p>
 
           {benefitTags.length > 0 && (
             <ul className="product-pill-list">
@@ -2405,6 +2468,11 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
             </div>
           )}
 
+          <div className="product-lightbox-block">
+            <h3>Alérgenos</h3>
+            <p className="product-allergens">{formatAllergenCopy(meal.allergens)}</p>
+          </div>
+
           {parentProduct && (
             <div className="product-lightbox-actions single-action">
               <button className="primary-button" type="button" onClick={() => onAddParent(parentProduct)}>
@@ -2424,7 +2492,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
     return (
       <section className="product-detail-page product-detail-state">
         <Sprout size={34} />
-        <h1>Cargando meal prep Fullness.</h1>
+        <h1>Cargando producto Fullness.</h1>
       </section>
     );
   }
@@ -2433,7 +2501,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
     return (
       <section className="product-detail-page product-detail-state">
         <Sprout size={34} />
-        <h1>No encontramos este meal prep.</h1>
+        <h1>No encontramos este producto.</h1>
         <p>Puede haber cambiado de nombre o ya no estar activo.</p>
         <button className="primary-button" type="button" onClick={onBackToShop}>
           <ArrowLeft size={18} />
@@ -2458,12 +2526,12 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 
       <section className="product-detail-hero">
         <div className="product-detail-media">
-          <img src={image} alt={`Plato ${product.name}`} />
+          <img src={image} alt={product.name} />
         </div>
         <div className="product-detail-copy">
-          <p className="eyebrow">{product.tag}</p>
+          <p className="eyebrow">{normalizeMealprepCopy(product.tag)}</p>
           <h1>{product.name}</h1>
-          <p>{product.description}</p>
+          <p>{normalizeMealprepCopy(product.description)}</p>
           {tags.length > 0 && (
             <ul className="product-pill-list">
               {tags.map((tag) => <li key={tag}>{tag}</li>)}
@@ -2483,10 +2551,10 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
         </div>
       </section>
 
-      <section className="product-detail-content" aria-label="Detalle del meal prep">
+      <section className="product-detail-content" aria-label="Detalle del producto">
         <div className="product-detail-panel">
           <h2>Receta</h2>
-          <p>{product.recipeSummary || product.description}</p>
+          <p>{normalizeMealprepCopy(product.recipeSummary || product.description)}</p>
           {recipeSteps.length > 0 && (
             <ol className="recipe-step-list">
               {recipeSteps.map((step) => <li key={step}>{step}</li>)}
@@ -2511,14 +2579,16 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
           ) : (
             <p>Ingredientes por confirmar.</p>
           )}
-          {product.allergens?.length > 0 && (
-            <p className="product-allergens">Alérgenos: {product.allergens.join(", ")}.</p>
+          {isFamilyDish && (
+            <p className="product-allergens">
+              Alérgenos: {formatAllergenCopy(product.allergens)}
+            </p>
           )}
         </div>
 
         {includedItems.length > 0 && (
           <div className="product-detail-panel product-detail-included">
-            <h2>Meal preps</h2>
+            <h2>Mealpreps del plan</h2>
             <div className="included-meals-grid">
               {includedItems.map((meal, mealIndex) => (
                 <button
@@ -2531,7 +2601,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
                     secondary={getMealSecondaryImage(meal, mealIndex)}
                     alt={meal.name}
                   />
-                  <span>{meal.tag}</span>
+                  <span>{normalizeMealprepCopy(meal.tag)}</span>
                   <strong>{meal.name}</strong>
                 </button>
               ))}
@@ -3410,6 +3480,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-preps");
+  const [webContentTab, setWebContentTab] = useState("shop");
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
   const [cartNotice, setCartNotice] = useState(null);
@@ -3485,6 +3556,8 @@ function App() {
   const menuFormDraftSyncVersionRef = useRef(0);
   const [mealLibrary, setMealLibrary] = useState([]);
   const [mealLibraryForm, setMealLibraryForm] = useState(createMealLibraryForm);
+  const [mealLibrarySearch, setMealLibrarySearch] = useState("");
+  const [mealLibraryEditorOpen, setMealLibraryEditorOpen] = useState(false);
   const [mealLibraryLoading, setMealLibraryLoading] = useState(false);
   const [mealLibrarySaving, setMealLibrarySaving] = useState(false);
   const [mealLibraryPhotoUploading, setMealLibraryPhotoUploading] = useState(false);
@@ -3513,6 +3586,19 @@ function App() {
   const [subscriptionPopupDismissed, setSubscriptionPopupDismissed] = useState(false);
   const [subscriptionPopupMessage, setSubscriptionPopupMessage] = useState("");
   const [subscriptionPopupSubmitting, setSubscriptionPopupSubmitting] = useState(false);
+
+  useEffect(() => {
+    const legacyWebContentTabs = {
+      shop: "shop",
+      lightbox: "lightbox",
+      community: "community"
+    };
+    const legacyTab = legacyWebContentTabs[activeBackofficeModule];
+    if (!legacyTab) return;
+
+    setWebContentTab(legacyTab);
+    setActiveBackofficeModule("web-content");
+  }, [activeBackofficeModule]);
   const [subscriptionPopupUploading, setSubscriptionPopupUploading] = useState(false);
   const [subscriptionPopupAdminMessage, setSubscriptionPopupAdminMessage] = useState("");
   const [subscriptionPopupAdminError, setSubscriptionPopupAdminError] = useState("");
@@ -3912,7 +3998,9 @@ function App() {
   function buildMenuFormDraft(form = menuForm, draftKey = menuFormDraftKey) {
     return normalizeMenuFormDraft({
       draftKey,
-      title: form.name?.trim() || "Meal prep sin título",
+      title:
+        form.name?.trim() ||
+        (form.productType === "family" ? "Mealprep familiar sin título" : "Plan sin título"),
       form,
       updatedAt: new Date().toISOString()
     });
@@ -4117,20 +4205,67 @@ function App() {
     setFamilyProductEditorOpen(false);
   }
 
+  function openMealLibraryItemForEditing(item) {
+    setMealLibraryForm(mealLibraryItemToForm(item));
+    setMealLibraryError("");
+    setMealLibraryMessage("");
+    setMealLibraryEditorOpen(true);
+  }
+
+  function startNewMealLibraryItem() {
+    resetMealLibraryForm();
+    setMealLibraryEditorOpen(true);
+  }
+
+  function closeMealLibraryEditor() {
+    setMealLibraryEditorOpen(false);
+  }
+
+  function acknowledgeBackofficeFeedback() {
+    const returnTo = backofficeFeedback?.returnTo;
+    setBackofficeFeedback(null);
+
+    if (returnTo === "meal-preps") {
+      setIncludedMealEditorIndex(null);
+      setMealPrepEditorOpen(false);
+      setActiveBackofficeModule("meal-preps");
+    }
+
+    if (returnTo === "family-products") {
+      setFamilyProductEditorOpen(false);
+      setActiveBackofficeModule("family-products");
+    }
+
+    if (returnTo === "meal-library") {
+      setMealLibraryEditorOpen(false);
+      setActiveBackofficeModule("meal-library");
+    }
+  }
+
   function openBackofficeModule(moduleId) {
-    if (activeBackofficeModule !== moduleId) {
+    const legacyWebContentTabs = {
+      shop: "shop",
+      lightbox: "lightbox",
+      community: "community"
+    };
+    const nextWebContentTab = legacyWebContentTabs[moduleId];
+    const nextModuleId = nextWebContentTab ? "web-content" : moduleId;
+
+    if (nextWebContentTab) setWebContentTab(nextWebContentTab);
+    if (activeBackofficeModule !== nextModuleId) {
       protectCurrentMenuFormDraft();
     }
     setMealPrepEditorOpen(false);
     setIncludedMealEditorIndex(null);
     setFamilyProductEditorOpen(false);
-    if (moduleId === "meal-preps" && menuForm.productType !== "plan") {
+    setMealLibraryEditorOpen(false);
+    if (nextModuleId === "meal-preps" && menuForm.productType !== "plan") {
       resetMenuForm();
     }
-    if (moduleId === "family-products" && menuForm.productType !== "family") {
+    if (nextModuleId === "family-products" && menuForm.productType !== "family") {
       resetFamilyProductForm();
     }
-    setActiveBackofficeModule(moduleId);
+    setActiveBackofficeModule(nextModuleId);
   }
 
   async function refreshPublicProducts() {
@@ -4152,7 +4287,7 @@ function App() {
     const result = await listAdminMenuItems();
 
     if (result.error) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos cargar los meal preps."));
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos cargar los planes."));
     } else {
       setAdminItems(result.data);
       if (!menuForm.id && result.data.length > 0) {
@@ -4178,7 +4313,7 @@ function App() {
 
     const result = await listMealLibraryItems();
     if (result.error) {
-      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos cargar la biblioteca de platos."));
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos cargar los mealpreps."));
     } else {
       setMealLibrary(result.data);
     }
@@ -4227,7 +4362,7 @@ function App() {
   }
 
   async function removeBenefitDefinition(item) {
-    if (!window.confirm(`¿Eliminar el beneficio “${item.name}”? Los platos conservarán la copia publicada hasta que se editen.`)) return;
+    if (!window.confirm(`¿Eliminar el beneficio “${item.name}”? Los mealpreps conservarán la copia publicada hasta que se editen.`)) return;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
@@ -4324,7 +4459,7 @@ function App() {
   }
 
   async function removeTagDefinition(item) {
-    if (!window.confirm(`¿Eliminar el tag “${item.name}”? Los platos conservarán la copia publicada hasta que se editen.`)) return;
+    if (!window.confirm(`¿Eliminar el tag “${item.name}”? Los mealpreps conservarán la copia publicada hasta que se editen.`)) return;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
@@ -4387,12 +4522,13 @@ function App() {
 
   async function submitMealLibraryItem(event) {
     event.preventDefault();
+    const isNewMealLibraryItem = !mealLibraryForm.id;
     setMealLibrarySaving(true);
     setMealLibraryError("");
     setMealLibraryMessage("");
     setBackofficeFeedback({
       status: "saving",
-      title: mealLibraryForm.id ? "Guardando cambios" : "Creando el plato",
+      title: mealLibraryForm.id ? "Guardando cambios" : "Creando el mealprep",
       message: "Estamos guardando la ficha y sus imágenes."
     });
 
@@ -4404,7 +4540,7 @@ function App() {
       setMealLibraryError(error.message);
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar el plato",
+        title: "No pudimos guardar el mealprep",
         message: "Revisa la información nutricional e inténtalo nuevamente."
       });
       return;
@@ -4416,21 +4552,23 @@ function App() {
       tags: tagDefinitions.filter((tag) => mealLibraryForm.tagIds?.includes(tag.id))
     });
     if (result.error || !result.configured) {
-      const message = getSupabaseErrorMessage(result.error, "No pudimos guardar el plato.");
+      const message = getSupabaseErrorMessage(result.error, "No pudimos guardar el mealprep.");
       setMealLibraryError(message);
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar el plato",
+        title: "No pudimos guardar el mealprep",
         message
       });
     } else {
       setMealLibraryForm(mealLibraryItemToForm(result.data));
-      setMealLibraryMessage("Plato guardado en biblioteca.");
+      setMealLibraryMessage("Mealprep guardado.");
       await refreshMealLibrary({ silent: true });
       setBackofficeFeedback({
         status: "success",
-        title: "Plato guardado",
-        message: `“${result.data.name}” ya está disponible para reutilizarlo en otros planes.`
+        title: "Mealprep guardado",
+        message: `“${result.data.name}” ya está disponible para incorporarlo a otros planes.`,
+        returnTo: isNewMealLibraryItem ? "meal-library" : undefined,
+        confirmLabel: isNewMealLibraryItem ? "Ver mealpreps" : undefined
       });
     }
 
@@ -4446,10 +4584,13 @@ function App() {
     const result = await deleteMealLibraryItem(item.id);
 
     if (result.error || !result.configured) {
-      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el plato."));
+      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el mealprep."));
     } else {
-      if (mealLibraryForm.id === item.id) resetMealLibraryForm();
-      setMealLibraryMessage("Plato eliminado de biblioteca.");
+      if (mealLibraryForm.id === item.id) {
+        resetMealLibraryForm();
+        setMealLibraryEditorOpen(false);
+      }
+      setMealLibraryMessage("Mealprep eliminado.");
       await refreshMealLibrary({ silent: true });
     }
 
@@ -4461,7 +4602,7 @@ function App() {
       setAdminError("Tu cuenta no tiene acceso de administración.");
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar los platos",
+        title: "No pudimos guardar los mealpreps",
         message: "Esta cuenta no tiene permisos para administrar la biblioteca."
       });
       return;
@@ -4473,11 +4614,11 @@ function App() {
       .map(({ index }) => index);
 
     if (pendingIndexes.length === 0) {
-      setAdminMessage("Todos los platos con contenido ya están guardados en Biblioteca.");
+      setAdminMessage("Todos los mealpreps con contenido ya están guardados.");
       setBackofficeFeedback({
         status: "success",
-        title: "Los platos ya están guardados",
-        message: "No hay platos nuevos pendientes de guardar para reutilizarlos."
+        title: "Los mealpreps ya están guardados",
+        message: "No hay mealpreps nuevos pendientes de guardar."
       });
       return;
     }
@@ -4487,7 +4628,7 @@ function App() {
     setAdminMessage("");
     setBackofficeFeedback({
       status: "saving",
-      title: "Guardando los platos",
+      title: "Guardando los mealpreps",
       message: "Estamos preparando cada ficha para que puedas reutilizarla en otros planes."
     });
 
@@ -4498,7 +4639,7 @@ function App() {
       for (const index of pendingIndexes) {
         const meal = nextItems[index];
         if (!meal.name.trim()) {
-          throw new Error(`Plato ${index + 1}: agrega un nombre antes de guardarlo en la Biblioteca.`);
+          throw new Error(`Mealprep ${index + 1}: agrega un nombre antes de guardarlo.`);
         }
 
         const nutritionFacts = parseJsonObject(meal.nutritionFacts);
@@ -4523,7 +4664,7 @@ function App() {
         });
 
         if (result.error || !result.configured) {
-          throw new Error(getSupabaseErrorMessage(result.error, `No pudimos guardar el plato ${index + 1} en la Biblioteca.`));
+          throw new Error(getSupabaseErrorMessage(result.error, `No pudimos guardar el mealprep ${index + 1}.`));
         }
 
         nextItems[index] = { ...meal, libraryMealId: result.data.id, sku: result.data.sku };
@@ -4534,18 +4675,18 @@ function App() {
       setMenuForm((current) => ({ ...current, includedItems: nextItems }));
       setMealLibrary((current) => [...current.filter((item) => !saved.some((savedItem) => savedItem.id === item.id)), ...saved]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
-      setAdminMessage(`${saved.length} plato${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"} en Biblioteca.`);
+      setAdminMessage(`${saved.length} mealprep${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"}.`);
       setBackofficeFeedback({
         status: "success",
-        title: saved.length === 1 ? "Plato guardado" : "Platos guardados",
-        message: `${saved.length} plato${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.`
+        title: saved.length === 1 ? "Mealprep guardado" : "Mealpreps guardados",
+        message: `${saved.length} mealprep${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.`
       });
     } catch (error) {
-      const message = error.message || "No pudimos guardar los platos en Biblioteca.";
+      const message = error.message || "No pudimos guardar los mealpreps.";
       setAdminError(message);
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar los platos",
+        title: "No pudimos guardar los mealpreps",
         message
       });
     } finally {
@@ -4558,7 +4699,7 @@ function App() {
       setAdminError("Tu cuenta no tiene acceso de administración.");
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar el plato",
+        title: "No pudimos guardar el mealprep",
         message: "Esta cuenta no tiene permisos para administrar la biblioteca."
       });
       return;
@@ -4566,11 +4707,11 @@ function App() {
 
     const meal = menuForm.includedItems[index];
     if (!meal?.name.trim()) {
-      const message = `Agrega un nombre al plato ${index + 1} antes de guardarlo.`;
+      const message = `Agrega un nombre al mealprep ${index + 1} antes de guardarlo.`;
       setAdminError(message);
       setBackofficeFeedback({
         status: "error",
-        title: "Falta el nombre del plato",
+        title: "Falta el nombre del mealprep",
         message
       });
       return;
@@ -4580,7 +4721,7 @@ function App() {
     try {
       nutritionFacts = parseJsonObject(meal.nutritionFacts);
     } catch (error) {
-      setAdminError(`Plato ${index + 1}: ${error.message}`);
+      setAdminError(`Mealprep ${index + 1}: ${error.message}`);
       setBackofficeFeedback({
         status: "error",
         title: "Revisa la información nutricional",
@@ -4594,7 +4735,7 @@ function App() {
     setAdminMessage("");
     setBackofficeFeedback({
       status: "saving",
-      title: "Guardando el plato",
+      title: "Guardando el mealprep",
       message: `Estamos preparando la ficha de “${meal.name}”.`
     });
 
@@ -4619,11 +4760,11 @@ function App() {
     });
 
     if (result.error || !result.configured) {
-      const message = getSupabaseErrorMessage(result.error, `No pudimos guardar el plato ${index + 1} en la biblioteca.`);
+      const message = getSupabaseErrorMessage(result.error, `No pudimos guardar el mealprep ${index + 1}.`);
       setAdminError(message);
       setBackofficeFeedback({
         status: "error",
-        title: "No pudimos guardar el plato",
+        title: "No pudimos guardar el mealprep",
         message
       });
     } else {
@@ -4636,10 +4777,10 @@ function App() {
       }));
       setMealLibrary((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
-      setAdminMessage(`“${result.data.name}” quedó guardado en Biblioteca de platos.`);
+      setAdminMessage(`“${result.data.name}” quedó guardado en Mealpreps.`);
       setBackofficeFeedback({
         status: "success",
-        title: "Plato guardado",
+        title: "Mealprep guardado",
         message: `“${result.data.name}” ya está disponible para reutilizarlo en otros planes.`
       });
     }
@@ -4723,7 +4864,7 @@ function App() {
       allergens: dishForm.allergens
     }));
     setSelectedLibraryMealId("");
-    setAdminMessage(`Plato “${libraryItem.name}” cargado como producto familiar.`);
+    setAdminMessage(`Mealprep “${libraryItem.name}” cargado como mealprep familiar.`);
   }
 
   async function getBackofficeAccessToken() {
@@ -5002,6 +5143,7 @@ function App() {
     setMealPrepEditorOpen(false);
     setIncludedMealEditorIndex(null);
     setFamilyProductEditorOpen(false);
+    setMealLibraryEditorOpen(false);
     setAdminOpen(false);
     if (window.location.hash === "#backoffice") {
       window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
@@ -6275,6 +6417,7 @@ function App() {
   async function submitMenuItem(event) {
     event.preventDefault();
     const savingFamilyProduct = menuForm.productType === "family";
+    const isNewMenuItem = !menuForm.id;
 
     if (!activeIsAdmin) {
       setAdminError("Tu cuenta no tiene acceso de administración.");
@@ -6306,8 +6449,8 @@ function App() {
       title: menuForm.id
         ? "Guardando cambios"
         : savingFamilyProduct
-          ? "Creando el plato familiar"
-          : "Creando el meal prep",
+          ? "Creando el mealprep familiar"
+          : "Creando el plan",
       message: "Estamos actualizando la ficha y el contenido que verá el cliente."
     });
 
@@ -6327,7 +6470,7 @@ function App() {
       setBackofficeFeedback({
         status: "error",
         title: "No pudimos guardar",
-        message: error.message || "Revisa la información de los platos e inténtalo nuevamente."
+        message: error.message || "Revisa la información de los mealpreps e inténtalo nuevamente."
       });
       return;
     }
@@ -6366,7 +6509,10 @@ function App() {
     });
 
     if (result.error || !result.configured) {
-      const message = getSupabaseErrorMessage(result.error, "No pudimos guardar el meal prep.");
+      const message = getSupabaseErrorMessage(
+        result.error,
+        savingFamilyProduct ? "No pudimos guardar el mealprep familiar." : "No pudimos guardar el plan."
+      );
       setAdminError(message);
       setBackofficeFeedback({
         status: "error",
@@ -6376,15 +6522,17 @@ function App() {
     } else {
       clearMenuFormDraft();
       setMenuForm(menuItemToForm(result.data));
-      setAdminMessage(savingFamilyProduct ? "Plato familiar guardado." : "Meal prep guardado.");
+      setAdminMessage(savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado.");
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
       setBackofficeFeedback({
         status: "success",
-        title: savingFamilyProduct ? "Plato familiar guardado" : "Meal prep guardado",
+        title: savingFamilyProduct ? "Mealprep familiar guardado" : "Plan guardado",
         message: result.data.isActive
           ? `“${result.data.name}” ya está actualizado y visible en la tienda.`
-          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.`
+          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.`,
+        returnTo: isNewMenuItem ? (savingFamilyProduct ? "family-products" : "meal-preps") : undefined,
+        confirmLabel: isNewMenuItem ? (savingFamilyProduct ? "Ver mealpreps familiares" : "Ver planes") : undefined
       });
     }
 
@@ -6401,7 +6549,7 @@ function App() {
     const result = await deleteMenuItem(item.id);
 
     if (result.error || !result.configured) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el meal prep."));
+      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el producto."));
     } else {
       if (menuForm.id === item.id) {
         if (item.productType === "family") {
@@ -6413,7 +6561,7 @@ function App() {
           setIncludedMealEditorIndex(null);
         }
       }
-      setAdminMessage(item.productType === "family" ? "Plato familiar eliminado." : "Meal prep eliminado.");
+      setAdminMessage(item.productType === "family" ? "Mealprep familiar eliminado." : "Plan eliminado.");
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
     }
@@ -6425,7 +6573,8 @@ function App() {
     setAdminError("Completa los campos obligatorios antes de guardar. Tu borrador se mantiene protegido en este navegador.");
     const publicationIssues = getMenuFormPublicationIssues(menuForm);
     if (publicationIssues.length > 0) {
-      setAdminError(`El meal prep sigue como borrador. Para guardarlo en el catálogo completa: ${publicationIssues.join(", ")}.`);
+      const draftLabel = menuForm.productType === "family" ? "mealprep familiar" : "plan";
+      setAdminError(`El ${draftLabel} sigue como borrador. Para guardarlo en el catálogo completa: ${publicationIssues.join(", ")}.`);
       return;
     }
 
@@ -6493,10 +6642,19 @@ function App() {
     if (!query) return familyProductItems;
 
     return familyProductItems.filter((item) =>
-      [item.name, item.tag, item.sku]
+      [item.name, item.tag, item.sku, item.allergens]
         .some((value) => String(value || "").toLocaleLowerCase("es").includes(query))
     );
   }, [adminItems, familyProductSearch]);
+  const filteredMealLibraryItems = useMemo(() => {
+    const query = mealLibrarySearch.trim().toLocaleLowerCase("es");
+    if (!query) return mealLibrary;
+
+    return mealLibrary.filter((item) =>
+      [item.name, item.tag, item.sku, item.ingredients, item.allergens]
+        .some((value) => String(value || "").toLocaleLowerCase("es").includes(query))
+    );
+  }, [mealLibrary, mealLibrarySearch]);
   const relevantMenuFormDrafts = menuFormDrafts.filter((draft) =>
     (draft.form.productType || "plan") === menuForm.productType
   );
@@ -6519,21 +6677,21 @@ function App() {
     ...(activeIsAdmin
       ? [
           {
+            id: "family-products",
+            label: "Mealpreps familiares",
+            description: `${familyProductItems.length} configurados · ${activeFamilyProductCount} activos`,
+            Icon: CookingPot
+          },
+          {
             id: "meal-preps",
-            label: "Meal preps",
+            label: "Planes",
             description: `${mealPrepItems.length} configurados · ${activeMealPrepCount} activos`,
             Icon: Utensils
           },
           {
             id: "meal-library",
-            label: "Platos reutilizables",
-            description: `${mealLibrary.length} reutilizables`,
-            Icon: CookingPot
-          },
-          {
-            id: "family-products",
-            label: "Platos familiares",
-            description: `${familyProductItems.length} configurados · ${activeFamilyProductCount} activos`,
+            label: "Mealpreps",
+            description: `${mealLibrary.length} disponibles`,
             Icon: CookingPot
           },
           {
@@ -6549,22 +6707,10 @@ function App() {
             Icon: Users
           },
           {
-            id: "shop",
-            label: "Tienda",
-            description: "Hero, CTA y bloque de suscripción",
+            id: "web-content",
+            label: "Contenido web",
+            description: `${communityActivities.length} actividades · ${subscriptionPopupForm.enabled ? "Lightbox activo" : "Lightbox inactivo"}`,
             Icon: Store
-          },
-          {
-            id: "lightbox",
-            label: "Lightbox",
-            description: subscriptionPopupForm.enabled ? "Popup activo" : "Popup inactivo",
-            Icon: Sparkles
-          },
-          {
-            id: "community",
-            label: "Comunidad",
-            description: `${communityActivities.length} actividades`,
-            Icon: Users
           },
           {
             id: "site-tools",
@@ -6920,7 +7066,7 @@ function App() {
         </div>
         <div className="meal-prep-copy">
           <p className="eyebrow">Tu semana resuelta</p>
-          <h2>Meal Prep <span>Antinflamatorio</span></h2>
+          <h2>Mealprep <span>Antinflamatorio</span></h2>
           <span className="section-rule" aria-hidden="true" />
           <p>
             Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
@@ -6941,7 +7087,7 @@ function App() {
         <a
           className="meal-prep-visual-link"
           href={shopPath}
-          aria-label="Ir a la tienda de meal preps"
+            aria-label="Ir a la tienda"
           onClick={openShopPage}
         >
           <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
@@ -6958,7 +7104,7 @@ function App() {
           <h2>Un espacio para aprender, compartir y crecer desde la <span>raíz.</span></h2>
           <span className="section-rule" aria-hidden="true" />
           <p>
-            Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá del plato.
+            Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá de cada mealprep.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
             {communityLandingFeatures.map(({ title, icon: Icon }) => (
@@ -7132,7 +7278,7 @@ function App() {
                     className="icon-button"
                     type="button"
                     onClick={() => refreshAdminItems()}
-                    aria-label="Actualizar meal preps"
+                    aria-label="Actualizar catálogo"
                     disabled={adminLoading}
                   >
                     <RefreshCw size={20} />
@@ -7148,7 +7294,7 @@ function App() {
               <div className="backoffice-state">
                 <ShieldCheck size={34} />
                 <h3>Acceso administrador</h3>
-                <p>Inicia sesión con una cuenta autorizada para gestionar los meal preps.</p>
+                <p>Inicia sesión con una cuenta autorizada para gestionar mealpreps, planes y contenido.</p>
                 <button className="primary-button" type="button" onClick={() => {
                   setAdminOpen(false);
                   setAccountOpen(true);
@@ -7194,22 +7340,22 @@ function App() {
                   <div className="backoffice-module-content">
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
-                  <section className="backoffice-catalog-panel" aria-label="Meal preps configurados">
+                  <section className="backoffice-catalog-panel" aria-label="Planes configurados">
                     <div className="backoffice-catalog-heading">
                       <div>
                         <p className="eyebrow">Catálogo</p>
-                        <h3>Meal preps</h3>
+                        <h3>Planes</h3>
                         <p>{mealPrepItems.length} planes configurados. Abre uno para editarlo o crea un plan nuevo.</p>
                       </div>
                       <button className="primary-button" type="button" onClick={startNewMealPrep}>
                         <Plus size={17} />
-                        Nuevo meal prep
+                        Nuevo plan
                       </button>
                     </div>
 
                     <div className="backoffice-catalog-tools">
                       <label className="backoffice-search-field">
-                        <span>Buscar meal prep</span>
+                        <span>Buscar plan</span>
                         <div>
                           <Search size={18} aria-hidden="true" />
                           <input
@@ -7226,7 +7372,7 @@ function App() {
                     </div>
 
                     {adminLoading ? (
-                      <p className="backoffice-muted">Cargando meal preps…</p>
+                      <p className="backoffice-muted">Cargando planes…</p>
                     ) : filteredMealPrepItems.length > 0 ? (
                       <div className="backoffice-catalog-list">
                         {filteredMealPrepItems.map((item) => (
@@ -7259,7 +7405,7 @@ function App() {
                     ) : (
                       <div className="backoffice-catalog-empty">
                         <Search size={24} aria-hidden="true" />
-                        <p>{mealPrepSearch ? "No encontramos meal preps con esa búsqueda." : "Aún no hay meal preps configurados."}</p>
+                        <p>{mealPrepSearch ? "No encontramos planes con esa búsqueda." : "Aún no hay planes configurados."}</p>
                       </div>
                     )}
                   </section>
@@ -7269,12 +7415,12 @@ function App() {
                   <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMenuItem}>
                     <div className="backoffice-form-head">
                       <div className="backoffice-workspace-title">
-                        <button className="backoffice-back-button" type="button" onClick={closeMealPrepEditor} aria-label="Volver al listado de meal preps">
+                        <button className="backoffice-back-button" type="button" onClick={closeMealPrepEditor} aria-label="Volver al listado de planes">
                           <ArrowLeft size={19} />
                         </button>
                         <div>
-                          <p className="backoffice-breadcrumb">Meal preps / {menuForm.id ? "Editar" : "Nuevo"}</p>
-                          <h3 id="meal-prep-editor-title">{menuForm.name || "Nuevo meal prep"}</h3>
+                          <p className="backoffice-breadcrumb">Planes / {menuForm.id ? "Editar" : "Nuevo"}</p>
+                          <h3 id="meal-prep-editor-title">{menuForm.name || "Nuevo plan"}</h3>
                         </div>
                       </div>
                       <div className="backoffice-form-head-actions">
@@ -7337,13 +7483,13 @@ function App() {
                     </div>
 
                     <p className="backoffice-intro-note">
-                      Un meal prep reúne varios platos. Su información nutricional, tags y beneficios se obtienen automáticamente desde esos platos.
+                      Un plan semanal o mensual reúne una caja de mealpreps. Cada mealprep conserva su propia ficha nutricional, tags y beneficios.
                     </p>
 
-                    <div className="backoffice-editor-tabs" role="tablist" aria-label="Secciones del meal prep">
+                    <div className="backoffice-editor-tabs" role="tablist" aria-label="Secciones del plan">
                       {[
                         ["general", "Información general"],
-                        ["dishes", `Platos (${menuForm.includedItems.length})`],
+                        ["dishes", `Mealpreps (${menuForm.includedItems.length})`],
                         ["publication", "Publicación"]
                       ].map(([id, label]) => (
                         <button
@@ -7364,7 +7510,7 @@ function App() {
                         <header>
                           <p className="eyebrow">Paso 1</p>
                           <h4 id="meal-prep-general-title">Información del plan</h4>
-                          <p>Define cómo se presenta el meal prep y las fotos de su caja completa.</p>
+                          <p>Define cómo se presenta el plan y las fotos de su caja completa.</p>
                         </header>
                     <div className="backoffice-grid">
                       <label>
@@ -7380,7 +7526,7 @@ function App() {
                       </label>
                       <label>
                         Etiqueta
-                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="5 meal preps / 1 semana…" />
+                        <input name="tag" value={menuForm.tag} onChange={updateMenuForm} placeholder="5 mealpreps / 1 semana…" />
                       </label>
                       <label>
                         Precio CLP
@@ -7425,7 +7571,7 @@ function App() {
                           <p>Revisa el estado del plan y deja los ajustes técnicos sólo para casos especiales.</p>
                         </header>
                     <details className="backoffice-advanced-fields" open>
-                      <summary>Ajustes avanzados del meal prep</summary>
+                      <summary>Ajustes avanzados del plan</summary>
                       <p>El código interno se genera automáticamente. Sólo cambia los otros campos si necesitas un ajuste especial.</p>
                       <div className="backoffice-grid">
                         <label>
@@ -7454,27 +7600,27 @@ function App() {
                         <div className="backoffice-list-top">
                           <div>
                             <p className="eyebrow">Paso 2</p>
-                            <h3>Platos del meal prep</h3>
-                            <p className="backoffice-section-copy">Cada plato conserva su propia nutrición, tags y beneficios. El meal prep los hereda automáticamente.</p>
+                            <h3>Mealpreps del plan</h3>
+                            <p className="backoffice-section-copy">Cada mealprep conserva su propia nutrición, tags y beneficios. El plan los reúne sin duplicar su información.</p>
                           </div>
                           <div className="included-editor-actions">
                             <select
-                              aria-label="Plato desde biblioteca"
+                              aria-label="Mealprep disponible"
                               value={selectedLibraryMealId}
                               onChange={(event) => setSelectedLibraryMealId(event.target.value)}
                             >
-                              <option value="">Biblioteca de platos</option>
+                              <option value="">Mealpreps disponibles</option>
                               {mealLibrary.filter((item) => item.isActive).map((item) => (
                                 <option key={item.id} value={item.id}>{item.name}</option>
                               ))}
                             </select>
                             <button className="backoffice-command" type="button" onClick={addSelectedLibraryMealToPlan} disabled={!selectedLibraryMealId}>
                               <Plus size={17} />
-                              Cargar plato
+                              Cargar mealprep
                             </button>
                             <button className="backoffice-command" type="button" onClick={addIncludedMeal}>
                               <Plus size={17} />
-                              Nuevo plato
+                              Nuevo mealprep
                             </button>
                           </div>
                         </div>
@@ -7482,11 +7628,11 @@ function App() {
                         {menuForm.includedItems.length === 0 ? (
                           <div className="backoffice-dish-empty">
                             <CookingPot size={28} aria-hidden="true" />
-                            <h4>Este meal prep aún no tiene platos</h4>
-                            <p>Crea un plato desde cero o añade uno ya guardado en Platos reutilizables.</p>
+                            <h4>Este plan aún no tiene mealpreps</h4>
+                            <p>Crea un mealprep desde cero o añade uno ya guardado en Mealpreps.</p>
                             <button className="primary-button" type="button" onClick={addIncludedMeal}>
                               <Plus size={17} />
-                              Crear primer plato
+                              Crear primer mealprep
                             </button>
                           </div>
                         ) : (
@@ -7502,10 +7648,10 @@ function App() {
                                     )}
                                   </span>
                                   <span className="backoffice-dish-copy">
-                                    <small>Plato {mealIndex + 1}{meal.libraryMealId ? " · Reutilizable" : " · Dentro de este meal prep"}</small>
-                                    <strong>{meal.name || "Plato sin nombre"}</strong>
+                                    <small>Mealprep {mealIndex + 1}{meal.libraryMealId ? " · Guardado" : " · Dentro de este plan"}</small>
+                                    <strong>{meal.name || "Mealprep sin nombre"}</strong>
                                     <span>
-                                      {meal.tag || "Sin etiqueta"}
+                                      {normalizeMealprepCopy(meal.tag) || "Sin etiqueta"}
                                       {meal.benefitAssignments?.length ? ` · ${meal.benefitAssignments.length} beneficios` : ""}
                                     </span>
                                   </span>
@@ -7517,14 +7663,14 @@ function App() {
                                     onClick={() => openIncludedMealEditor(mealIndex)}
                                   >
                                     <Pencil size={16} />
-                                    Editar plato
+                                    Editar mealprep
                                   </button>
                                   <button
                                     className="backoffice-icon-command"
                                     type="button"
                                     onClick={() => removeIncludedMeal(mealIndex)}
-                                    aria-label={`Eliminar plato ${mealIndex + 1}`}
-                                    title="Quitar del meal prep"
+                                    aria-label={`Eliminar mealprep ${mealIndex + 1}`}
+                                    title="Quitar del plan"
                                   >
                                     <Trash2 size={16} />
                                   </button>
@@ -7550,22 +7696,22 @@ function App() {
                                 className="backoffice-back-button"
                                 type="button"
                                 onClick={closeIncludedMealEditor}
-                                aria-label="Volver al meal prep"
+                                aria-label="Volver al plan"
                               >
                                 <ArrowLeft size={19} />
                               </button>
                               <div>
                                 <p className="backoffice-breadcrumb">
-                                  Meal preps / {menuForm.name || "Nuevo meal prep"} / Plato {includedMealEditorIndex + 1}
+                                  Planes / {menuForm.name || "Nuevo plan"} / Mealprep {includedMealEditorIndex + 1}
                                 </p>
-                                <h3 id="included-meal-editor-title">{activeIncludedMeal.name || "Nuevo plato"}</h3>
+                                <h3 id="included-meal-editor-title">{activeIncludedMeal.name || "Nuevo mealprep"}</h3>
                               </div>
                             </div>
                             <button
                               className="icon-button"
                               type="button"
                               onClick={closeIncludedMealEditor}
-                              aria-label="Cerrar editor del plato"
+                              aria-label="Cerrar editor del mealprep"
                             >
                               <X size={20} />
                             </button>
@@ -7574,20 +7720,20 @@ function App() {
                           <div className="backoffice-editing-context">
                             <CookingPot size={20} aria-hidden="true" />
                             <div>
-                              <span>Estás editando un plato dentro de</span>
-                              <strong>{menuForm.name || "este nuevo meal prep"}</strong>
+                              <span>Estás editando un mealprep dentro de</span>
+                              <strong>{menuForm.name || "este nuevo plan"}</strong>
                             </div>
                             <small>Código automático: {activeIncludedMeal.sku}</small>
                           </div>
 
-                          <div className="backoffice-editor-mode" role="group" aria-label="Nivel de edición del plato">
+                          <div className="backoffice-editor-mode" role="group" aria-label="Nivel de edición del mealprep">
                             <button
                               className={activeIncludedMeal.editorMode === "express" ? "is-active" : ""}
                               type="button"
                               onClick={() => updateIncludedMealForm(includedMealEditorIndex, "editorMode", "express")}
                             >
                               Rápida
-                              <small>Nombre, descripción y foto principal</small>
+                              <small>Nombre, descripción, alérgenos y foto principal</small>
                             </button>
                             <button
                               className={activeIncludedMeal.editorMode === "advanced" ? "is-active" : ""}
@@ -7595,7 +7741,7 @@ function App() {
                               onClick={() => updateIncludedMealForm(includedMealEditorIndex, "editorMode", "advanced")}
                             >
                               Completa
-                              <small>Nutrición, beneficios, ingredientes y ambas fotos</small>
+                              <small>Nutrición, alérgenos, beneficios y ambas fotos</small>
                             </button>
                           </div>
 
@@ -7604,12 +7750,12 @@ function App() {
                               <section className="backoffice-editor-section" aria-labelledby="quick-dish-title">
                                 <header>
                                   <p className="eyebrow">Edición rápida</p>
-                                  <h4 id="quick-dish-title">Lo esencial del plato</h4>
-                                  <p>Estos datos bastan para dejar el plato creado y continuar armando el meal prep.</p>
+                                  <h4 id="quick-dish-title">Lo esencial del mealprep</h4>
+                                  <p>Estos datos bastan para dejar el mealprep creado y continuar armando el plan.</p>
                                 </header>
                                 <div className="backoffice-grid">
                                   <label>
-                                    Nombre del plato
+                                    Nombre del mealprep
                                     <input
                                       value={activeIncludedMeal.name}
                                       onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "name", event.target.value)}
@@ -7631,7 +7777,16 @@ function App() {
                                     rows="4"
                                     value={activeIncludedMeal.description}
                                     onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "description", event.target.value)}
-                                    placeholder="Describe qué incluye y qué caracteriza a este plato…"
+                                    placeholder="Describe qué incluye y qué caracteriza a este mealprep…"
+                                  />
+                                </label>
+                                <label className="backoffice-wide">
+                                  Alérgenos (campo libre)
+                                  <textarea
+                                    rows="3"
+                                    value={activeIncludedMeal.allergens}
+                                    onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "allergens", event.target.value)}
+                                    placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…"
                                   />
                                 </label>
                                 <BackofficePhotoEditor
@@ -7649,7 +7804,7 @@ function App() {
                               </section>
                             ) : (
                               <>
-                                <div className="backoffice-editor-tabs is-secondary" role="tablist" aria-label="Información completa del plato">
+                                <div className="backoffice-editor-tabs is-secondary" role="tablist" aria-label="Información completa del mealprep">
                                   {[
                                     ["details", "Información"],
                                     ["wellness", "Nutrición y beneficios"],
@@ -7671,12 +7826,12 @@ function App() {
                                 {includedMealEditorTab === "details" && (
                                   <section className="backoffice-editor-section" aria-labelledby="complete-dish-details-title">
                                     <header>
-                                      <p className="eyebrow">Plato</p>
+                                      <p className="eyebrow">Mealprep</p>
                                       <h4 id="complete-dish-details-title">Información e ingredientes</h4>
                                     </header>
                                     <div className="backoffice-grid">
                                       <label>
-                                        Nombre del plato
+                                        Nombre del mealprep
                                         <input
                                           value={activeIncludedMeal.name}
                                           onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "name", event.target.value)}
@@ -7698,7 +7853,7 @@ function App() {
                                         rows="4"
                                         value={activeIncludedMeal.description}
                                         onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "description", event.target.value)}
-                                        placeholder="Describe el plato incluido…"
+                                        placeholder="Describe el mealprep incluido…"
                                       />
                                     </label>
                                     <div className="backoffice-grid">
@@ -7712,12 +7867,12 @@ function App() {
                                         />
                                       </label>
                                       <label>
-                                        Alérgenos
+                                        Alérgenos (campo libre)
                                         <textarea
                                           rows="6"
                                           value={activeIncludedMeal.allergens}
                                           onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "allergens", event.target.value)}
-                                          placeholder={"Pescado\nFrutos secos…"}
+                                          placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…"
                                         />
                                       </label>
                                     </div>
@@ -7727,9 +7882,9 @@ function App() {
                                 {includedMealEditorTab === "wellness" && (
                                   <section className="backoffice-editor-section" aria-labelledby="complete-dish-wellness-title">
                                     <header>
-                                      <p className="eyebrow">Ficha del plato</p>
+                                      <p className="eyebrow">Ficha del mealprep</p>
                                       <h4 id="complete-dish-wellness-title">Nutrición y beneficios</h4>
-                                      <p>Esta información pertenece al plato y será heredada por el meal prep.</p>
+                                      <p>Esta información pertenece al mealprep y se mostrará dentro de los planes que lo incluyan.</p>
                                     </header>
                                     <label className="backoffice-wide">
                                       Descripción nutricional
@@ -7758,6 +7913,7 @@ function App() {
                                       onChange={(benefitAssignments) => updateIncludedMealForm(includedMealEditorIndex, "benefitAssignments", benefitAssignments)}
                                       idPrefix={`plan-${activeIncludedMeal.id}-benefit`}
                                       onCreateQuick={createQuickBenefitDefinition}
+                                      onUploadIcon={uploadBenefitIcon}
                                     />
                                   </section>
                                 )}
@@ -7766,8 +7922,8 @@ function App() {
                                   <section className="backoffice-editor-section" aria-labelledby="complete-dish-photos-title">
                                     <header>
                                       <p className="eyebrow">Imágenes</p>
-                                      <h4 id="complete-dish-photos-title">Fotos del plato</h4>
-                                      <p>La segunda foto aparecerá al pasar el cursor sobre el plato.</p>
+                                      <h4 id="complete-dish-photos-title">Fotos del mealprep</h4>
+                                      <p>La segunda foto aparecerá al pasar el cursor sobre el mealprep.</p>
                                     </header>
                                     <BackofficePhotoEditor
                                       primaryUrl={activeIncludedMeal.photoUrl}
@@ -7788,7 +7944,7 @@ function App() {
 
                           <div className="backoffice-nested-editor-actions">
                             <div>
-                              <span>{activeIncludedMeal.libraryMealId ? "Este plato proviene de Platos reutilizables." : "Este plato vive dentro del borrador del meal prep."}</span>
+                              <span>{activeIncludedMeal.libraryMealId ? "Este mealprep proviene del catálogo de Mealpreps." : "Este mealprep vive dentro del borrador del plan."}</span>
                               <small>Sus cambios quedarán protegidos aunque vuelvas al plan.</small>
                             </div>
                             <div>
@@ -7804,7 +7960,7 @@ function App() {
                                 </button>
                               )}
                               <button className="primary-button" type="button" onClick={closeIncludedMealEditor}>
-                                Listo, volver al meal prep
+                                Listo, volver al plan
                               </button>
                             </div>
                           </div>
@@ -7815,7 +7971,7 @@ function App() {
                     <div className="backoffice-form-actions">
                       <div className="backoffice-action-copy">
                         <span>{menuFormHasUnsavedChanges ? "Tus cambios están protegidos como borrador." : "No hay cambios pendientes."}</span>
-                        <small>Al guardar, el meal prep se actualizará junto con todos sus platos.</small>
+                        <small>Al guardar, el plan se actualizará junto con todos sus mealpreps.</small>
                       </div>
                       <div className="backoffice-action-buttons">
                         <button className="google-button" type="button" onClick={closeMealPrepEditor} disabled={adminSaving}>
@@ -7825,12 +7981,12 @@ function App() {
                         {menuForm.includedItems.some((item) => !item.libraryMealId && item.name.trim()) && (
                           <button className="backoffice-command" type="button" onClick={saveAllIncludedMealsToLibrary} disabled={adminSaving || photoUploading || includedMealSavingIndex !== null}>
                             {includedMealSavingIndex === -1 ? <RefreshCw size={17} /> : <Save size={17} />}
-                            {includedMealSavingIndex === -1 ? "Guardando platos…" : "Guardar platos para reutilizar"}
+                            {includedMealSavingIndex === -1 ? "Guardando mealpreps…" : "Guardar mealpreps"}
                           </button>
                         )}
                         <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                           {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                          {adminSaving ? "Guardando…" : "Guardar meal prep"}
+                          {adminSaving ? "Guardando…" : "Guardar plan"}
                         </button>
                       </div>
                     </div>
@@ -7841,26 +7997,49 @@ function App() {
                     )}
 
                     {activeBackofficeModule === "meal-library" && (
-                      <div className="backoffice-layout backoffice-library-layout">
-                        <aside className="backoffice-list" aria-label="Biblioteca de platos">
-                          <div className="backoffice-list-top">
-                            <h3>Platos</h3>
-                            <button className="backoffice-command" type="button" onClick={resetMealLibraryForm}>
+                      <div className="backoffice-catalog-view">
+                        <section className="backoffice-catalog-panel" aria-label="Mealpreps configurados">
+                          <div className="backoffice-catalog-heading">
+                            <div>
+                              <p className="eyebrow">Catálogo</p>
+                              <h3>Mealpreps</h3>
+                              <p>Administra las bolsas individuales que pueden formar parte de planes semanales y mensuales.</p>
+                            </div>
+                            <button className="primary-button" type="button" onClick={startNewMealLibraryItem}>
                               <Plus size={17} />
-                              Nuevo
+                              Nuevo mealprep
                             </button>
                           </div>
+
+                          <div className="backoffice-catalog-tools">
+                            <label className="backoffice-search-field">
+                              <span>Buscar mealprep</span>
+                              <div>
+                                <Search size={18} aria-hidden="true" />
+                                <input
+                                  type="search"
+                                  value={mealLibrarySearch}
+                                  onChange={(event) => setMealLibrarySearch(event.target.value)}
+                                  placeholder="Buscar por nombre o etiqueta…"
+                                />
+                              </div>
+                            </label>
+                            <p aria-live="polite">
+                              {filteredMealLibraryItems.length} {filteredMealLibraryItems.length === 1 ? "resultado" : "resultados"}
+                            </p>
+                          </div>
+
                           {mealLibraryLoading ? (
-                            <p className="backoffice-muted">Cargando platos…</p>
-                          ) : mealLibrary.length ? (
-                            <div className="backoffice-menu-stack">
-                              {mealLibrary.map((item) => (
+                            <p className="backoffice-muted">Cargando mealpreps…</p>
+                          ) : filteredMealLibraryItems.length ? (
+                            <div className="backoffice-catalog-list">
+                              {filteredMealLibraryItems.map((item) => (
                                 <article className={`backoffice-menu-card ${mealLibraryForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
-                                  <button className="backoffice-menu-main" type="button" onClick={() => setMealLibraryForm(mealLibraryItemToForm(item))}>
+                                  <button className="backoffice-menu-main" type="button" onClick={() => openMealLibraryItemForEditing(item)}>
                                     <img src={item.photoUrl || placeholderProductImage} alt="" aria-hidden="true" />
                                     <span>
                                       <strong>{item.name}</strong>
-                                      <small>{item.tag || "Sin etiqueta"}</small>
+                                      <small>{normalizeMealprepCopy(item.tag) || "Sin etiqueta"}</small>
                                     </span>
                                   </button>
                                   <div className="backoffice-card-meta">
@@ -7870,10 +8049,10 @@ function App() {
                                     </span>
                                   </div>
                                   <div className="backoffice-card-actions">
-                                    <button type="button" onClick={() => setMealLibraryForm(mealLibraryItemToForm(item))} aria-label={`Editar ${item.name}`}>
+                                    <button type="button" onClick={() => openMealLibraryItemForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
                                       <Pencil size={16} />
                                     </button>
-                                    <button type="button" onClick={() => removeMealLibraryItem(item)} aria-label={`Eliminar ${item.name}`} disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
+                                    <button type="button" onClick={() => removeMealLibraryItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
                                       <Trash2 size={16} />
                                     </button>
                                   </div>
@@ -7881,98 +8060,145 @@ function App() {
                               ))}
                             </div>
                           ) : (
-                            <p className="backoffice-muted">Sin platos en biblioteca.</p>
-                          )}
-                        </aside>
-
-                        <form className="backoffice-form" onSubmit={submitMealLibraryItem}>
-                          <div className="backoffice-form-head">
-                            <div>
-                              <p className="eyebrow">{mealLibraryForm.id ? "Editar" : "Nuevo"}</p>
-                              <h3>{mealLibraryForm.name || "Plato reutilizable"}</h3>
+                            <div className="backoffice-catalog-empty">
+                              <Search size={24} aria-hidden="true" />
+                              <p>{mealLibrarySearch ? "No encontramos mealpreps con esa búsqueda." : "Aún no hay mealpreps configurados."}</p>
                             </div>
-                            <label className="backoffice-switch">
-                              <input name="isActive" type="checkbox" checked={mealLibraryForm.isActive} onChange={updateMealLibraryForm} />
-                              <span>{mealLibraryForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.isActive ? "Activo" : "Inactivo"}</span>
-                            </label>
-                          </div>
-                          {(mealLibraryError || mealLibraryMessage) && (
-                            <p className={`backoffice-alert ${mealLibraryError ? "is-error" : "is-success"}`} role="status">
-                              {mealLibraryError || mealLibraryMessage}
-                            </p>
                           )}
-                          <div className="backoffice-grid">
-                            <label>Nombre<input required name="name" value={mealLibraryForm.name} onChange={updateMealLibraryForm} placeholder="Pollo, camote y cúrcuma…" /></label>
-                            <label>Etiqueta<input name="tag" value={mealLibraryForm.tag} onChange={updateMealLibraryForm} placeholder="Energético…" /></label>
+                        </section>
+
+                        {mealLibraryEditorOpen && (
+                          <div className="backoffice-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="meal-library-editor-title">
+                            <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMealLibraryItem}>
+                              <div className="backoffice-form-head">
+                                <div className="backoffice-workspace-title">
+                                  <button className="backoffice-back-button" type="button" onClick={closeMealLibraryEditor} aria-label="Volver al listado de mealpreps">
+                                    <ArrowLeft size={19} />
+                                  </button>
+                                  <div>
+                                    <p className="backoffice-breadcrumb">Mealpreps / {mealLibraryForm.id ? "Editar" : "Nuevo"}</p>
+                                    <h3 id="meal-library-editor-title">{mealLibraryForm.name || "Nuevo mealprep"}</h3>
+                                  </div>
+                                </div>
+                                <div className="backoffice-form-head-actions">
+                                  <label className="backoffice-switch">
+                                    <input name="isActive" type="checkbox" checked={mealLibraryForm.isActive} onChange={updateMealLibraryForm} />
+                                    <span>{mealLibraryForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.isActive ? "Activo" : "Inactivo"}</span>
+                                  </label>
+                                </div>
+                              </div>
+
+                              {(mealLibraryError || mealLibraryMessage) && (
+                                <p className={`backoffice-alert ${mealLibraryError ? "is-error" : "is-success"}`} role="status">
+                                  {mealLibraryError || mealLibraryMessage}
+                                </p>
+                              )}
+
+                              <section className="backoffice-editor-section" aria-labelledby="library-general-title">
+                                <header>
+                                  <p className="eyebrow">Mealprep</p>
+                                  <h4 id="library-general-title">Información e imágenes</h4>
+                                  <p>Esta ficha podrá incorporarse a uno o varios planes.</p>
+                                </header>
+                                <div className="backoffice-grid">
+                                  <label>Nombre<input required name="name" value={mealLibraryForm.name} onChange={updateMealLibraryForm} placeholder="Pollo, camote y cúrcuma…" /></label>
+                                  <label>Etiqueta breve<input name="tag" value={mealLibraryForm.tag} onChange={updateMealLibraryForm} placeholder="Energético…" /></label>
+                                </div>
+                                <label className="backoffice-wide">Descripción<textarea required name="description" rows="3" value={mealLibraryForm.description} onChange={updateMealLibraryForm} placeholder="Describe el mealprep…" /></label>
+                                <BackofficePhotoEditor
+                                  primaryUrl={mealLibraryForm.photoUrl}
+                                  secondaryUrl={mealLibraryForm.secondaryPhotoUrl}
+                                  onPrimaryFile={(event) => handleMealLibraryPhotoChange(event)}
+                                  onSecondaryFile={(event) => handleMealLibraryPhotoChange(event, "secondary")}
+                                  onPrimaryUrlChange={(photoUrl) => setMealLibraryForm((current) => ({ ...current, photoUrl }))}
+                                  onSecondaryUrlChange={(secondaryPhotoUrl) => setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl }))}
+                                  disabled={mealLibrarySaving || mealLibraryPhotoUploading}
+                                  uploading={mealLibraryPhotoUploading}
+                                  idPrefix="library-meal"
+                                />
+                              </section>
+
+                              <section className="backoffice-editor-section" aria-labelledby="library-wellness-title">
+                                <header>
+                                  <p className="eyebrow">Ficha del mealprep</p>
+                                  <h4 id="library-wellness-title">Nutrición y beneficios</h4>
+                                </header>
+                                <TagSelector
+                                  definitions={tagDefinitions}
+                                  value={mealLibraryForm.tagIds}
+                                  onChange={(tagIds) => setMealLibraryForm((current) => ({ ...current, tagIds }))}
+                                  idPrefix="library-tag"
+                                  onCreateQuick={createQuickTagDefinition}
+                                />
+                                <BenefitAssignmentEditor
+                                  definitions={benefitDefinitions}
+                                  value={mealLibraryForm.benefitAssignments}
+                                  onChange={(benefitAssignments) => setMealLibraryForm((current) => ({ ...current, benefitAssignments }))}
+                                  idPrefix="library-benefit"
+                                  onCreateQuick={createQuickBenefitDefinition}
+                                  onUploadIcon={uploadBenefitIcon}
+                                />
+                                <div className="backoffice-grid">
+                                  <label>Ingredientes<textarea name="ingredients" rows="5" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
+                                  <label>Alérgenos (campo libre)<textarea name="allergens" rows="5" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…" /></label>
+                                </div>
+                                <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
+                                <NutritionFactsEditor
+                                  value={mealLibraryForm.nutritionFacts}
+                                  onChange={(nutritionFacts) => setMealLibraryForm((current) => ({ ...current, nutritionFacts }))}
+                                  idPrefix="library-meal-nutrition"
+                                />
+                              </section>
+
+                              <details className="backoffice-advanced-fields">
+                                <summary>Información interna del mealprep</summary>
+                                <p>El código se genera automáticamente y no necesitas modificarlo.</p>
+                                <label>
+                                  Código automático
+                                  <input value={mealLibraryForm.sku} readOnly aria-readonly="true" />
+                                </label>
+                              </details>
+
+                              <div className="backoffice-form-actions">
+                                <div className="backoffice-action-copy">
+                                  <span>{mealLibraryForm.id ? "Editando un mealprep." : "El mealprep aparecerá en el listado al guardarlo."}</span>
+                                  <small>Podrás incorporarlo luego a planes semanales y mensuales.</small>
+                                </div>
+                                <div className="backoffice-action-buttons">
+                                  <button className="google-button" type="button" onClick={closeMealLibraryEditor} disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
+                                    <ArrowLeft size={18} />
+                                    Volver al listado
+                                  </button>
+                                  <button className="primary-button" type="submit" disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
+                                    {mealLibrarySaving ? <RefreshCw size={18} /> : <Save size={18} />}
+                                    {mealLibrarySaving ? "Guardando…" : "Guardar mealprep"}
+                                  </button>
+                                </div>
+                              </div>
+                            </form>
                           </div>
-                          <label className="backoffice-wide">Descripción<textarea required name="description" rows="3" value={mealLibraryForm.description} onChange={updateMealLibraryForm} placeholder="Describe el plato reutilizable…" /></label>
-                          <BackofficePhotoEditor
-                            primaryUrl={mealLibraryForm.photoUrl}
-                            secondaryUrl={mealLibraryForm.secondaryPhotoUrl}
-                            onPrimaryFile={(event) => handleMealLibraryPhotoChange(event)}
-                            onSecondaryFile={(event) => handleMealLibraryPhotoChange(event, "secondary")}
-                            onPrimaryUrlChange={(photoUrl) => setMealLibraryForm((current) => ({ ...current, photoUrl }))}
-                            onSecondaryUrlChange={(secondaryPhotoUrl) => setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl }))}
-                            disabled={mealLibrarySaving || mealLibraryPhotoUploading}
-                            uploading={mealLibraryPhotoUploading}
-                            idPrefix="library-meal"
-                          />
-                          <TagSelector
-                            definitions={tagDefinitions}
-                            value={mealLibraryForm.tagIds}
-                            onChange={(tagIds) => setMealLibraryForm((current) => ({ ...current, tagIds }))}
-                            idPrefix="library-tag"
-                            onCreateQuick={createQuickTagDefinition}
-                          />
-                          <BenefitAssignmentEditor
-                            definitions={benefitDefinitions}
-                            value={mealLibraryForm.benefitAssignments}
-                            onChange={(benefitAssignments) => setMealLibraryForm((current) => ({ ...current, benefitAssignments }))}
-                            idPrefix="library-benefit"
-                            onCreateQuick={createQuickBenefitDefinition}
-                          />
-                          <label className="backoffice-wide">Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
-                          <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
-                          <NutritionFactsEditor
-                            value={mealLibraryForm.nutritionFacts}
-                            onChange={(nutritionFacts) => setMealLibraryForm((current) => ({ ...current, nutritionFacts }))}
-                            idPrefix="library-meal-nutrition"
-                          />
-                          <label className="backoffice-wide">Alérgenos<textarea name="allergens" rows="3" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder={"Pescado\nFrutos secos…"} /></label>
-                          <details className="backoffice-advanced-fields">
-                            <summary>Información interna del plato</summary>
-                            <p>El código se genera automáticamente y no necesitas modificarlo.</p>
-                            <label>
-                              Código automático
-                              <input value={mealLibraryForm.sku} readOnly aria-readonly="true" />
-                            </label>
-                          </details>
-                          <div className="backoffice-form-actions">
-                            <button className="google-button" type="button" onClick={resetMealLibraryForm} disabled={mealLibrarySaving || mealLibraryPhotoUploading}><Plus size={18} />Nuevo</button>
-                            <button className="primary-button" type="submit" disabled={mealLibrarySaving || mealLibraryPhotoUploading}>{mealLibrarySaving ? <RefreshCw size={18} /> : <Save size={18} />}{mealLibrarySaving ? "Guardando…" : "Guardar plato"}</button>
-                          </div>
-                        </form>
+                        )}
                       </div>
                     )}
 
                     {activeBackofficeModule === "family-products" && (
                       <div className="backoffice-catalog-view">
-                        <section className="backoffice-catalog-panel" aria-label="Platos familiares configurados">
+                        <section className="backoffice-catalog-panel" aria-label="Mealpreps familiares configurados">
                           <div className="backoffice-catalog-heading">
                             <div>
                               <p className="eyebrow">Catálogo</p>
-                              <h3>Platos familiares</h3>
+                              <h3>Mealpreps familiares</h3>
                               <p>Preparaciones de formato familiar vendidas directamente, con su propia ficha nutricional.</p>
                             </div>
                             <button className="primary-button" type="button" onClick={startNewFamilyProduct}>
                               <Plus size={17} />
-                              Nuevo plato familiar
+                              Nuevo mealprep familiar
                             </button>
                           </div>
 
                           <div className="backoffice-catalog-tools">
                             <label className="backoffice-search-field">
-                              <span>Buscar plato familiar</span>
+                              <span>Buscar mealprep familiar</span>
                               <div>
                                 <Search size={18} aria-hidden="true" />
                                 <input
@@ -7989,7 +8215,7 @@ function App() {
                           </div>
 
                           {adminLoading ? (
-                            <p className="backoffice-muted">Cargando platos familiares…</p>
+                            <p className="backoffice-muted">Cargando mealpreps familiares…</p>
                           ) : filteredFamilyProductItems.length ? (
                             <div className="backoffice-catalog-list">
                               {filteredFamilyProductItems.map((item) => (
@@ -8022,7 +8248,7 @@ function App() {
                           ) : (
                             <div className="backoffice-catalog-empty">
                               <Search size={24} aria-hidden="true" />
-                              <p>{familyProductSearch ? "No encontramos platos con esa búsqueda." : "Aún no hay platos familiares configurados."}</p>
+                              <p>{familyProductSearch ? "No encontramos mealpreps con esa búsqueda." : "Aún no hay mealpreps familiares configurados."}</p>
                             </div>
                           )}
                         </section>
@@ -8032,12 +8258,12 @@ function App() {
                             <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMenuItem}>
                               <div className="backoffice-form-head">
                                 <div className="backoffice-workspace-title">
-                                  <button className="backoffice-back-button" type="button" onClick={closeFamilyProductEditor} aria-label="Volver al listado de platos familiares">
+                                  <button className="backoffice-back-button" type="button" onClick={closeFamilyProductEditor} aria-label="Volver al listado de mealpreps familiares">
                                     <ArrowLeft size={19} />
                                   </button>
                                   <div>
-                                    <p className="backoffice-breadcrumb">Platos familiares / {menuForm.id ? "Editar" : "Nuevo"}</p>
-                                    <h3 id="family-product-editor-title">{menuForm.name || "Nuevo plato familiar"}</h3>
+                                    <p className="backoffice-breadcrumb">Mealpreps familiares / {menuForm.id ? "Editar" : "Nuevo"}</p>
+                                    <h3 id="family-product-editor-title">{menuForm.name || "Nuevo mealprep familiar"}</h3>
                                   </div>
                                 </div>
                                 <div className="backoffice-form-head-actions">
@@ -8061,10 +8287,10 @@ function App() {
                               </div>
 
                               <p className="backoffice-intro-note">
-                                Un plato familiar es una preparación individual de formato grande. Por eso su nutrición, tags y beneficios se editan en esta ficha.
+                                Un mealprep familiar es una preparación de formato grande. Su nutrición, tags y beneficios se editan en esta ficha.
                               </p>
 
-                              <div className="backoffice-editor-tabs" role="tablist" aria-label="Secciones del plato familiar">
+                              <div className="backoffice-editor-tabs" role="tablist" aria-label="Secciones del mealprep familiar">
                                 {[
                                   ["general", "Información general"],
                                   ["wellness", "Nutrición y beneficios"],
@@ -8086,16 +8312,16 @@ function App() {
                               {familyProductEditorTab === "general" && (
                                 <section className="backoffice-editor-section" aria-labelledby="family-general-title">
                                   <header>
-                                    <p className="eyebrow">Plato familiar</p>
+                                    <p className="eyebrow">Mealprep familiar</p>
                                     <h4 id="family-general-title">Información del producto</h4>
-                                    <p>Puedes comenzar desde un plato reutilizable y ajustar después el precio y formato familiar.</p>
+                                    <p>Puedes comenzar desde un mealprep y ajustar después el precio y formato familiar.</p>
                                   </header>
 
                                   <div className="backoffice-library-loader">
                                     <label>
-                                      Usar un plato ya guardado
+                                      Usar un mealprep ya guardado
                                       <select value={selectedLibraryMealId} onChange={(event) => setSelectedLibraryMealId(event.target.value)}>
-                                        <option value="">Seleccionar plato reutilizable…</option>
+                                        <option value="">Seleccionar mealprep…</option>
                                         {mealLibrary.filter((item) => item.isActive).map((item) => (
                                           <option key={item.id} value={item.id}>{item.name}</option>
                                         ))}
@@ -8126,7 +8352,7 @@ function App() {
                                   </div>
                                   <label className="backoffice-wide">
                                     Descripción
-                                    <textarea required name="description" rows="4" value={menuForm.description} onChange={updateMenuForm} placeholder="Describe el plato familiar…" />
+                                    <textarea required name="description" rows="4" value={menuForm.description} onChange={updateMenuForm} placeholder="Describe el mealprep familiar…" />
                                   </label>
                                   <BackofficePhotoEditor
                                     primaryUrl={menuForm.photoUrl}
@@ -8151,9 +8377,9 @@ function App() {
                               {familyProductEditorTab === "wellness" && (
                                 <section className="backoffice-editor-section" aria-labelledby="family-wellness-title">
                                   <header>
-                                    <p className="eyebrow">Ficha del plato</p>
+                                    <p className="eyebrow">Ficha del mealprep</p>
                                     <h4 id="family-wellness-title">Nutrición y beneficios</h4>
-                                    <p>Esta información se mostrará en el detalle del plato familiar.</p>
+                                    <p>Esta información se mostrará en el detalle del mealprep familiar.</p>
                                   </header>
                                   <TagSelector
                                     definitions={tagDefinitions}
@@ -8174,6 +8400,7 @@ function App() {
                                     }}
                                     idPrefix="family-benefit"
                                     onCreateQuick={createQuickBenefitDefinition}
+                                    onUploadIcon={uploadBenefitIcon}
                                   />
                                   <div className="backoffice-grid">
                                     <label>
@@ -8181,13 +8408,13 @@ function App() {
                                       <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Pollo\nCamote\nCúrcuma…"} />
                                     </label>
                                     <label>
-                                      Alérgenos
-                                      <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos…"} />
+                                      Alérgenos (campo libre)
+                                      <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…" />
                                     </label>
                                   </div>
                                   <label className="backoffice-wide">
                                     Descripción nutricional
-                                    <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Resume el aporte nutricional del plato…" />
+                                    <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Resume el aporte nutricional del mealprep…" />
                                   </label>
                                   <NutritionFactsEditor
                                     value={menuForm.nutritionFacts}
@@ -8244,7 +8471,7 @@ function App() {
                               <div className="backoffice-form-actions">
                                 <div className="backoffice-action-copy">
                                   <span>{menuFormHasUnsavedChanges ? "Tus cambios están protegidos como borrador." : "No hay cambios pendientes."}</span>
-                                  <small>Al guardar, esta ficha se actualizará en Platos familiares.</small>
+                                  <small>Al guardar, esta ficha se actualizará en Mealpreps familiares.</small>
                                 </div>
                                 <div className="backoffice-action-buttons">
                                   <button className="google-button" type="button" onClick={closeFamilyProductEditor} disabled={adminSaving}>
@@ -8253,7 +8480,7 @@ function App() {
                                   </button>
                                   <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                                     {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                                    {adminSaving ? "Guardando…" : "Guardar plato familiar"}
+                                    {adminSaving ? "Guardando…" : "Guardar mealprep familiar"}
                                   </button>
                                 </div>
                               </div>
@@ -8313,11 +8540,9 @@ function App() {
                       </section>
                     )}
 
-                    {activeBackofficeModule === "shop" && (
-                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="shop-settings-title">
-                      <div className="backoffice-list-top">
-                        <h3 id="shop-settings-title">Tienda</h3>
-                      </div>
+                    {activeBackofficeModule === "web-content" && webContentTab === "shop" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" id="web-content-shop" role="tabpanel" aria-labelledby="web-content-title">
+                      <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
                       {(shopSettingsError || shopSettingsMessage) && (
                         <p className={`backoffice-alert ${shopSettingsError ? "is-error" : "is-success"}`} role="status">
                           {shopSettingsError || shopSettingsMessage}
@@ -8406,11 +8631,9 @@ function App() {
                     </section>
                     )}
 
-                    {activeBackofficeModule === "lightbox" && (
-                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="subscription-popup-admin-title">
-                      <div className="backoffice-list-top">
-                        <h3 id="subscription-popup-admin-title">Lightbox</h3>
-                      </div>
+                    {activeBackofficeModule === "web-content" && webContentTab === "lightbox" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" id="web-content-lightbox" role="tabpanel" aria-labelledby="web-content-title">
+                      <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
                       {(subscriptionPopupAdminError || subscriptionPopupAdminMessage) && (
                         <p className={`backoffice-alert ${subscriptionPopupAdminError ? "is-error" : "is-success"}`} role="status">
                           {subscriptionPopupAdminError || subscriptionPopupAdminMessage}
@@ -8486,11 +8709,9 @@ function App() {
                     </section>
                     )}
 
-                    {activeBackofficeModule === "community" && (
-                    <section className="backoffice-side-panel backoffice-module-panel" aria-labelledby="community-admin-title">
-                      <div className="backoffice-list-top">
-                        <h3 id="community-admin-title">Comunidad</h3>
-                      </div>
+                    {activeBackofficeModule === "web-content" && webContentTab === "community" && (
+                    <section className="backoffice-side-panel backoffice-module-panel" id="web-content-community" role="tabpanel" aria-labelledby="web-content-title">
+                      <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
                     <form className="community-admin-form" onSubmit={addCommunityActivity}>
                       <label>
                         Fecha
@@ -8607,7 +8828,7 @@ function App() {
                                 <option value="">Todo el bucket</option>
                                 <option value="assets/">Assets</option>
                                 <option value="images/">Imágenes</option>
-                                <option value="images/meal-preps/">Meal preps</option>
+                                <option value="images/meal-preps/">Mealpreps</option>
                               </select>
                               <button className="backoffice-command" type="button" onClick={() => loadR2Objects()} disabled={r2Loading}>
                                 {r2Loading ? <RefreshCw size={17} /> : <FolderOpen size={17} />}
@@ -8797,7 +9018,7 @@ function App() {
               </>
             )}
           </section>
-          <BackofficeSaveLightbox feedback={backofficeFeedback} onClose={() => setBackofficeFeedback(null)} />
+          <BackofficeSaveLightbox feedback={backofficeFeedback} onClose={acknowledgeBackofficeFeedback} />
         </div>
       )}
 
@@ -8821,7 +9042,7 @@ function App() {
           <p className="eyebrow">Tu carrito</p>
           <h2 id="cart-title">Pedido Fullness</h2>
           {cart.length === 0 ? (
-            <p className="empty-cart">Aún no agregas platos. Elige un favorito para empezar.</p>
+            <p className="empty-cart">Aún no agregas productos. Elige un favorito para empezar.</p>
           ) : (
             <>
               <div className="cart-items">
