@@ -38,7 +38,6 @@ for (const product of products) {
   if (!product.name || !product.slug || !product.description) issues.push(`${label}: faltan datos editoriales obligatorios.`);
   if (!Number.isInteger(Number(product.price_clp)) || Number(product.price_clp) < 0) issues.push(`${label}: precio CLP inválido.`);
   if (!product.photo_url || product.photo_url.includes("fullness-food-crop.jpeg")) issues.push(`${label}: requiere una foto principal real.`);
-  if (!product.secondary_photo_url) issues.push(`${label}: requiere una segunda foto para el hover.`);
 
   if (product.product_type === "plan") {
     if (!Array.isArray(product.included_items) || product.included_items.length === 0) {
@@ -47,8 +46,8 @@ for (const product of products) {
     }
 
     for (const meal of product.included_items) {
-      if (!meal?.name || !meal?.photoUrl || !meal?.secondaryPhotoUrl) {
-        issues.push(`${label}: cada meal prep incluido requiere nombre y ambas fotos.`);
+      if (!meal?.name || !meal?.photoUrl) {
+        issues.push(`${label}: cada meal prep incluido requiere nombre y foto principal.`);
         break;
       }
     }

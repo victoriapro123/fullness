@@ -931,39 +931,47 @@ export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
     };
   }
 
-  const base64 = await fileToBase64(file);
-  const response = await fetch("/api/upload-media", {
-    method: "POST",
-    headers: {
-      "authorization": `Bearer ${token}`,
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({
-      contentType: file.type || "image/jpeg",
-      dataBase64: base64,
-      fileName: file.name,
-      folder
-    })
-  });
+  try {
+    const base64 = await fileToBase64(file);
+    const response = await fetch("/api/upload-media", {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${token}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        contentType: file.type || "image/jpeg",
+        dataBase64: base64,
+        fileName: file.name,
+        folder
+      })
+    });
 
-  const payload = await response.json().catch(() => ({}));
+    const payload = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return {
+        data: null,
+        error: new Error(payload.error || "No pudimos subir la imagen a R2."),
+        configured: true
+      };
+    }
+
+    return {
+      data: {
+        photoUrl: payload.publicUrl,
+        photoStoragePath: payload.key
+      },
+      error: null,
+      configured: true
+    };
+  } catch (error) {
     return {
       data: null,
-      error: new Error(payload.error || "No pudimos subir la imagen a R2."),
+      error: error instanceof Error ? error : new Error("No pudimos preparar la imagen para subirla."),
       configured: true
     };
   }
-
-  return {
-    data: {
-      photoUrl: payload.publicUrl,
-      photoStoragePath: payload.key
-    },
-    error: null,
-    configured: true
-  };
 }
 
 async function fileToBase64(file) {

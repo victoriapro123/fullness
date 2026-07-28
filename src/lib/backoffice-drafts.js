@@ -19,7 +19,8 @@ function mapDraft(row) {
     title: row.title || "Mealprep sin título",
     form: row.payload?.form || {},
     createdAt: row.created_at || "",
-    updatedAt: row.updated_at || ""
+    updatedAt: row.updated_at || "",
+    isServerCopy: true
   };
 }
 

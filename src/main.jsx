@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowUpRight,
   CalendarDays,
@@ -750,6 +751,8 @@ const subscriptionPopupSubscribersStorageKey = "fullness_subscription_popup_subs
 const menuFormDraftStorageKey = "fullness_menu_form_drafts_v2";
 const legacyMenuFormDraftStorageKey = "fullness_menu_form_draft_v1";
 const menuFormDraftScope = "meal-prep";
+const mealLibraryDraftStorageKey = "fullness_meal_library_drafts_v1";
+const mealLibraryDraftScope = "meal-library";
 const adminAccessModeStorageKey = "fullness_carlos_access_mode";
 const adminPersonaEmail = "carlos@prof3sional.com";
 const checkoutCartStorageKey = "fullness_checkout_cart";
@@ -1247,7 +1250,7 @@ function createIncludedMealForm(index = 0) {
   return {
     id,
     sku: createAutomaticSku("PL"),
-    editorMode: "express",
+    editorMode: "advanced",
     libraryMealId: "",
     name: "",
     tag: "",
@@ -1355,15 +1358,23 @@ function createMenuForm(displayOrder = 0) {
   };
 }
 
-function createMenuFormDraftKey(menuItemId = "") {
-  if (menuItemId) return `item:${menuItemId}`;
+function createBackofficeDraftKey(prefix, recordId = "") {
+  if (recordId) return `${prefix}:${recordId}`;
 
   const suffix =
     typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-  return `new:${suffix}`;
+  return `${prefix}:new:${suffix}`;
+}
+
+function createMenuFormDraftKey(menuItemId = "") {
+  return createBackofficeDraftKey("item", menuItemId);
+}
+
+function createMealLibraryDraftKey(mealLibraryItemId = "") {
+  return createBackofficeDraftKey("library", mealLibraryItemId);
 }
 
 function normalizeMenuFormDraft(rawDraft) {
@@ -1386,7 +1397,8 @@ function normalizeMenuFormDraft(rawDraft) {
       (form.productType === "family" ? "Mealprep familiar sin título" : "Plan sin título"),
     form,
     createdAt: rawDraft.createdAt || rawDraft.created_at || updatedAt,
-    updatedAt
+    updatedAt,
+    isServerCopy: Boolean(rawDraft.isServerCopy)
   };
 }
 
@@ -1447,6 +1459,95 @@ function isMeaningfulMenuFormDraft(form) {
     form.photoUrl?.trim() ||
     form.secondaryPhotoUrl?.trim() ||
     form.includedItems?.some((item) => item.name?.trim() || item.description?.trim() || item.photoUrl?.trim())
+  );
+}
+
+function normalizeMealLibraryDraft(rawDraft) {
+  if (!rawDraft?.form || typeof rawDraft.form !== "object") return null;
+
+  const defaults = createMealLibraryForm();
+  const form = {
+    ...defaults,
+    ...rawDraft.form,
+    benefitAssignments: Array.isArray(rawDraft.form.benefitAssignments) ? rawDraft.form.benefitAssignments : defaults.benefitAssignments,
+    tagIds: Array.isArray(rawDraft.form.tagIds) ? rawDraft.form.tagIds : defaults.tagIds
+  };
+  const updatedAt = rawDraft.updatedAt || rawDraft.updated_at || rawDraft.savedAt || Date.now();
+
+  return {
+    id: rawDraft.id || "",
+    draftKey: rawDraft.draftKey || rawDraft.draft_key || createMealLibraryDraftKey(form.id),
+    title: rawDraft.title || form.name?.trim() || "Mealprep sin titulo",
+    form,
+    createdAt: rawDraft.createdAt || rawDraft.created_at || updatedAt,
+    updatedAt,
+    isServerCopy: Boolean(rawDraft.isServerCopy)
+  };
+}
+
+function mergeMealLibraryDrafts(...collections) {
+  const merged = new Map();
+
+  collections.flat().forEach((rawDraft) => {
+    const draft = normalizeMealLibraryDraft(rawDraft);
+    if (!draft) return;
+
+    const previous = merged.get(draft.draftKey);
+    if (!previous || new Date(draft.updatedAt).getTime() >= new Date(previous.updatedAt).getTime()) {
+      merged.set(draft.draftKey, draft);
+    }
+  });
+
+  return [...merged.values()].sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
+}
+
+function getStoredMealLibraryDrafts() {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(mealLibraryDraftStorageKey) || "[]");
+    return mergeMealLibraryDrafts(Array.isArray(stored) ? stored : []);
+  } catch {
+    return [];
+  }
+}
+
+function storeMealLibraryDrafts(drafts) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (drafts.length) {
+      window.localStorage.setItem(mealLibraryDraftStorageKey, JSON.stringify(drafts));
+    } else {
+      window.localStorage.removeItem(mealLibraryDraftStorageKey);
+    }
+  } catch {
+    // The authenticated copy remains available when localStorage cannot be written.
+  }
+}
+
+function isMeaningfulMealLibraryDraft(form) {
+  if (!form || typeof form !== "object") return false;
+
+  const textFields = [
+    form.name,
+    form.tag,
+    form.description,
+    form.photoUrl,
+    form.secondaryPhotoUrl,
+    form.benefitTags,
+    form.ingredients,
+    form.nutritionDescription,
+    form.nutritionHighlights,
+    form.allergens
+  ];
+  const nutritionFacts = String(form.nutritionFacts || "").trim();
+
+  return Boolean(
+    textFields.some((value) => String(value || "").trim()) ||
+    (nutritionFacts && nutritionFacts !== "{}") ||
+    form.benefitAssignments?.length ||
+    form.tagIds?.length
   );
 }
 
@@ -1529,13 +1630,13 @@ function updateNutritionFactValue(value, field, nextValue) {
   return JSON.stringify(next, null, 2);
 }
 
-function NutritionFactsEditor({ value, onChange, idPrefix }) {
+function NutritionFactsEditor({ value, onChange, idPrefix, required = false }) {
   const facts = readNutritionFactsForEditor(value);
 
   return (
     <fieldset className="backoffice-nutrition-editor">
       <legend>Información nutricional por porción</legend>
-      <p>Completa sólo los valores que quieras mostrar en la ficha del mealprep.</p>
+      <p>{required ? "Agrega al menos un valor nutricional antes de guardar el mealprep." : "Completa los valores que quieras mostrar en la ficha del mealprep."}</p>
       <div className="backoffice-nutrition-grid">
         {nutritionFactEditorFields.map((field) => {
           const aliasValue = field.aliases?.map((alias) => facts[alias]).find((item) => item !== undefined);
@@ -1554,6 +1655,7 @@ function NutritionFactsEditor({ value, onChange, idPrefix }) {
                   step={field.step}
                   value={fieldValue}
                   onChange={(event) => onChange(updateNutritionFactValue(value, field, event.target.value))}
+                  aria-required={required && field.key === "calories"}
                   autoComplete="off"
                   placeholder="0"
                 />
@@ -1576,6 +1678,8 @@ function BackofficePhotoEditor({
   onSecondaryUrlChange,
   disabled,
   uploading,
+  primaryError = "",
+  secondaryError = "",
   idPrefix,
   showSecondary = true
 }) {
@@ -1607,13 +1711,14 @@ function BackofficePhotoEditor({
             />
           </label>
           {primaryUrl && <p className="backoffice-image-ready"><CheckCircle2 size={16} aria-hidden="true" />Foto lista</p>}
+          {primaryError && <p className="backoffice-photo-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{primaryError}</p>}
         </section>
 
         {showSecondary && (
           <section className="backoffice-photo-block">
             <header>
-              <strong>Segunda foto</strong>
-              <small>Aparece cuando el cliente pasa el cursor sobre la imagen.</small>
+              <strong>Segunda foto (opcional)</strong>
+              <small>Si la agregas, aparece cuando el cliente pasa el cursor sobre la imagen.</small>
             </header>
             <div className="backoffice-photo-preview">
               {secondaryUrl ? (
@@ -1635,6 +1740,7 @@ function BackofficePhotoEditor({
               />
             </label>
             {secondaryUrl && <p className="backoffice-image-ready"><CheckCircle2 size={16} aria-hidden="true" />Foto lista</p>}
+            {secondaryError && <p className="backoffice-photo-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{secondaryError}</p>}
           </section>
         )}
       </div>
@@ -1751,6 +1857,27 @@ function WebsiteContentHeading({ activeTab, onChange }) {
   );
 }
 
+function validateIncludedMealForSaving(item, index) {
+  const issues = [];
+
+  if (!item.name?.trim()) issues.push("nombre");
+  if (!item.description?.trim()) issues.push("descripción");
+  if (!item.photoUrl?.trim()) issues.push("foto principal");
+  if (!item.nutritionDescription?.trim()) issues.push("descripción nutricional");
+
+  const nutritionFacts = parseJsonObject(item.nutritionFacts);
+  const hasNutritionValue = Object.values(nutritionFacts).some((value) =>
+    value !== "" && value !== null && value !== undefined
+  );
+  if (!hasNutritionValue) issues.push("al menos un valor nutricional");
+
+  if (issues.length > 0) {
+    throw new Error(`Mealprep ${index + 1}: completa ${issues.join(", ")}.`);
+  }
+
+  return nutritionFacts;
+}
+
 function parseIncludedMealsFromForm(items, tagDefinitions = []) {
   return items
     .map((item, index) => {
@@ -1765,9 +1892,9 @@ function parseIncludedMealsFromForm(items, tagDefinitions = []) {
       let nutritionFacts = {};
 
       try {
-        nutritionFacts = parseJsonObject(item.nutritionFacts);
+        nutritionFacts = validateIncludedMealForSaving(item, index);
       } catch (error) {
-        throw new Error(`Mealprep ${index + 1}: ${error.message}`);
+        throw new Error(error.message || `Mealprep ${index + 1}: revisa la información nutricional.`);
       }
 
       return {
@@ -1816,6 +1943,33 @@ function getMenuFormPublicationIssues(form) {
 
 function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
   return error?.message || fallback;
+}
+
+function getPhotoUploadErrorMessage(error, fallback = "No pudimos subir la foto.") {
+  const message = getSupabaseErrorMessage(error, fallback);
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("tamaño máximo") || normalized.includes("supera el tamaño")) {
+    return "La imagen supera el tamaño máximo permitido. Reduce su peso e inténtalo nuevamente.";
+  }
+
+  if (normalized.includes("formato de imagen") || normalized.includes("formato") || normalized.includes("content type")) {
+    return "El archivo no es una imagen compatible. Usa JPG, PNG, WEBP, GIF o AVIF.";
+  }
+
+  if (normalized.includes("sesión") || normalized.includes("iniciar sesión") || normalized.includes("permisos")) {
+    return "Tu sesión de administradora ya no es válida. Inicia sesión nuevamente e inténtalo otra vez.";
+  }
+
+  if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
+    return "No pudimos conectar con el almacenamiento. Revisa tu conexión e inténtalo nuevamente.";
+  }
+
+  if (normalized.includes("r2 respondió")) {
+    return "El almacenamiento rechazó la imagen. Inténtalo otra vez; si persiste, avisa al equipo.";
+  }
+
+  return message;
 }
 
 function getMemberLabel(user) {
@@ -3529,6 +3683,7 @@ function App() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadError, setPhotoUploadError] = useState({ target: "", message: "" });
   const [shopSettings, setShopSettings] = useState(createDefaultShopSettings);
   const [shopSettingsForm, setShopSettingsForm] = useState(() => createShopSettingsForm());
   const [shopSettingsSaving, setShopSettingsSaving] = useState(false);
@@ -3556,11 +3711,19 @@ function App() {
   const menuFormDraftSyncVersionRef = useRef(0);
   const [mealLibrary, setMealLibrary] = useState([]);
   const [mealLibraryForm, setMealLibraryForm] = useState(createMealLibraryForm);
+  const [mealLibraryFormHasUnsavedChanges, setMealLibraryFormHasUnsavedChanges] = useState(false);
+  const [mealLibraryDraftKey, setMealLibraryDraftKey] = useState(() => createMealLibraryDraftKey());
+  const [mealLibraryDrafts, setMealLibraryDrafts] = useState([]);
+  const [mealLibraryDraftStatus, setMealLibraryDraftStatus] = useState("idle");
+  const mealLibraryDraftRestoredRef = useRef(false);
+  const mealLibraryDraftSyncTimerRef = useRef(null);
+  const mealLibraryDraftSyncVersionRef = useRef(0);
   const [mealLibrarySearch, setMealLibrarySearch] = useState("");
   const [mealLibraryEditorOpen, setMealLibraryEditorOpen] = useState(false);
   const [mealLibraryLoading, setMealLibraryLoading] = useState(false);
   const [mealLibrarySaving, setMealLibrarySaving] = useState(false);
   const [mealLibraryPhotoUploading, setMealLibraryPhotoUploading] = useState(false);
+  const [mealLibraryPhotoUploadError, setMealLibraryPhotoUploadError] = useState({ target: "", message: "" });
   const [mealLibraryMessage, setMealLibraryMessage] = useState("");
   const [mealLibraryError, setMealLibraryError] = useState("");
   const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
@@ -4081,7 +4244,7 @@ function App() {
     setMenuForm(draft.form);
     setMenuFormDraftKey(draft.draftKey);
     setMenuFormHasUnsavedChanges(true);
-    setMenuFormDraftStatus("synced");
+    setMenuFormDraftStatus(draft.isServerCopy ? "synced" : "local");
     setAdminError("");
     if (announce) setAdminMessage(`Borrador recuperado: ${draft.title}.`);
   }
@@ -4108,6 +4271,118 @@ function App() {
     setMenuFormHasUnsavedChanges(true);
     setAdminError("");
     setAdminMessage("");
+  }
+
+  function buildMealLibraryDraft(form = mealLibraryForm, draftKey = mealLibraryDraftKey) {
+    return normalizeMealLibraryDraft({
+      draftKey,
+      title: form.name?.trim() || "Mealprep sin titulo",
+      form,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  function persistMealLibraryDraftLocally(form = mealLibraryForm, draftKey = mealLibraryDraftKey) {
+    if (!isMeaningfulMealLibraryDraft(form)) return null;
+
+    const draft = buildMealLibraryDraft(form, draftKey);
+    const nextDrafts = mergeMealLibraryDrafts(
+      getStoredMealLibraryDrafts().filter((item) => item.draftKey !== draft.draftKey),
+      [draft]
+    );
+
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    return draft;
+  }
+
+  async function syncMealLibraryDraft(draft, version) {
+    if (!draft || !authUser?.id || !activeIsAdmin) {
+      setMealLibraryDraftStatus(draft ? "local" : "idle");
+      return;
+    }
+
+    const result = await saveBackofficeDraft({
+      ownerId: authUser.id,
+      scope: mealLibraryDraftScope,
+      draftKey: draft.draftKey,
+      title: draft.title,
+      form: draft.form
+    });
+
+    if (mealLibraryDraftSyncVersionRef.current !== version) return;
+
+    if (result.error || !result.configured) {
+      setMealLibraryDraftStatus("local");
+      return;
+    }
+
+    const nextDrafts = mergeMealLibraryDrafts(
+      getStoredMealLibraryDrafts().filter((item) => item.draftKey !== result.data.draftKey),
+      [result.data]
+    );
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    setMealLibraryDraftStatus("synced");
+  }
+
+  function protectCurrentMealLibraryDraft() {
+    if (!mealLibraryFormHasUnsavedChanges) return;
+
+    const draft = persistMealLibraryDraftLocally();
+    if (!draft || !authUser?.id || !activeIsAdmin) return;
+
+    const version = ++mealLibraryDraftSyncVersionRef.current;
+    void syncMealLibraryDraft(draft, version);
+  }
+
+  function clearMealLibraryDraft(draftKey = mealLibraryDraftKey) {
+    setMealLibraryFormHasUnsavedChanges(false);
+    mealLibraryDraftSyncVersionRef.current += 1;
+    window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
+
+    const nextDrafts = getStoredMealLibraryDrafts().filter((draft) => draft.draftKey !== draftKey);
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    setMealLibraryDraftStatus("idle");
+
+    if (activeIsAdmin) {
+      void deleteBackofficeDraft({ draftKey, scope: mealLibraryDraftScope });
+    }
+  }
+
+  function restoreMealLibraryDraft(draft, { announce = true } = {}) {
+    if (!draft) return;
+
+    setMealLibraryForm(draft.form);
+    setMealLibraryDraftKey(draft.draftKey);
+    setMealLibraryFormHasUnsavedChanges(true);
+    setMealLibraryDraftStatus(draft.isServerCopy ? "synced" : "local");
+    setMealLibraryError("");
+    setMealLibraryMessage("");
+    if (announce) setAdminMessage(`Borrador recuperado: ${draft.title}.`);
+  }
+
+  function discardCurrentMealLibraryDraft() {
+    if (!mealLibraryFormHasUnsavedChanges || !window.confirm("¿Descartar este borrador? Esta acción no se puede deshacer.")) return;
+
+    const original = mealLibraryForm.id ? mealLibrary.find((item) => item.id === mealLibraryForm.id) : null;
+    clearMealLibraryDraft();
+    if (original) {
+      setMealLibraryForm(mealLibraryItemToForm(original));
+      setMealLibraryDraftKey(createMealLibraryDraftKey(original.id));
+    } else {
+      setMealLibraryForm(createMealLibraryForm());
+      setMealLibraryDraftKey(createMealLibraryDraftKey());
+    }
+    setMealLibraryError("");
+    setMealLibraryMessage("Borrador descartado.");
+  }
+
+  function markMealLibraryFormChanged() {
+    setMealLibraryFormHasUnsavedChanges(true);
+    setMealLibraryError("");
+    setMealLibraryMessage("");
   }
 
   function selectMenuItemForEditing(item) {
@@ -4206,7 +4481,11 @@ function App() {
   }
 
   function openMealLibraryItemForEditing(item) {
+    protectCurrentMealLibraryDraft();
     setMealLibraryForm(mealLibraryItemToForm(item));
+    setMealLibraryDraftKey(createMealLibraryDraftKey(item.id));
+    setMealLibraryFormHasUnsavedChanges(false);
+    setMealLibraryDraftStatus("idle");
     setMealLibraryError("");
     setMealLibraryMessage("");
     setMealLibraryEditorOpen(true);
@@ -4218,6 +4497,7 @@ function App() {
   }
 
   function closeMealLibraryEditor() {
+    protectCurrentMealLibraryDraft();
     setMealLibraryEditorOpen(false);
   }
 
@@ -4254,6 +4534,7 @@ function App() {
     if (nextWebContentTab) setWebContentTab(nextWebContentTab);
     if (activeBackofficeModule !== nextModuleId) {
       protectCurrentMenuFormDraft();
+      protectCurrentMealLibraryDraft();
     }
     setMealPrepEditorOpen(false);
     setIncludedMealEditorIndex(null);
@@ -4508,14 +4789,20 @@ function App() {
 
   function updateMealLibraryForm(event) {
     const { checked, name, type, value } = event.target;
+    markMealLibraryFormChanged();
     setMealLibraryForm((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value
     }));
   }
 
-  function resetMealLibraryForm() {
+  function resetMealLibraryForm({ force = false } = {}) {
+    if (!force) protectCurrentMealLibraryDraft();
+
     setMealLibraryForm(createMealLibraryForm());
+    setMealLibraryDraftKey(createMealLibraryDraftKey());
+    setMealLibraryFormHasUnsavedChanges(false);
+    setMealLibraryDraftStatus("idle");
     setMealLibraryError("");
     setMealLibraryMessage("");
   }
@@ -4560,7 +4847,11 @@ function App() {
         message
       });
     } else {
+      clearMealLibraryDraft();
       setMealLibraryForm(mealLibraryItemToForm(result.data));
+      setMealLibraryDraftKey(createMealLibraryDraftKey(result.data.id));
+      setMealLibraryFormHasUnsavedChanges(false);
+      setMealLibraryDraftStatus("idle");
       setMealLibraryMessage("Mealprep guardado.");
       await refreshMealLibrary({ silent: true });
       setBackofficeFeedback({
@@ -4597,40 +4888,48 @@ function App() {
     setMealLibrarySaving(false);
   }
 
-  async function saveAllIncludedMealsToLibrary() {
+  async function saveAllIncludedMealsToLibrary({ silent = false } = {}) {
     if (!activeIsAdmin) {
-      setAdminError("Tu cuenta no tiene acceso de administración.");
-      setBackofficeFeedback({
-        status: "error",
-        title: "No pudimos guardar los mealpreps",
-        message: "Esta cuenta no tiene permisos para administrar la biblioteca."
-      });
-      return;
+      const message = "Tu cuenta no tiene acceso de administración.";
+      if (!silent) {
+        setAdminError(message);
+        setBackofficeFeedback({
+          status: "error",
+          title: "No pudimos guardar los mealpreps",
+          message: "Esta cuenta no tiene permisos para administrar la biblioteca."
+        });
+      }
+      if (silent) throw new Error(message);
+      return null;
     }
 
     const pendingIndexes = menuForm.includedItems
       .map((meal, index) => ({ meal, index }))
-      .filter(({ meal }) => !meal.libraryMealId && [meal.name, meal.tag, meal.description, meal.photoUrl, meal.ingredients, meal.allergens].some((value) => String(value || "").trim()))
+      .filter(({ meal }) => [meal.name, meal.tag, meal.description, meal.photoUrl, meal.ingredients, meal.allergens].some((value) => String(value || "").trim()))
       .map(({ index }) => index);
 
     if (pendingIndexes.length === 0) {
-      setAdminMessage("Todos los mealpreps con contenido ya están guardados.");
-      setBackofficeFeedback({
-        status: "success",
-        title: "Los mealpreps ya están guardados",
-        message: "No hay mealpreps nuevos pendientes de guardar."
-      });
-      return;
+      if (!silent) {
+        setAdminMessage("Todos los mealpreps con contenido ya están guardados.");
+        setBackofficeFeedback({
+          status: "success",
+          title: "Los mealpreps ya están guardados",
+          message: "No hay mealpreps nuevos pendientes de guardar."
+        });
+      }
+      return menuForm.includedItems;
     }
 
     setIncludedMealSavingIndex(-1);
-    setAdminError("");
-    setAdminMessage("");
-    setBackofficeFeedback({
-      status: "saving",
-      title: "Guardando los mealpreps",
-      message: "Estamos preparando cada ficha para que puedas reutilizarla en otros planes."
-    });
+    if (!silent) {
+      setAdminError("");
+      setAdminMessage("");
+      setBackofficeFeedback({
+        status: "saving",
+        title: "Guardando los mealpreps",
+        message: "Estamos guardando la ficha de cada mealprep."
+      });
+    }
 
     try {
       const nextItems = menuForm.includedItems.map((item) => ({ ...item }));
@@ -4638,12 +4937,9 @@ function App() {
 
       for (const index of pendingIndexes) {
         const meal = nextItems[index];
-        if (!meal.name.trim()) {
-          throw new Error(`Mealprep ${index + 1}: agrega un nombre antes de guardarlo.`);
-        }
-
-        const nutritionFacts = parseJsonObject(meal.nutritionFacts);
+        const nutritionFacts = validateIncludedMealForSaving(meal, index);
         const result = await saveMealLibraryItem({
+          id: meal.libraryMealId || undefined,
           name: meal.name,
           tag: meal.tag,
           description: meal.description,
@@ -4675,20 +4971,27 @@ function App() {
       setMenuForm((current) => ({ ...current, includedItems: nextItems }));
       setMealLibrary((current) => [...current.filter((item) => !saved.some((savedItem) => savedItem.id === item.id)), ...saved]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
-      setAdminMessage(`${saved.length} mealprep${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"}.`);
-      setBackofficeFeedback({
-        status: "success",
-        title: saved.length === 1 ? "Mealprep guardado" : "Mealpreps guardados",
-        message: `${saved.length} mealprep${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.`
-      });
+      if (!silent) {
+        setAdminMessage(`${saved.length} mealprep${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"}.`);
+        setBackofficeFeedback({
+          status: "success",
+          title: saved.length === 1 ? "Mealprep guardado" : "Mealpreps guardados",
+          message: `${saved.length} mealprep${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.`
+        });
+      }
+      return nextItems;
     } catch (error) {
       const message = error.message || "No pudimos guardar los mealpreps.";
       setAdminError(message);
-      setBackofficeFeedback({
-        status: "error",
-        title: "No pudimos guardar los mealpreps",
-        message
-      });
+      if (!silent) {
+        setBackofficeFeedback({
+          status: "error",
+          title: "No pudimos guardar los mealpreps",
+          message
+        });
+      }
+      if (silent) throw error;
+      return null;
     } finally {
       setIncludedMealSavingIndex(null);
     }
@@ -4706,26 +5009,18 @@ function App() {
     }
 
     const meal = menuForm.includedItems[index];
-    if (!meal?.name.trim()) {
-      const message = `Agrega un nombre al mealprep ${index + 1} antes de guardarlo.`;
-      setAdminError(message);
-      setBackofficeFeedback({
-        status: "error",
-        title: "Falta el nombre del mealprep",
-        message
-      });
-      return;
-    }
+    if (!meal) return;
 
     let nutritionFacts = {};
     try {
-      nutritionFacts = parseJsonObject(meal.nutritionFacts);
+      nutritionFacts = validateIncludedMealForSaving(meal, index);
     } catch (error) {
-      setAdminError(`Mealprep ${index + 1}: ${error.message}`);
+      const message = error.message || `Mealprep ${index + 1}: revisa la información nutricional.`;
+      setAdminError(message);
       setBackofficeFeedback({
         status: "error",
-        title: "Revisa la información nutricional",
-        message: `No pudimos guardar “${meal.name}”.`
+        title: "Completa la ficha del mealprep",
+        message
       });
       return;
     }
@@ -4740,6 +5035,7 @@ function App() {
     });
 
     const result = await saveMealLibraryItem({
+      id: meal.libraryMealId || undefined,
       name: meal.name,
       tag: meal.tag,
       description: meal.description,
@@ -4792,13 +5088,18 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const photoLabel = target === "secondary" ? "Segunda foto" : "Foto principal";
     setMealLibraryPhotoUploading(true);
     setMealLibraryError("");
+    setMealLibraryPhotoUploadError({ target: "", message: "" });
     const result = await uploadMenuPhoto(file);
 
     if (result.error || !result.configured) {
-      setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
+      const message = getPhotoUploadErrorMessage(result.error, "No pudimos subir la foto.");
+      setMealLibraryPhotoUploadError({ target, message });
+      setMealLibraryError(`${photoLabel}: ${message}`);
     } else {
+      markMealLibraryFormChanged();
       setMealLibraryForm((current) => target === "secondary"
         ? { ...current, secondaryPhotoUrl: result.data.photoUrl, secondaryPhotoStoragePath: result.data.photoStoragePath }
         : { ...current, photoUrl: result.data.photoUrl, photoStoragePath: result.data.photoStoragePath });
@@ -5422,6 +5723,36 @@ function App() {
   }, [activeIsAdmin, authUser?.id]);
 
   useEffect(() => {
+    if (!activeIsAdmin || mealLibraryDraftRestoredRef.current) return undefined;
+
+    let ignore = false;
+    mealLibraryDraftRestoredRef.current = true;
+
+    async function restoreMealLibraryDrafts() {
+      const localDrafts = getStoredMealLibraryDrafts();
+      let mergedDrafts = localDrafts;
+
+      if (authUser?.id) {
+        const result = await listBackofficeDrafts({ ownerId: authUser.id, scope: mealLibraryDraftScope });
+        if (!ignore && result.configured && !result.error) {
+          mergedDrafts = mergeMealLibraryDrafts(localDrafts, result.data);
+          storeMealLibraryDrafts(mergedDrafts);
+        }
+      }
+
+      if (ignore) return;
+      setMealLibraryDrafts(mergedDrafts);
+      setMealLibraryDraftStatus("idle");
+    }
+
+    void restoreMealLibraryDrafts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeIsAdmin, authUser?.id]);
+
+  useEffect(() => {
     if (!menuFormHasUnsavedChanges || typeof window === "undefined") return undefined;
 
     const draft = persistMenuFormDraftLocally();
@@ -5437,16 +5768,55 @@ function App() {
     window.clearTimeout(menuFormDraftSyncTimerRef.current);
     menuFormDraftSyncTimerRef.current = window.setTimeout(() => {
       void syncMenuFormDraft(draft, version);
-    }, 600);
+    }, 350);
 
     return () => window.clearTimeout(menuFormDraftSyncTimerRef.current);
   }, [menuForm, menuFormDraftKey, menuFormHasUnsavedChanges, activeIsAdmin, authUser?.id]);
 
   useEffect(() => {
+    if (!mealLibraryFormHasUnsavedChanges || typeof window === "undefined") return undefined;
+
+    const draft = persistMealLibraryDraftLocally();
+    if (!draft) return undefined;
+
+    if (!authUser?.id || !activeIsAdmin) {
+      setMealLibraryDraftStatus("local");
+      return undefined;
+    }
+
+    const version = ++mealLibraryDraftSyncVersionRef.current;
+    setMealLibraryDraftStatus("saving");
+    window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
+    mealLibraryDraftSyncTimerRef.current = window.setTimeout(() => {
+      void syncMealLibraryDraft(draft, version);
+    }, 350);
+
+    return () => window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
+  }, [mealLibraryForm, mealLibraryDraftKey, mealLibraryFormHasUnsavedChanges, activeIsAdmin, authUser?.id]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const persistBeforeExit = () => {
-      if (menuFormHasUnsavedChanges) persistMenuFormDraftLocally();
+    const persistBeforeExit = (event) => {
+      if (event.type === "visibilitychange" && document.visibilityState !== "hidden") return;
+
+      if (menuFormHasUnsavedChanges) {
+        const draft = persistMenuFormDraftLocally();
+        if (draft && authUser?.id && activeIsAdmin) {
+          window.clearTimeout(menuFormDraftSyncTimerRef.current);
+          const version = ++menuFormDraftSyncVersionRef.current;
+          void syncMenuFormDraft(draft, version);
+        }
+      }
+
+      if (mealLibraryFormHasUnsavedChanges) {
+        const draft = persistMealLibraryDraftLocally();
+        if (draft && authUser?.id && activeIsAdmin) {
+          window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
+          const version = ++mealLibraryDraftSyncVersionRef.current;
+          void syncMealLibraryDraft(draft, version);
+        }
+      }
     };
 
     window.addEventListener("pagehide", persistBeforeExit);
@@ -5456,10 +5826,20 @@ function App() {
       window.removeEventListener("pagehide", persistBeforeExit);
       document.removeEventListener("visibilitychange", persistBeforeExit);
     };
-  }, [menuForm, menuFormDraftKey, menuFormHasUnsavedChanges]);
+  }, [
+    menuForm,
+    menuFormDraftKey,
+    menuFormHasUnsavedChanges,
+    mealLibraryForm,
+    mealLibraryDraftKey,
+    mealLibraryFormHasUnsavedChanges,
+    activeIsAdmin,
+    authUser?.id
+  ]);
 
   useEffect(() => () => {
     window.clearTimeout(menuFormDraftSyncTimerRef.current);
+    window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -6359,14 +6739,19 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const isSecondaryPhoto = target === "secondary" || target === "mealSecondary";
+    const photoLabel = isSecondaryPhoto ? "Segunda foto" : "Foto principal";
     setPhotoUploading(true);
     setAdminError("");
     setAdminMessage("");
+    setPhotoUploadError({ target: "", message: "" });
 
     const result = await uploadMenuPhoto(file);
 
     if (result.error || !result.configured) {
-      setAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la foto."));
+      const message = getPhotoUploadErrorMessage(result.error, "No pudimos subir la foto.");
+      setPhotoUploadError({ target, message });
+      setAdminError(`${photoLabel}: ${message}`);
     } else {
       markMenuFormChanged();
       setMenuForm((current) => {
@@ -6451,16 +6836,23 @@ function App() {
         : savingFamilyProduct
           ? "Creando el mealprep familiar"
           : "Creando el plan",
-      message: "Estamos actualizando la ficha y el contenido que verá el cliente."
+      message: savingFamilyProduct
+        ? "Estamos actualizando la ficha y el contenido que verá el cliente."
+        : "Estamos guardando el plan y las fichas reutilizables de sus mealpreps."
     });
 
     let includedItems = [];
     let nutritionFacts = {};
 
     try {
-      includedItems = menuForm.productType === "plan"
-        ? parseIncludedMealsFromForm(menuForm.includedItems, tagDefinitions)
-        : [];
+      if (menuForm.productType === "plan") {
+        parseIncludedMealsFromForm(menuForm.includedItems, tagDefinitions);
+        const savedMealItems = await saveAllIncludedMealsToLibrary({ silent: true });
+        if (!savedMealItems) throw new Error("No pudimos guardar los mealpreps del plan. Revisa la ficha indicada e inténtalo nuevamente.");
+        includedItems = parseIncludedMealsFromForm(savedMealItems, tagDefinitions);
+      } else {
+        includedItems = [];
+      }
       nutritionFacts = menuForm.productType === "family"
         ? parseJsonObject(menuForm.nutritionFacts)
         : {};
@@ -6659,7 +7051,9 @@ function App() {
     (draft.form.productType || "plan") === menuForm.productType
   );
   const activeIncludedMeal =
-    includedMealEditorIndex === null ? null : menuForm.includedItems[includedMealEditorIndex] || null;
+    includedMealEditorIndex === null || !menuForm.includedItems[includedMealEditorIndex]
+      ? null
+      : { ...menuForm.includedItems[includedMealEditorIndex], editorMode: "advanced" };
   const activeSubscriptionCount = subscriptionCustomers.filter((item) => item.status === "active").length;
   const filteredSubscriptions = useMemo(() => {
     const query = subscriptionFilter.query.trim().toLowerCase();
@@ -7428,11 +7822,11 @@ function App() {
                           {menuFormDraftStatus === "saving" ? <RefreshCw size={15} /> : menuFormDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                           <span>
                             {menuFormDraftStatus === "saving"
-                              ? "Guardando borrador"
+                              ? "Guardando en servidor"
                               : menuFormDraftStatus === "local"
-                                ? "Borrador local"
-                                : menuFormHasUnsavedChanges
-                                  ? "Borrador guardado"
+                                ? "Solo en este dispositivo"
+                                : menuFormDraftStatus === "synced"
+                                  ? "Respaldo en servidor"
                                   : "Sin cambios"}
                           </span>
                         </div>
@@ -7558,6 +7952,8 @@ function App() {
                       }}
                       disabled={photoUploading || adminSaving}
                       uploading={photoUploading}
+                      primaryError={photoUploadError.target === "primary" ? photoUploadError.message : ""}
+                      secondaryError={photoUploadError.target === "secondary" ? photoUploadError.message : ""}
                       idPrefix="meal-prep"
                     />
                       </section>
@@ -7726,84 +8122,15 @@ function App() {
                             <small>Código automático: {activeIncludedMeal.sku}</small>
                           </div>
 
-                          <div className="backoffice-editor-mode" role="group" aria-label="Nivel de edición del mealprep">
-                            <button
-                              className={activeIncludedMeal.editorMode === "express" ? "is-active" : ""}
-                              type="button"
-                              onClick={() => updateIncludedMealForm(includedMealEditorIndex, "editorMode", "express")}
-                            >
-                              Rápida
-                              <small>Nombre, descripción, alérgenos y foto principal</small>
-                            </button>
-                            <button
-                              className={activeIncludedMeal.editorMode === "advanced" ? "is-active" : ""}
-                              type="button"
-                              onClick={() => updateIncludedMealForm(includedMealEditorIndex, "editorMode", "advanced")}
-                            >
-                              Completa
-                              <small>Nutrición, alérgenos, beneficios y ambas fotos</small>
-                            </button>
+                          <div className="backoffice-editor-mode" aria-label="Ficha completa del mealprep">
+                            <div className="backoffice-editor-mode-copy">
+                              <strong>Ficha completa</strong>
+                              <small>Información, nutrición, alérgenos, beneficios y fotos; la segunda es opcional.</small>
+                            </div>
                           </div>
 
                           <div className="backoffice-nested-editor-body">
-                            {activeIncludedMeal.editorMode === "express" ? (
-                              <section className="backoffice-editor-section" aria-labelledby="quick-dish-title">
-                                <header>
-                                  <p className="eyebrow">Edición rápida</p>
-                                  <h4 id="quick-dish-title">Lo esencial del mealprep</h4>
-                                  <p>Estos datos bastan para dejar el mealprep creado y continuar armando el plan.</p>
-                                </header>
-                                <div className="backoffice-grid">
-                                  <label>
-                                    Nombre del mealprep
-                                    <input
-                                      value={activeIncludedMeal.name}
-                                      onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "name", event.target.value)}
-                                      placeholder="Pollo, camote y cúrcuma…"
-                                    />
-                                  </label>
-                                  <label>
-                                    Etiqueta breve
-                                    <input
-                                      value={activeIncludedMeal.tag}
-                                      onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "tag", event.target.value)}
-                                      placeholder="Energético…"
-                                    />
-                                  </label>
-                                </div>
-                                <label className="backoffice-wide">
-                                  Descripción
-                                  <textarea
-                                    rows="4"
-                                    value={activeIncludedMeal.description}
-                                    onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "description", event.target.value)}
-                                    placeholder="Describe qué incluye y qué caracteriza a este mealprep…"
-                                  />
-                                </label>
-                                <label className="backoffice-wide">
-                                  Alérgenos (campo libre)
-                                  <textarea
-                                    rows="3"
-                                    value={activeIncludedMeal.allergens}
-                                    onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "allergens", event.target.value)}
-                                    placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…"
-                                  />
-                                </label>
-                                <BackofficePhotoEditor
-                                  primaryUrl={activeIncludedMeal.photoUrl}
-                                  secondaryUrl={activeIncludedMeal.secondaryPhotoUrl}
-                                  onPrimaryFile={(event) => handleMenuPhotoChange(event, "mealPrimary", includedMealEditorIndex)}
-                                  onSecondaryFile={(event) => handleMenuPhotoChange(event, "mealSecondary", includedMealEditorIndex)}
-                                  onPrimaryUrlChange={(photoUrl) => updateIncludedMealForm(includedMealEditorIndex, "photoUrl", photoUrl)}
-                                  onSecondaryUrlChange={(secondaryPhotoUrl) => updateIncludedMealForm(includedMealEditorIndex, "secondaryPhotoUrl", secondaryPhotoUrl)}
-                                  disabled={photoUploading || adminSaving}
-                                  uploading={photoUploading}
-                                  idPrefix={`included-meal-${activeIncludedMeal.id}`}
-                                  showSecondary={false}
-                                />
-                              </section>
-                            ) : (
-                              <>
+                            <>
                                 <div className="backoffice-editor-tabs is-secondary" role="tablist" aria-label="Información completa del mealprep">
                                   {[
                                     ["details", "Información"],
@@ -7887,7 +8214,7 @@ function App() {
                                       <p>Esta información pertenece al mealprep y se mostrará dentro de los planes que lo incluyan.</p>
                                     </header>
                                     <label className="backoffice-wide">
-                                      Descripción nutricional
+                                      Descripción nutricional obligatoria
                                       <textarea
                                         rows="3"
                                         value={activeIncludedMeal.nutritionDescription}
@@ -7899,6 +8226,7 @@ function App() {
                                       value={activeIncludedMeal.nutritionFacts}
                                       onChange={(nutritionFacts) => updateIncludedMealForm(includedMealEditorIndex, "nutritionFacts", nutritionFacts)}
                                       idPrefix={`included-meal-${activeIncludedMeal.id}-nutrition`}
+                                      required
                                     />
                                     <TagSelector
                                       definitions={tagDefinitions}
@@ -7923,7 +8251,7 @@ function App() {
                                     <header>
                                       <p className="eyebrow">Imágenes</p>
                                       <h4 id="complete-dish-photos-title">Fotos del mealprep</h4>
-                                      <p>La segunda foto aparecerá al pasar el cursor sobre el mealprep.</p>
+                                      <p>La segunda foto es opcional; si la agregas, aparecerá al pasar el cursor sobre el mealprep.</p>
                                     </header>
                                     <BackofficePhotoEditor
                                       primaryUrl={activeIncludedMeal.photoUrl}
@@ -7934,31 +8262,30 @@ function App() {
                                       onSecondaryUrlChange={(secondaryPhotoUrl) => updateIncludedMealForm(includedMealEditorIndex, "secondaryPhotoUrl", secondaryPhotoUrl)}
                                       disabled={photoUploading || adminSaving}
                                       uploading={photoUploading}
+                                      primaryError={photoUploadError.target === "mealPrimary" ? photoUploadError.message : ""}
+                                      secondaryError={photoUploadError.target === "mealSecondary" ? photoUploadError.message : ""}
                                       idPrefix={`included-meal-${activeIncludedMeal.id}`}
                                     />
                                   </section>
                                 )}
-                              </>
-                            )}
+                            </>
                           </div>
 
                           <div className="backoffice-nested-editor-actions">
                             <div>
-                              <span>{activeIncludedMeal.libraryMealId ? "Este mealprep proviene del catálogo de Mealpreps." : "Este mealprep vive dentro del borrador del plan."}</span>
+                              <span>{activeIncludedMeal.libraryMealId ? "Este mealprep se actualiza en Mealpreps." : "Al guardar el plan, este mealprep se incorporará a Mealpreps."}</span>
                               <small>Sus cambios quedarán protegidos aunque vuelvas al plan.</small>
                             </div>
                             <div>
-                              {!activeIncludedMeal.libraryMealId && (
-                                <button
-                                  className="backoffice-command"
-                                  type="button"
-                                  onClick={() => saveIncludedMealToLibrary(includedMealEditorIndex)}
-                                  disabled={includedMealSavingIndex !== null}
-                                >
-                                  {includedMealSavingIndex === includedMealEditorIndex ? <RefreshCw size={16} /> : <Save size={16} />}
-                                  {includedMealSavingIndex === includedMealEditorIndex ? "Guardando…" : "Guardar para reutilizar"}
-                                </button>
-                              )}
+                              <button
+                                className="backoffice-command"
+                                type="button"
+                                onClick={() => saveIncludedMealToLibrary(includedMealEditorIndex)}
+                                disabled={includedMealSavingIndex !== null}
+                              >
+                                {includedMealSavingIndex === includedMealEditorIndex ? <RefreshCw size={16} /> : <Save size={16} />}
+                                {includedMealSavingIndex === includedMealEditorIndex ? "Guardando mealprep…" : "Guardar mealprep"}
+                              </button>
                               <button className="primary-button" type="button" onClick={closeIncludedMealEditor}>
                                 Listo, volver al plan
                               </button>
@@ -7978,12 +8305,6 @@ function App() {
                           <ArrowLeft size={18} />
                           Volver al listado
                         </button>
-                        {menuForm.includedItems.some((item) => !item.libraryMealId && item.name.trim()) && (
-                          <button className="backoffice-command" type="button" onClick={saveAllIncludedMealsToLibrary} disabled={adminSaving || photoUploading || includedMealSavingIndex !== null}>
-                            {includedMealSavingIndex === -1 ? <RefreshCw size={17} /> : <Save size={17} />}
-                            {includedMealSavingIndex === -1 ? "Guardando mealpreps…" : "Guardar mealpreps"}
-                          </button>
-                        )}
                         <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                           {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
                           {adminSaving ? "Guardando…" : "Guardar plan"}
@@ -8081,6 +8402,49 @@ function App() {
                                   </div>
                                 </div>
                                 <div className="backoffice-form-head-actions">
+                                  <div className={`backoffice-draft-status is-${mealLibraryDraftStatus}`} aria-live="polite">
+                                    {mealLibraryDraftStatus === "saving" ? <RefreshCw size={15} /> : mealLibraryDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
+                                    <span>
+                                      {mealLibraryDraftStatus === "saving"
+                                        ? "Guardando en servidor"
+                                        : mealLibraryDraftStatus === "local"
+                                          ? "Solo en este dispositivo"
+                                          : mealLibraryDraftStatus === "synced"
+                                            ? "Respaldo en servidor"
+                                            : "Sin cambios"}
+                                    </span>
+                                  </div>
+                                  {mealLibraryDrafts.length > 0 && (
+                                    <label className="backoffice-draft-picker">
+                                      <History size={16} aria-hidden="true" />
+                                      <select
+                                        aria-label="Recuperar borrador de mealprep"
+                                        value=""
+                                        onChange={(event) => {
+                                          const draft = mealLibraryDrafts.find((item) => item.draftKey === event.target.value);
+                                          if (draft) restoreMealLibraryDraft(draft);
+                                        }}
+                                      >
+                                        <option value="">Borradores ({mealLibraryDrafts.length})</option>
+                                        {mealLibraryDrafts.map((draft) => (
+                                          <option key={draft.draftKey} value={draft.draftKey}>
+                                            {draft.title} · {formatR2Date(draft.updatedAt)}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                  )}
+                                  {mealLibraryFormHasUnsavedChanges && (
+                                    <button
+                                      className="backoffice-draft-discard"
+                                      type="button"
+                                      onClick={discardCurrentMealLibraryDraft}
+                                      title="Descartar borrador"
+                                      aria-label="Descartar borrador"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  )}
                                   <label className="backoffice-switch">
                                     <input name="isActive" type="checkbox" checked={mealLibraryForm.isActive} onChange={updateMealLibraryForm} />
                                     <span>{mealLibraryForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.isActive ? "Activo" : "Inactivo"}</span>
@@ -8110,10 +8474,18 @@ function App() {
                                   secondaryUrl={mealLibraryForm.secondaryPhotoUrl}
                                   onPrimaryFile={(event) => handleMealLibraryPhotoChange(event)}
                                   onSecondaryFile={(event) => handleMealLibraryPhotoChange(event, "secondary")}
-                                  onPrimaryUrlChange={(photoUrl) => setMealLibraryForm((current) => ({ ...current, photoUrl }))}
-                                  onSecondaryUrlChange={(secondaryPhotoUrl) => setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl }))}
+                                  onPrimaryUrlChange={(photoUrl) => {
+                                    markMealLibraryFormChanged();
+                                    setMealLibraryForm((current) => ({ ...current, photoUrl }));
+                                  }}
+                                  onSecondaryUrlChange={(secondaryPhotoUrl) => {
+                                    markMealLibraryFormChanged();
+                                    setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl }));
+                                  }}
                                   disabled={mealLibrarySaving || mealLibraryPhotoUploading}
                                   uploading={mealLibraryPhotoUploading}
+                                  primaryError={mealLibraryPhotoUploadError.target === "primary" ? mealLibraryPhotoUploadError.message : ""}
+                                  secondaryError={mealLibraryPhotoUploadError.target === "secondary" ? mealLibraryPhotoUploadError.message : ""}
                                   idPrefix="library-meal"
                                 />
                               </section>
@@ -8126,14 +8498,20 @@ function App() {
                                 <TagSelector
                                   definitions={tagDefinitions}
                                   value={mealLibraryForm.tagIds}
-                                  onChange={(tagIds) => setMealLibraryForm((current) => ({ ...current, tagIds }))}
+                                  onChange={(tagIds) => {
+                                    markMealLibraryFormChanged();
+                                    setMealLibraryForm((current) => ({ ...current, tagIds }));
+                                  }}
                                   idPrefix="library-tag"
                                   onCreateQuick={createQuickTagDefinition}
                                 />
                                 <BenefitAssignmentEditor
                                   definitions={benefitDefinitions}
                                   value={mealLibraryForm.benefitAssignments}
-                                  onChange={(benefitAssignments) => setMealLibraryForm((current) => ({ ...current, benefitAssignments }))}
+                                  onChange={(benefitAssignments) => {
+                                    markMealLibraryFormChanged();
+                                    setMealLibraryForm((current) => ({ ...current, benefitAssignments }));
+                                  }}
                                   idPrefix="library-benefit"
                                   onCreateQuick={createQuickBenefitDefinition}
                                   onUploadIcon={uploadBenefitIcon}
@@ -8145,7 +8523,10 @@ function App() {
                                 <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
                                 <NutritionFactsEditor
                                   value={mealLibraryForm.nutritionFacts}
-                                  onChange={(nutritionFacts) => setMealLibraryForm((current) => ({ ...current, nutritionFacts }))}
+                                  onChange={(nutritionFacts) => {
+                                    markMealLibraryFormChanged();
+                                    setMealLibraryForm((current) => ({ ...current, nutritionFacts }));
+                                  }}
                                   idPrefix="library-meal-nutrition"
                                 />
                               </section>
@@ -8271,11 +8652,11 @@ function App() {
                                     {menuFormDraftStatus === "saving" ? <RefreshCw size={15} /> : menuFormDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                                     <span>
                                       {menuFormDraftStatus === "saving"
-                                        ? "Guardando borrador"
+                                        ? "Guardando en servidor"
                                         : menuFormDraftStatus === "local"
-                                          ? "Borrador local"
-                                          : menuFormHasUnsavedChanges
-                                            ? "Borrador guardado"
+                                          ? "Solo en este dispositivo"
+                                          : menuFormDraftStatus === "synced"
+                                            ? "Respaldo en servidor"
                                             : "Sin cambios"}
                                     </span>
                                   </div>
@@ -8369,6 +8750,8 @@ function App() {
                                     }}
                                     disabled={photoUploading || adminSaving}
                                     uploading={photoUploading}
+                                    primaryError={photoUploadError.target === "primary" ? photoUploadError.message : ""}
+                                    secondaryError={photoUploadError.target === "secondary" ? photoUploadError.message : ""}
                                     idPrefix="family-product"
                                   />
                                 </section>
