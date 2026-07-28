@@ -1694,7 +1694,6 @@ const shopProcessSteps = [
 function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct }) {
   const includedItems = product.includedItems || [];
   const benefitTags = getBenefitTags(product);
-  const benefits = getProductBenefits(product);
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
   const isMonthly = product.planFrequency === "monthly";
@@ -1720,12 +1719,6 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
           </ul>
         )}
 
-        <BenefitIconList
-          benefits={benefits}
-          contextTitle={product.name}
-          onOpenBenefit={onOpenBenefit}
-          limit={3}
-        />
       </div>
 
       {includedItems.length > 0 && (

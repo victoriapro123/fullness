@@ -3690,3 +3690,178 @@
     transition: none;
   }
 }
+
+/* Plan hierarchy: tags describe the plan; illustrated benefits belong to each dish. */
+.route-shop .shop-plan-card {
+  grid-template-rows: auto auto auto auto;
+}
+
+.route-shop .shop-plan-media-button {
+  display: block;
+  aspect-ratio: 1.72 / 0.88;
+  overflow: hidden;
+}
+
+.route-shop .shop-plan-media-button .hover-image-frame {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.route-shop .shop-plan-media-button > span:not(.hover-image-frame) {
+  left: 16px;
+  bottom: 14px;
+  min-height: 34px;
+  padding-inline: 13px;
+  font-size: 0.7rem;
+}
+
+.route-shop .shop-plan-title-button > span,
+.route-shop .shop-plan-meals .shop-plan-meal-kicker {
+  color: #7d2430 !important;
+  font-weight: 700 !important;
+}
+
+.route-shop .shop-plan-title-button p,
+.route-shop .shop-family-detail-button p,
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main p {
+  color: rgba(33, 23, 17, 0.84) !important;
+  font-weight: 500 !important;
+}
+
+.route-shop .shop-plan-meals {
+  gap: 0 !important;
+  padding: 24px 22px 0 !important;
+  border-top: 1px solid rgba(94, 42, 35, 0.18);
+}
+
+.route-shop .shop-plan-meal-card {
+  grid-template-rows: minmax(132px, auto) auto;
+  min-height: 208px;
+  border: 0 !important;
+  border-inline-start: 1px solid rgba(94, 42, 35, 0.16) !important;
+  background: transparent !important;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.route-shop .shop-plan-meal-card:first-child {
+  border-inline-start: 0 !important;
+}
+
+.route-shop .shop-plan-meal-card:hover,
+.route-shop .shop-plan-meal-card:focus-within {
+  box-shadow: inset 0 0 0 1px rgba(125, 36, 48, 0.24);
+  background: rgba(255, 250, 242, 0.26) !important;
+  transform: none;
+}
+
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main {
+  min-height: 132px !important;
+  padding: 0 14px 14px !important;
+}
+
+.route-shop .shop-plan-meal-card:first-child > .shop-plan-meal-main {
+  padding-left: 0 !important;
+}
+
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main strong {
+  color: rgba(33, 23, 17, 0.94);
+  font-size: 0.84rem;
+  font-weight: 650 !important;
+  line-height: 1.3;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 11px 14px 0;
+  border-top: 1px solid rgba(94, 42, 35, 0.14);
+}
+
+.route-shop .shop-plan-meal-card:first-child .benefit-icon-list {
+  padding-left: 0;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list button {
+  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-rows: minmax(46px, auto);
+  align-items: center;
+  justify-items: start;
+  flex: 1 1 100%;
+  min-height: 46px !important;
+  padding: 0 !important;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list img,
+.route-shop .shop-family-copy > .benefit-icon-list img {
+  box-sizing: border-box;
+  width: 46px;
+  height: 46px;
+  padding: 7px;
+  border: 1px solid #7d2430;
+  border-radius: 50%;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list span,
+.route-shop .shop-family-copy > .benefit-icon-list span {
+  align-self: center;
+  color: #7d2430 !important;
+  font-family: var(--font-body);
+  font-size: 0.61rem;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em;
+  line-height: 1.24;
+  text-align: left;
+}
+
+.route-shop .shop-family-copy > .benefit-icon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(94, 42, 35, 0.14);
+}
+
+.route-shop .shop-family-copy > .benefit-icon-list button {
+  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-rows: minmax(46px, auto);
+  align-items: center;
+  justify-items: start;
+  flex: 1 1 100%;
+  min-height: 46px;
+  padding: 0;
+}
+
+@media (max-width: 760px) {
+  .route-shop .shop-plan-media-button {
+    aspect-ratio: 1.42 / 0.88;
+  }
+
+  .route-shop .shop-plan-media-button > span:not(.hover-image-frame) {
+    left: 12px;
+    bottom: 12px;
+  }
+
+  .route-shop .shop-plan-meals {
+    gap: 10px !important;
+    padding: 18px 16px 14px !important;
+  }
+
+  .route-shop .shop-plan-meal-card,
+  .route-shop .shop-plan-meal-card:first-child {
+    min-height: 202px;
+    border: 1px solid rgba(94, 42, 35, 0.18) !important;
+  }
+
+  .route-shop .shop-plan-meal-card > .shop-plan-meal-main,
+  .route-shop .shop-plan-meal-card:first-child > .shop-plan-meal-main {
+    min-height: 122px !important;
+    padding: 14px 14px 12px !important;
+  }
+
+  .route-shop .shop-plan-meal-card .benefit-icon-list,
+  .route-shop .shop-plan-meal-card:first-child .benefit-icon-list {
+    padding: 10px 14px 12px;
+  }
+}
