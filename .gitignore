@@ -7,6 +7,7 @@ public/assets/*
 !public/assets/benefits/
 public/assets/benefits/*
 !public/assets/benefits/*.webp
+!public/assets/benefits/*.png
 !public/assets/brand/
 public/assets/brand/*
 !public/assets/brand/fullness-lab-horizontal-contrast-2026.png

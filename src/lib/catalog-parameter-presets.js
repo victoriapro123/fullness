@@ -1,5 +1,5 @@
 const benefitAssetUrl = (slug) =>
-  `/api/media?key=${encodeURIComponent(`assets/benefits/${slug}.webp`)}`;
+  `/api/media?key=${encodeURIComponent(`assets/benefits/${slug}.png`)}`;
 
 export const benefitPresets = [
   {
@@ -7,7 +7,7 @@ export const benefitPresets = [
     slug: "antiinflamatorio",
     name: "Antiinflamatorio",
     iconUrl: benefitAssetUrl("antiinflamatorio"),
-    iconStoragePath: "assets/benefits/antiinflamatorio.webp",
+    iconStoragePath: "assets/benefits/antiinflamatorio.png",
     defaultDescription: "Combina ingredientes con compuestos bioactivos que acompañan una respuesta inflamatoria equilibrada.",
     displayOrder: 10,
     isActive: true
@@ -17,7 +17,7 @@ export const benefitPresets = [
     slug: "energetico",
     name: "Energético",
     iconUrl: benefitAssetUrl("energetico"),
-    iconStoragePath: "assets/benefits/energetico.webp",
+    iconStoragePath: "assets/benefits/energetico.png",
     defaultDescription: "Aporta una combinación de nutrientes pensada para sostener la energía durante el día.",
     displayOrder: 20,
     isActive: true
@@ -27,7 +27,7 @@ export const benefitPresets = [
     slug: "digestivo",
     name: "Digestivo",
     iconUrl: benefitAssetUrl("digestivo"),
-    iconStoragePath: "assets/benefits/digestivo.webp",
+    iconStoragePath: "assets/benefits/digestivo.png",
     defaultDescription: "Incluye ingredientes y fibra que acompañan una digestión amable y el bienestar intestinal.",
     displayOrder: 30,
     isActive: true
@@ -37,7 +37,7 @@ export const benefitPresets = [
     slug: "antioxidante",
     name: "Antioxidante",
     iconUrl: benefitAssetUrl("antioxidante"),
-    iconStoragePath: "assets/benefits/antioxidante.webp",
+    iconStoragePath: "assets/benefits/antioxidante.png",
     defaultDescription: "Reúne ingredientes naturalmente ricos en compuestos antioxidantes que ayudan a proteger las células del estrés oxidativo.",
     displayOrder: 40,
     isActive: true
@@ -47,7 +47,7 @@ export const benefitPresets = [
     slug: "alto-en-proteina",
     name: "Alto en proteína",
     iconUrl: benefitAssetUrl("alto-en-proteina"),
-    iconStoragePath: "assets/benefits/alto-en-proteina.webp",
+    iconStoragePath: "assets/benefits/alto-en-proteina.png",
     defaultDescription: "Entrega una porción relevante de proteína, clave para la mantención muscular y una saciedad duradera.",
     displayOrder: 50,
     isActive: true
@@ -57,7 +57,7 @@ export const benefitPresets = [
     slug: "alto-en-fibra",
     name: "Alto en fibra",
     iconUrl: benefitAssetUrl("alto-en-fibra"),
-    iconStoragePath: "assets/benefits/alto-en-fibra.webp",
+    iconStoragePath: "assets/benefits/alto-en-fibra.png",
     defaultDescription: "Aporta fibra dietaria que favorece el tránsito intestinal y ayuda a prolongar la saciedad.",
     displayOrder: 60,
     isActive: true
@@ -67,7 +67,7 @@ export const benefitPresets = [
     slug: "omega-3",
     name: "Omega 3",
     iconUrl: benefitAssetUrl("omega-3"),
-    iconStoragePath: "assets/benefits/omega-3.webp",
+    iconStoragePath: "assets/benefits/omega-3.png",
     defaultDescription: "Incluye fuentes naturales de ácidos grasos omega 3, asociados al cuidado cardiovascular y cerebral.",
     displayOrder: 70,
     isActive: true
@@ -77,7 +77,7 @@ export const benefitPresets = [
     slug: "equilibrio",
     name: "Equilibrio",
     iconUrl: benefitAssetUrl("equilibrio"),
-    iconStoragePath: "assets/benefits/equilibrio.webp",
+    iconStoragePath: "assets/benefits/equilibrio.png",
     defaultDescription: "Combina proteínas, vegetales, grasas saludables y carbohidratos para una comida completa.",
     displayOrder: 80,
     isActive: true
@@ -87,7 +87,7 @@ export const benefitPresets = [
     slug: "detox",
     name: "Detox",
     iconUrl: benefitAssetUrl("detox"),
-    iconStoragePath: "assets/benefits/detox.webp",
+    iconStoragePath: "assets/benefits/detox.png",
     defaultDescription: "Integra vegetales y fibra que acompañan los procesos naturales de eliminación del organismo.",
     displayOrder: 90,
     isActive: true
@@ -97,7 +97,7 @@ export const benefitPresets = [
     slug: "inmunidad",
     name: "Inmunidad",
     iconUrl: benefitAssetUrl("inmunidad"),
-    iconStoragePath: "assets/benefits/inmunidad.webp",
+    iconStoragePath: "assets/benefits/inmunidad.png",
     defaultDescription: "Aporta nutrientes que participan en el funcionamiento normal del sistema inmune.",
     displayOrder: 100,
     isActive: true
@@ -107,7 +107,7 @@ export const benefitPresets = [
     slug: "salud-cardiovascular",
     name: "Salud cardiovascular",
     iconUrl: benefitAssetUrl("salud-cardiovascular"),
-    iconStoragePath: "assets/benefits/salud-cardiovascular.webp",
+    iconStoragePath: "assets/benefits/salud-cardiovascular.png",
     defaultDescription: "Combina grasas saludables, fibra y vegetales que acompañan el cuidado cardiovascular.",
     displayOrder: 110,
     isActive: true
@@ -117,7 +117,7 @@ export const benefitPresets = [
     slug: "saciedad",
     name: "Saciedad",
     iconUrl: benefitAssetUrl("saciedad"),
-    iconStoragePath: "assets/benefits/saciedad.webp",
+    iconStoragePath: "assets/benefits/saciedad.png",
     defaultDescription: "Su combinación de proteína, fibra y grasas saludables ayuda a mantener la saciedad por más tiempo.",
     displayOrder: 120,
     isActive: true

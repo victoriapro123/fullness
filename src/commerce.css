@@ -146,7 +146,7 @@
   overflow: hidden;
   border: 1px solid rgba(79, 23, 40, 0.14);
   color: var(--ink);
-  background: var(--benefit-artwork-paper);
+  background: #f8f3ea;
 }
 
 .product-lightbox-media {
@@ -301,7 +301,9 @@
   min-height: 100svh;
   padding: clamp(34px, 5vw, 72px) clamp(22px, 5vw, 86px) clamp(72px, 8vw, 118px);
   color: var(--ink);
-  background: var(--benefit-artwork-paper);
+  background:
+    radial-gradient(circle at 82% 14%, rgba(208, 173, 115, 0.14), transparent 28%),
+    linear-gradient(180deg, #efe7d7 0%, #ded1b9 100%);
 }
 
 .product-detail-back {
@@ -3309,7 +3311,9 @@
 
 .route-shop .shop-plan-card {
   grid-template-rows: auto minmax(340px, auto) auto auto;
-  background: var(--benefit-artwork-paper);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.42), rgba(246, 236, 218, 0.54)),
+    var(--shop-cream);
 }
 
 .route-shop .shop-plan-media-button .hover-image-frame {
@@ -3404,14 +3408,14 @@
   min-width: 0;
   min-height: 158px;
   border: 1px solid rgba(94, 42, 35, 0.16);
-  background: var(--benefit-artwork-paper);
+  background: rgba(255, 252, 246, 0.72);
   transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
 }
 
 .route-shop .shop-plan-meal-card:hover,
 .route-shop .shop-plan-meal-card:focus-within {
   border-color: rgba(125, 36, 48, 0.42);
-  background: var(--benefit-artwork-paper);
+  background: rgba(255, 252, 246, 0.98);
   transform: translateY(-2px);
 }
 
@@ -3491,7 +3495,9 @@
 
 .route-shop .shop-family-card {
   grid-template-rows: auto minmax(225px, 1fr) auto;
-  background: var(--benefit-artwork-paper);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.42), rgba(246, 236, 218, 0.56)),
+    var(--shop-cream);
 }
 
 .route-shop .shop-family-media-button .hover-image-frame {

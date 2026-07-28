@@ -46,8 +46,8 @@ assert.deepEqual(mealPrepPayload.included_items, [
         benefitId: "10000000-0000-4000-8000-000000000002",
         slug: "energetico",
         name: "Energético",
-        iconUrl: "/api/media?key=assets%2Fbenefits%2Fenergetico.webp",
-        iconStoragePath: "assets/benefits/energetico.webp",
+        iconUrl: "/api/media?key=assets%2Fbenefits%2Fenergetico.png",
+        iconStoragePath: "assets/benefits/energetico.png",
         defaultDescription: "Aporta una combinación de nutrientes pensada para sostener la energía durante el día.",
         explanation: ""
       }
