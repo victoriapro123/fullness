@@ -3811,6 +3811,74 @@ function App() {
     setMealLibrarySaving(false);
   }
 
+  async function saveAllIncludedMealsToLibrary() {
+    if (!activeIsAdmin) {
+      setAdminError("Tu cuenta no tiene acceso de administración.");
+      return;
+    }
+
+    const pendingIndexes = menuForm.includedItems
+      .map((meal, index) => ({ meal, index }))
+      .filter(({ meal }) => !meal.libraryMealId && [meal.name, meal.tag, meal.description, meal.photoUrl, meal.ingredients, meal.allergens].some((value) => String(value || "").trim()))
+      .map(({ index }) => index);
+
+    if (pendingIndexes.length === 0) {
+      setAdminMessage("Todos los platos con contenido ya están guardados en Biblioteca.");
+      return;
+    }
+
+    setIncludedMealSavingIndex(-1);
+    setAdminError("");
+    setAdminMessage("");
+
+    try {
+      const nextItems = menuForm.includedItems.map((item) => ({ ...item }));
+      const saved = [];
+
+      for (const index of pendingIndexes) {
+        const meal = nextItems[index];
+        if (!meal.name.trim()) {
+          throw new Error(`Plato ${index + 1}: agrega un nombre antes de guardarlo en la Biblioteca.`);
+        }
+
+        const nutritionFacts = parseJsonObject(meal.nutritionFacts);
+        const result = await saveMealLibraryItem({
+          name: meal.name,
+          tag: meal.tag,
+          description: meal.description,
+          photoUrl: meal.photoUrl,
+          photoStoragePath: meal.photoStoragePath,
+          secondaryPhotoUrl: meal.secondaryPhotoUrl,
+          secondaryPhotoStoragePath: meal.secondaryPhotoStoragePath,
+          benefitTags: meal.benefitTags,
+          ingredients: meal.ingredients,
+          nutritionDescription: meal.nutritionDescription,
+          nutritionHighlights: meal.nutritionHighlights,
+          nutritionFacts,
+          allergens: meal.allergens,
+          isActive: true
+        });
+
+        if (result.error || !result.configured) {
+          throw new Error(getSupabaseErrorMessage(result.error, `No pudimos guardar el plato ${index + 1} en la Biblioteca.`));
+        }
+
+        nextItems[index] = { ...meal, libraryMealId: result.data.id };
+        saved.push(result.data);
+      }
+
+      markMenuFormChanged();
+      setMenuForm((current) => ({ ...current, includedItems: nextItems }));
+      setMealLibrary((current) => [...current.filter((item) => !saved.some((savedItem) => savedItem.id === item.id)), ...saved]
+        .sort((left, right) => left.name.localeCompare(right.name, "es")));
+      setAdminMessage(`${saved.length} plato${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"} en Biblioteca.`);
+    } catch (error) {
+      setAdminError(error.message || "No pudimos guardar los platos en Biblioteca.");
+    } finally {
+      setIncludedMealSavingIndex(null);
+    }
+  }
+
   async function saveIncludedMealToLibrary(index) {
     if (!activeIsAdmin) {
       setAdminError("Tu cuenta no tiene acceso de administración.");
@@ -6301,7 +6369,7 @@ function App() {
                     )}
                   </aside>
 
-                  <form className="backoffice-form" onSubmit={submitMenuItem} onInvalid={reportMenuFormInvalid}>
+                  <form className="backoffice-form" noValidate onSubmit={submitMenuItem}>
                     <div className="backoffice-form-head">
                       <div>
                         <p className="eyebrow">{menuForm.id ? "Editar" : "Nuevo"}</p>
@@ -6645,6 +6713,7 @@ function App() {
                         <Plus size={18} />
                         Nuevo
                       </button>
+                      {menuForm.productType === "plan" && <button className="backoffice-command" type="button" onClick={saveAllIncludedMealsToLibrary} disabled={adminSaving || photoUploading || includedMealSavingIndex !== null}>{includedMealSavingIndex === -1 ? <RefreshCw size={17} /> : <Save size={17} />}{includedMealSavingIndex === -1 ? "Guardando platos…" : "Guardar platos en Biblioteca"}</button>}
                       <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                         {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
                         {adminSaving ? "Guardando…" : "Guardar meal prep"}
