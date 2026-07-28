@@ -13,6 +13,15 @@ function cleanText(value) {
   return String(value || "").trim();
 }
 
+function createStableDishSku(value) {
+  const token = cleanText(value)
+    .replace(/[^a-z0-9]/gi, "")
+    .slice(0, 10)
+    .toUpperCase();
+
+  return token ? `PL-${token}` : "";
+}
+
 function nullableText(value) {
   const text = cleanText(value);
   return text || null;
@@ -267,6 +276,7 @@ function normalizeIncludedItems(value, context = createCatalogContext(), library
 
       return {
         id: cleanText(item?.id) || `meal-${index + 1}`,
+        sku: cleanText(item?.sku || source?.sku) || createStableDishSku(libraryMealId || item?.id),
         libraryMealId,
         name,
         tag: cleanText(source?.tag),
@@ -295,6 +305,7 @@ function normalizeIncludedItems(value, context = createCatalogContext(), library
 function serializeIncludedItems(value) {
   return normalizeIncludedItems(value).map((item) => ({
     id: item.id,
+    sku: item.sku,
     libraryMealId: item.libraryMealId,
     name: item.name,
     tag: item.tag,
@@ -402,6 +413,7 @@ export function mapMealLibraryItem(row, context = createCatalogContext()) {
 
   return {
     id: row.id,
+    sku: row.sku || createStableDishSku(row.id),
     name: row.name || "",
     tag: row.tag || "",
     description: row.description || "",

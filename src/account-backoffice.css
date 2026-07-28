@@ -1827,3 +1827,1405 @@
     white-space: normal;
   }
 }
+
+/* Backoffice workspace: clear hierarchy for non-technical catalog editing. */
+.backoffice-overlay {
+  padding: 10px;
+  background: rgba(36, 31, 28, 0.34);
+}
+
+.backoffice-panel {
+  width: min(1680px, calc(100vw - 20px));
+  max-height: calc(100svh - 20px);
+  border-color: rgba(54, 43, 39, 0.14);
+  background: #f3f1ed;
+  box-shadow: 0 22px 64px rgba(28, 22, 19, 0.2);
+}
+
+.backoffice-header {
+  padding: 16px 22px;
+  background: rgba(250, 249, 246, 0.97);
+}
+
+.backoffice-header h2 {
+  font-size: clamp(1.7rem, 2.2vw, 2.45rem);
+  font-weight: 400;
+}
+
+.backoffice-header .eyebrow,
+.backoffice-panel .eyebrow {
+  font-weight: 550;
+  letter-spacing: 0.1em;
+}
+
+.backoffice-header-subtitle {
+  margin-top: 2px;
+  font-size: 0.9rem;
+}
+
+.backoffice-dashboard {
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 0;
+  min-height: min(760px, calc(100svh - 112px));
+  padding: 0;
+}
+
+.backoffice-module-nav {
+  top: 86px;
+  gap: 8px;
+  min-height: 100%;
+  padding: 18px 12px;
+  border-right: 1px solid rgba(54, 43, 39, 0.11);
+  background: #eae7e2;
+}
+
+.backoffice-module-summary {
+  gap: 3px;
+  padding: 4px 10px 14px;
+  border: 0;
+  background: transparent;
+}
+
+.backoffice-module-summary span {
+  font-size: 0.68rem;
+  font-weight: 550;
+  letter-spacing: 0.1em;
+}
+
+.backoffice-module-summary strong {
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.backoffice-module-buttons {
+  gap: 2px;
+}
+
+.backoffice-module-button {
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.backoffice-module-button:hover {
+  transform: none;
+  border-color: rgba(142, 38, 60, 0.28);
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.backoffice-module-button.is-active {
+  border-color: var(--beet);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.backoffice-module-button > svg {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.backoffice-module-button span {
+  gap: 1px;
+}
+
+.backoffice-module-button strong {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.backoffice-module-button small {
+  font-size: 0.71rem;
+}
+
+.backoffice-module-content {
+  position: relative;
+  padding: clamp(18px, 2vw, 30px);
+  background: #f7f5f1;
+}
+
+.backoffice-panel strong,
+.backoffice-panel b {
+  font-weight: 500;
+}
+
+.backoffice-catalog-view,
+.backoffice-catalog-panel {
+  min-width: 0;
+}
+
+.backoffice-catalog-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.backoffice-catalog-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.12);
+}
+
+.backoffice-catalog-heading h3 {
+  margin: 2px 0 5px;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-weight: 400;
+}
+
+.backoffice-catalog-heading p:not(.eyebrow) {
+  max-width: 64ch;
+  margin: 0;
+  color: rgba(35, 30, 27, 0.62);
+  line-height: 1.5;
+}
+
+.backoffice-catalog-heading .primary-button {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+}
+
+.backoffice-catalog-tools {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.backoffice-catalog-tools > p {
+  flex: 0 0 auto;
+  margin: 0 0 11px;
+  color: rgba(35, 30, 27, 0.54);
+  font-size: 0.82rem;
+}
+
+.backoffice-search-field {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 520px);
+  color: rgba(35, 30, 27, 0.72);
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.backoffice-search-field > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid rgba(54, 43, 39, 0.16);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.backoffice-search-field svg {
+  color: rgba(35, 30, 27, 0.48);
+}
+
+.backoffice-search-field input {
+  min-width: 0;
+  height: 44px;
+  padding: 0 10px;
+  border: 0;
+  outline: 0;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-size: 0.96rem;
+}
+
+.backoffice-catalog-list {
+  display: grid;
+  gap: 8px;
+}
+
+.backoffice-catalog-list .backoffice-menu-card {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 12px;
+  border-color: rgba(54, 43, 39, 0.11);
+  background: #fff;
+}
+
+.backoffice-catalog-list .backoffice-menu-card.is-selected {
+  border-color: rgba(142, 38, 60, 0.34);
+  background: #fff;
+}
+
+.backoffice-catalog-list .backoffice-menu-main {
+  grid-template-columns: 68px minmax(0, 1fr);
+}
+
+.backoffice-catalog-list .backoffice-menu-main img {
+  width: 68px;
+  height: 54px;
+}
+
+.backoffice-catalog-list .backoffice-menu-main strong {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.backoffice-catalog-list .backoffice-card-meta {
+  gap: 16px;
+}
+
+.backoffice-catalog-list .backoffice-card-actions {
+  min-width: 80px;
+}
+
+.backoffice-catalog-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-height: 210px;
+  padding: 40px 20px;
+  border: 1px dashed rgba(54, 43, 39, 0.18);
+  color: rgba(35, 30, 27, 0.5);
+  background: rgba(255, 255, 255, 0.48);
+  text-align: center;
+}
+
+.backoffice-catalog-empty p {
+  margin: 0;
+}
+
+.backoffice-editor-overlay,
+.backoffice-nested-editor-overlay,
+.backoffice-result-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2vw, 24px);
+  background: rgba(31, 26, 23, 0.48);
+}
+
+.backoffice-editor-overlay {
+  z-index: 66;
+}
+
+.backoffice-workspace-form {
+  width: min(1260px, calc(100vw - 28px));
+  max-height: calc(100svh - 28px);
+  overflow-y: auto;
+  gap: 20px;
+  padding: clamp(18px, 2.4vw, 34px);
+  border-color: rgba(54, 43, 39, 0.14);
+  background: #faf9f6;
+  box-shadow: 0 24px 70px rgba(25, 20, 18, 0.24);
+  overscroll-behavior: contain;
+}
+
+.backoffice-workspace-form > .backoffice-form-head {
+  position: sticky;
+  top: calc(clamp(18px, 2.4vw, 34px) * -1);
+  z-index: 4;
+  margin: calc(clamp(18px, 2.4vw, 34px) * -1);
+  margin-bottom: 0;
+  padding: 18px clamp(18px, 2.4vw, 34px);
+  border-bottom: 1px solid rgba(54, 43, 39, 0.11);
+  background: rgba(250, 249, 246, 0.98);
+}
+
+.backoffice-workspace-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.backoffice-workspace-title > div {
+  min-width: 0;
+}
+
+.backoffice-workspace-title h3 {
+  overflow: hidden;
+  margin: 1px 0 0;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-breadcrumb {
+  overflow: hidden;
+  margin: 0;
+  color: var(--beet);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-back-button,
+.backoffice-icon-command {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(54, 43, 39, 0.15);
+  border-radius: 50%;
+  color: var(--ink);
+  background: #fff;
+  cursor: pointer;
+}
+
+.backoffice-intro-note {
+  margin: 0;
+  padding: 12px 15px;
+  border-left: 2px solid var(--beet);
+  color: rgba(35, 30, 27, 0.7);
+  background: #f0ede8;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.backoffice-editor-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.14);
+  scrollbar-width: none;
+}
+
+.backoffice-editor-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.backoffice-editor-tabs button {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  color: rgba(35, 30, 27, 0.58);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 450;
+  cursor: pointer;
+}
+
+.backoffice-editor-tabs button::after {
+  position: absolute;
+  right: 18px;
+  bottom: -1px;
+  left: 18px;
+  height: 2px;
+  content: "";
+  background: transparent;
+}
+
+.backoffice-editor-tabs button.is-active {
+  color: var(--ink);
+}
+
+.backoffice-editor-tabs button.is-active::after {
+  background: var(--beet);
+}
+
+.backoffice-editor-tabs button:focus-visible,
+.backoffice-editor-mode button:focus-visible {
+  outline: 2px solid rgba(142, 38, 60, 0.46);
+  outline-offset: -3px;
+}
+
+.backoffice-editor-tabs.is-secondary {
+  margin-bottom: 2px;
+}
+
+.backoffice-editor-section {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.backoffice-editor-section > header {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.1);
+}
+
+.backoffice-editor-section > header h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-weight: 400;
+}
+
+.backoffice-editor-section > header p:not(.eyebrow),
+.backoffice-section-copy {
+  max-width: 68ch;
+  margin: 2px 0 0;
+  color: rgba(35, 30, 27, 0.58);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.backoffice-form label,
+.backoffice-wide {
+  color: rgba(35, 30, 27, 0.76);
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.backoffice-form input,
+.backoffice-form select,
+.backoffice-form textarea {
+  border-color: rgba(54, 43, 39, 0.16);
+  background: #fff;
+  font-size: 0.94rem;
+  font-weight: 400;
+}
+
+.backoffice-form input[readonly] {
+  color: rgba(35, 30, 27, 0.54);
+  background: #ebe8e3;
+}
+
+.backoffice-advanced-fields {
+  padding: 14px;
+  border: 1px solid rgba(54, 43, 39, 0.12);
+  border-radius: 6px;
+  background: #f2efea;
+}
+
+.backoffice-advanced-fields summary {
+  color: rgba(35, 30, 27, 0.78);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.backoffice-advanced-fields > p {
+  margin: 8px 0 14px;
+  color: rgba(35, 30, 27, 0.56);
+  font-size: 0.82rem;
+}
+
+.backoffice-advanced-fields:not([open]) > p,
+.backoffice-advanced-fields:not([open]) > div,
+.backoffice-advanced-fields:not([open]) > label {
+  display: none;
+}
+
+.backoffice-photo-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.backoffice-photo-row.backoffice-photo-row-double {
+  gap: 16px;
+}
+
+.backoffice-photo-row.backoffice-photo-row-double.is-single {
+  grid-template-columns: minmax(0, 560px);
+}
+
+.backoffice-photo-block {
+  align-content: start;
+  padding: 14px;
+  border: 1px solid rgba(54, 43, 39, 0.12);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.backoffice-photo-block > header {
+  display: grid;
+  gap: 2px;
+}
+
+.backoffice-photo-block > header strong {
+  font-size: 0.94rem;
+  font-weight: 500;
+}
+
+.backoffice-photo-block > header small {
+  color: rgba(35, 30, 27, 0.54);
+  line-height: 1.4;
+}
+
+.backoffice-photo-preview {
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  background: #efede9;
+}
+
+.backoffice-image-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #386247;
+  font-size: 0.8rem;
+}
+
+.backoffice-nutrition-editor {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgba(54, 43, 39, 0.12);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.backoffice-nutrition-editor legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 500;
+}
+
+.backoffice-nutrition-editor > p {
+  margin: 0;
+  color: rgba(35, 30, 27, 0.56);
+  font-size: 0.82rem;
+}
+
+.backoffice-nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.backoffice-unit-input {
+  position: relative;
+  display: block;
+}
+
+.backoffice-unit-input input {
+  padding-right: 46px;
+}
+
+.backoffice-unit-input small {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: rgba(35, 30, 27, 0.46);
+  font-size: 0.76rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.backoffice-included-editor {
+  gap: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.backoffice-included-editor > .backoffice-list-top {
+  align-items: end;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.11);
+}
+
+.backoffice-included-editor h3 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+
+.included-editor-actions {
+  align-items: center;
+}
+
+.included-editor-actions select {
+  border-radius: 6px;
+  background: #fff;
+}
+
+.backoffice-dish-list {
+  display: grid;
+  gap: 8px;
+}
+
+.included-editor-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border-color: rgba(54, 43, 39, 0.11);
+  background: #fff;
+}
+
+.backoffice-dish-main {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.backoffice-dish-thumb {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 4px;
+  color: rgba(35, 30, 27, 0.46);
+  background: #eeebe6;
+}
+
+.backoffice-dish-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.backoffice-dish-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.backoffice-dish-copy small {
+  color: var(--beet);
+  font-size: 0.72rem;
+}
+
+.backoffice-dish-copy strong {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-dish-copy > span {
+  overflow: hidden;
+  color: rgba(35, 30, 27, 0.56);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backoffice-dish-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.backoffice-icon-command {
+  border-radius: 6px;
+  color: var(--beet);
+}
+
+.backoffice-dish-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-height: 260px;
+  padding: 42px 20px;
+  border: 1px dashed rgba(54, 43, 39, 0.18);
+  background: rgba(255, 255, 255, 0.48);
+  text-align: center;
+}
+
+.backoffice-dish-empty h4,
+.backoffice-dish-empty p {
+  margin: 0;
+}
+
+.backoffice-dish-empty h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+}
+
+.backoffice-dish-empty p {
+  max-width: 48ch;
+  color: rgba(35, 30, 27, 0.58);
+}
+
+.backoffice-dish-empty .primary-button {
+  width: auto;
+  margin-top: 6px;
+}
+
+.backoffice-nested-editor-overlay {
+  z-index: 74;
+}
+
+.backoffice-nested-editor {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  min-width: 0;
+  width: min(1120px, calc(100vw - 28px));
+  max-height: calc(100svh - 28px);
+  overflow: hidden;
+  border: 1px solid rgba(54, 43, 39, 0.14);
+  border-radius: 8px;
+  background: #faf9f6;
+  box-shadow: 0 26px 74px rgba(22, 18, 16, 0.28);
+}
+
+.backoffice-nested-editor > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-nested-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.11);
+  background: #fff;
+}
+
+.backoffice-nested-editor-head .backoffice-workspace-title {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.backoffice-nested-editor-head > .icon-button {
+  flex: 0 0 auto;
+}
+
+.backoffice-editing-context {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #f8f4ed;
+  background: #5a2132;
+}
+
+.backoffice-editing-context div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.backoffice-editing-context span,
+.backoffice-editing-context small {
+  color: rgba(248, 244, 237, 0.7);
+  font-size: 0.76rem;
+}
+
+.backoffice-editing-context strong {
+  font-size: 0.94rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.backoffice-editor-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 14px 20px 0;
+  background: #faf9f6;
+}
+
+.backoffice-editor-mode button {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid rgba(54, 43, 39, 0.13);
+  color: rgba(35, 30, 27, 0.58);
+  background: #f0ede8;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.backoffice-editor-mode button + button {
+  border-left: 0;
+}
+
+.backoffice-editor-mode button.is-active {
+  color: var(--ink);
+  border-color: rgba(142, 38, 60, 0.34);
+  background: #fff;
+}
+
+.backoffice-editor-mode small {
+  color: rgba(35, 30, 27, 0.52);
+  font-size: 0.74rem;
+  font-weight: 400;
+}
+
+.backoffice-nested-editor-body {
+  overflow-y: auto;
+  display: grid;
+  gap: 18px;
+  padding: 18px 20px 24px;
+  overscroll-behavior: contain;
+}
+
+.backoffice-workspace-form,
+.backoffice-nested-editor-body {
+  scrollbar-color: rgba(90, 33, 50, 0.32) transparent;
+  scrollbar-width: thin;
+}
+
+.backoffice-workspace-form::-webkit-scrollbar,
+.backoffice-nested-editor-body::-webkit-scrollbar {
+  width: 7px;
+}
+
+.backoffice-workspace-form::-webkit-scrollbar-thumb,
+.backoffice-nested-editor-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: rgba(90, 33, 50, 0.32);
+  background-clip: padding-box;
+}
+
+.backoffice-nested-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(54, 43, 39, 0.11);
+  background: #fff;
+}
+
+.backoffice-nested-editor-actions > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backoffice-nested-editor-actions > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.backoffice-nested-editor-actions span {
+  color: rgba(35, 30, 27, 0.72);
+  font-size: 0.84rem;
+}
+
+.backoffice-nested-editor-actions small {
+  color: rgba(35, 30, 27, 0.5);
+  font-size: 0.76rem;
+}
+
+.backoffice-nested-editor-actions .primary-button {
+  width: auto;
+  margin: 0;
+}
+
+.backoffice-library-loader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(54, 43, 39, 0.11);
+  background: #f1eee9;
+}
+
+.backoffice-form-actions {
+  position: sticky;
+  bottom: calc(clamp(18px, 2.4vw, 34px) * -1);
+  z-index: 4;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 2px calc(clamp(18px, 2.4vw, 34px) * -1) calc(clamp(18px, 2.4vw, 34px) * -1);
+  padding: 15px clamp(18px, 2.4vw, 34px);
+  border-top: 1px solid rgba(54, 43, 39, 0.11);
+  background: rgba(250, 249, 246, 0.98);
+}
+
+.backoffice-action-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.backoffice-action-copy span {
+  color: rgba(35, 30, 27, 0.74);
+  font-size: 0.84rem;
+}
+
+.backoffice-action-copy small {
+  color: rgba(35, 30, 27, 0.5);
+  font-size: 0.76rem;
+}
+
+.backoffice-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.backoffice-action-buttons .google-button,
+.backoffice-action-buttons .primary-button {
+  width: auto;
+  margin: 0;
+}
+
+.backoffice-result-overlay {
+  z-index: 92;
+}
+
+.backoffice-result-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  padding: 34px;
+  border: 1px solid rgba(54, 43, 39, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(22, 18, 16, 0.28);
+  text-align: center;
+}
+
+.backoffice-result-card h3,
+.backoffice-result-card p {
+  margin: 0;
+}
+
+.backoffice-result-card h3 {
+  color: var(--ink) !important;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.backoffice-result-card .eyebrow {
+  color: var(--beet);
+  font-weight: 550;
+}
+
+.backoffice-result-card > p:not(.eyebrow) {
+  color: rgba(35, 30, 27, 0.62);
+  line-height: 1.5;
+}
+
+.backoffice-result-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border: 1px solid rgba(142, 38, 60, 0.25);
+  border-radius: 50%;
+  color: var(--beet);
+}
+
+.backoffice-result-card.is-success .backoffice-result-icon {
+  color: #386247;
+  border-color: rgba(56, 98, 71, 0.28);
+}
+
+.backoffice-result-card.is-saving .backoffice-result-icon svg {
+  animation: backoffice-draft-spin 900ms linear infinite;
+}
+
+.backoffice-result-card .primary-button {
+  width: auto;
+  margin-top: 8px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.backoffice-result-card .primary-button:focus-visible {
+  outline: 2px solid rgba(142, 38, 60, 0.46);
+  outline-offset: 3px;
+}
+
+.backoffice-command,
+.backoffice-panel .primary-button,
+.backoffice-panel .google-button,
+.backoffice-card-actions button,
+.upload-control,
+.backoffice-switch span,
+.backoffice-draft-status,
+.backoffice-draft-picker {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.backoffice-command,
+.backoffice-panel .primary-button,
+.backoffice-panel .google-button {
+  text-transform: none;
+}
+
+.status-pill {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (min-width: 901px) {
+  .backoffice-dashboard {
+    grid-template-columns: 236px minmax(0, 1fr);
+  }
+
+  .backoffice-module-nav {
+    position: sticky;
+  }
+
+  .backoffice-module-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-module-button {
+    grid-template-columns: 30px minmax(0, 1fr);
+    justify-items: stretch;
+    min-height: 54px;
+    text-align: left;
+  }
+
+  .backoffice-module-button span {
+    justify-items: stretch;
+  }
+}
+
+@media (max-width: 900px) {
+  .backoffice-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-module-nav {
+    position: static;
+    min-height: auto;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(54, 43, 39, 0.11);
+  }
+
+  .backoffice-module-summary {
+    display: none;
+  }
+
+  .backoffice-module-buttons {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .backoffice-module-button {
+    flex: 0 0 176px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    min-height: 52px;
+  }
+
+  .backoffice-module-content {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .backoffice-panel,
+  .backoffice-workspace-form,
+  .backoffice-nested-editor-body,
+  .backoffice-module-buttons {
+    scrollbar-width: none;
+  }
+
+  .backoffice-panel::-webkit-scrollbar,
+  .backoffice-workspace-form::-webkit-scrollbar,
+  .backoffice-nested-editor-body::-webkit-scrollbar,
+  .backoffice-module-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  .backoffice-catalog-heading,
+  .backoffice-catalog-tools,
+  .backoffice-form-head,
+  .backoffice-form-actions,
+  .backoffice-nested-editor-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .backoffice-catalog-heading .primary-button,
+  .backoffice-search-field,
+  .backoffice-action-buttons,
+  .backoffice-action-buttons > *,
+  .backoffice-nested-editor-actions > div,
+  .backoffice-nested-editor-actions button {
+    width: 100%;
+  }
+
+  .backoffice-catalog-tools > p {
+    margin: 0;
+  }
+
+  .backoffice-catalog-list .backoffice-menu-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .backoffice-catalog-list .backoffice-card-meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .backoffice-action-buttons,
+  .backoffice-nested-editor-actions > div {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-workspace-form > .backoffice-form-head {
+    gap: 12px;
+    padding-block: 14px;
+  }
+
+  .backoffice-form-head-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px auto;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .backoffice-draft-status {
+    grid-column: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .backoffice-draft-status span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .backoffice-draft-picker {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: auto;
+  }
+
+  .backoffice-draft-discard {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .backoffice-form-head-actions .backoffice-switch {
+    grid-column: 3;
+    grid-row: 1;
+    width: auto;
+  }
+
+  .backoffice-form-head-actions .backoffice-switch span {
+    width: auto;
+    padding-inline: 12px;
+  }
+
+  .backoffice-form-head-actions:not(:has(.backoffice-draft-discard)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .backoffice-form-head-actions:not(:has(.backoffice-draft-discard)) .backoffice-switch {
+    grid-column: 2;
+  }
+
+  .backoffice-intro-note {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .backoffice-editor-tabs button {
+    padding-inline: 11px;
+    font-size: 0.8rem;
+  }
+
+  .backoffice-editor-tabs button::after {
+    right: 11px;
+    left: 11px;
+  }
+
+  .backoffice-form-actions,
+  .backoffice-nested-editor-actions {
+    gap: 10px;
+    padding-block: 11px;
+  }
+
+  .backoffice-action-copy,
+  .backoffice-nested-editor-actions > div:first-child {
+    gap: 0;
+  }
+
+  .backoffice-action-copy small,
+  .backoffice-nested-editor-actions > div:first-child small {
+    display: none;
+  }
+
+  .backoffice-action-buttons,
+  .backoffice-nested-editor-actions > div:last-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .backoffice-nested-editor-actions > div:last-child > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .backoffice-action-buttons button,
+  .backoffice-nested-editor-actions button {
+    min-height: 48px;
+    padding-inline: 10px;
+    font-size: 0.82rem;
+  }
+
+  .backoffice-grid,
+  .backoffice-nutrition-grid,
+  .backoffice-library-loader {
+    grid-template-columns: 1fr;
+  }
+
+  .included-editor-card {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-dish-actions {
+    justify-content: flex-end;
+  }
+
+  .backoffice-editing-context {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .backoffice-editing-context > small {
+    grid-column: 2;
+  }
+
+  .backoffice-editor-mode {
+    grid-template-columns: 1fr;
+  }
+
+  .backoffice-editor-mode button + button {
+    border-top: 0;
+    border-left: 1px solid rgba(54, 43, 39, 0.13);
+  }
+
+  .backoffice-workspace-form,
+  .backoffice-nested-editor {
+    width: calc(100vw - 12px);
+    max-height: calc(100svh - 12px);
+  }
+
+  .backoffice-editor-overlay,
+  .backoffice-nested-editor-overlay {
+    padding: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  .backoffice-panel {
+    width: 100vw;
+    max-height: 100svh;
+    border: 0;
+  }
+
+  .backoffice-overlay {
+    padding: 0;
+  }
+
+  .backoffice-module-content {
+    padding: 14px;
+  }
+
+  .backoffice-catalog-list .backoffice-menu-main {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .backoffice-catalog-list .backoffice-menu-main img {
+    width: 56px;
+    height: 48px;
+  }
+
+  .backoffice-dish-main {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .backoffice-dish-thumb {
+    width: 76px;
+    height: 62px;
+  }
+
+  .backoffice-editor-tabs button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 0.74rem;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .backoffice-editor-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .backoffice-editor-tabs button::after {
+    right: 6px;
+    left: 6px;
+  }
+
+  .backoffice-workspace-title h3 {
+    font-size: 1.15rem;
+  }
+
+  .backoffice-editing-context {
+    padding-inline: 14px;
+  }
+
+  .backoffice-nested-editor-body,
+  .backoffice-nested-editor-head,
+  .backoffice-nested-editor-actions {
+    padding-inline: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backoffice-result-card.is-saving .backoffice-result-icon svg,
+  .backoffice-draft-status.is-saving svg {
+    animation-duration: 1800ms;
+  }
+}

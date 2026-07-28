@@ -117,3 +117,16 @@
 - Esta validacion reemplaza la nota antigua que indicaba que el selector nativo de archivos no estaba probado.
 - Evidencias: `demo-clienta/qa-catalogo-2026-07-28/`. Onepage para Cecilia: `demo-clienta/onepage-sistema-platos-beneficios.pdf`.
 - Migracion aplicada: `20260728001000_catalog_parameters_and_dish_benefits.sql`.
+
+### Arquitectura UX del Backoffice 2026-07-28
+
+- Un meal prep es un plan comercial compuesto por platos. El plan sólo administra sus datos comerciales, frecuencia, precio, descripción, fotos de la caja y publicación. La nutrición, ingredientes, tags y beneficios pertenecen a cada plato y el meal prep los hereda y deduplica.
+- El Backoffice usa navegación lateral en escritorio y navegación horizontal táctil en móvil. Cada módulo abre primero un catálogo con listado, buscador y acciones claras; no se abre directamente un formulario largo.
+- `Meal preps`, `Platos reutilizables` y `Platos familiares` son módulos distintos. Los productos familiares son platos comerciales con ficha nutricional propia y nunca deben aparecer mezclados en el listado de meal preps.
+- Crear o editar un meal prep abre un espacio de trabajo amplio con pestañas `Información general`, `Platos` y `Publicación`. El plan debe contener al menos un plato con nombre antes de poder guardarse en el catálogo.
+- Crear o editar un plato dentro del meal prep abre un segundo lightbox contextual. Debe mostrar siempre la ruta `Meal preps / plan / Plato N`, el nombre del plan y el código automático del plato.
+- La edición de platos ofrece modo `Rápida` para nombre, descripción y foto principal, y modo `Completa` para ingredientes, alérgenos, nutrición, tags, beneficios y ambas fotos. Volver al meal prep conserva los cambios en su borrador.
+- Los códigos se generan automáticamente y no se solicitan al usuario: `MP-` para meal preps, `PL-` para platos y `PF-` para platos familiares. Sólo se muestran como información interna de solo lectura.
+- Guardar debe mostrar un lightbox de progreso y un resultado inequívoco. Los errores indican exactamente qué falta y recuerdan que el borrador sigue protegido.
+- La interfaz evita negritas pesadas: títulos en peso regular y controles en peso medio. La jerarquía se construye con tamaño, espacio, pestañas, color y contexto.
+- QA aprobado en `1440x1000` y `390x844`: catálogo, búsqueda, creación de meal prep, plato rápido/completo, ficha nutricional, platos familiares, validación de guardado, nombres largos y ausencia de desbordes horizontales.

@@ -30,9 +30,13 @@ assert.equal("nutrition_description" in mealPrepPayload, false);
 assert.equal("nutrition_highlights" in mealPrepPayload, false);
 assert.equal("nutrition_detail" in mealPrepPayload, false);
 assert.equal("nutrition_facts" in mealPrepPayload, false);
+assert.equal("benefit_assignments" in mealPrepPayload, false);
+assert.equal("benefit_tags" in mealPrepPayload, false);
+assert.equal("tag_ids" in mealPrepPayload, false);
 assert.deepEqual(mealPrepPayload.included_items, [
   {
     id: "plato-qa",
+    sku: "PL-PLATOQA",
     libraryMealId: "",
     name: "Plato reutilizable QA",
     tag: "",
