@@ -4265,6 +4265,64 @@ function App() {
     return result.data;
   }
 
+  function findExistingCatalogDefinition(definitions, name) {
+    const normalizedName = String(name || "").trim().toLocaleLowerCase("es");
+    const normalizedSlug = slugifyMenuName(name);
+
+    return definitions.find((definition) => (
+      definition.slug === normalizedSlug
+      || String(definition.name || "").trim().toLocaleLowerCase("es") === normalizedName
+    ));
+  }
+
+  async function createQuickBenefitDefinition(form) {
+    if (!activeIsAdmin) {
+      return { data: null, error: "Necesitas una sesion de administracion para crear beneficios." };
+    }
+
+    const existing = findExistingCatalogDefinition(benefitDefinitions, form.name);
+    if (existing) return { data: existing, error: "", existing: true };
+
+    const result = await saveBenefitDefinition(form);
+    if (result.error || !result.configured || !result.data) {
+      return {
+        data: null,
+        error: getSupabaseErrorMessage(result.error, "No pudimos crear el beneficio.")
+      };
+    }
+
+    await Promise.all([
+      refreshCatalogParameters({ silent: true }),
+      refreshPublicProducts()
+    ]);
+
+    return { data: result.data, error: "", existing: false };
+  }
+
+  async function createQuickTagDefinition(form) {
+    if (!activeIsAdmin) {
+      return { data: null, error: "Necesitas una sesion de administracion para crear tags." };
+    }
+
+    const existing = findExistingCatalogDefinition(tagDefinitions, form.name);
+    if (existing) return { data: existing, error: "", existing: true };
+
+    const result = await saveTagDefinition(form);
+    if (result.error || !result.configured || !result.data) {
+      return {
+        data: null,
+        error: getSupabaseErrorMessage(result.error, "No pudimos crear el tag.")
+      };
+    }
+
+    await Promise.all([
+      refreshCatalogParameters({ silent: true }),
+      refreshPublicProducts()
+    ]);
+
+    return { data: result.data, error: "", existing: false };
+  }
+
   async function removeTagDefinition(item) {
     if (!window.confirm(`¿Eliminar el tag “${item.name}”? Los platos conservarán la copia publicada hasta que se editen.`)) return;
 
@@ -7692,12 +7750,14 @@ function App() {
                                       value={activeIncludedMeal.tagIds}
                                       onChange={(tagIds) => updateIncludedMealForm(includedMealEditorIndex, "tagIds", tagIds)}
                                       idPrefix={`plan-${activeIncludedMeal.id}-tag`}
+                                      onCreateQuick={createQuickTagDefinition}
                                     />
                                     <BenefitAssignmentEditor
                                       definitions={benefitDefinitions}
                                       value={activeIncludedMeal.benefitAssignments}
                                       onChange={(benefitAssignments) => updateIncludedMealForm(includedMealEditorIndex, "benefitAssignments", benefitAssignments)}
                                       idPrefix={`plan-${activeIncludedMeal.id}-benefit`}
+                                      onCreateQuick={createQuickBenefitDefinition}
                                     />
                                   </section>
                                 )}
@@ -7862,12 +7922,14 @@ function App() {
                             value={mealLibraryForm.tagIds}
                             onChange={(tagIds) => setMealLibraryForm((current) => ({ ...current, tagIds }))}
                             idPrefix="library-tag"
+                            onCreateQuick={createQuickTagDefinition}
                           />
                           <BenefitAssignmentEditor
                             definitions={benefitDefinitions}
                             value={mealLibraryForm.benefitAssignments}
                             onChange={(benefitAssignments) => setMealLibraryForm((current) => ({ ...current, benefitAssignments }))}
                             idPrefix="library-benefit"
+                            onCreateQuick={createQuickBenefitDefinition}
                           />
                           <label className="backoffice-wide">Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
                           <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
@@ -8101,6 +8163,7 @@ function App() {
                                       setMenuForm((current) => ({ ...current, tagIds }));
                                     }}
                                     idPrefix="family-tag"
+                                    onCreateQuick={createQuickTagDefinition}
                                   />
                                   <BenefitAssignmentEditor
                                     definitions={benefitDefinitions}
@@ -8110,6 +8173,7 @@ function App() {
                                       setMenuForm((current) => ({ ...current, benefitAssignments }));
                                     }}
                                     idPrefix="family-benefit"
+                                    onCreateQuick={createQuickBenefitDefinition}
                                   />
                                   <div className="backoffice-grid">
                                     <label>

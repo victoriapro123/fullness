@@ -204,15 +204,284 @@
   border-top: 1px solid rgba(81, 20, 37, 0.12);
 }
 
-.benefit-assignment-editor legend,
-.tag-selector legend {
-  padding: 0 12px 0 0;
+.selector-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
   color: rgba(23, 17, 12, 0.76);
   font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.selector-legend > span {
+  padding-right: 12px;
+}
+
+.selector-legend > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid rgba(142, 38, 60, 0.26);
+  border-radius: 0;
+  color: #762531;
+  background: rgba(255, 250, 242, 0.8);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.065em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.selector-legend > button:hover,
+.selector-legend > button:focus-visible {
+  border-color: #8e263c;
+  background: rgba(142, 38, 60, 0.09);
+}
+
+.selector-legend > button:focus-visible {
+  outline: 2px solid rgba(142, 38, 60, 0.36);
+  outline-offset: 2px;
+}
+
+.quick-parameter-lightbox {
+  z-index: 160;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 15, 13, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.quick-parameter-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(560px, 100%);
+  max-height: min(760px, calc(100svh - 40px));
+  padding: clamp(20px, 3vw, 30px);
+  overflow-y: auto;
+  border: 1px solid rgba(81, 20, 37, 0.16);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fffdf9;
+  box-shadow: 0 28px 76px rgba(22, 18, 16, 0.28);
+}
+
+.quick-parameter-dialog > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.quick-parameter-dialog .eyebrow,
+.quick-parameter-dialog h3,
+.quick-parameter-dialog > p {
+  margin: 0;
+}
+
+.quick-parameter-dialog h3 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.06;
+}
+
+.quick-parameter-dialog > p {
+  color: rgba(23, 17, 12, 0.62);
+  font-size: 0.91rem;
+  line-height: 1.48;
+}
+
+.quick-parameter-dialog > label {
+  display: grid;
+  gap: 7px;
+  color: rgba(23, 17, 12, 0.76);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.quick-parameter-dialog > label small {
+  color: rgba(23, 17, 12, 0.48);
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.quick-parameter-dialog :is(input, textarea) {
+  width: 100%;
+  border: 1px solid rgba(81, 20, 37, 0.16);
+  border-radius: 6px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  color: var(--ink);
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 0.94rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+}
+
+.quick-parameter-dialog input {
+  min-height: 46px;
+  padding: 0 12px;
+}
+
+.quick-parameter-dialog textarea {
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.quick-parameter-dialog :is(input, textarea):focus-visible {
+  border-color: rgba(142, 38, 60, 0.6);
+  outline-color: rgba(142, 38, 60, 0.3);
+}
+
+.quick-parameter-icons {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(81, 20, 37, 0.12);
+}
+
+.quick-parameter-icons legend {
+  padding: 0;
+  color: rgba(23, 17, 12, 0.76);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.quick-parameter-icons > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 7px;
+}
+
+.quick-parameter-icons label {
+  position: relative;
+  display: grid;
+  grid-template-rows: 48px auto;
+  justify-items: center;
+  gap: 4px;
+  min-height: 80px;
+  padding: 6px 4px;
+  border: 1px solid rgba(81, 20, 37, 0.14);
+  color: rgba(23, 17, 12, 0.62);
+  background: #fff;
+  cursor: pointer;
+}
+
+.quick-parameter-icons label:hover,
+.quick-parameter-icons label:focus-within,
+.quick-parameter-icons label.is-selected {
+  border-color: #8e263c;
+  color: #762531;
+  background: rgba(142, 38, 60, 0.06);
+}
+
+.quick-parameter-icons input {
+  position: absolute;
+  width: 1px;
+  min-height: 0;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+}
+
+.quick-parameter-icons img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: none;
+  mix-blend-mode: normal;
+}
+
+.quick-parameter-icons span {
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 0.53rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.quick-parameter-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(158, 48, 48, 0.22);
+  color: #8b2e37 !important;
+  background: rgba(158, 48, 48, 0.07);
+  font-size: 0.82rem !important;
+}
+
+.quick-parameter-notice {
+  margin: 0;
+  color: #386247;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.quick-parameter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 2px;
+}
+
+.quick-parameter-actions > button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(81, 20, 37, 0.2);
+  border-radius: 0;
+  color: #762531;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quick-parameter-actions > .primary-button {
+  width: auto;
+  margin: 0;
+  border-color: #8e263c;
+  color: #fffaf2;
+  background: #8e263c;
+}
+
+.quick-parameter-actions > button:disabled {
+  cursor: wait;
+  opacity: 0.66;
 }
 
 .benefit-choice-grid {

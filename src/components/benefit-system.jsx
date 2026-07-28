@@ -49,12 +49,213 @@ function normalizeAssignments(value, definitions) {
     .filter(Boolean);
 }
 
+function findMatchingDefinition(definitions, name) {
+  const cleanedName = cleanText(name).toLocaleLowerCase("es");
+  const slug = slugify(name);
+
+  return definitions.find((definition) => (
+    definition.slug === slug || cleanText(definition.name).toLocaleLowerCase("es") === cleanedName
+  ));
+}
+
+function QuickParameterDialog({
+  kind,
+  definitions,
+  onClose,
+  onCreate,
+  onChoose
+}) {
+  const closeRef = useRef(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const iconOptions = useMemo(
+    () => definitions.filter((definition) => definition.iconUrl),
+    [definitions]
+  );
+  const [selectedIconId, setSelectedIconId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const isBenefit = kind === "benefit";
+  const singular = isBenefit ? "beneficio" : "tag";
+  const dialogTitleId = `quick-${kind}-title`;
+
+  useEffect(() => {
+    setName("");
+    setDescription("");
+    setSelectedIconId(iconOptions[0]?.id || "");
+    setSaving(false);
+    setError("");
+    window.requestAnimationFrame(() => closeRef.current?.focus());
+  }, [iconOptions, kind]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !saving) onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, saving]);
+
+  async function submitQuickDefinition(event) {
+    event.preventDefault();
+    const trimmedName = cleanText(name);
+
+    if (!trimmedName) {
+      setError(`Escribe el nombre del ${singular}.`);
+      return;
+    }
+
+    const existingDefinition = findMatchingDefinition(definitions, trimmedName);
+    if (existingDefinition) {
+      onChoose(existingDefinition);
+      onClose();
+      return;
+    }
+
+    const selectedIcon = iconOptions.find((definition) => definition.id === selectedIconId);
+    if (isBenefit && !selectedIcon) {
+      setError("Elige un simbolo ilustrado para continuar.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    let result;
+
+    try {
+      result = await onCreate({
+        name: trimmedName,
+        defaultDescription: cleanText(description),
+        iconUrl: selectedIcon?.iconUrl || "",
+        iconStoragePath: selectedIcon?.iconStoragePath || "",
+        displayOrder: definitions.reduce(
+          (highest, definition) => Math.max(highest, Number(definition.displayOrder || 0)),
+          0
+        ) + 10,
+        isActive: true
+      });
+    } catch {
+      result = { data: null, error: `No pudimos crear el ${singular}. Intenta nuevamente.` };
+    }
+
+    setSaving(false);
+
+    if (!result?.data) {
+      setError(result?.error || `No pudimos crear el ${singular}. Intenta nuevamente.`);
+      return;
+    }
+
+    onChoose(result.data);
+    onClose();
+  }
+
+  return (
+    <div
+      className="overlay quick-parameter-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={dialogTitleId}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !saving) onClose();
+      }}
+    >
+      <form className="quick-parameter-dialog" onSubmit={submitQuickDefinition}>
+        <header>
+          <div>
+            <p className="eyebrow">Mientras editas este plato</p>
+            <h3 id={dialogTitleId}>Nuevo {singular}</h3>
+          </div>
+          <button
+            ref={closeRef}
+            className="icon-button"
+            type="button"
+            onClick={onClose}
+            aria-label={`Cerrar nuevo ${singular}`}
+            disabled={saving}
+          >
+            <X size={19} />
+          </button>
+        </header>
+
+        <p>
+          {isBenefit
+            ? "Quedara disponible para todos los platos. Puedes completar su iconografia o texto mas tarde en Parametros."
+            : "Quedara disponible para todos los platos y se agregara a este plato al guardarlo."}
+        </p>
+
+        <label>
+          Nombre
+          <input
+            autoComplete="off"
+            autoFocus
+            disabled={saving}
+            onChange={(event) => setName(event.target.value)}
+            placeholder={isBenefit ? "Antiinflamatorio..." : "Alto en hierro..."}
+            value={name}
+          />
+        </label>
+
+        {isBenefit && (
+          <>
+            <label>
+              Descripcion general <small>(opcional)</small>
+              <textarea
+                disabled={saving}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Explica brevemente por que este beneficio puede aplicar a un plato..."
+                rows="3"
+                value={description}
+              />
+            </label>
+
+            <fieldset className="quick-parameter-icons">
+              <legend>Simbolo ilustrado</legend>
+              <div>
+                {iconOptions.map((definition) => {
+                  const controlId = `quick-benefit-icon-${definition.id}`;
+                  const selected = selectedIconId === definition.id;
+
+                  return (
+                    <label className={selected ? "is-selected" : ""} htmlFor={controlId} key={definition.id}>
+                      <input
+                        checked={selected}
+                        disabled={saving}
+                        id={controlId}
+                        name="quickBenefitIcon"
+                        onChange={() => setSelectedIconId(definition.id)}
+                        type="radio"
+                      />
+                      <img src={definition.iconUrl} alt="" width="48" height="48" />
+                      <span>{definition.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          </>
+        )}
+
+        {error && <p className="quick-parameter-error" role="alert">{error}</p>}
+
+        <div className="quick-parameter-actions">
+          <button type="button" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button className="primary-button" type="submit" disabled={saving}>
+            {saving ? "Guardando..." : `Crear y agregar ${singular}`}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function BenefitAssignmentEditor({
   definitions,
   value,
   onChange,
   legend = "Beneficios del plato",
-  idPrefix = "benefit"
+  idPrefix = "benefit",
+  onCreateQuick
 }) {
   const activeDefinitions = definitions.filter((item) => item.isActive);
   const assignments = useMemo(
@@ -62,6 +263,8 @@ export function BenefitAssignmentEditor({
     [definitions, value]
   );
   const selectedIds = new Set(assignments.map((item) => item.benefitId));
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quickNotice, setQuickNotice] = useState("");
 
   function toggleBenefit(definition) {
     if (selectedIds.has(definition.id)) {
@@ -89,9 +292,27 @@ export function BenefitAssignmentEditor({
     )));
   }
 
+  function addQuickBenefit(definition) {
+    if (selectedIds.has(definition.id)) {
+      setQuickNotice(`“${definition.name}” ya estaba aplicado a este plato.`);
+      return;
+    }
+
+    toggleBenefit(definition);
+    setQuickNotice(`“${definition.name}” se agrego a este plato.`);
+  }
+
   return (
     <fieldset className="benefit-assignment-editor">
-      <legend>{legend}</legend>
+      <legend className="selector-legend">
+        <span>{legend}</span>
+        {onCreateQuick && (
+          <button type="button" onClick={() => setQuickCreateOpen(true)}>
+            <Plus size={14} aria-hidden="true" />
+            Crear beneficio
+          </button>
+        )}
+      </legend>
       <div className="benefit-choice-grid">
         {activeDefinitions.map((definition) => {
           const selected = selectedIds.has(definition.id);
@@ -112,6 +333,7 @@ export function BenefitAssignmentEditor({
           );
         })}
       </div>
+      {quickNotice && <p className="quick-parameter-notice" role="status">{quickNotice}</p>}
 
       {assignments.length > 0 && (
         <div className="benefit-explanation-stack">
@@ -132,6 +354,16 @@ export function BenefitAssignmentEditor({
           ))}
         </div>
       )}
+
+      {quickCreateOpen && (
+        <QuickParameterDialog
+          kind="benefit"
+          definitions={definitions}
+          onChoose={addQuickBenefit}
+          onClose={() => setQuickCreateOpen(false)}
+          onCreate={onCreateQuick}
+        />
+      )}
     </fieldset>
   );
 }
@@ -141,9 +373,12 @@ export function TagSelector({
   value,
   onChange,
   legend = "Tags nutricionales",
-  idPrefix = "tag"
+  idPrefix = "tag",
+  onCreateQuick
 }) {
   const selectedIds = new Set(Array.isArray(value) ? value : []);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quickNotice, setQuickNotice] = useState("");
 
   function toggleTag(tag) {
     const next = selectedIds.has(tag.id)
@@ -152,9 +387,27 @@ export function TagSelector({
     onChange(next);
   }
 
+  function addQuickTag(tag) {
+    if (selectedIds.has(tag.id)) {
+      setQuickNotice(`“${tag.name}” ya estaba aplicado a este plato.`);
+      return;
+    }
+
+    toggleTag(tag);
+    setQuickNotice(`“${tag.name}” se agrego a este plato.`);
+  }
+
   return (
     <fieldset className="tag-selector">
-      <legend>{legend}</legend>
+      <legend className="selector-legend">
+        <span>{legend}</span>
+        {onCreateQuick && (
+          <button type="button" onClick={() => setQuickCreateOpen(true)}>
+            <Plus size={14} aria-hidden="true" />
+            Crear tag
+          </button>
+        )}
+      </legend>
       <div className="tag-choice-grid">
         {definitions.filter((item) => item.isActive).map((tag) => {
           const controlId = `${idPrefix}-${tag.id}`;
@@ -173,6 +426,17 @@ export function TagSelector({
           );
         })}
       </div>
+      {quickNotice && <p className="quick-parameter-notice" role="status">{quickNotice}</p>}
+
+      {quickCreateOpen && (
+        <QuickParameterDialog
+          kind="tag"
+          definitions={definitions}
+          onChoose={addQuickTag}
+          onClose={() => setQuickCreateOpen(false)}
+          onCreate={onCreateQuick}
+        />
+      )}
     </fieldset>
   );
 }

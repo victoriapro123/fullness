@@ -130,3 +130,9 @@
 - Guardar debe mostrar un lightbox de progreso y un resultado inequívoco. Los errores indican exactamente qué falta y recuerdan que el borrador sigue protegido.
 - La interfaz evita negritas pesadas: títulos en peso regular y controles en peso medio. La jerarquía se construye con tamaño, espacio, pestañas, color y contexto.
 - QA aprobado en `1440x1000` y `390x844`: catálogo, búsqueda, creación de meal prep, plato rápido/completo, ficha nutricional, platos familiares, validación de guardado, nombres largos y ausencia de desbordes horizontales.
+
+### Alta rápida de beneficios y tags 2026-07-28
+
+- Mientras se edita la ficha nutricional de un plato, el administrador puede usar `Crear tag` o `Crear beneficio` sin abandonar el plato. Ambos se guardan como parámetros globales reutilizables en Supabase y se asignan automáticamente al plato abierto; el cambio permanece dentro del borrador del meal prep hasta que éste se publique.
+- El alta rápida de un tag pide solamente su nombre. El alta de un beneficio pide nombre, una descripción general opcional y elegir una ilustración ya aprobada del set editorial. El icono no se deja vacío ni se reemplaza por un pictograma genérico; la personalización completa de icono y texto sigue disponible en `Parámetros`.
+- Si el nombre ya existe, se usa el beneficio o tag existente en vez de crear un duplicado o mostrar un error técnico. Esta acción también se ofrece al editar un plato reutilizable o familiar, porque comparten la misma ficha de plato.
