@@ -17,6 +17,10 @@ function cleanText(value) {
   return String(value || "").trim();
 }
 
+function preserveInputText(value) {
+  return value === null || value === undefined ? "" : String(value);
+}
+
 function slugify(value) {
   return cleanText(value)
     .normalize("NFD")
@@ -45,7 +49,7 @@ function normalizeAssignments(value, definitions) {
         iconUrl: definition?.iconUrl || cleanText(assignment?.iconUrl || assignment?.icon_url),
         iconStoragePath: definition?.iconStoragePath || cleanText(assignment?.iconStoragePath || assignment?.icon_storage_path),
         defaultDescription: definition?.defaultDescription || cleanText(assignment?.defaultDescription || assignment?.default_description),
-        explanation: cleanText(assignment?.explanation || assignment?.description)
+        explanation: preserveInputText(assignment?.explanation ?? assignment?.description)
       };
     })
     .filter(Boolean);

@@ -149,6 +149,7 @@
 - El diálogo de alta rápida incluye un prompt base copiable para generar una ilustración con IA. Debe mantenerse como apoyo operativo dentro del flujo de administración y no como contenido público.
 - Si el nombre ya existe, se usa el beneficio o tag existente en vez de crear un duplicado o mostrar un error técnico. Esta acción se ofrece al editar mealpreps individuales y familiares.
 - Los nombres visibles de beneficios y tags aceptan espacios y los conservan al publicar. El código interno se genera automáticamente a partir del nombre, con guiones, y no debe confundirse con el texto que verá la clienta.
+- La explicación de cada beneficio dentro de un mealprep debe conservar todos los espacios mientras se escribe. No aplicar `trim()` ni otra normalización al valor controlado; el saneamiento puede ocurrir recién al persistir la ficha.
 
 ### Recuperacion conservadora 2026-07-28
 
