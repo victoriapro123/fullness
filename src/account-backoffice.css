@@ -1864,18 +1864,22 @@
 
 .backoffice-dashboard {
   grid-template-columns: 236px minmax(0, 1fr);
-  gap: 0;
+  gap: clamp(12px, 1.35vw, 20px);
   min-height: min(760px, calc(100svh - 112px));
-  padding: 0;
+  padding: clamp(12px, 1.35vw, 20px);
 }
 
 .backoffice-module-nav {
-  top: 86px;
+  top: 12px;
   gap: 8px;
-  min-height: 100%;
+  min-height: 0;
+  max-height: calc(100svh - 146px);
   padding: 18px 12px;
-  border-right: 1px solid rgba(54, 43, 39, 0.11);
+  border: 1px solid rgba(54, 43, 39, 0.11);
+  border-radius: 8px;
   background: #eae7e2;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .backoffice-module-summary {
@@ -1948,7 +1952,10 @@
 
 .backoffice-module-content {
   position: relative;
+  min-width: 0;
   padding: clamp(18px, 2vw, 30px);
+  border: 1px solid rgba(54, 43, 39, 0.1);
+  border-radius: 8px;
   background: #f7f5f1;
 }
 
@@ -2930,9 +2937,9 @@
   .backoffice-module-nav {
     position: static;
     min-height: auto;
+    max-height: none;
     padding: 10px;
-    border-right: 0;
-    border-bottom: 1px solid rgba(54, 43, 39, 0.11);
+    border: 1px solid rgba(54, 43, 39, 0.11);
   }
 
   .backoffice-module-summary {

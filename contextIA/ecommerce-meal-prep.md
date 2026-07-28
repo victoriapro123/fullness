@@ -137,6 +137,7 @@
 - `Planes`, `Mealpreps` y `Mealpreps familiares` comparten el patrón de catálogo: encabezado, acción de creación, buscador y resultados en filas combinadas.
 - Los listados de beneficios y tags en `Parámetros` conservan sus cuadros modulares y tienen buscadores independientes. Suscripciones mantiene su filtro y buscador propio, que cubren el mismo objetivo sin repetir una segunda interfaz de búsqueda.
 - Todos los campos de texto y selectores de los formularios de Backoffice deben usar una altura visual fija de `48px`. No depender del alto nativo del navegador para los selectores ni permitir que un input quede más alto que el selector contiguo.
+- El menú lateral del Backoffice debe conservar margen respecto del área de trabajo: vive como columna contenida con borde completo, radio de `8px`, altura máxima y scroll propio. No debe pegarse al contenido, expandirse indefinidamente ni usar un `sticky` con un desplazamiento que deje espacio muerto al recorrer módulos largos.
 - Tras crear un plan, mealprep o mealprep familiar, la confirmación de guardado debe volver al catálogo correspondiente. Al guardar una ficha existente, se mantiene abierto el editor para permitir ajustes consecutivos.
 - `Parámetros` separa `Beneficios` y `Tags` en pestañas para que cada biblioteca y su formulario tenga ancho completo. `Contenido web` consolida los antiguos módulos `Tienda`, `Lightbox` y `Comunidad` bajo tres pestañas, conservando sus propios formularios y mecanismos de guardado.
 
