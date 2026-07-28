@@ -1,3 +1,7 @@
+:root {
+  --benefit-artwork-paper: #f9e9cf;
+}
+
 .benefit-icon-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
@@ -14,19 +18,18 @@
   min-width: 0;
   min-height: 106px;
   padding: 8px 5px 7px;
-  border: 1px solid rgba(122, 35, 48, 0.2);
+  border: 0;
   border-radius: 0;
   color: #6f222d;
-  background: rgba(255, 250, 242, 0.58);
+  background: transparent;
   cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  transition: transform 180ms ease;
   touch-action: manipulation;
 }
 
 .benefit-icon-list button:hover,
 .benefit-icon-list button:focus-visible {
-  border-color: rgba(122, 35, 48, 0.54);
-  background: rgba(255, 250, 242, 0.92);
+  background: transparent;
   transform: translateY(-2px);
 }
 
@@ -39,6 +42,7 @@
   width: 64px;
   height: 64px;
   object-fit: cover;
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
   mix-blend-mode: multiply;
 }
 
@@ -116,9 +120,7 @@
   min-height: 100%;
   margin: 0;
   padding: clamp(30px, 5vw, 70px);
-  background:
-    linear-gradient(rgba(243, 231, 212, 0.08), rgba(243, 231, 212, 0.08)),
-    #1a1410;
+  background: var(--benefit-artwork-paper);
 }
 
 .benefit-detail-panel > figure img {
@@ -126,7 +128,9 @@
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
+  mix-blend-mode: multiply;
+  box-shadow: none;
 }
 
 .benefit-detail-panel > div {
@@ -233,7 +237,7 @@
   border: 1px solid rgba(81, 20, 37, 0.12);
   border-radius: 0;
   color: rgba(23, 17, 12, 0.64) !important;
-  background: rgba(255, 253, 248, 0.52);
+  background: var(--benefit-artwork-paper);
   cursor: pointer;
   transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
 }
@@ -243,7 +247,7 @@
 .benefit-choice.is-selected {
   border-color: rgba(142, 38, 60, 0.46);
   color: #762531 !important;
-  background: rgba(255, 250, 242, 0.96);
+  background: var(--benefit-artwork-paper);
 }
 
 .benefit-choice:hover {
@@ -264,6 +268,7 @@
   width: 76px;
   height: 76px;
   object-fit: cover;
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
   mix-blend-mode: multiply;
 }
 
@@ -302,13 +307,14 @@
   padding: 10px !important;
   border: 1px solid rgba(81, 20, 37, 0.12);
   border-radius: 0;
-  background: rgba(255, 253, 248, 0.48);
+  background: var(--benefit-artwork-paper);
 }
 
 .benefit-explanation-field img {
   width: 64px;
   height: 64px;
   object-fit: cover;
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
   mix-blend-mode: multiply;
 }
 
@@ -451,7 +457,7 @@
   display: grid;
   min-width: 0;
   border: 1px solid rgba(81, 20, 37, 0.12);
-  background: rgba(255, 253, 248, 0.54);
+  background: var(--benefit-artwork-paper);
 }
 
 .parameter-benefit-library article.is-inactive,
@@ -475,6 +481,7 @@
   width: 92px;
   height: 92px;
   object-fit: cover;
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
   mix-blend-mode: multiply;
 }
 
@@ -660,7 +667,7 @@
   margin: 0;
   border: 1px dashed rgba(81, 20, 37, 0.2);
   color: #762531;
-  background: rgba(255, 253, 248, 0.7);
+  background: var(--benefit-artwork-paper);
   overflow: hidden;
 }
 
@@ -668,6 +675,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(1.18) contrast(1.15) saturate(1.08);
   mix-blend-mode: multiply;
 }
 

@@ -27,6 +27,10 @@ QA aprobado contra Supabase y R2 de produccion. Los registros, cuenta e imagen c
 - `10`: modulo de Parametros del backoffice.
 - `11`: carrusel de familiares en movil.
 - `12`: detalle familiar y nutricion en movil.
+- `13`: iconos integrados al papel editorial, sin recuadros, en escritorio.
+- `14`: lightbox de beneficio sin fondo cuadrado.
+- `15`: iconos integrados al papel editorial en movil.
+- `16`: lightbox movil sin fondo cuadrado.
 
 ## Verificaciones automatizadas
 
