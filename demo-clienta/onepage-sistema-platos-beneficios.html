@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fullness Lab | Sistema de platos, beneficios y planes</title>
+    <style>
+      :root {
+        color: #231713;
+        background: #eee3d1;
+        font-family: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
+        font-synthesis: none;
+        --paper: #f2e8d7;
+        --paper-light: #fff9ef;
+        --ink: #231713;
+        --muted: #75675e;
+        --beet: #87283a;
+        --black: #0c0b09;
+        --line: rgba(120, 72, 59, 0.24);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(242, 232, 215, 0.94), rgba(242, 232, 215, 0.94)),
+          repeating-linear-gradient(90deg, transparent 0 88px, rgba(135, 40, 58, 0.04) 88px 89px);
+      }
+
+      main {
+        width: min(1440px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(180px, 0.24fr) minmax(0, 0.76fr);
+        gap: 52px;
+        align-items: end;
+        padding: 42px clamp(34px, 5vw, 76px) 34px;
+        color: #f7ecde;
+        background: var(--black);
+      }
+
+      header img {
+        width: min(100%, 210px);
+        height: auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: #c77f89;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 19ch;
+        margin-bottom: 12px;
+        font-size: clamp(2.1rem, 4vw, 4rem);
+        font-weight: 300;
+        letter-spacing: 0;
+        line-height: 1.02;
+      }
+
+      header p:last-child {
+        max-width: 64ch;
+        margin-bottom: 0;
+        color: rgba(247, 236, 222, 0.68);
+        font-size: 1rem;
+        line-height: 1.55;
+      }
+
+      .logic {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.9fr) 48px minmax(250px, 1fr) 48px minmax(250px, 1fr);
+        gap: 18px;
+        align-items: stretch;
+        padding: 42px clamp(34px, 5vw, 76px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .logic-block {
+        display: grid;
+        align-content: start;
+        gap: 14px;
+        min-width: 0;
+        padding: 22px;
+        border-top: 3px solid var(--beet);
+        background: rgba(255, 249, 239, 0.58);
+      }
+
+      .logic-block.is-source {
+        color: #f7ecde;
+        border-top-color: #c77f89;
+        background: var(--black);
+      }
+
+      .logic-block > span {
+        color: var(--beet);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .logic-block.is-source > span {
+        color: #c77f89;
+      }
+
+      .logic-block h2 {
+        margin-bottom: 0;
+        font-size: 1.55rem;
+        font-weight: 400;
+        line-height: 1.15;
+      }
+
+      .logic-block p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.52;
+      }
+
+      .logic-block.is-source p {
+        color: rgba(247, 236, 222, 0.68);
+      }
+
+      .logic-block ul {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .logic-block li {
+        position: relative;
+        padding-left: 16px;
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+
+      .logic-block li::before {
+        content: "";
+        position: absolute;
+        top: 0.5em;
+        left: 0;
+        width: 6px;
+        height: 6px;
+        background: var(--beet);
+        transform: rotate(45deg);
+      }
+
+      .logic-block.is-source li::before {
+        background: #c77f89;
+      }
+
+      .logic-arrow {
+        display: grid;
+        place-items: center;
+        color: var(--beet);
+        font-size: 2rem;
+        font-weight: 300;
+      }
+
+      .benefits {
+        display: grid;
+        grid-template-columns: minmax(250px, 0.32fr) minmax(0, 0.68fr);
+        gap: 36px;
+        padding: 36px clamp(34px, 5vw, 76px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .benefits h2,
+      .steps h2 {
+        margin-bottom: 8px;
+        font-size: 1.7rem;
+        font-weight: 400;
+        line-height: 1.15;
+      }
+
+      .benefits-copy > p:last-child {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+
+      .benefit-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .benefit {
+        display: grid;
+        grid-template-rows: 92px auto;
+        justify-items: center;
+        gap: 7px;
+        min-width: 0;
+        padding: 10px 7px;
+        border: 1px solid var(--line);
+        background: rgba(255, 249, 239, 0.62);
+        text-align: center;
+      }
+
+      .benefit img {
+        width: 92px;
+        height: 92px;
+        object-fit: cover;
+        mix-blend-mode: multiply;
+      }
+
+      .benefit strong {
+        color: var(--beet);
+        font-size: 0.64rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        line-height: 1.25;
+        text-transform: uppercase;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.28fr) minmax(0, 0.72fr);
+        gap: 36px;
+        padding: 32px clamp(34px, 5vw, 76px) 40px;
+      }
+
+      .step-list {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--line);
+      }
+
+      .step {
+        min-height: 140px;
+        padding: 18px;
+        background: var(--paper-light);
+      }
+
+      .step span {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin-bottom: 16px;
+        color: #fff8ee;
+        background: var(--beet);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .step h3 {
+        margin-bottom: 7px;
+        color: var(--beet);
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        line-height: 1.3;
+        text-transform: uppercase;
+      }
+
+      .step p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.75rem;
+        line-height: 1.45;
+      }
+
+      footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 15px clamp(34px, 5vw, 76px);
+        color: rgba(247, 236, 222, 0.7);
+        background: var(--black);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      footer strong {
+        color: #f7ecde;
+        font-weight: 500;
+      }
+
+      @media (max-width: 900px) {
+        header,
+        .benefits,
+        .steps {
+          grid-template-columns: 1fr;
+        }
+
+        .logic {
+          grid-template-columns: 1fr;
+        }
+
+        .logic-arrow {
+          min-height: 30px;
+          transform: rotate(90deg);
+        }
+
+        .benefit-row,
+        .step-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        header,
+        .logic,
+        .benefits,
+        .steps {
+          padding-inline: 20px;
+        }
+
+        .benefit-row,
+        .step-list {
+          grid-template-columns: 1fr;
+        }
+
+        footer {
+          align-items: flex-start;
+          flex-direction: column;
+          padding-inline: 20px;
+        }
+      }
+
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 0;
+        }
+
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        main {
+          width: 297mm;
+          height: 210mm;
+          min-height: 210mm;
+          display: grid;
+          grid-template-rows: 42mm 73mm 39mm 46mm 10mm;
+          overflow: hidden;
+        }
+
+        header {
+          grid-template-columns: 45mm minmax(0, 1fr);
+          gap: 10mm;
+          padding: 8mm 14mm 6mm;
+        }
+
+        header img {
+          width: 42mm;
+        }
+
+        header .eyebrow {
+          margin-bottom: 1.5mm;
+          font-size: 2.2mm;
+        }
+
+        h1 {
+          max-width: none;
+          margin-bottom: 2mm;
+          font-size: 8.4mm;
+        }
+
+        header p:last-child {
+          max-width: 150mm;
+          font-size: 2.7mm;
+          line-height: 1.38;
+        }
+
+        .logic {
+          grid-template-columns: minmax(0, 0.9fr) 9mm minmax(0, 1fr) 9mm minmax(0, 1fr);
+          gap: 3mm;
+          padding: 5mm 14mm;
+        }
+
+        .logic-block {
+          gap: 2mm;
+          padding: 4mm;
+        }
+
+        .logic-block > span {
+          font-size: 1.9mm;
+        }
+
+        .logic-block h2 {
+          font-size: 4.4mm;
+        }
+
+        .logic-block p {
+          font-size: 2.3mm;
+          line-height: 1.4;
+        }
+
+        .logic-block ul {
+          gap: 1.1mm;
+        }
+
+        .logic-block li {
+          padding-left: 3.2mm;
+          font-size: 2.1mm;
+          line-height: 1.3;
+        }
+
+        .logic-block li::before {
+          width: 1.4mm;
+          height: 1.4mm;
+        }
+
+        .logic-arrow {
+          min-height: 0;
+          font-size: 7mm;
+          transform: none;
+        }
+
+        .benefits {
+          grid-template-columns: 68mm minmax(0, 1fr);
+          gap: 8mm;
+          padding: 4mm 14mm;
+        }
+
+        .benefits h2,
+        .steps h2 {
+          margin-bottom: 1.5mm;
+          font-size: 4.6mm;
+        }
+
+        .benefits-copy > p:last-child {
+          font-size: 2.35mm;
+          line-height: 1.42;
+        }
+
+        .benefit-row {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 2mm;
+        }
+
+        .benefit {
+          grid-template-rows: 20mm auto;
+          gap: 1mm;
+          padding: 1.5mm;
+        }
+
+        .benefit img {
+          width: 20mm;
+          height: 20mm;
+        }
+
+        .benefit strong {
+          font-size: 1.9mm;
+        }
+
+        .steps {
+          grid-template-columns: 58mm minmax(0, 1fr);
+          gap: 8mm;
+          padding: 4mm 14mm 5mm;
+        }
+
+        .steps .eyebrow {
+          margin-bottom: 1.5mm;
+          font-size: 2mm;
+        }
+
+        .step-list {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .step {
+          min-height: 0;
+          padding: 3.5mm;
+        }
+
+        .step span {
+          width: 7mm;
+          height: 7mm;
+          margin-bottom: 2.5mm;
+          font-size: 2mm;
+        }
+
+        .step h3 {
+          margin-bottom: 1.2mm;
+          font-size: 2.1mm;
+        }
+
+        .step p {
+          font-size: 2mm;
+          line-height: 1.4;
+        }
+
+        footer {
+          flex-direction: row;
+          padding: 2.5mm 14mm;
+          font-size: 1.9mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="../public/assets/brand/fullness-lab-horizontal-contrast-2026.png" alt="Fullness Lab" />
+        <div>
+          <p class="eyebrow">Lógica del catálogo</p>
+          <h1>Un plato se configura una vez. El resto se hereda.</h1>
+          <p>
+            El backoffice separa la información propia de cada plato de la oferta comercial.
+            Así los planes siempre muestran datos consistentes y cada cambio se realiza desde una única fuente.
+          </p>
+        </div>
+      </header>
+
+      <section class="logic" aria-label="Flujo del sistema">
+        <article class="logic-block is-source">
+          <span>Fuente única</span>
+          <h2>Biblioteca de platos</h2>
+          <p>Aquí se crea y mantiene la ficha maestra de cada preparación.</p>
+          <ul>
+            <li>Fotos principal y hover</li>
+            <li>Descripción e ingredientes</li>
+            <li>Información nutricional</li>
+            <li>Tags nutricionales</li>
+            <li>Beneficios y explicación libre</li>
+          </ul>
+        </article>
+
+        <div class="logic-arrow" aria-hidden="true">→</div>
+
+        <article class="logic-block">
+          <span>Composición</span>
+          <h2>Plan semanal o mensual</h2>
+          <p>El plan reúne platos existentes. No duplica información nutricional ni beneficios.</p>
+          <ul>
+            <li>Hereda las fichas de sus platos</li>
+            <li>Deduplica tags y beneficios</li>
+            <li>Permite abrir cada plato por separado</li>
+            <li>Una edición del plato se refleja en sus planes</li>
+          </ul>
+        </article>
+
+        <div class="logic-arrow" aria-hidden="true">→</div>
+
+        <article class="logic-block">
+          <span>Venta puntual</span>
+          <h2>Plato familiar</h2>
+          <p>Un producto familiar también es un plato, sólo cambia su formato comercial.</p>
+          <ul>
+            <li>Puede cargarse desde Biblioteca</li>
+            <li>Conserva nutrición y beneficios</li>
+            <li>Usa fotos, tags e ingredientes propios</li>
+            <li>Se vende de forma individual</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="benefits">
+        <div class="benefits-copy">
+          <p class="eyebrow">Lenguaje visual común</p>
+          <h2>Beneficios ilustrados</h2>
+          <p>
+            Los iconos se administran en <strong>Parámetros</strong>. Al seleccionarlos en un plato,
+            Cecilia escribe por qué aplica ese beneficio. En la tienda, un clic abre esa explicación.
+          </p>
+        </div>
+        <div class="benefit-row">
+          <div class="benefit">
+            <img src="../public/assets/benefits/antiinflamatorio.webp" alt="" />
+            <strong>Antiinflamatorio</strong>
+          </div>
+          <div class="benefit">
+            <img src="../public/assets/benefits/energetico.webp" alt="" />
+            <strong>Energético</strong>
+          </div>
+          <div class="benefit">
+            <img src="../public/assets/benefits/digestivo.webp" alt="" />
+            <strong>Digestivo</strong>
+          </div>
+          <div class="benefit">
+            <img src="../public/assets/benefits/omega-3.webp" alt="" />
+            <strong>Omega 3</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="steps">
+        <div>
+          <p class="eyebrow">Flujo de trabajo</p>
+          <h2>Publicar sin repetir</h2>
+        </div>
+        <div class="step-list">
+          <article class="step">
+            <span>01</span>
+            <h3>Define parámetros</h3>
+            <p>Crea o ajusta beneficios, iconos y tags compartidos.</p>
+          </article>
+          <article class="step">
+            <span>02</span>
+            <h3>Crea el plato</h3>
+            <p>Completa una sola ficha en la Biblioteca y guarda.</p>
+          </article>
+          <article class="step">
+            <span>03</span>
+            <h3>Compone el plan</h3>
+            <p>Carga platos existentes en un semanal o mensual.</p>
+          </article>
+          <article class="step">
+            <span>04</span>
+            <h3>Publica</h3>
+            <p>La tienda hereda datos consistentes y abre cada detalle.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <strong>Fullness Lab · Backoffice de producción</strong>
+        <span>Nutrición y beneficios pertenecen al plato</span>
+      </footer>
+    </main>
+  </body>
+</html>

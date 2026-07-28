@@ -4,6 +4,9 @@ dist
 public/assets/*
 !public/assets/
 !public/assets/fullness-beet-isotype.svg
+!public/assets/benefits/
+public/assets/benefits/*
+!public/assets/benefits/*.webp
 !public/assets/brand/
 public/assets/brand/*
 !public/assets/brand/fullness-lab-horizontal-contrast-2026.png

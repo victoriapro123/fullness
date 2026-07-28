@@ -51,16 +51,21 @@ import {
   X
 } from "lucide-react";
 import {
+  deleteBenefitDefinition,
   deleteMenuItem,
   deleteMealLibraryItem,
+  deleteTagDefinition,
   getShopSettings,
+  listCatalogParameters,
   listAdminCustomerSubscriptions,
   listActiveMenuItems,
   listAdminMenuItems,
   listMealLibraryItems,
+  saveBenefitDefinition,
   saveMealLibraryItem,
   saveMenuItem,
   saveShopSettings,
+  saveTagDefinition,
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import {
@@ -69,6 +74,13 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
+import {
+  BenefitAssignmentEditor,
+  BenefitDetailLightbox,
+  BenefitIconList,
+  CatalogParametersAdmin,
+  TagSelector
+} from "./components/benefit-system.jsx";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
 import storyPlateCutoutSrc from "./assets/fullness-story-plate-vegetable-cutout.png";
@@ -95,6 +107,7 @@ import "./landing-meal-prep.css";
 import "./commerce.css";
 import "./community.css";
 import "./account-backoffice.css";
+import "./benefit-system.css";
 import "./overlays.css";
 import "./about-nosotros.css";
 import "./faq.css";
@@ -125,6 +138,7 @@ const communityGalleryImages = [
 const shopPath = "/tienda";
 const faqPath = "/preguntas-frecuentes";
 const aboutPath = "/quienes-somos";
+const opaqueMealPrepHeroAssetToken = "cbe5de9a-232f-4269-9515-13e31e0b9198";
 
 function downloadBlob(file, disposition, fallbackName) {
   const objectUrl = window.URL.createObjectURL(file);
@@ -1206,6 +1220,8 @@ function createIncludedMealForm(index = 0) {
     secondaryPhotoUrl: "",
     secondaryPhotoStoragePath: "",
     benefitTags: "",
+    benefitAssignments: [],
+    tagIds: [],
     ingredients: "",
     nutritionDescription: "",
     nutritionHighlights: "",
@@ -1226,6 +1242,8 @@ function includedMealToForm(item, index = 0) {
     secondaryPhotoUrl: item.secondaryPhotoUrl || item.secondaryImage || "",
     secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     benefitTags: (item.benefitTags || item.benefit_tags || []).join("\n"),
+    benefitAssignments: item.benefitAssignments || item.benefit_assignments || item.benefits || [],
+    tagIds: item.tagIds || item.tag_ids || item.tags?.map((tag) => tag.id).filter(Boolean) || [],
     ingredients: (item.ingredients || []).join("\n"),
     nutritionDescription: item.nutritionDescription || item.nutrition_description || "",
     nutritionHighlights: (item.nutritionHighlights || item.nutrition_highlights || []).join("\n"),
@@ -1245,6 +1263,8 @@ function mealLibraryItemToForm(item) {
     secondaryPhotoUrl: item.secondaryPhotoUrl || "",
     secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     benefitTags: (item.benefitTags || []).join("\n"),
+    benefitAssignments: item.benefitAssignments || item.benefits || [],
+    tagIds: item.tagIds || item.tags?.map((tag) => tag.id).filter(Boolean) || [],
     ingredients: (item.ingredients || []).join("\n"),
     nutritionDescription: item.nutritionDescription || "",
     nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
@@ -1277,7 +1297,13 @@ function createMenuForm(displayOrder = 0) {
     secondaryPhotoStoragePath: "",
     priceClp: "",
     benefitTags: "",
+    benefitAssignments: [],
+    tagIds: [],
+    libraryMealId: "",
     ingredients: "",
+    nutritionDescription: "",
+    nutritionHighlights: "",
+    nutritionFacts: "{}",
     recipeSummary: "",
     recipeSteps: "",
     allergens: "",
@@ -1398,7 +1424,13 @@ function menuItemToForm(item) {
     secondaryPhotoStoragePath: item.secondaryPhotoStoragePath || "",
     priceClp: String(item.price || 0),
     benefitTags: (item.benefitTags || []).join("\n"),
+    benefitAssignments: item.benefitAssignments || item.benefits || [],
+    tagIds: item.tagIds || item.tags?.map((tag) => tag.id).filter(Boolean) || [],
+    libraryMealId: item.libraryMealId || "",
     ingredients: (item.ingredients || []).join("\n"),
+    nutritionDescription: item.nutritionDescription || "",
+    nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
+    nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
     recipeSummary: item.recipeSummary || "",
     recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
@@ -1422,7 +1454,7 @@ function parseJsonObject(value) {
   return parsed;
 }
 
-function parseIncludedMealsFromForm(items) {
+function parseIncludedMealsFromForm(items, tagDefinitions = []) {
   return items
     .map((item, index) => {
       const hasContent =
@@ -1452,6 +1484,9 @@ function parseIncludedMealsFromForm(items) {
         secondaryPhotoUrl: item.secondaryPhotoUrl,
         secondaryPhotoStoragePath: item.secondaryPhotoStoragePath,
         benefitTags: item.benefitTags,
+        benefitAssignments: item.benefitAssignments,
+        tagIds: item.tagIds,
+        tags: tagDefinitions.filter((tag) => item.tagIds?.includes(tag.id)),
         ingredients: item.ingredients,
         nutritionDescription: item.nutritionDescription,
         nutritionHighlights: item.nutritionHighlights,
@@ -1539,9 +1574,16 @@ function getProductTypeLabel(product) {
 }
 
 function getBenefitTags(product) {
-  if (product?.benefitTags?.length) return product.benefitTags;
+  if (product?.tags?.length) return product.tags.map((tag) => tag.name);
   if (product?.nutritionHighlights?.length) return product.nutritionHighlights;
+  if (product?.benefitTags?.length) return product.benefitTags;
   if (product?.tag) return [product.tag];
+  return [];
+}
+
+function getProductBenefits(product) {
+  if (product?.benefits?.length) return product.benefits;
+  if (product?.benefitAssignments?.length) return product.benefitAssignments;
   return [];
 }
 
@@ -1649,25 +1691,10 @@ const shopProcessSteps = [
   { icon: Heart, title: "Disfruta tu semana", text: "Comida completa sin improvisar." }
 ];
 
-function getPlanFeatureIcon(meal = {}, index = 0) {
-  const text = [
-    meal.tag,
-    meal.name,
-    ...(meal.benefitTags || [])
-  ].join(" ").toLowerCase();
-
-  if (/omega|salm[oó]n|pescad|grasa/.test(text)) return Heart;
-  if (/digest|fibra|lenteja|legumbre/.test(text)) return Leaf;
-  if (/detox|verde|quinoa|micro/.test(text)) return Sprout;
-  if (/antiinflama|c[uú]rcuma|prote[ií]na|pollo/.test(text)) return ShieldCheck;
-  if (/energ|camote|ra[ií]z|carbo/.test(text)) return Sparkles;
-
-  return [Leaf, Sparkles, Heart, Sprout, CookingPot][index % 5];
-}
-
-function ShopPlanCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
+function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct }) {
   const includedItems = product.includedItems || [];
   const benefitTags = getBenefitTags(product);
+  const benefits = getProductBenefits(product);
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
   const isMonthly = product.planFrequency === "monthly";
@@ -1692,27 +1719,37 @@ function ShopPlanCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
             {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
           </ul>
         )}
+
+        <BenefitIconList
+          benefits={benefits}
+          contextTitle={product.name}
+          onOpenBenefit={onOpenBenefit}
+          limit={3}
+        />
       </div>
 
       {includedItems.length > 0 && (
-        <div className="shop-plan-meals" aria-label={`Características incluidas en ${product.name}`}>
-          {includedItems.slice(0, 3).map((meal, mealIndex) => {
-            const FeatureIcon = getPlanFeatureIcon(meal, mealIndex);
-
-            return (
+        <div className={`shop-plan-meals is-${Math.min(includedItems.length, 3)}`} aria-label={`Platos incluidos en ${product.name}`}>
+          {includedItems.slice(0, 3).map((meal) => (
+            <article className="shop-plan-meal-card" key={meal.id || meal.name}>
               <button
-                key={meal.id || meal.name}
+                className="shop-plan-meal-main"
                 type="button"
                 onClick={(event) => onOpenMeal(product, meal, event)}
               >
-                <span className="shop-plan-meal-icon" aria-hidden="true">
-                  <FeatureIcon size={22} />
-                </span>
-                <span className="shop-plan-meal-kicker">{meal.tag || meal.benefitTags?.[0] || "Meal prep"}</span>
+                <span className="shop-plan-meal-kicker">{meal.tag || "Plato Fullness"}</span>
                 <strong>{meal.name}</strong>
+                <p>{meal.description}</p>
               </button>
-            );
-          })}
+              <BenefitIconList
+                benefits={getProductBenefits(meal)}
+                contextTitle={meal.name}
+                onOpenBenefit={onOpenBenefit}
+                limit={2}
+                compact
+              />
+            </article>
+          ))}
         </div>
       )}
 
@@ -1732,10 +1769,11 @@ function ShopPlanCard({ product, index, onAdd, onOpenMeal, onOpenProduct }) {
   );
 }
 
-function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
+function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct }) {
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
   const benefitTags = getBenefitTags(product);
+  const benefits = getProductBenefits(product);
 
   return (
     <article className="shop-family-card">
@@ -1743,14 +1781,23 @@ function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
         <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
       </button>
       <div className="shop-family-copy">
-        <span>{product.servingLabel || product.tag || "Para compartir"}</span>
-        <h3>{product.name}</h3>
-        <p>{product.description}</p>
+        <button className="shop-family-detail-button" type="button" onClick={() => onOpenProduct(product)}>
+          <span>{product.servingLabel || product.tag || "Para compartir"}</span>
+          <h3>{product.name}</h3>
+          <p>{product.description}</p>
+        </button>
         {benefitTags.length > 0 && (
           <ul className="shop-benefit-tags" aria-label="Beneficios">
-            {benefitTags.slice(0, 2).map((tag) => <li key={tag}>{tag}</li>)}
+            {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
           </ul>
         )}
+        <BenefitIconList
+          benefits={benefits}
+          contextTitle={product.name}
+          onOpenBenefit={onOpenBenefit}
+          limit={3}
+          compact
+        />
       </div>
       <div className="shop-family-footer">
         <strong>{formatPrice(product.price)}</strong>
@@ -1765,13 +1812,16 @@ function ShopFamilyCard({ product, index, onAdd, onOpenProduct }) {
   );
 }
 
-function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenProduct, plans, shopSettings }) {
+function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
   const catalogPlans = plans;
   const monthlyPlan = catalogPlans.find((product) => product.planFrequency === "monthly");
   const subscriptionProduct = monthlyPlan || catalogPlans[0] || null;
   const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || null;
-  const heroImage = settings.heroImageUrl || getProductImage(heroFallbackProduct);
+  const configuredHeroImage = settings.heroImageUrl || "";
+  const heroImage = configuredHeroImage.includes(opaqueMealPrepHeroAssetToken)
+    ? shopHeroBoxDarkCutoutSrc
+    : configuredHeroImage || getProductImage(heroFallbackProduct);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
   const planHeading = catalogPlans.some((product) => product.planFrequency === "monthly")
@@ -1895,6 +1945,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
                     product={product}
                     index={index}
                     onAdd={onAdd}
+                    onOpenBenefit={onOpenBenefit}
                     onOpenMeal={onOpenMeal}
                     onOpenProduct={onOpenProduct}
                   />
@@ -1945,6 +1996,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
                     product={product}
                     index={index + catalogPlans.length}
                     onAdd={onAdd}
+                    onOpenBenefit={onOpenBenefit}
                     onOpenProduct={onOpenProduct}
                   />
                 ))}
@@ -1975,9 +2027,11 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenMeal, onOpenPro
   );
 }
 
-function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpenMeal }) {
+function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpenDetail, onOpenMeal }) {
   const benefitTags = getBenefitTags(product);
+  const benefits = getProductBenefits(product);
   const includedItems = product?.includedItems || [];
+  const isFamilyDish = getProductType(product) === "family";
 
   return (
     <div className="overlay product-lightbox" role="dialog" aria-modal="true" aria-labelledby="product-lightbox-title">
@@ -1998,6 +2052,21 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpen
             <ul className="product-pill-list">
               {benefitTags.map((item) => <li key={item}>{item}</li>)}
             </ul>
+          )}
+
+          <BenefitIconList
+            benefits={benefits}
+            contextTitle={product.name}
+            onOpenBenefit={onOpenBenefit}
+            limit={4}
+          />
+
+          {isFamilyDish && (
+            <div className="product-lightbox-block">
+              <h3>Información nutricional</h3>
+              {product.nutritionDescription && <p>{product.nutritionDescription}</p>}
+              <ProductNutritionFacts product={product} />
+            </div>
           )}
 
           <div className="product-lightbox-block">
@@ -2044,8 +2113,9 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenDetail, onOpen
   );
 }
 
-function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
+function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBenefit }) {
   const benefitTags = getBenefitTags(meal);
+  const benefits = getProductBenefits(meal);
 
   return (
     <div className="overlay meal-lightbox" role="dialog" aria-modal="true" aria-labelledby="meal-lightbox-title">
@@ -2066,6 +2136,13 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
               {benefitTags.map((item) => <li key={item}>{item}</li>)}
             </ul>
           )}
+
+          <BenefitIconList
+            benefits={benefits}
+            contextTitle={meal.name}
+            onOpenBenefit={onOpenBenefit}
+            limit={4}
+          />
 
           <div className="product-lightbox-block">
             <h3>Información nutricional</h3>
@@ -2101,7 +2178,7 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose }) {
   );
 }
 
-function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpenMeal }) {
+function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpenBenefit, onOpenMeal }) {
   if (loading && !product) {
     return (
       <section className="product-detail-page product-detail-state">
@@ -2127,6 +2204,9 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 
   const recipeSteps = product.recipeSteps?.length ? product.recipeSteps : [];
   const includedItems = product.includedItems || [];
+  const benefits = getProductBenefits(product);
+  const tags = getBenefitTags(product);
+  const isFamilyDish = getProductType(product) === "family";
 
   return (
     <article className="product-detail-page">
@@ -2143,6 +2223,17 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
           <p className="eyebrow">{product.tag}</p>
           <h1>{product.name}</h1>
           <p>{product.description}</p>
+          {tags.length > 0 && (
+            <ul className="product-pill-list">
+              {tags.map((tag) => <li key={tag}>{tag}</li>)}
+            </ul>
+          )}
+          <BenefitIconList
+            benefits={benefits}
+            contextTitle={product.name}
+            onOpenBenefit={onOpenBenefit}
+            limit={4}
+          />
           <strong>{formatPrice(product.price)}</strong>
           <button className="primary-button" type="button" onClick={() => onAdd(product)}>
             <Plus size={18} />
@@ -2161,6 +2252,14 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
             </ol>
           )}
         </div>
+
+        {isFamilyDish && (
+          <div className="product-detail-panel">
+            <h2>Información nutricional</h2>
+            {product.nutritionDescription && <p>{product.nutritionDescription}</p>}
+            <ProductNutritionFacts product={product} />
+          </div>
+        )}
 
         <div className="product-detail-panel">
           <h2>Ingredientes</h2>
@@ -3079,6 +3178,7 @@ function App() {
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
   const [mealPreview, setMealPreview] = useState(null);
+  const [benefitPreview, setBenefitPreview] = useState(null);
   const [currentProductSlug, setCurrentProductSlug] = useState(() => getProductSlugFromPath());
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [checkoutForm, setCheckoutForm] = useState(loadStoredCheckoutForm);
@@ -3141,6 +3241,12 @@ function App() {
   const [mealLibraryError, setMealLibraryError] = useState("");
   const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
   const [includedMealSavingIndex, setIncludedMealSavingIndex] = useState(null);
+  const [benefitDefinitions, setBenefitDefinitions] = useState([]);
+  const [tagDefinitions, setTagDefinitions] = useState([]);
+  const [catalogParametersLoading, setCatalogParametersLoading] = useState(false);
+  const [catalogParametersSaving, setCatalogParametersSaving] = useState(false);
+  const [catalogParametersMessage, setCatalogParametersMessage] = useState("");
+  const [catalogParametersError, setCatalogParametersError] = useState("");
   const [subscriptionCustomers, setSubscriptionCustomers] = useState([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const [subscriptionsError, setSubscriptionsError] = useState("");
@@ -3735,6 +3841,117 @@ function App() {
     if (!silent) setMealLibraryLoading(false);
   }
 
+  async function refreshCatalogParameters({ silent = false } = {}) {
+    if (!silent) {
+      setCatalogParametersLoading(true);
+      setCatalogParametersError("");
+    }
+
+    const result = await listCatalogParameters({ includeInactive: activeIsAdmin });
+    if (result.error && activeIsAdmin) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos cargar beneficios y tags."));
+    }
+
+    if (result.data) {
+      setBenefitDefinitions(result.data.benefits || []);
+      setTagDefinitions(result.data.tags || []);
+    }
+
+    if (!silent) setCatalogParametersLoading(false);
+  }
+
+  async function submitBenefitDefinition(form) {
+    if (!activeIsAdmin) return null;
+
+    setCatalogParametersSaving(true);
+    setCatalogParametersError("");
+    setCatalogParametersMessage("");
+    const result = await saveBenefitDefinition(form);
+
+    if (result.error || !result.configured) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el beneficio."));
+      setCatalogParametersSaving(false);
+      return null;
+    }
+
+    setCatalogParametersMessage(`Beneficio “${result.data.name}” guardado.`);
+    await refreshCatalogParameters({ silent: true });
+    await refreshPublicProducts();
+    setCatalogParametersSaving(false);
+    return result.data;
+  }
+
+  async function removeBenefitDefinition(item) {
+    if (!window.confirm(`¿Eliminar el beneficio “${item.name}”? Los platos conservarán la copia publicada hasta que se editen.`)) return;
+
+    setCatalogParametersSaving(true);
+    setCatalogParametersError("");
+    setCatalogParametersMessage("");
+    const result = await deleteBenefitDefinition(item.id);
+
+    if (result.error || !result.configured) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el beneficio."));
+    } else {
+      setCatalogParametersMessage("Beneficio eliminado.");
+      await refreshCatalogParameters({ silent: true });
+    }
+
+    setCatalogParametersSaving(false);
+  }
+
+  async function submitTagDefinition(form) {
+    if (!activeIsAdmin) return null;
+
+    setCatalogParametersSaving(true);
+    setCatalogParametersError("");
+    setCatalogParametersMessage("");
+    const result = await saveTagDefinition(form);
+
+    if (result.error || !result.configured) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el tag."));
+      setCatalogParametersSaving(false);
+      return null;
+    }
+
+    setCatalogParametersMessage(`Tag “${result.data.name}” guardado.`);
+    await refreshCatalogParameters({ silent: true });
+    await refreshPublicProducts();
+    setCatalogParametersSaving(false);
+    return result.data;
+  }
+
+  async function removeTagDefinition(item) {
+    if (!window.confirm(`¿Eliminar el tag “${item.name}”? Los platos conservarán la copia publicada hasta que se editen.`)) return;
+
+    setCatalogParametersSaving(true);
+    setCatalogParametersError("");
+    setCatalogParametersMessage("");
+    const result = await deleteTagDefinition(item.id);
+
+    if (result.error || !result.configured) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el tag."));
+    } else {
+      setCatalogParametersMessage("Tag eliminado.");
+      await refreshCatalogParameters({ silent: true });
+    }
+
+    setCatalogParametersSaving(false);
+  }
+
+  async function uploadBenefitIcon(file) {
+    setCatalogParametersError("");
+    setCatalogParametersMessage("");
+    const result = await uploadMenuPhoto(file, "images/benefits");
+
+    if (result.error || !result.configured) {
+      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos subir el icono."));
+      return null;
+    }
+
+    setCatalogParametersMessage("Icono cargado en R2.");
+    return result.data;
+  }
+
   async function refreshSubscriptionCustomers() {
     if (!activeIsAdmin) return;
 
@@ -3780,7 +3997,11 @@ function App() {
       return;
     }
 
-    const result = await saveMealLibraryItem({ ...mealLibraryForm, nutritionFacts });
+    const result = await saveMealLibraryItem({
+      ...mealLibraryForm,
+      nutritionFacts,
+      tags: tagDefinitions.filter((tag) => mealLibraryForm.tagIds?.includes(tag.id))
+    });
     if (result.error || !result.configured) {
       setMealLibraryError(getSupabaseErrorMessage(result.error, "No pudimos guardar el plato."));
     } else {
@@ -3851,6 +4072,9 @@ function App() {
           secondaryPhotoUrl: meal.secondaryPhotoUrl,
           secondaryPhotoStoragePath: meal.secondaryPhotoStoragePath,
           benefitTags: meal.benefitTags,
+          benefitAssignments: meal.benefitAssignments,
+          tagIds: meal.tagIds,
+          tags: tagDefinitions.filter((tag) => meal.tagIds?.includes(tag.id)),
           ingredients: meal.ingredients,
           nutritionDescription: meal.nutritionDescription,
           nutritionHighlights: meal.nutritionHighlights,
@@ -3912,6 +4136,9 @@ function App() {
       secondaryPhotoUrl: meal.secondaryPhotoUrl,
       secondaryPhotoStoragePath: meal.secondaryPhotoStoragePath,
       benefitTags: meal.benefitTags,
+      benefitAssignments: meal.benefitAssignments,
+      tagIds: meal.tagIds,
+      tags: tagDefinitions.filter((tag) => meal.tagIds?.includes(tag.id)),
       ingredients: meal.ingredients,
       nutritionDescription: meal.nutritionDescription,
       nutritionHighlights: meal.nutritionHighlights,
@@ -3979,6 +4206,36 @@ function App() {
       };
     });
     setSelectedLibraryMealId("");
+  }
+
+  function loadSelectedLibraryMealIntoFamily() {
+    const libraryItem = mealLibrary.find((item) => item.id === selectedLibraryMealId);
+    if (!libraryItem) return;
+
+    const dishForm = mealLibraryItemToForm(libraryItem);
+    markMenuFormChanged();
+    setMenuForm((current) => ({
+      ...current,
+      name: dishForm.name,
+      slug: current.slug || slugifyMenuName(dishForm.name),
+      description: dishForm.description,
+      tag: dishForm.tag,
+      photoUrl: dishForm.photoUrl,
+      photoStoragePath: dishForm.photoStoragePath,
+      secondaryPhotoUrl: dishForm.secondaryPhotoUrl,
+      secondaryPhotoStoragePath: dishForm.secondaryPhotoStoragePath,
+      libraryMealId: libraryItem.id,
+      benefitAssignments: dishForm.benefitAssignments,
+      tagIds: dishForm.tagIds,
+      benefitTags: dishForm.benefitTags,
+      ingredients: dishForm.ingredients,
+      nutritionDescription: dishForm.nutritionDescription,
+      nutritionHighlights: dishForm.nutritionHighlights,
+      nutritionFacts: dishForm.nutritionFacts,
+      allergens: dishForm.allergens
+    }));
+    setSelectedLibraryMealId("");
+    setAdminMessage(`Plato “${libraryItem.name}” cargado como producto familiar.`);
   }
 
   async function getBackofficeAccessToken() {
@@ -4317,6 +4574,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    void refreshCatalogParameters();
+  }, []);
+
+  useEffect(() => {
     let ignore = false;
 
     async function loadShopSettings() {
@@ -4491,6 +4752,7 @@ function App() {
     if (adminOpen && activeIsAdmin) {
       refreshAdminItems();
       refreshMealLibrary({ silent: true });
+      refreshCatalogParameters({ silent: true });
       refreshSubscriptionCustomers();
     }
   }, [activeIsAdmin, adminOpen]);
@@ -5530,11 +5792,15 @@ function App() {
     setAdminMessage("");
 
     let includedItems = [];
+    let nutritionFacts = {};
 
     try {
       includedItems = menuForm.productType === "plan"
-        ? parseIncludedMealsFromForm(menuForm.includedItems)
+        ? parseIncludedMealsFromForm(menuForm.includedItems, tagDefinitions)
         : [];
+      nutritionFacts = menuForm.productType === "family"
+        ? parseJsonObject(menuForm.nutritionFacts)
+        : {};
     } catch (error) {
       setAdminSaving(false);
       setAdminError(error.message);
@@ -5556,7 +5822,14 @@ function App() {
       secondaryPhotoStoragePath: menuForm.secondaryPhotoStoragePath,
       priceClp: menuForm.priceClp,
       benefitTags: menuForm.benefitTags,
+      benefitAssignments: menuForm.benefitAssignments,
+      tagIds: menuForm.tagIds,
+      tags: tagDefinitions.filter((tag) => menuForm.tagIds?.includes(tag.id)),
+      libraryMealId: menuForm.libraryMealId,
       ingredients: menuForm.ingredients,
+      nutritionDescription: menuForm.nutritionDescription,
+      nutritionHighlights: menuForm.nutritionHighlights,
+      nutritionFacts,
       recipeSummary: menuForm.recipeSummary,
       recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
@@ -5685,6 +5958,12 @@ function App() {
             Icon: CookingPot
           },
           {
+            id: "parameters",
+            label: "Parámetros",
+            description: `${benefitDefinitions.length} beneficios · ${tagDefinitions.length} tags`,
+            Icon: Tags
+          },
+          {
             id: "subscriptions",
             label: "Clientes",
             description: `${activeSubscriptionCount} suscripciones activas`,
@@ -5734,7 +6013,8 @@ function App() {
     subscriptionPopupOpen ||
     Boolean(checkoutResult) ||
     Boolean(productPreview) ||
-    Boolean(mealPreviewItem);
+    Boolean(mealPreviewItem) ||
+    Boolean(benefitPreview);
 
   const renderSiteFooter = () => (
     <footer id="contacto">
@@ -5897,6 +6177,7 @@ function App() {
           loading={productsLoading}
           onAdd={addToCart}
           onBackToShop={backToShop}
+          onOpenBenefit={setBenefitPreview}
           onOpenMeal={openMealQuickView}
         />
       ) : isCommunityPage ? (
@@ -5932,6 +6213,7 @@ function App() {
               shopSettings={shopSettings}
               loading={productsLoading}
               onAdd={addToCart}
+              onOpenBenefit={setBenefitPreview}
               onOpenMeal={openMealQuickView}
               onOpenProduct={openProductQuickView}
             />
@@ -6127,6 +6409,7 @@ function App() {
             setProductPreviewSlug("");
             setMealPreview(null);
           }}
+          onOpenBenefit={setBenefitPreview}
           onOpenDetail={openProductDetail}
           onOpenMeal={openMealQuickView}
         />
@@ -6138,6 +6421,14 @@ function App() {
           parentProduct={mealPreviewParent}
           onAddParent={addToCart}
           onClose={() => setMealPreview(null)}
+          onOpenBenefit={setBenefitPreview}
+        />
+      )}
+
+      {benefitPreview && (
+        <BenefitDetailLightbox
+          preview={benefitPreview}
+          onClose={() => setBenefitPreview(null)}
         />
       )}
 
@@ -6490,11 +6781,6 @@ function App() {
                       <textarea required name="description" rows="3" value={menuForm.description} onChange={updateMenuForm} placeholder="Pescado del sur, raíces dulces, hojas verdes y granos integrales…" />
                     </label>
 
-                    <label className="backoffice-wide">
-                      Tags de beneficios
-                      <textarea name="benefitTags" rows="3" value={menuForm.benefitTags} onChange={updateMenuForm} placeholder={"Antioxidante\nEnergético\nDetox…"} />
-                    </label>
-
                     <div className="backoffice-photo-row backoffice-photo-row-double">
                       <div className="backoffice-photo-block">
                         <div className="backoffice-photo-preview">
@@ -6535,26 +6821,83 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="backoffice-grid">
-                      <label>
-                        Ingredientes
-                        <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Trucha\nBetarraga\nQuinoa…"} />
-                      </label>
-                      <label>
-                        Alérgenos
-                        <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos…"} />
-                      </label>
-                    </div>
+                    {menuForm.productType === "family" && (
+                      <section className="backoffice-included-editor backoffice-family-dish-editor">
+                        <div className="backoffice-list-top">
+                          <div>
+                            <p className="eyebrow">Ficha de plato</p>
+                            <h3>Información del producto familiar</h3>
+                          </div>
+                          <div className="included-editor-actions">
+                            <select
+                              aria-label="Plato familiar desde biblioteca"
+                              value={selectedLibraryMealId}
+                              onChange={(event) => setSelectedLibraryMealId(event.target.value)}
+                            >
+                              <option value="">Cargar desde Biblioteca</option>
+                              {mealLibrary.filter((item) => item.isActive).map((item) => (
+                                <option key={item.id} value={item.id}>{item.name}</option>
+                              ))}
+                            </select>
+                            <button className="backoffice-command" type="button" onClick={loadSelectedLibraryMealIntoFamily} disabled={!selectedLibraryMealId}>
+                              <Plus size={17} />
+                              Cargar plato
+                            </button>
+                          </div>
+                        </div>
 
-                    <label className="backoffice-wide">
-                      Receta resumida
-                      <textarea name="recipeSummary" rows="4" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Salmón dorado al punto, lentejas especiadas y hojas verdes…" />
-                    </label>
+                        <TagSelector
+                          definitions={tagDefinitions}
+                          value={menuForm.tagIds}
+                          onChange={(tagIds) => {
+                            markMenuFormChanged();
+                            setMenuForm((current) => ({ ...current, tagIds }));
+                          }}
+                          idPrefix="family-tag"
+                        />
 
-                    <label className="backoffice-wide">
-                      Pasos de receta / preparación
-                      <textarea name="recipeSteps" rows="5" value={menuForm.recipeSteps} onChange={updateMenuForm} placeholder={"Dorar el salmón con calor controlado.\nCalentar las lentejas especiadas.\nTerminar con hojas verdes frescas…"} />
-                    </label>
+                        <BenefitAssignmentEditor
+                          definitions={benefitDefinitions}
+                          value={menuForm.benefitAssignments}
+                          onChange={(benefitAssignments) => {
+                            markMenuFormChanged();
+                            setMenuForm((current) => ({ ...current, benefitAssignments }));
+                          }}
+                          idPrefix="family-benefit"
+                        />
+
+                        <div className="backoffice-grid">
+                          <label>
+                            Ingredientes
+                            <textarea name="ingredients" rows="6" value={menuForm.ingredients} onChange={updateMenuForm} placeholder={"Trucha\nBetarraga\nQuinoa…"} />
+                          </label>
+                          <label>
+                            Alérgenos
+                            <textarea name="allergens" rows="6" value={menuForm.allergens} onChange={updateMenuForm} placeholder={"Pescado\nFrutos secos…"} />
+                          </label>
+                        </div>
+
+                        <label className="backoffice-wide">
+                          Descripción nutricional
+                          <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Describe el aporte nutricional del plato…" />
+                        </label>
+
+                        <label className="backoffice-wide">
+                          Datos nutricionales JSON
+                          <textarea name="nutritionFacts" rows="5" value={menuForm.nutritionFacts} onChange={updateMenuForm} spellCheck={false} />
+                        </label>
+
+                        <label className="backoffice-wide">
+                          Receta resumida
+                          <textarea name="recipeSummary" rows="4" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Salmón dorado al punto, lentejas especiadas y hojas verdes…" />
+                        </label>
+
+                        <label className="backoffice-wide">
+                          Pasos de receta / preparación
+                          <textarea name="recipeSteps" rows="5" value={menuForm.recipeSteps} onChange={updateMenuForm} placeholder={"Dorar el salmón con calor controlado.\nCalentar las lentejas especiadas.\nTerminar con hojas verdes frescas…"} />
+                        </label>
+                      </section>
+                    )}
 
                     {menuForm.productType === "plan" && (
                       <section className="backoffice-included-editor">
@@ -6630,16 +6973,24 @@ function App() {
                                   <textarea rows="3" value={meal.nutritionDescription} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionDescription", event.target.value)} placeholder="Proteína magra, carbohidrato complejo y especias funcionales…" />
                                 </label>
 
-                                <div className="backoffice-grid">
-                                  <label>
-                                    Características nutricionales
-                                    <textarea rows="4" value={meal.nutritionHighlights} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionHighlights", event.target.value)} placeholder={"Alto en proteína\nFibra vegetal…"} />
-                                  </label>
-                                  <label>
-                                    Datos nutricionales JSON
-                                    <textarea rows="4" value={meal.nutritionFacts} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionFacts", event.target.value)} spellCheck={false} />
-                                  </label>
-                                </div>
+                                <TagSelector
+                                  definitions={tagDefinitions}
+                                  value={meal.tagIds}
+                                  onChange={(tagIds) => updateIncludedMealForm(mealIndex, "tagIds", tagIds)}
+                                  idPrefix={`plan-${meal.id}-tag`}
+                                />
+
+                                <BenefitAssignmentEditor
+                                  definitions={benefitDefinitions}
+                                  value={meal.benefitAssignments}
+                                  onChange={(benefitAssignments) => updateIncludedMealForm(mealIndex, "benefitAssignments", benefitAssignments)}
+                                  idPrefix={`plan-${meal.id}-benefit`}
+                                />
+
+                                <label className="backoffice-wide">
+                                  Datos nutricionales JSON
+                                  <textarea rows="5" value={meal.nutritionFacts} onChange={(event) => updateIncludedMealForm(mealIndex, "nutritionFacts", event.target.value)} spellCheck={false} />
+                                </label>
 
                                 <label className="backoffice-wide">
                                   Descripción
@@ -6688,19 +7039,14 @@ function App() {
 
                                 <div className="backoffice-grid">
                                   <label>
-                                    Tags de beneficios
-                                    <textarea rows="4" value={meal.benefitTags} onChange={(event) => updateIncludedMealForm(mealIndex, "benefitTags", event.target.value)} placeholder={"Antioxidante\nEnergético…"} />
-                                  </label>
-                                  <label>
                                     Ingredientes
                                     <textarea rows="4" value={meal.ingredients} onChange={(event) => updateIncludedMealForm(mealIndex, "ingredients", event.target.value)} placeholder={"Pollo\nCamote\nCúrcuma…"} />
                                   </label>
+                                  <label>
+                                    Alérgenos
+                                    <textarea rows="4" value={meal.allergens} onChange={(event) => updateIncludedMealForm(mealIndex, "allergens", event.target.value)} placeholder={"Pescado\nFrutos secos…"} />
+                                  </label>
                                 </div>
-
-                                <label className="backoffice-wide">
-                                  Alérgenos
-                                  <textarea rows="3" value={meal.allergens} onChange={(event) => updateIncludedMealForm(mealIndex, "allergens", event.target.value)} placeholder={"Pescado\nFrutos secos…"} />
-                                </label>
                               </article>
                             ))}
                           </div>
@@ -6801,15 +7147,21 @@ function App() {
                               <label className="backoffice-wide">URL hover<input name="secondaryPhotoUrl" value={mealLibraryForm.secondaryPhotoUrl} onChange={updateMealLibraryForm} placeholder="/api/media?key=images/meal-preps/…" /></label>
                             </div>
                           </div>
-                          <div className="backoffice-grid">
-                            <label>Tags de beneficios<textarea name="benefitTags" rows="4" value={mealLibraryForm.benefitTags} onChange={updateMealLibraryForm} placeholder={"Antioxidante\nEnergético…"} /></label>
-                            <label>Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
-                          </div>
+                          <TagSelector
+                            definitions={tagDefinitions}
+                            value={mealLibraryForm.tagIds}
+                            onChange={(tagIds) => setMealLibraryForm((current) => ({ ...current, tagIds }))}
+                            idPrefix="library-tag"
+                          />
+                          <BenefitAssignmentEditor
+                            definitions={benefitDefinitions}
+                            value={mealLibraryForm.benefitAssignments}
+                            onChange={(benefitAssignments) => setMealLibraryForm((current) => ({ ...current, benefitAssignments }))}
+                            idPrefix="library-benefit"
+                          />
+                          <label className="backoffice-wide">Ingredientes<textarea name="ingredients" rows="4" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
                           <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
-                          <div className="backoffice-grid">
-                            <label>Características nutricionales<textarea name="nutritionHighlights" rows="4" value={mealLibraryForm.nutritionHighlights} onChange={updateMealLibraryForm} placeholder={"Alto en proteína\nFibra vegetal…"} /></label>
-                            <label>Datos nutricionales JSON<textarea name="nutritionFacts" rows="4" value={mealLibraryForm.nutritionFacts} onChange={updateMealLibraryForm} spellCheck={false} /></label>
-                          </div>
+                          <label className="backoffice-wide">Datos nutricionales JSON<textarea name="nutritionFacts" rows="5" value={mealLibraryForm.nutritionFacts} onChange={updateMealLibraryForm} spellCheck={false} /></label>
                           <label className="backoffice-wide">Alérgenos<textarea name="allergens" rows="3" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder={"Pescado\nFrutos secos…"} /></label>
                           <div className="backoffice-form-actions">
                             <button className="google-button" type="button" onClick={resetMealLibraryForm} disabled={mealLibrarySaving}><Plus size={18} />Nuevo</button>
@@ -6817,6 +7169,23 @@ function App() {
                           </div>
                         </form>
                       </div>
+                    )}
+
+                    {activeBackofficeModule === "parameters" && (
+                      <CatalogParametersAdmin
+                        benefits={benefitDefinitions}
+                        tags={tagDefinitions}
+                        loading={catalogParametersLoading}
+                        saving={catalogParametersSaving}
+                        message={catalogParametersMessage}
+                        error={catalogParametersError}
+                        onRefresh={() => refreshCatalogParameters()}
+                        onSaveBenefit={submitBenefitDefinition}
+                        onDeleteBenefit={removeBenefitDefinition}
+                        onSaveTag={submitTagDefinition}
+                        onDeleteTag={removeTagDefinition}
+                        onUploadBenefitIcon={uploadBenefitIcon}
+                      />
                     )}
 
                     {activeBackofficeModule === "subscriptions" && (

@@ -19,8 +19,8 @@ const mealPrepPayload = buildMenuItemPayload({
       benefitTags: ["Energetico"],
       ingredients: ["Quinoa"],
       allergens: ["Frutos secos"],
-      nutritionDescription: "No debe viajar con el plato.",
-      nutritionHighlights: ["No debe viajar"],
+      nutritionDescription: "Debe conservarse en el plato.",
+      nutritionHighlights: ["Alto en proteina"],
       nutritionFacts: { protein_g: 99 }
     }
   ]
@@ -41,10 +41,22 @@ assert.deepEqual(mealPrepPayload.included_items, [
     photoStoragePath: "",
     secondaryPhotoUrl: "",
     secondaryPhotoStoragePath: "",
-    benefitTags: ["Energetico"],
+    benefitAssignments: [
+      {
+        benefitId: "10000000-0000-4000-8000-000000000002",
+        slug: "energetico",
+        name: "Energético",
+        iconUrl: "/api/media?key=assets%2Fbenefits%2Fenergetico.webp",
+        iconStoragePath: "assets/benefits/energetico.webp",
+        defaultDescription: "Aporta una combinación de nutrientes pensada para sostener la energía durante el día.",
+        explanation: ""
+      }
+    ],
+    benefitTags: ["Energético"],
+    tagIds: ["20000000-0000-4000-8000-000000000001"],
     ingredients: ["Quinoa"],
-    nutritionDescription: "No debe viajar con el plato.",
-    nutritionHighlights: ["No debe viajar"],
+    nutritionDescription: "Debe conservarse en el plato.",
+    nutritionHighlights: ["Alto en proteína"],
     nutritionFacts: { protein_g: 99 },
     allergens: ["Frutos secos"]
   }
@@ -59,7 +71,7 @@ const libraryPayload = buildMealLibraryPayload({
 });
 
 assert.equal(libraryPayload.nutrition_description, "Nutricion del plato reutilizable.");
-assert.deepEqual(libraryPayload.nutrition_highlights, ["Alto en proteina"]);
+assert.deepEqual(libraryPayload.nutrition_highlights, ["Alto en proteína"]);
 assert.deepEqual(libraryPayload.nutrition_facts, { protein_g: 99 });
 
 console.log("Nutrición validada: se conserva en platos y se excluye del meal prep principal.");

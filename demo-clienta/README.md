@@ -1,30 +1,29 @@
-# Demo Fullness
+# Fullness Lab - Documentacion de produccion
 
-Esta carpeta documenta las decisiones tomadas para la demo de la web Fullness, siguiendo las instrucciones entregadas por la clienta durante el proceso.
+Esta carpeta contiene manuales, onepages y evidencias de QA para operar el sitio productivo de Fullness Lab.
 
-## Objetivo
+## Material vigente
 
-Crear una pagina web para Fullness Lab, una marca de comida real y bienestar desde la raiz, con una estetica elegante, natural y premium.
+- `onepage-sistema-platos-beneficios.pdf`: explica a Cecilia la relacion entre Biblioteca, planes, productos familiares, beneficios y tags.
+- `guia-crear-mealprep.pdf`: guia operativa para crear meal preps.
+- `manual-cecilia-backoffice-mercadopago.md`: operacion de backoffice y pasarela.
+- `qa-catalogo-2026-07-28/`: evidencias visuales de escritorio, movil y modulo de Parametros.
+- `qa/manual-compra/`: recorrido de compra documentado.
 
-La propuesta comunica:
+## Estado
 
-- Alimentacion Antinflamatoria y nutricion consciente.
-- Ingredientes reales y preparaciones honestas.
-- Bienestar desde adentro, cuerpo, mente y emociones.
-- Comida lista para servir en bolsas al vacio.
-- Oferta comercial de menus, Meal Prep y Talleres.
-- Comunidad y acceso para miembros.
-- Carrito funcional para agregar productos.
+- La tienda publica vive en `/tienda`.
+- Supabase es la fuente del catalogo, Biblioteca, parametros y permisos.
+- R2 almacena imagenes de productos, hero e iconos.
+- Cecilia (`cecilia.prueba@fullnesslab.com`) tiene acceso administrativo completo.
+- Los precios visibles y usados en checkout provienen de `menu_items.price_clp`; no existe catalogo demo como reemplazo.
+- Nutricion, tags y beneficios pertenecen a los platos. Los planes los heredan de la Biblioteca.
 
-## Estado actual
+Antes de una publicacion que toque catalogo se ejecutan:
 
-La demo ya incluye una portada con video principal, direccion visual Fullness Lab, navegacion, secciones de proposito y nutricion funcional, franja de calentado, oferta Fullness Lab, productos, carrito, acceso a miembros y una animacion al agregar productos al carrito.
-
-La portada se actualizo para levantar las cuatro patas definidas por la clienta:
-
-- Practico: lo bueno hecho simple.
-- Rico: food porn y placer gastronomico.
-- Antinflamatorio: nutrientes, vitaminas, minerales y combinaciones funcionales.
-- Premium: paleta oscura, marfil calido, dorados opacos, burdeo betarraga, isotipo de raiz y lenguaje editorial.
-
-El proyecto esta preparado para desplegarse en Vercel desde GitHub.
+```bash
+npm run qa:parameters
+npm run qa:nutrition-scope
+npm run qa:catalog
+npm run build
+```

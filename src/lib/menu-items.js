@@ -1,9 +1,12 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
+import { benefitPresets, tagPresets } from "./catalog-parameter-presets.js";
 
 const MENU_ITEM_COLUMNS = "*";
 const SHOP_SETTINGS_COLUMNS = "*";
 const SHOP_SETTINGS_ID = "main";
 const MEAL_LIBRARY_COLUMNS = "*";
+const BENEFIT_DEFINITION_COLUMNS = "*";
+const TAG_DEFINITION_COLUMNS = "*";
 const CUSTOMER_SUBSCRIPTION_COLUMNS = "*, plan:menu_items(id,name,plan_frequency)";
 
 function cleanText(value) {
@@ -30,6 +33,176 @@ function normalizeJsonObject(value) {
   if (!value || Array.isArray(value) || typeof value !== "object") return {};
 
   return value;
+}
+
+function slugifyParameter(value) {
+  return cleanText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 72);
+}
+
+function mapBenefitDefinition(row) {
+  return {
+    id: row.id,
+    slug: row.slug || "",
+    name: row.name || "",
+    iconUrl: row.icon_url || "",
+    iconStoragePath: row.icon_storage_path || "",
+    defaultDescription: row.default_description || "",
+    displayOrder: Number(row.display_order || 0),
+    isActive: Boolean(row.is_active)
+  };
+}
+
+function mapTagDefinition(row) {
+  return {
+    id: row.id,
+    slug: row.slug || "",
+    name: row.name || "",
+    displayOrder: Number(row.display_order || 0),
+    isActive: Boolean(row.is_active)
+  };
+}
+
+function createCatalogContext(benefits = benefitPresets, tags = tagPresets) {
+  const benefitList = benefits.length ? benefits : benefitPresets;
+  const tagList = tags.length ? tags : tagPresets;
+
+  return {
+    benefits: benefitList,
+    tags: tagList,
+    benefitById: new Map(benefitList.map((item) => [item.id, item])),
+    benefitBySlug: new Map(benefitList.map((item) => [item.slug, item])),
+    benefitByName: new Map(benefitList.map((item) => [cleanText(item.name).toLocaleLowerCase("es"), item])),
+    tagById: new Map(tagList.map((item) => [item.id, item])),
+    tagBySlug: new Map(tagList.map((item) => [item.slug, item])),
+    tagByName: new Map(tagList.map((item) => [cleanText(item.name).toLocaleLowerCase("es"), item]))
+  };
+}
+
+function normalizeBenefitAssignments(value, legacyNames = [], context = createCatalogContext()) {
+  const rawAssignments = Array.isArray(value) ? value : [];
+  const candidates = [
+    ...rawAssignments,
+    ...normalizeTextList(legacyNames).map((name) => ({ name }))
+  ];
+  const seen = new Set();
+
+  return candidates
+    .map((raw) => {
+      const item = typeof raw === "string" ? { name: raw } : raw || {};
+      const rawId = cleanText(item.benefitId || item.benefit_id || item.id);
+      const rawSlug = cleanText(item.slug) || slugifyParameter(item.name);
+      const rawName = cleanText(item.name);
+      const definition =
+        context.benefitById.get(rawId) ||
+        context.benefitBySlug.get(rawSlug) ||
+        context.benefitByName.get(rawName.toLocaleLowerCase("es"));
+      const benefitId = definition?.id || rawId;
+      const name = definition?.name || rawName;
+      const key = benefitId || slugifyParameter(name);
+
+      if (!name || !key || seen.has(key)) return null;
+      seen.add(key);
+
+      return {
+        benefitId,
+        slug: definition?.slug || rawSlug,
+        name,
+        iconUrl: definition?.iconUrl || cleanText(item.iconUrl || item.icon_url),
+        iconStoragePath: definition?.iconStoragePath || cleanText(item.iconStoragePath || item.icon_storage_path),
+        defaultDescription: definition?.defaultDescription || cleanText(item.defaultDescription || item.default_description),
+        explanation: cleanText(item.explanation || item.description)
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeTagAssignments(tagIds, legacyNames = [], context = createCatalogContext()) {
+  const directTags = Array.isArray(tagIds)
+    ? tagIds.map((item) => typeof item === "object" && item !== null ? item : { id: item })
+    : [];
+  const candidates = [
+    ...directTags,
+    ...normalizeTextList(legacyNames).map((name) => ({ name }))
+  ];
+  const seen = new Set();
+
+  return candidates
+    .map((raw) => {
+      const rawId = cleanText(raw.id || raw.tagId || raw.tag_id);
+      const rawName = cleanText(raw.name);
+      const rawSlug = cleanText(raw.slug) || slugifyParameter(rawName);
+      const definition =
+        context.tagById.get(rawId) ||
+        context.tagBySlug.get(rawSlug) ||
+        context.tagByName.get(rawName.toLocaleLowerCase("es"));
+      const id = definition?.id || rawId;
+      const name = definition?.name || rawName;
+      const key = id || slugifyParameter(name);
+
+      if (!name || !key || seen.has(key)) return null;
+      seen.add(key);
+
+      return {
+        id,
+        slug: definition?.slug || rawSlug,
+        name
+      };
+    })
+    .filter(Boolean);
+}
+
+function serializeBenefitAssignments(value) {
+  return normalizeBenefitAssignments(value).map((item) => ({
+    benefitId: item.benefitId,
+    slug: item.slug,
+    name: item.name,
+    iconUrl: item.iconUrl,
+    iconStoragePath: item.iconStoragePath,
+    defaultDescription: item.defaultDescription,
+    explanation: item.explanation
+  }));
+}
+
+function aggregateBenefits(items) {
+  const aggregated = new Map();
+
+  items.forEach((item) => {
+    (item?.benefits || normalizeBenefitAssignments(item?.benefitAssignments, item?.benefitTags)).forEach((benefit) => {
+      const key = benefit.benefitId || benefit.slug || benefit.name;
+      const current = aggregated.get(key) || { ...benefit, sources: [] };
+      const explanation = cleanText(benefit.explanation);
+
+      if (explanation || item?.name) {
+        current.sources.push({
+          mealName: cleanText(item?.name),
+          explanation: explanation || benefit.defaultDescription
+        });
+      }
+
+      aggregated.set(key, current);
+    });
+  });
+
+  return [...aggregated.values()];
+}
+
+function aggregateTags(items) {
+  const aggregated = new Map();
+
+  items.forEach((item) => {
+    (item?.tags || []).forEach((tag) => {
+      const key = tag.id || tag.slug || tag.name;
+      if (key && !aggregated.has(key)) aggregated.set(key, tag);
+    });
+  });
+
+  return [...aggregated.values()];
 }
 
 function normalizePrice(value) {
@@ -66,35 +239,79 @@ function normalizeNutritionFacts(value) {
   return normalizeJsonObject(value);
 }
 
-function normalizeIncludedItems(value) {
+function normalizeIncludedItems(value, context = createCatalogContext(), libraryById = new Map()) {
   if (!Array.isArray(value)) return [];
 
   return value
     .map((item, index) => {
-      const name = cleanText(item?.name);
-      const description = cleanText(item?.description);
+      const libraryMealId = cleanText(item?.libraryMealId || item?.library_meal_id);
+      const libraryMeal = libraryById.get(libraryMealId);
+      const source = libraryMeal ? { ...item, ...libraryMeal } : item;
+      const name = cleanText(source?.name);
+      const description = cleanText(source?.description);
 
-      if (!name && !description && !item?.photoUrl && !item?.photo_url) return null;
+      if (!name && !description && !source?.photoUrl && !source?.photo_url) return null;
+
+      const benefits = normalizeBenefitAssignments(
+        source?.benefitAssignments || source?.benefit_assignments || source?.benefits,
+        source?.benefitTags || source?.benefit_tags,
+        context
+      );
+      const sourceTagIds = source?.tagIds || source?.tag_ids || [];
+      const sourceTags = Array.isArray(source?.tags) ? source.tags : [];
+      const tags = normalizeTagAssignments(
+        [...sourceTagIds, ...sourceTags],
+        source?.nutritionHighlights || source?.nutrition_highlights,
+        context
+      );
 
       return {
         id: cleanText(item?.id) || `meal-${index + 1}`,
-        libraryMealId: cleanText(item?.libraryMealId || item?.library_meal_id),
+        libraryMealId,
         name,
-        tag: cleanText(item?.tag),
+        tag: cleanText(source?.tag),
         description,
-        photoUrl: cleanText(item?.photoUrl || item?.photo_url),
-        photoStoragePath: cleanText(item?.photoStoragePath || item?.photo_storage_path),
-        secondaryPhotoUrl: cleanText(item?.secondaryPhotoUrl || item?.secondary_photo_url),
-        secondaryPhotoStoragePath: cleanText(item?.secondaryPhotoStoragePath || item?.secondary_photo_storage_path),
-        benefitTags: normalizeTextList(item?.benefitTags || item?.benefit_tags),
-        ingredients: normalizeTextList(item?.ingredients),
-        nutritionDescription: cleanText(item?.nutritionDescription || item?.nutrition_description),
-        nutritionHighlights: normalizeTextList(item?.nutritionHighlights || item?.nutrition_highlights),
-        nutritionFacts: normalizeNutritionFacts(item?.nutritionFacts || item?.nutrition_facts),
-        allergens: normalizeTextList(item?.allergens)
+        photoUrl: cleanText(source?.photoUrl || source?.photo_url),
+        photoStoragePath: cleanText(source?.photoStoragePath || source?.photo_storage_path),
+        secondaryPhotoUrl: cleanText(source?.secondaryPhotoUrl || source?.secondary_photo_url),
+        secondaryPhotoStoragePath: cleanText(source?.secondaryPhotoStoragePath || source?.secondary_photo_storage_path),
+        benefitAssignments: benefits,
+        benefits,
+        benefitTags: benefits.map((benefit) => benefit.name),
+        tagIds: tags.map((tag) => tag.id).filter(Boolean),
+        tags,
+        ingredients: normalizeTextList(source?.ingredients),
+        nutritionDescription: cleanText(source?.nutritionDescription || source?.nutrition_description),
+        nutritionHighlights: tags.length
+          ? tags.map((tag) => tag.name)
+          : normalizeTextList(source?.nutritionHighlights || source?.nutrition_highlights),
+        nutritionFacts: normalizeNutritionFacts(source?.nutritionFacts || source?.nutrition_facts),
+        allergens: normalizeTextList(source?.allergens)
       };
     })
     .filter(Boolean);
+}
+
+function serializeIncludedItems(value) {
+  return normalizeIncludedItems(value).map((item) => ({
+    id: item.id,
+    libraryMealId: item.libraryMealId,
+    name: item.name,
+    tag: item.tag,
+    description: item.description,
+    photoUrl: item.photoUrl,
+    photoStoragePath: item.photoStoragePath,
+    secondaryPhotoUrl: item.secondaryPhotoUrl,
+    secondaryPhotoStoragePath: item.secondaryPhotoStoragePath,
+    benefitAssignments: serializeBenefitAssignments(item.benefitAssignments),
+    benefitTags: item.benefits.map((benefit) => benefit.name),
+    tagIds: item.tagIds,
+    ingredients: item.ingredients,
+    nutritionDescription: item.nutritionDescription,
+    nutritionHighlights: item.tags.map((tag) => tag.name),
+    nutritionFacts: item.nutritionFacts,
+    allergens: item.allergens
+  }));
 }
 
 function normalizeComparisonRows(value) {
@@ -115,13 +332,28 @@ function normalizeComparisonRows(value) {
     .filter(Boolean);
 }
 
-export function mapMenuItem(row) {
+export function mapMenuItem(row, context = createCatalogContext(), libraryById = new Map()) {
+  const productType = row.product_type || "family";
+  const includedItems = normalizeIncludedItems(row.included_items, context, libraryById);
+  const directBenefits = normalizeBenefitAssignments(
+    row.benefit_assignments,
+    row.benefit_tags,
+    context
+  );
+  const directTags = normalizeTagAssignments(
+    row.tag_ids,
+    row.nutrition_highlights,
+    context
+  );
+  const benefits = productType === "plan" ? aggregateBenefits(includedItems) : directBenefits;
+  const tags = productType === "plan" ? aggregateTags(includedItems) : directTags;
+
   return {
     id: row.id,
     slug: row.slug,
     sku: row.sku || "",
     name: row.name,
-    productType: row.product_type || "family",
+    productType,
     planFrequency: row.plan_frequency || "",
     tag: row.tag || "",
     price: Number(row.price_clp || 0),
@@ -132,12 +364,22 @@ export function mapMenuItem(row) {
     secondaryImage: row.secondary_photo_url || "",
     secondaryPhotoUrl: row.secondary_photo_url || "",
     secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
-    benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
+    libraryMealId: row.library_meal_id || "",
+    benefitAssignments: benefits,
+    benefits,
+    benefitTags: benefits.map((benefit) => benefit.name),
+    tagIds: tags.map((tag) => tag.id).filter(Boolean),
+    tags,
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     recipeSummary: row.recipe_summary || "",
     recipeSteps: Array.isArray(row.recipe_steps) ? row.recipe_steps : [],
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
-    includedItems: Array.isArray(row.included_items) ? row.included_items : [],
+    nutritionDescription: productType === "family" ? row.nutrition_description || "" : "",
+    nutritionHighlights: productType === "family"
+      ? (tags.length ? tags.map((tag) => tag.name) : Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [])
+      : [],
+    nutritionFacts: productType === "family" ? row.nutrition_facts || {} : {},
+    includedItems,
     servingLabel: row.serving_label || "",
     purchaseLabel: row.purchase_label || "",
     displayOrder: Number(row.display_order || 0),
@@ -146,7 +388,18 @@ export function mapMenuItem(row) {
   };
 }
 
-export function mapMealLibraryItem(row) {
+export function mapMealLibraryItem(row, context = createCatalogContext()) {
+  const benefits = normalizeBenefitAssignments(
+    row.benefit_assignments,
+    row.benefit_tags,
+    context
+  );
+  const tags = normalizeTagAssignments(
+    row.tag_ids,
+    row.nutrition_highlights,
+    context
+  );
+
   return {
     id: row.id,
     name: row.name || "",
@@ -156,10 +409,16 @@ export function mapMealLibraryItem(row) {
     photoStoragePath: row.photo_storage_path || "",
     secondaryPhotoUrl: row.secondary_photo_url || "",
     secondaryPhotoStoragePath: row.secondary_photo_storage_path || "",
-    benefitTags: Array.isArray(row.benefit_tags) ? row.benefit_tags : [],
+    benefitAssignments: benefits,
+    benefits,
+    benefitTags: benefits.map((benefit) => benefit.name),
+    tagIds: tags.map((tag) => tag.id).filter(Boolean),
+    tags,
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     nutritionDescription: row.nutrition_description || "",
-    nutritionHighlights: Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
+    nutritionHighlights: tags.length
+      ? tags.map((tag) => tag.name)
+      : Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
     nutritionFacts: row.nutrition_facts || {},
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
     isActive: Boolean(row.is_active),
@@ -204,6 +463,19 @@ export function mapShopSettings(row) {
 
 export function buildMenuItemPayload(input) {
   const productType = normalizeProductType(input.productType || input.product_type);
+  const includedItems = productType === "plan"
+    ? normalizeIncludedItems(input.includedItems || input.included_items)
+    : [];
+  const directBenefits = normalizeBenefitAssignments(
+    input.benefitAssignments || input.benefit_assignments,
+    input.benefitTags || input.benefit_tags
+  );
+  const directTags = normalizeTagAssignments(
+    input.tags || input.tagAssignments || input.tagIds || input.tag_ids,
+    input.nutritionHighlights || input.nutrition_highlights
+  );
+  const benefits = directBenefits;
+  const tags = directTags;
 
   return {
     slug: cleanText(input.slug),
@@ -219,20 +491,41 @@ export function buildMenuItemPayload(input) {
     secondary_photo_storage_path: nullableText(input.secondaryPhotoStoragePath || input.secondary_photo_storage_path),
     price_clp: normalizePrice(input.priceClp ?? input.price_clp ?? input.price),
     currency: "CLP",
-    benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
+    library_meal_id: productType === "family" ? nullableText(input.libraryMealId || input.library_meal_id) : null,
     ingredients: normalizeTextList(input.ingredients),
     recipe_summary: nullableText(input.recipeSummary || input.recipe_summary),
     recipe_steps: normalizeTextList(input.recipeSteps || input.recipe_steps),
     allergens: normalizeTextList(input.allergens),
-    included_items: normalizeIncludedItems(input.includedItems || input.included_items),
+    included_items: productType === "plan" ? serializeIncludedItems(includedItems) : [],
     serving_label: nullableText(input.servingLabel || input.serving_label),
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
-    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order)
+    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
+    ...(productType === "family"
+      ? {
+          benefit_assignments: serializeBenefitAssignments(benefits),
+          benefit_tags: benefits.map((benefit) => benefit.name),
+          tag_ids: tags.map((tag) => tag.id).filter(Boolean),
+          nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
+          nutrition_highlights: tags.length
+            ? tags.map((tag) => tag.name)
+            : normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
+          nutrition_facts: normalizeNutritionFacts(input.nutritionFacts || input.nutrition_facts)
+        }
+      : {})
   };
 }
 
 export function buildMealLibraryPayload(input) {
+  const benefits = normalizeBenefitAssignments(
+    input.benefitAssignments || input.benefit_assignments,
+    input.benefitTags || input.benefit_tags
+  );
+  const tags = normalizeTagAssignments(
+    input.tags || input.tagAssignments || input.tagIds || input.tag_ids,
+    input.nutritionHighlights || input.nutrition_highlights
+  );
+
   return {
     name: cleanText(input.name),
     tag: nullableText(input.tag),
@@ -241,11 +534,15 @@ export function buildMealLibraryPayload(input) {
     photo_storage_path: nullableText(input.photoStoragePath || input.photo_storage_path),
     secondary_photo_url: nullableText(input.secondaryPhotoUrl || input.secondary_photo_url),
     secondary_photo_storage_path: nullableText(input.secondaryPhotoStoragePath || input.secondary_photo_storage_path),
-    benefit_tags: normalizeTextList(input.benefitTags || input.benefit_tags),
+    benefit_assignments: serializeBenefitAssignments(benefits),
+    benefit_tags: benefits.map((benefit) => benefit.name),
+    tag_ids: tags.map((tag) => tag.id).filter(Boolean),
     ingredients: normalizeTextList(input.ingredients),
     nutrition_description: nullableText(input.nutritionDescription || input.nutrition_description),
-    nutrition_highlights: normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
-    nutrition_facts: normalizeJsonObject(input.nutritionFacts || input.nutrition_facts),
+    nutrition_highlights: tags.length
+      ? tags.map((tag) => tag.name)
+      : normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
+    nutrition_facts: normalizeNutritionFacts(input.nutritionFacts || input.nutrition_facts),
     allergens: normalizeTextList(input.allergens),
     is_active: Boolean(input.isActive ?? input.is_active)
   };
@@ -281,25 +578,80 @@ async function getConfiguredSupabase() {
   return getSupabaseClient();
 }
 
+async function fetchCatalogContext(supabase, { includeInactive = false } = {}) {
+  let benefitQuery = supabase
+    .from("benefit_definitions")
+    .select(BENEFIT_DEFINITION_COLUMNS)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+  let tagQuery = supabase
+    .from("tag_definitions")
+    .select(TAG_DEFINITION_COLUMNS)
+    .order("display_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (!includeInactive) {
+    benefitQuery = benefitQuery.eq("is_active", true);
+    tagQuery = tagQuery.eq("is_active", true);
+  }
+
+  const [benefitResult, tagResult] = await Promise.all([benefitQuery, tagQuery]);
+  const benefits = benefitResult.error
+    ? benefitPresets
+    : (benefitResult.data || []).map(mapBenefitDefinition);
+  const tags = tagResult.error
+    ? tagPresets
+    : (tagResult.data || []).map(mapTagDefinition);
+
+  return {
+    context: createCatalogContext(benefits, tags),
+    benefits,
+    tags,
+    error: benefitResult.error || tagResult.error || null
+  };
+}
+
+async function fetchMealLibraryRows(supabase, { includeInactive = false } = {}) {
+  let query = supabase
+    .from("meal_library_items")
+    .select(MEAL_LIBRARY_COLUMNS)
+    .order("name", { ascending: true });
+
+  if (!includeInactive) query = query.eq("is_active", true);
+
+  const { data, error } = await query;
+  return { data: data || [], error };
+}
+
 export async function listActiveMenuItems() {
   const supabase = await getConfiguredSupabase();
   if (!supabase) {
     return { data: [], error: null, configured: false };
   }
 
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select(MENU_ITEM_COLUMNS)
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("name", { ascending: true });
+  const [menuResult, parameterResult, libraryResult] = await Promise.all([
+    supabase
+      .from("menu_items")
+      .select(MENU_ITEM_COLUMNS)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+    fetchCatalogContext(supabase),
+    fetchMealLibraryRows(supabase)
+  ]);
+  const { data, error } = menuResult;
 
   if (error) {
     return { data: [], error, configured: true };
   }
 
+  const libraryItems = libraryResult.error
+    ? []
+    : libraryResult.data.map((row) => mapMealLibraryItem(row, parameterResult.context));
+  const libraryById = new Map(libraryItems.map((item) => [item.id, item]));
+
   return {
-    data: (data || []).map(mapMenuItem),
+    data: (data || []).map((row) => mapMenuItem(row, parameterResult.context, libraryById)),
     error: null,
     configured: true
   };
@@ -311,18 +663,28 @@ export async function listAdminMenuItems() {
     return { data: [], error: null, configured: false };
   }
 
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select(MENU_ITEM_COLUMNS)
-    .order("display_order", { ascending: true })
-    .order("name", { ascending: true });
+  const [menuResult, parameterResult, libraryResult] = await Promise.all([
+    supabase
+      .from("menu_items")
+      .select(MENU_ITEM_COLUMNS)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true }),
+    fetchCatalogContext(supabase, { includeInactive: true }),
+    fetchMealLibraryRows(supabase, { includeInactive: true })
+  ]);
+  const { data, error } = menuResult;
 
   if (error) {
     return { data: [], error, configured: true };
   }
 
+  const libraryItems = libraryResult.error
+    ? []
+    : libraryResult.data.map((row) => mapMealLibraryItem(row, parameterResult.context));
+  const libraryById = new Map(libraryItems.map((item) => [item.id, item]));
+
   return {
-    data: (data || []).map(mapMenuItem),
+    data: (data || []).map((row) => mapMenuItem(row, parameterResult.context, libraryById)),
     error: null,
     configured: true
   };
@@ -332,14 +694,19 @@ export async function listMealLibraryItems() {
   const supabase = await getConfiguredSupabase();
   if (!supabase) return { data: [], error: null, configured: false };
 
-  const { data, error } = await supabase
-    .from("meal_library_items")
-    .select(MEAL_LIBRARY_COLUMNS)
-    .order("name", { ascending: true });
+  const [libraryResult, parameterResult] = await Promise.all([
+    fetchMealLibraryRows(supabase, { includeInactive: true }),
+    fetchCatalogContext(supabase, { includeInactive: true })
+  ]);
+  const { data, error } = libraryResult;
 
   if (error) return { data: [], error, configured: true };
 
-  return { data: (data || []).map(mapMealLibraryItem), error: null, configured: true };
+  return {
+    data: (data || []).map((row) => mapMealLibraryItem(row, parameterResult.context)),
+    error: null,
+    configured: true
+  };
 }
 
 export async function saveMealLibraryItem(input) {
@@ -354,7 +721,12 @@ export async function saveMealLibraryItem(input) {
 
   if (error) return { data: null, error, configured: true };
 
-  return { data: mapMealLibraryItem(data), error: null, configured: true };
+  const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
+  return {
+    data: mapMealLibraryItem(data, parameterResult.context),
+    error: null,
+    configured: true
+  };
 }
 
 export async function deleteMealLibraryItem(id) {
@@ -378,6 +750,91 @@ export async function listAdminCustomerSubscriptions() {
   if (error) return { data: [], error, configured: true };
 
   return { data: (data || []).map(mapCustomerSubscription), error: null, configured: true };
+}
+
+export async function listCatalogParameters({ includeInactive = false } = {}) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) {
+    return {
+      data: { benefits: benefitPresets, tags: tagPresets },
+      error: null,
+      configured: false
+    };
+  }
+
+  const result = await fetchCatalogContext(supabase, { includeInactive });
+
+  return {
+    data: {
+      benefits: result.benefits,
+      tags: result.tags
+    },
+    error: result.error,
+    configured: true
+  };
+}
+
+export async function saveBenefitDefinition(input) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const payload = {
+    slug: slugifyParameter(input.slug || input.name),
+    name: cleanText(input.name),
+    icon_url: cleanText(input.iconUrl || input.icon_url),
+    icon_storage_path: nullableText(input.iconStoragePath || input.icon_storage_path),
+    default_description: cleanText(input.defaultDescription || input.default_description),
+    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
+    is_active: Boolean(input.isActive ?? input.is_active)
+  };
+  const query = input.id
+    ? supabase.from("benefit_definitions").update(payload).eq("id", input.id)
+    : supabase.from("benefit_definitions").insert(payload);
+  const { data, error } = await query.select(BENEFIT_DEFINITION_COLUMNS).single();
+
+  return {
+    data: data ? mapBenefitDefinition(data) : null,
+    error,
+    configured: true
+  };
+}
+
+export async function deleteBenefitDefinition(id) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const { error } = await supabase.from("benefit_definitions").delete().eq("id", id);
+  return { data: error ? null : id, error, configured: true };
+}
+
+export async function saveTagDefinition(input) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const payload = {
+    slug: slugifyParameter(input.slug || input.name),
+    name: cleanText(input.name),
+    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
+    is_active: Boolean(input.isActive ?? input.is_active)
+  };
+  const query = input.id
+    ? supabase.from("tag_definitions").update(payload).eq("id", input.id)
+    : supabase.from("tag_definitions").insert(payload);
+  const { data, error } = await query.select(TAG_DEFINITION_COLUMNS).single();
+
+  return {
+    data: data ? mapTagDefinition(data) : null,
+    error,
+    configured: true
+  };
+}
+
+export async function deleteTagDefinition(id) {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return unavailableResult();
+
+  const { error } = await supabase.from("tag_definitions").delete().eq("id", id);
+  return { data: error ? null : id, error, configured: true };
 }
 
 export async function getShopSettings() {
@@ -412,7 +869,12 @@ export async function saveMenuItem(input) {
     return { data: null, error, configured: true };
   }
 
-  return { data: mapMenuItem(data), error: null, configured: true };
+  const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
+  return {
+    data: mapMenuItem(data, parameterResult.context),
+    error: null,
+    configured: true
+  };
 }
 
 export async function saveShopSettings(input) {
@@ -442,7 +904,7 @@ export async function deleteMenuItem(id) {
   return { data: error ? null : id, error, configured: true };
 }
 
-export async function uploadMenuPhoto(file) {
+export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
   const supabase = await getConfiguredSupabase();
   if (!supabase) return unavailableResult();
 
@@ -468,7 +930,7 @@ export async function uploadMenuPhoto(file) {
       contentType: file.type || "image/jpeg",
       dataBase64: base64,
       fileName: file.name,
-      folder: "images/meal-preps"
+      folder
     })
   });
 

@@ -3288,3 +3288,405 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Editorial catalog system: plans compose dishes; family products are dishes. */
+.route-shop .shop-plan-grid {
+  grid-template-columns: repeat(2, minmax(360px, 600px)) !important;
+  gap: clamp(18px, 2.2vw, 30px) !important;
+  width: min(100%, 1230px);
+  margin-inline: auto;
+}
+
+.route-shop .shop-plan-card,
+.route-shop .shop-family-card {
+  transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+
+.route-shop .shop-plan-card:hover,
+.route-shop .shop-family-card:hover {
+  border-color: rgba(125, 36, 48, 0.38);
+  box-shadow: 0 22px 48px rgba(67, 35, 24, 0.11);
+  transform: translateY(-3px);
+}
+
+.route-shop .shop-plan-card {
+  grid-template-rows: auto minmax(340px, auto) auto auto;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.42), rgba(246, 236, 218, 0.54)),
+    var(--shop-cream);
+}
+
+.route-shop .shop-plan-media-button .hover-image-frame {
+  aspect-ratio: 1.72 / 0.88;
+}
+
+.route-shop .shop-plan-body {
+  align-content: start;
+  gap: 14px;
+  padding: 22px 22px 0;
+}
+
+.route-shop .shop-plan-title-button,
+.route-shop .shop-family-detail-button {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.route-shop .shop-plan-title-button {
+  display: grid;
+  gap: 8px;
+}
+
+.route-shop .shop-plan-title-button h3 {
+  max-width: 24ch;
+  font-size: clamp(1.35rem, 1.75vw, 1.9rem);
+  line-height: 1.14;
+  text-wrap: balance;
+}
+
+.route-shop .shop-plan-title-button p,
+.route-shop .shop-family-detail-button p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  max-height: 6.4em;
+  text-overflow: ellipsis;
+}
+
+.route-shop .shop-benefit-tags {
+  gap: 8px;
+  min-height: 31px;
+}
+
+.route-shop .shop-benefit-tags li {
+  min-height: 31px;
+  padding: 0 11px;
+  border-color: var(--shop-burgundy);
+  color: #fff8ee;
+  background: var(--shop-burgundy);
+  font-size: 0.65rem;
+  font-weight: 500 !important;
+  letter-spacing: 0.085em;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list {
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  gap: 10px;
+  margin-top: auto;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list button {
+  min-height: 122px;
+  background: rgba(255, 252, 246, 0.74);
+}
+
+.route-shop .shop-plan-meals {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 18px 22px 0 !important;
+}
+
+.route-shop .shop-plan-meals.is-1 {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.route-shop .shop-plan-meals.is-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.route-shop .shop-plan-meal-card {
+  display: grid;
+  grid-template-rows: minmax(94px, auto) auto;
+  align-content: start;
+  min-width: 0;
+  min-height: 158px;
+  border: 1px solid rgba(94, 42, 35, 0.16);
+  background: rgba(255, 252, 246, 0.72);
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.route-shop .shop-plan-meal-card:hover,
+.route-shop .shop-plan-meal-card:focus-within {
+  border-color: rgba(125, 36, 48, 0.42);
+  background: rgba(255, 252, 246, 0.98);
+  transform: translateY(-2px);
+}
+
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  min-height: 0 !important;
+  padding: 12px 11px 9px !important;
+  border: 0 !important;
+  color: var(--shop-ink);
+  background: transparent !important;
+  text-align: left;
+}
+
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main strong {
+  color: var(--shop-ink);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 500 !important;
+  letter-spacing: 0.025em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.route-shop .shop-plan-meal-card > .shop-plan-meal-main p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: rgba(33, 23, 17, 0.62);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 0 8px 8px;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list button {
+  grid-template-rows: 44px minmax(26px, auto);
+  gap: 3px;
+  min-height: 78px !important;
+  padding: 4px 3px !important;
+  background: rgba(248, 239, 226, 0.64);
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list img {
+  width: 44px;
+  height: 44px;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list span {
+  font-size: 0.49rem;
+  letter-spacing: 0.055em;
+}
+
+.route-shop .shop-plan-footer {
+  padding: 18px 22px 22px;
+}
+
+.route-shop .shop-family-section {
+  grid-template-columns: minmax(230px, 0.22fr) minmax(0, 0.78fr);
+  gap: clamp(26px, 3.8vw, 58px);
+}
+
+.route-shop .shop-family-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 330px)) !important;
+  justify-content: start;
+  gap: 18px !important;
+  overflow: visible;
+}
+
+.route-shop .shop-family-card {
+  grid-template-rows: auto minmax(225px, 1fr) auto;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 242, 0.42), rgba(246, 236, 218, 0.56)),
+    var(--shop-cream);
+}
+
+.route-shop .shop-family-media-button .hover-image-frame {
+  aspect-ratio: 1 / 0.86;
+}
+
+.route-shop .shop-family-copy {
+  align-content: start;
+  gap: 12px;
+  padding: 17px 16px 0;
+  text-align: left;
+}
+
+.route-shop .shop-family-detail-button {
+  display: grid;
+  gap: 7px;
+}
+
+.route-shop .shop-family-copy p,
+.route-shop .shop-family-copy .shop-benefit-tags {
+  display: flex;
+}
+
+.route-shop .shop-family-detail-button p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  max-height: 4.8em;
+}
+
+.route-shop .shop-family-copy h3 {
+  font-size: clamp(1rem, 1.05vw, 1.22rem);
+  text-align: left;
+}
+
+.route-shop .shop-family-copy > .benefit-icon-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: auto;
+}
+
+.route-shop .shop-family-copy > .benefit-icon-list button {
+  min-height: 92px;
+}
+
+.route-shop .shop-family-footer {
+  gap: 8px;
+  padding: 16px;
+}
+
+@media (max-width: 980px) {
+  .route-shop .shop-plan-grid {
+    grid-template-columns: minmax(0, 680px) !important;
+  }
+
+  .route-shop .shop-family-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .route-shop .shop-plan-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 22px !important;
+  }
+
+  .route-shop .shop-plan-card {
+    grid-template-rows: auto auto auto auto;
+    transform: none;
+  }
+
+  .route-shop .shop-plan-card:hover,
+  .route-shop .shop-family-card:hover {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .route-shop .shop-plan-media-button .hover-image-frame {
+    aspect-ratio: 1.42 / 0.88;
+  }
+
+  .route-shop .shop-plan-body {
+    gap: 12px;
+    padding: 18px 16px 0;
+  }
+
+  .route-shop .shop-plan-title-button h3 {
+    max-width: 22ch;
+    font-size: clamp(1.28rem, 6.4vw, 1.72rem);
+  }
+
+  .route-shop .shop-plan-title-button p {
+    -webkit-line-clamp: 3;
+    max-height: 4.8em;
+  }
+
+  .route-shop .shop-plan-body > .benefit-icon-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .route-shop .shop-plan-body > .benefit-icon-list button {
+    min-height: 104px;
+  }
+
+  .route-shop .shop-plan-meals {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(220px, 82%);
+    gap: 10px !important;
+    width: 100%;
+    padding: 17px 16px 12px !important;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 16px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .route-shop .shop-plan-meals::-webkit-scrollbar,
+  .route-shop .shop-family-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .route-shop .shop-plan-meal-card {
+    min-height: 176px;
+    scroll-snap-align: start;
+  }
+
+  .route-shop .shop-plan-meal-card > .shop-plan-meal-main {
+    min-height: 102px !important;
+  }
+
+  .route-shop .shop-plan-footer {
+    padding: 14px 16px 18px;
+  }
+
+  .route-shop .shop-plan-footer > div {
+    grid-template-columns: 1fr;
+  }
+
+  .route-shop .shop-family-grid {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(280px, 88%);
+    gap: 14px !important;
+    width: calc(100% + var(--mobile-page-inline));
+    padding: 2px var(--mobile-page-inline) 14px 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: var(--mobile-page-inline);
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .route-shop .shop-family-card {
+    grid-template-rows: auto auto auto;
+    min-height: 0;
+    scroll-snap-align: start;
+  }
+
+  .route-shop .shop-family-copy {
+    min-height: 0;
+  }
+
+  .route-shop .shop-family-copy > .benefit-icon-list {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .route-shop .shop-plan-body > .benefit-icon-list,
+  .route-shop .shop-family-copy > .benefit-icon-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .route-shop .shop-plan-meals {
+    grid-auto-columns: minmax(214px, 90%);
+  }
+
+  .route-shop .shop-family-grid {
+    grid-auto-columns: minmax(260px, 92%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-shop .shop-plan-card,
+  .route-shop .shop-family-card,
+  .route-shop .shop-plan-meal-card {
+    transition: none;
+  }
+}

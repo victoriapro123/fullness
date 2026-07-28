@@ -843,3 +843,28 @@ Impacto proactivo:
 
 - Los bloques `.footer-column` deben ser grillas verticales con `gap`, titulo separado y enlaces en bloque. No dejar los enlaces como elementos inline, pues se concatenan y pueden invadir columnas contiguas en escritorio.
 - El contacto conserva el mismo patron de lectura vertical y `overflow-wrap:anywhere` para email largo. En movil los enlaces mantienen una zona tactil de al menos 44 px.
+
+### Correccion hero Planes 2026-07-28
+
+- El PNG remoto `cbe5de9a-232f-4269-9515-13e31e0b9198` de Meal Prep no tiene transparencia y muestra un rectangulo marfil detrás de la caja. La tienda debe sustituir únicamente ese asset legado por `src/assets/ecommerce/fullness-hero-box-dark-cutout-v2.png`, que es RGBA y se integra sobre el fondo oscuro.
+- Las nuevas cargas de hero desde Backoffice se respetan: esta sustitucion aplica solo al identificador del asset opaco ya publicado.
+
+### Sistema de platos, beneficios y tags 2026-07-28
+
+Cambio:
+- La informacion nutricional, los tags y los beneficios pertenecen exclusivamente al plato. Un plan semanal o mensual los hereda de sus platos y los deduplica; no tiene una ficha nutricional paralela.
+- Un producto familiar tambien es un plato. Puede cargarse desde Biblioteca y conserva fotografia, nutricion, ingredientes, tags, beneficios y la explicacion particular de cada beneficio.
+- Los parametros compartidos viven en `benefit_definitions` y `tag_definitions`. El set inicial tiene 12 beneficios ilustrados en WebP, almacenados en R2 bajo `assets/benefits/`.
+- Cada beneficio seleccionado en un plato exige una explicacion libre de por que aplica. En tienda, el icono abre un lightbox con esa explicacion o con la descripcion general del parametro.
+- La migracion `20260728001000_catalog_parameters_and_dish_benefits.sql` esta aplicada en el proyecto productivo `allyjctrrtvibwchjouu`. Cecilia conserva acceso administrativo completo.
+
+Impacto retroactivo:
+- Se reemplazan tags y beneficios escritos manualmente como fuente principal. Los textos legados se conservan para no perder contenido, pero las nuevas fichas deben usar los parametros estandarizados.
+- Queda superado el QA antiguo que no pudo accionar el selector nativo: se aprobo desde UI la subida real de una fotografia a R2, creacion, edicion, reutilizacion familiar y eliminacion con limpieza del objeto temporal.
+- Se corrigio el error de runtime `tagDefinitions is not defined` al guardar planes. `parseIncludedMealsFromForm` recibe ahora las definiciones como argumento explicito.
+
+Impacto proactivo:
+- Antes de publicar cambios de catalogo, ejecutar `npm run qa:parameters`, `npm run qa:nutrition-scope`, `npm run qa:catalog` y `npm run build`.
+- Probar siempre un precio entero que no sea multiplo de 100 y restaurarlo. El QA aprobado fue `$58.200 -> $58.201 -> $58.200`, confirmado tanto en UI como en Supabase.
+- No duplicar nutricion o beneficios en el formulario principal de un plan. Si se necesita cambiar esa informacion, editar el plato de Biblioteca.
+- La explicacion para Cecilia esta en `demo-clienta/onepage-sistema-platos-beneficios.pdf`.

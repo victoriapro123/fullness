@@ -1,0 +1,610 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Check,
+  ImagePlus,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Tags,
+  Trash2,
+  X
+} from "lucide-react";
+
+function cleanText(value) {
+  return String(value || "").trim();
+}
+
+function slugify(value) {
+  return cleanText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 72);
+}
+
+function normalizeAssignments(value, definitions) {
+  const definitionById = new Map(definitions.map((item) => [item.id, item]));
+
+  return (Array.isArray(value) ? value : [])
+    .map((assignment) => {
+      const benefitId = cleanText(assignment?.benefitId || assignment?.benefit_id || assignment?.id);
+      const definition = definitionById.get(benefitId);
+      const name = definition?.name || cleanText(assignment?.name);
+
+      if (!benefitId && !name) return null;
+
+      return {
+        benefitId: definition?.id || benefitId,
+        slug: definition?.slug || cleanText(assignment?.slug) || slugify(name),
+        name,
+        iconUrl: definition?.iconUrl || cleanText(assignment?.iconUrl || assignment?.icon_url),
+        iconStoragePath: definition?.iconStoragePath || cleanText(assignment?.iconStoragePath || assignment?.icon_storage_path),
+        defaultDescription: definition?.defaultDescription || cleanText(assignment?.defaultDescription || assignment?.default_description),
+        explanation: cleanText(assignment?.explanation || assignment?.description)
+      };
+    })
+    .filter(Boolean);
+}
+
+export function BenefitAssignmentEditor({
+  definitions,
+  value,
+  onChange,
+  legend = "Beneficios del plato",
+  idPrefix = "benefit"
+}) {
+  const activeDefinitions = definitions.filter((item) => item.isActive);
+  const assignments = useMemo(
+    () => normalizeAssignments(value, definitions),
+    [definitions, value]
+  );
+  const selectedIds = new Set(assignments.map((item) => item.benefitId));
+
+  function toggleBenefit(definition) {
+    if (selectedIds.has(definition.id)) {
+      onChange(assignments.filter((item) => item.benefitId !== definition.id));
+      return;
+    }
+
+    onChange([
+      ...assignments,
+      {
+        benefitId: definition.id,
+        slug: definition.slug,
+        name: definition.name,
+        iconUrl: definition.iconUrl,
+        iconStoragePath: definition.iconStoragePath,
+        defaultDescription: definition.defaultDescription,
+        explanation: ""
+      }
+    ]);
+  }
+
+  function updateExplanation(benefitId, explanation) {
+    onChange(assignments.map((item) => (
+      item.benefitId === benefitId ? { ...item, explanation } : item
+    )));
+  }
+
+  return (
+    <fieldset className="benefit-assignment-editor">
+      <legend>{legend}</legend>
+      <div className="benefit-choice-grid">
+        {activeDefinitions.map((definition) => {
+          const selected = selectedIds.has(definition.id);
+          const controlId = `${idPrefix}-${definition.id}`;
+
+          return (
+            <label className={`benefit-choice ${selected ? "is-selected" : ""}`} htmlFor={controlId} key={definition.id}>
+              <input
+                id={controlId}
+                type="checkbox"
+                checked={selected}
+                onChange={() => toggleBenefit(definition)}
+              />
+              <img src={definition.iconUrl} alt="" width="80" height="80" loading="lazy" />
+              <span>{definition.name}</span>
+              <Check size={15} aria-hidden="true" />
+            </label>
+          );
+        })}
+      </div>
+
+      {assignments.length > 0 && (
+        <div className="benefit-explanation-stack">
+          {assignments.map((assignment) => (
+            <label className="benefit-explanation-field" key={assignment.benefitId || assignment.slug}>
+              <img src={assignment.iconUrl} alt="" width="64" height="64" loading="lazy" />
+              <span>
+                <strong>{assignment.name}</strong>
+                <small>Por qué aplica en este plato</small>
+              </span>
+              <textarea
+                value={assignment.explanation}
+                onChange={(event) => updateExplanation(assignment.benefitId, event.target.value)}
+                placeholder={`Describe qué ingredientes hacen que este plato sea ${assignment.name.toLocaleLowerCase("es")} y por qué.`}
+                rows="3"
+              />
+            </label>
+          ))}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+export function TagSelector({
+  definitions,
+  value,
+  onChange,
+  legend = "Tags nutricionales",
+  idPrefix = "tag"
+}) {
+  const selectedIds = new Set(Array.isArray(value) ? value : []);
+
+  function toggleTag(tag) {
+    const next = selectedIds.has(tag.id)
+      ? [...selectedIds].filter((id) => id !== tag.id)
+      : [...selectedIds, tag.id];
+    onChange(next);
+  }
+
+  return (
+    <fieldset className="tag-selector">
+      <legend>{legend}</legend>
+      <div className="tag-choice-grid">
+        {definitions.filter((item) => item.isActive).map((tag) => {
+          const controlId = `${idPrefix}-${tag.id}`;
+
+          return (
+            <label className={selectedIds.has(tag.id) ? "is-selected" : ""} htmlFor={controlId} key={tag.id}>
+              <input
+                id={controlId}
+                type="checkbox"
+                checked={selectedIds.has(tag.id)}
+                onChange={() => toggleTag(tag)}
+              />
+              <span>{tag.name}</span>
+              <Check size={14} aria-hidden="true" />
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+export function BenefitIconList({
+  benefits,
+  contextTitle,
+  onOpenBenefit,
+  limit = 4,
+  compact = false
+}) {
+  const visibleBenefits = (Array.isArray(benefits) ? benefits : [])
+    .filter((benefit) => benefit?.name && benefit?.iconUrl)
+    .slice(0, limit);
+
+  if (visibleBenefits.length === 0) return null;
+
+  return (
+    <div className={`benefit-icon-list ${compact ? "is-compact" : ""}`} aria-label="Beneficios del plato">
+      {visibleBenefits.map((benefit) => (
+        <button
+          type="button"
+          key={benefit.benefitId || benefit.slug || benefit.name}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenBenefit({ benefit, contextTitle });
+          }}
+          aria-label={`Ver por qué ${contextTitle} es ${benefit.name.toLocaleLowerCase("es")}`}
+        >
+          <img src={benefit.iconUrl} alt="" width="76" height="76" loading="lazy" />
+          <span>{benefit.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function BenefitDetailLightbox({ preview, onClose }) {
+  const closeRef = useRef(null);
+  const benefit = preview?.benefit;
+
+  useEffect(() => {
+    if (!preview) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.requestAnimationFrame(() => closeRef.current?.focus());
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, preview]);
+
+  if (!benefit) return null;
+
+  const sources = Array.isArray(benefit.sources)
+    ? benefit.sources.filter((source) => source.mealName || source.explanation)
+    : [];
+  const explanation = cleanText(benefit.explanation) || cleanText(benefit.defaultDescription);
+
+  return (
+    <div
+      className="overlay benefit-detail-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="benefit-detail-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="benefit-detail-panel">
+        <button
+          ref={closeRef}
+          className="icon-button close"
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar beneficio"
+        >
+          <X size={22} />
+        </button>
+        <figure>
+          <img src={benefit.iconUrl} alt="" width="320" height="320" />
+        </figure>
+        <div>
+          <p className="eyebrow">Beneficio del plato</p>
+          <h2 id="benefit-detail-title">{benefit.name}</h2>
+          {preview.contextTitle && <p className="benefit-detail-context">En {preview.contextTitle}</p>}
+
+          {sources.length > 0 ? (
+            <div className="benefit-source-list">
+              {sources.map((source, index) => (
+                <article key={`${source.mealName}-${index}`}>
+                  {source.mealName && <h3>{source.mealName}</h3>}
+                  <p>{source.explanation || benefit.defaultDescription}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="benefit-detail-copy">{explanation || "Información en preparación."}</p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function createBenefitForm(nextOrder = 10) {
+  return {
+    id: "",
+    name: "",
+    slug: "",
+    iconUrl: "",
+    iconStoragePath: "",
+    defaultDescription: "",
+    displayOrder: String(nextOrder),
+    isActive: true
+  };
+}
+
+function createTagForm(nextOrder = 10) {
+  return {
+    id: "",
+    name: "",
+    slug: "",
+    displayOrder: String(nextOrder),
+    isActive: true
+  };
+}
+
+export function CatalogParametersAdmin({
+  benefits,
+  tags,
+  loading,
+  saving,
+  message,
+  error,
+  onRefresh,
+  onSaveBenefit,
+  onDeleteBenefit,
+  onSaveTag,
+  onDeleteTag,
+  onUploadBenefitIcon
+}) {
+  const [benefitForm, setBenefitForm] = useState(() => createBenefitForm(benefits.length * 10 + 10));
+  const [tagForm, setTagForm] = useState(() => createTagForm(tags.length * 10 + 10));
+  const [uploading, setUploading] = useState(false);
+
+  function editBenefit(benefit) {
+    setBenefitForm({
+      ...benefit,
+      displayOrder: String(benefit.displayOrder)
+    });
+  }
+
+  function editTag(tag) {
+    setTagForm({
+      ...tag,
+      displayOrder: String(tag.displayOrder)
+    });
+  }
+
+  async function submitBenefit(event) {
+    event.preventDefault();
+    const saved = await onSaveBenefit(benefitForm);
+    if (saved) setBenefitForm(createBenefitForm(benefits.length * 10 + 20));
+  }
+
+  async function submitTag(event) {
+    event.preventDefault();
+    const saved = await onSaveTag(tagForm);
+    if (saved) setTagForm(createTagForm(tags.length * 10 + 20));
+  }
+
+  async function uploadBenefitIcon(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const uploaded = await onUploadBenefitIcon(file);
+    if (uploaded) {
+      setBenefitForm((current) => ({
+        ...current,
+        iconUrl: uploaded.photoUrl,
+        iconStoragePath: uploaded.photoStoragePath
+      }));
+    }
+    setUploading(false);
+    event.target.value = "";
+  }
+
+  return (
+    <section className="catalog-parameters-admin" aria-labelledby="catalog-parameters-title">
+      <header className="catalog-parameters-heading">
+        <div>
+          <p className="eyebrow">Parámetros de platos</p>
+          <h3 id="catalog-parameters-title">Beneficios y tags</h3>
+        </div>
+        <button className="icon-button" type="button" onClick={onRefresh} aria-label="Actualizar parámetros" disabled={loading}>
+          <RefreshCw size={18} />
+        </button>
+      </header>
+
+      {(message || error) && (
+        <p className={`backoffice-alert ${error ? "is-error" : "is-success"}`} role="status">
+          {error || message}
+        </p>
+      )}
+
+      <div className="catalog-parameters-layout">
+        <section className="parameter-section">
+          <div className="parameter-section-heading">
+            <span><ImagePlus size={18} aria-hidden="true" /></span>
+            <div>
+              <h4>Beneficios ilustrados</h4>
+              <p>{benefits.length} símbolos disponibles</p>
+            </div>
+          </div>
+
+          <div className="parameter-benefit-library" aria-label="Beneficios configurados">
+            {benefits.map((benefit) => (
+              <article className={!benefit.isActive ? "is-inactive" : ""} key={benefit.id}>
+                <button type="button" className="parameter-benefit-main" onClick={() => editBenefit(benefit)}>
+                  <img src={benefit.iconUrl} alt="" width="92" height="92" loading="lazy" />
+                  <span>
+                    <strong>{benefit.name}</strong>
+                    <small>{benefit.isActive ? "Activo" : "Inactivo"}</small>
+                  </span>
+                </button>
+                <div>
+                  <button type="button" onClick={() => editBenefit(benefit)} aria-label={`Editar ${benefit.name}`}>
+                    <Pencil size={15} />
+                  </button>
+                  <button type="button" onClick={() => onDeleteBenefit(benefit)} aria-label={`Eliminar ${benefit.name}`} disabled={saving}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <form className="parameter-form" onSubmit={submitBenefit}>
+            <div className="parameter-form-heading">
+              <h4>{benefitForm.id ? "Editar beneficio" : "Nuevo beneficio"}</h4>
+              <button type="button" onClick={() => setBenefitForm(createBenefitForm(benefits.length * 10 + 10))} aria-label="Nuevo beneficio">
+                <Plus size={17} />
+              </button>
+            </div>
+            <div className="parameter-form-grid">
+              <label>
+                Nombre
+                <input
+                  required
+                  name="benefitName"
+                  value={benefitForm.name}
+                  onChange={(event) => setBenefitForm((current) => ({
+                    ...current,
+                    name: event.target.value,
+                    slug: current.id || current.slug ? current.slug : slugify(event.target.value)
+                  }))}
+                  placeholder="Restaurador…"
+                  autoComplete="off"
+                />
+              </label>
+              <label>
+                Slug
+                <input
+                  required
+                  name="benefitSlug"
+                  value={benefitForm.slug}
+                  onChange={(event) => setBenefitForm((current) => ({ ...current, slug: slugify(event.target.value) }))}
+                  placeholder="restaurador…"
+                  autoComplete="off"
+                />
+              </label>
+              <label>
+                Orden
+                <input
+                  name="benefitOrder"
+                  type="number"
+                  step="1"
+                  value={benefitForm.displayOrder}
+                  onChange={(event) => setBenefitForm((current) => ({ ...current, displayOrder: event.target.value }))}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </label>
+              <label className="parameter-active-toggle">
+                <input
+                  name="benefitActive"
+                  type="checkbox"
+                  checked={benefitForm.isActive}
+                  onChange={(event) => setBenefitForm((current) => ({ ...current, isActive: event.target.checked }))}
+                />
+                <span>{benefitForm.isActive ? "Activo" : "Inactivo"}</span>
+              </label>
+            </div>
+            <label>
+              Descripción general del beneficio
+              <textarea
+                name="benefitDescription"
+                value={benefitForm.defaultDescription}
+                onChange={(event) => setBenefitForm((current) => ({ ...current, defaultDescription: event.target.value }))}
+                placeholder="Texto general que verá el cliente si el plato aún no tiene una explicación específica…"
+                rows="3"
+              />
+            </label>
+            <div className="parameter-icon-control">
+              <figure>
+                {benefitForm.iconUrl ? (
+                  <img src={benefitForm.iconUrl} alt="" width="112" height="112" />
+                ) : (
+                  <ImagePlus size={28} aria-hidden="true" />
+                )}
+              </figure>
+              <div>
+                <label className="upload-control">
+                  <ImagePlus size={17} aria-hidden="true" />
+                  {uploading ? "Subiendo…" : "Subir icono"}
+                  <input type="file" accept="image/*" onChange={uploadBenefitIcon} disabled={uploading || saving} />
+                </label>
+                <label>
+                  URL del icono
+                  <input
+                    required
+                    name="benefitIconUrl"
+                    type="text"
+                    value={benefitForm.iconUrl}
+                    onChange={(event) => setBenefitForm((current) => ({ ...current, iconUrl: event.target.value }))}
+                    placeholder="/api/media?key=assets%2Fbenefits%2F…"
+                    autoComplete="off"
+                  />
+                </label>
+              </div>
+            </div>
+            <button className="primary-button" type="submit" disabled={saving || uploading}>
+              {saving ? <RefreshCw size={17} /> : <Save size={17} />}
+              {saving ? "Guardando…" : "Guardar beneficio"}
+            </button>
+          </form>
+        </section>
+
+        <section className="parameter-section">
+          <div className="parameter-section-heading">
+            <span><Tags size={18} aria-hidden="true" /></span>
+            <div>
+              <h4>Tags nutricionales</h4>
+              <p>{tags.length} etiquetas disponibles</p>
+            </div>
+          </div>
+
+          <div className="parameter-tag-library" aria-label="Tags configurados">
+            {tags.map((tag) => (
+              <article className={!tag.isActive ? "is-inactive" : ""} key={tag.id}>
+                <button type="button" onClick={() => editTag(tag)}>
+                  <span>{tag.name}</span>
+                  <small>{tag.isActive ? "Activo" : "Inactivo"}</small>
+                </button>
+                <div>
+                  <button type="button" onClick={() => editTag(tag)} aria-label={`Editar ${tag.name}`}>
+                    <Pencil size={15} />
+                  </button>
+                  <button type="button" onClick={() => onDeleteTag(tag)} aria-label={`Eliminar ${tag.name}`} disabled={saving}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <form className="parameter-form" onSubmit={submitTag}>
+            <div className="parameter-form-heading">
+              <h4>{tagForm.id ? "Editar tag" : "Nuevo tag"}</h4>
+              <button type="button" onClick={() => setTagForm(createTagForm(tags.length * 10 + 10))} aria-label="Nuevo tag">
+                <Plus size={17} />
+              </button>
+            </div>
+            <label>
+              Nombre
+              <input
+                required
+                name="tagName"
+                value={tagForm.name}
+                onChange={(event) => setTagForm((current) => ({
+                  ...current,
+                  name: event.target.value,
+                  slug: current.id || current.slug ? current.slug : slugify(event.target.value)
+                }))}
+                placeholder="Fuente de hierro…"
+                autoComplete="off"
+              />
+            </label>
+            <label>
+              Slug
+              <input
+                required
+                name="tagSlug"
+                value={tagForm.slug}
+                onChange={(event) => setTagForm((current) => ({ ...current, slug: slugify(event.target.value) }))}
+                placeholder="fuente-de-hierro…"
+                autoComplete="off"
+              />
+            </label>
+            <div className="parameter-form-grid">
+              <label>
+                Orden
+                <input
+                  name="tagOrder"
+                  type="number"
+                  step="1"
+                  value={tagForm.displayOrder}
+                  onChange={(event) => setTagForm((current) => ({ ...current, displayOrder: event.target.value }))}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </label>
+              <label className="parameter-active-toggle">
+                <input
+                  name="tagActive"
+                  type="checkbox"
+                  checked={tagForm.isActive}
+                  onChange={(event) => setTagForm((current) => ({ ...current, isActive: event.target.checked }))}
+                />
+                <span>{tagForm.isActive ? "Activo" : "Inactivo"}</span>
+              </label>
+            </div>
+            <button className="primary-button" type="submit" disabled={saving}>
+              {saving ? <RefreshCw size={17} /> : <Save size={17} />}
+              {saving ? "Guardando…" : "Guardar tag"}
+            </button>
+          </form>
+        </section>
+      </div>
+    </section>
+  );
+}

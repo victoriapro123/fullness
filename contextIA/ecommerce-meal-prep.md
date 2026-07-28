@@ -101,3 +101,16 @@
 - Verificación 2026-07-27: el proyecto remoto respondió `PGRST205` para `backoffice_drafts`; la tabla no está aplicada o no está visible en el caché PostgREST. Por ello, un borrador de meal prep sólo queda en el navegador de Cecilia y no puede recuperarse ni publicarse desde otro dispositivo hasta aplicar `20260727001000_backoffice_drafts.sql` al proyecto Supabase `allyjctrrtvibwchjouu` y verificar su lectura autenticada. No sustituir ni recrear un borrador local sin abrirlo primero en la sesión de su autora.
 - Conexión Supabase 2026-07-27: la credencial propia de Fullness confirmó que `menu_items` y `meal_library_items` están disponibles, pero `backoffice_drafts` no. La Biblioteca estaba vacía; los 2 planes activos contenían 3 platos cada uno y 0 referencias `libraryMealId`. Antes de cualquier recuperación, aprobar explícitamente el backfill de 6 registros de Biblioteca y la actualización de los 2 planes activos; verificar después los 6 enlaces y conservar el script idempotente para no duplicar platos.
 - Recuperación autorizada 2026-07-27: se crearon o reutilizaron 6 platos de Biblioteca y se enlazaron los 3 platos de cada plan activo con un `libraryMealId` válido. El Backoffice dispone además de `Guardar platos en Biblioteca`, que persiste todos los platos nuevos sin exigir publicar el meal prep; `Guardar meal prep` usa validación propia para explicar campos comerciales faltantes y el botón individual ya no se comprime a 36 px.
+
+### Parametros de catalogo y QA productivo 2026-07-28
+
+- Beneficios y tags se administran desde el modulo `Parametros`. Supabase contiene 12 beneficios ilustrados y 12 tags iniciales; los iconos WebP viven en R2 bajo `assets/benefits/`.
+- Cada plato de Biblioteca guarda `tag_ids`, `benefit_assignments` y una explicacion libre por beneficio. Los planes heredan y deduplican esos datos desde sus platos; la ficha del plan no guarda nutricion propia.
+- Los productos familiares son platos comerciales: pueden cargar una ficha de Biblioteca mediante `library_meal_id` y conservan nutricion, ingredientes, tags y beneficios.
+- En tienda, los beneficios estandarizados se presentan como iconos editoriales interactivos. El lightbox muestra titulo, contexto del plato y explicacion. Las descripciones largas de platos se acotan visualmente y abren su detalle completo.
+- Se aprobo responsive dedicado en escritorio y telefono de 390 x 844: grilla editorial de planes, carruseles tactiles de platos y familiares, lightboxes de pantalla completa y CTAs sin montajes.
+- QA UI aprobado en produccion de datos: crear y editar plato, subir foto real a R2, asignar nutricion/tag/beneficio, reutilizarlo en familiar, aceptar precio `$12.345`, eliminar ambos registros y limpiar la imagen R2.
+- Al guardar un plan existente se encontro y corrigio `tagDefinitions is not defined`. Se comprobo por UI y Supabase el cambio reversible `$58.200 -> $58.201 -> $58.200`; no existe restriccion por multiplos de 100.
+- Esta validacion reemplaza la nota antigua que indicaba que el selector nativo de archivos no estaba probado.
+- Evidencias: `demo-clienta/qa-catalogo-2026-07-28/`. Onepage para Cecilia: `demo-clienta/onepage-sistema-platos-beneficios.pdf`.
+- Migracion aplicada: `20260728001000_catalog_parameters_and_dish_benefits.sql`.
