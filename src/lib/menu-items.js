@@ -620,7 +620,19 @@ async function fetchCatalogContext(supabase, { includeInactive = false } = {}) {
     tagQuery = tagQuery.eq("is_active", true);
   }
 
-  const [benefitResult, tagResult] = await Promise.all([benefitQuery, tagQuery]);
+  let benefitResult;
+  let tagResult;
+
+  try {
+    [benefitResult, tagResult] = await Promise.all([benefitQuery, tagQuery]);
+  } catch (error) {
+    return {
+      context: createCatalogContext(),
+      benefits: benefitPresets,
+      tags: tagPresets,
+      error
+    };
+  }
   const benefits = benefitResult.error
     ? benefitPresets
     : (benefitResult.data || []).map(mapBenefitDefinition);
@@ -738,25 +750,37 @@ export async function saveMealLibraryItem(input) {
   const supabase = await getConfiguredSupabase();
   if (!supabase) return unavailableResult();
 
-  const payload = buildMealLibraryPayload(input);
-  let data;
-  let error;
-  let replacedMissingReference = false;
+  try {
+    const payload = buildMealLibraryPayload(input);
+    let data;
+    let error;
+    let replacedMissingReference = false;
 
-  if (input.id) {
-    const updateResult = await supabase
-      .from("meal_library_items")
-      .update(payload)
-      .eq("id", input.id)
-      .select(MEAL_LIBRARY_COLUMNS)
-      .maybeSingle();
+    if (input.id) {
+      const updateResult = await supabase
+        .from("meal_library_items")
+        .update(payload)
+        .eq("id", input.id)
+        .select(MEAL_LIBRARY_COLUMNS)
+        .maybeSingle();
 
-    data = updateResult.data;
-    error = updateResult.error;
+      data = updateResult.data;
+      error = updateResult.error;
 
-    // Plans created before the library link was stabilized can point to a
-    // deleted mealprep. Preserve the plan's form data by creating its library item.
-    if (!error && !data) {
+      // Plans created before the library link was stabilized can point to a
+      // deleted mealprep. Preserve the plan's form data by creating its library item.
+      if (!error && !data) {
+        const insertResult = await supabase
+          .from("meal_library_items")
+          .insert(payload)
+          .select(MEAL_LIBRARY_COLUMNS)
+          .single();
+
+        data = insertResult.data;
+        error = insertResult.error;
+        replacedMissingReference = !error && Boolean(data);
+      }
+    } else {
       const insertResult = await supabase
         .from("meal_library_items")
         .insert(payload)
@@ -765,28 +789,20 @@ export async function saveMealLibraryItem(input) {
 
       data = insertResult.data;
       error = insertResult.error;
-      replacedMissingReference = !error && Boolean(data);
     }
-  } else {
-    const insertResult = await supabase
-      .from("meal_library_items")
-      .insert(payload)
-      .select(MEAL_LIBRARY_COLUMNS)
-      .single();
 
-    data = insertResult.data;
-    error = insertResult.error;
+    if (error) return { data: null, error, configured: true };
+
+    const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
+    return {
+      data: mapMealLibraryItem(data, parameterResult.context),
+      error: null,
+      configured: true,
+      replacedMissingReference
+    };
+  } catch (error) {
+    return { data: null, error, configured: true };
   }
-
-  if (error) return { data: null, error, configured: true };
-
-  const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
-  return {
-    data: mapMealLibraryItem(data, parameterResult.context),
-    error: null,
-    configured: true,
-    replacedMissingReference
-  };
 }
 
 export async function deleteMealLibraryItem(id) {

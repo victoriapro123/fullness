@@ -2025,7 +2025,16 @@ function getMenuFormPublicationIssues(form) {
   return issues;
 }
 
+function isConnectionError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return message.includes("failed to fetch") || message.includes("networkerror") || message.includes("network request failed");
+}
+
 function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
+  if (isConnectionError(error)) {
+    return "No pudimos conectarnos con el servidor. Revisa tu conexión e inténtalo nuevamente.";
+  }
+
   return error?.message || fallback;
 }
 
@@ -2045,7 +2054,7 @@ function getPhotoUploadErrorMessage(error, fallback = "No pudimos subir la foto.
     return "Tu sesión de administradora ya no es válida. Inicia sesión nuevamente e inténtalo otra vez.";
   }
 
-  if (normalized.includes("failed to fetch") || normalized.includes("networkerror")) {
+  if (isConnectionError(error)) {
     return "No pudimos conectar con el almacenamiento. Revisa tu conexión e inténtalo nuevamente.";
   }
 
@@ -5033,11 +5042,14 @@ function App() {
     });
     if (result.error || !result.configured) {
       const message = getSupabaseErrorMessage(result.error, "No pudimos guardar el mealprep.");
-      setMealLibraryError(message);
+      const protectedMessage = isConnectionError(result.error)
+        ? `${message} Tu borrador sigue protegido para que puedas reintentar.`
+        : message;
+      setMealLibraryError(protectedMessage);
       setBackofficeFeedback({
         status: "error",
         title: "No pudimos guardar el mealprep",
-        message
+        message: protectedMessage
       });
     } else {
       clearMealLibraryDraft();
