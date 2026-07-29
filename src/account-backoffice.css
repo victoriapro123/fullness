@@ -2434,6 +2434,22 @@
   gap: 12px;
 }
 
+.backoffice-nutrition-json {
+  margin-top: 2px;
+}
+
+.backoffice-nutrition-json textarea {
+  min-height: 180px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.backoffice-field-error {
+  color: #9b1c1c !important;
+}
+
 .backoffice-unit-input {
   position: relative;
   display: block;

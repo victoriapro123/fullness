@@ -726,10 +726,44 @@ export async function saveMealLibraryItem(input) {
   if (!supabase) return unavailableResult();
 
   const payload = buildMealLibraryPayload(input);
-  const query = input.id
-    ? supabase.from("meal_library_items").update(payload).eq("id", input.id)
-    : supabase.from("meal_library_items").insert(payload);
-  const { data, error } = await query.select(MEAL_LIBRARY_COLUMNS).single();
+  let data;
+  let error;
+  let replacedMissingReference = false;
+
+  if (input.id) {
+    const updateResult = await supabase
+      .from("meal_library_items")
+      .update(payload)
+      .eq("id", input.id)
+      .select(MEAL_LIBRARY_COLUMNS)
+      .maybeSingle();
+
+    data = updateResult.data;
+    error = updateResult.error;
+
+    // Plans created before the library link was stabilized can point to a
+    // deleted mealprep. Preserve the plan's form data by creating its library item.
+    if (!error && !data) {
+      const insertResult = await supabase
+        .from("meal_library_items")
+        .insert(payload)
+        .select(MEAL_LIBRARY_COLUMNS)
+        .single();
+
+      data = insertResult.data;
+      error = insertResult.error;
+      replacedMissingReference = !error && Boolean(data);
+    }
+  } else {
+    const insertResult = await supabase
+      .from("meal_library_items")
+      .insert(payload)
+      .select(MEAL_LIBRARY_COLUMNS)
+      .single();
+
+    data = insertResult.data;
+    error = insertResult.error;
+  }
 
   if (error) return { data: null, error, configured: true };
 
@@ -737,7 +771,8 @@ export async function saveMealLibraryItem(input) {
   return {
     data: mapMealLibraryItem(data, parameterResult.context),
     error: null,
-    configured: true
+    configured: true,
+    replacedMissingReference
   };
 }
 

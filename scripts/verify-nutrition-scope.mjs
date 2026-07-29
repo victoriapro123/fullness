@@ -72,12 +72,16 @@ const mealprepPayload = buildMealLibraryPayload({
   allergens: "Pescado\nElaborado en cocina compartida",
   nutritionDescription: "Nutricion del mealprep.",
   nutritionHighlights: ["Alto en proteina"],
-  nutritionFacts: { protein_g: 99 }
+  nutritionFacts: { protein_g: 99, vitamin_b12_mcg: 2.4, source: "Laboratorio" }
 });
 
 assert.equal(mealprepPayload.nutrition_description, "Nutricion del mealprep.");
 assert.deepEqual(mealprepPayload.nutrition_highlights, ["Alto en proteína"]);
-assert.deepEqual(mealprepPayload.nutrition_facts, { protein_g: 99 });
+assert.deepEqual(mealprepPayload.nutrition_facts, {
+  protein_g: 99,
+  vitamin_b12_mcg: 2.4,
+  source: "Laboratorio"
+});
 assert.deepEqual(mealprepPayload.allergens, ["Pescado", "Elaborado en cocina compartida"]);
 
 const familyPayload = buildMenuItemPayload({

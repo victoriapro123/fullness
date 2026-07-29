@@ -1633,6 +1633,13 @@ function updateNutritionFactValue(value, field, nextValue) {
 
 function NutritionFactsEditor({ value, onChange, idPrefix, required = false }) {
   const facts = readNutritionFactsForEditor(value);
+  let jsonError = "";
+
+  try {
+    parseJsonObject(value);
+  } catch {
+    jsonError = "El JSON todavía no es válido. Corrígelo antes de guardar el mealprep.";
+  }
 
   return (
     <fieldset className="backoffice-nutrition-editor">
@@ -1666,6 +1673,24 @@ function NutritionFactsEditor({ value, onChange, idPrefix, required = false }) {
           );
         })}
       </div>
+      <details className="backoffice-advanced-fields backoffice-nutrition-json">
+        <summary>Datos nutricionales JSON</summary>
+        <p>Úsalo para conservar o agregar valores y claves personalizadas. Debe ser un objeto JSON válido.</p>
+        <label htmlFor={`${idPrefix}-json`}>
+          Datos nutricionales JSON
+          <textarea
+            id={`${idPrefix}-json`}
+            name={`${idPrefix}-json`}
+            rows="9"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            spellCheck="false"
+            aria-invalid={Boolean(jsonError)}
+            aria-describedby={jsonError ? `${idPrefix}-json-error` : undefined}
+          />
+        </label>
+        {jsonError && <p className="backoffice-field-error" id={`${idPrefix}-json-error`} role="alert">{jsonError}</p>}
+      </details>
     </fieldset>
   );
 }
@@ -4949,6 +4974,7 @@ function App() {
     try {
       const nextItems = menuForm.includedItems.map((item) => ({ ...item }));
       const saved = [];
+      let replacedMissingReference = false;
 
       for (const index of pendingIndexes) {
         const meal = nextItems[index];
@@ -4980,6 +5006,7 @@ function App() {
 
         nextItems[index] = { ...meal, libraryMealId: result.data.id, sku: result.data.sku };
         saved.push(result.data);
+        replacedMissingReference ||= Boolean(result.replacedMissingReference);
       }
 
       markMenuFormChanged();
@@ -4987,11 +5014,14 @@ function App() {
       setMealLibrary((current) => [...current.filter((item) => !saved.some((savedItem) => savedItem.id === item.id)), ...saved]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
       if (!silent) {
-        setAdminMessage(`${saved.length} mealprep${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"}.`);
+        const replacementNote = replacedMissingReference
+          ? " Se reemplazó un vínculo anterior; guarda el plan para conservarlo."
+          : "";
+        setAdminMessage(`${saved.length} mealprep${saved.length === 1 ? "" : "s"} guardado${saved.length === 1 ? "" : "s"}.${replacementNote}`);
         setBackofficeFeedback({
           status: "success",
           title: saved.length === 1 ? "Mealprep guardado" : "Mealpreps guardados",
-          message: `${saved.length} mealprep${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.`
+          message: `${saved.length} mealprep${saved.length === 1 ? "" : "s"} ya ${saved.length === 1 ? "está disponible" : "están disponibles"} para reutilizar.${replacementNote}`
         });
       }
       return nextItems;
@@ -5088,11 +5118,14 @@ function App() {
       }));
       setMealLibrary((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
-      setAdminMessage(`“${result.data.name}” quedó guardado en Mealpreps.`);
+      const replacementNote = result.replacedMissingReference
+        ? " Se reemplazó un vínculo anterior: guarda el plan para conservar el nuevo vínculo."
+        : "";
+      setAdminMessage(`“${result.data.name}” quedó guardado en Mealpreps.${replacementNote}`);
       setBackofficeFeedback({
         status: "success",
         title: "Mealprep guardado",
-        message: `“${result.data.name}” ya está disponible para reutilizarlo en otros planes.`
+        message: `“${result.data.name}” ya está disponible para reutilizarlo en otros planes.${replacementNote}`
       });
     }
 
