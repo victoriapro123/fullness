@@ -141,6 +141,7 @@
 - Las cargas de foto en planes, mealpreps y mealpreps familiares deben reportar el error dentro del recuadro exacto que falló (`Foto principal` o `Segunda foto`), además del aviso general. Traducir tamaño excesivo, formato no admitido, sesión vencida, red y rechazo de R2 a mensajes accionables. Las fallas de lectura o red deben devolver un resultado controlado para restaurar el botón de carga.
 - Al guardar un plan, nuevo o existente, la confirmación debe volver al listado de `Planes`; nunca puede dejar abierto el lightbox del plan ni del mealprep interno. Las fichas existentes de mealprep individual o familiar pueden mantenerse abiertas para ajustes consecutivos.
 - `Parámetros` separa `Beneficios` y `Tags` en pestañas para que cada biblioteca y su formulario tenga ancho completo. `Contenido web` consolida los antiguos módulos `Tienda`, `Lightbox` y `Comunidad` bajo tres pestañas, conservando sus propios formularios y mecanismos de guardado.
+- Las pestañas de `Parámetros` deben renderizar exclusivamente su panel activo; no depender sólo del atributo HTML `hidden`, porque ambas bibliotecas pueden terminar visibles por reglas de layout heredadas. Al cambiar de pestaña, la otra biblioteca y formulario no deben ocupar espacio ni permanecer en el DOM.
 
 ### Alta rápida de beneficios y tags 2026-07-28
 

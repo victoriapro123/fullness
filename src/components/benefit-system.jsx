@@ -785,7 +785,8 @@ export function CatalogParametersAdmin({
       </div>
 
       <div className="catalog-parameters-layout">
-        <section className="parameter-section" id="parameter-benefits" role="tabpanel" hidden={activeParameterTab !== "benefits"}>
+        {activeParameterTab === "benefits" && (
+        <section className="parameter-section" id="parameter-benefits" role="tabpanel">
           <div className="parameter-section-heading">
             <span><ImagePlus size={18} aria-hidden="true" /></span>
             <div>
@@ -931,8 +932,10 @@ export function CatalogParametersAdmin({
             </button>
           </form>
         </section>
+        )}
 
-        <section className="parameter-section" id="parameter-tags" role="tabpanel" hidden={activeParameterTab !== "tags"}>
+        {activeParameterTab === "tags" && (
+        <section className="parameter-section" id="parameter-tags" role="tabpanel">
           <div className="parameter-section-heading">
             <span><Tags size={18} aria-hidden="true" /></span>
             <div>
@@ -1037,6 +1040,7 @@ export function CatalogParametersAdmin({
             </button>
           </form>
         </section>
+        )}
       </div>
     </section>
   );
