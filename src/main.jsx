@@ -1845,16 +1845,36 @@ function WebsiteContentTabs({ activeTab, onChange }) {
 }
 
 function WebsiteContentHeading({ activeTab, onChange }) {
+  const tabDetails = {
+    shop: {
+      eyebrow: "Contenido web / Tienda",
+      title: "Tienda",
+      description: "Edita la portada y el bloque de suscripción que acompañan la compra."
+    },
+    lightbox: {
+      eyebrow: "Contenido web / Lightbox",
+      title: "Lightbox de suscripción",
+      description: "Define el mensaje, las acciones y la imagen que verá cada nueva visita."
+    },
+    community: {
+      eyebrow: "Contenido web / Comunidad",
+      title: "Agenda de comunidad",
+      description: "Ordena las actividades que se muestran en la sección de comunidad."
+    }
+  };
+  const currentTab = tabDetails[activeTab] || tabDetails.shop;
+
   return (
-    <>
-      <div className="backoffice-list-top">
+    <div className="website-content-heading">
+      <div className="backoffice-catalog-heading">
         <div>
-          <p className="eyebrow">Contenido web</p>
-          <h3 id="web-content-title">Contenido del sitio</h3>
+          <p className="eyebrow">{currentTab.eyebrow}</p>
+          <h3 id="web-content-title">{currentTab.title}</h3>
+          <p>{currentTab.description}</p>
         </div>
       </div>
       <WebsiteContentTabs activeTab={activeTab} onChange={onChange} />
-    </>
+    </div>
   );
 }
 
@@ -8942,28 +8962,33 @@ function App() {
 
                     {activeBackofficeModule === "subscriptions" && (
                       <section className="backoffice-side-panel backoffice-module-panel subscriptions-panel" aria-labelledby="subscriptions-title">
-                        <div className="backoffice-list-top">
-                          <h3 id="subscriptions-title">Clientes con suscripción</h3>
-                          <button className="icon-button" type="button" onClick={refreshSubscriptionCustomers} aria-label="Actualizar suscripciones" disabled={subscriptionsLoading}><RefreshCw size={18} /></button>
+                        <div className="backoffice-catalog-heading subscriptions-heading">
+                          <div>
+                            <p className="eyebrow">Clientes</p>
+                            <h3 id="subscriptions-title">Suscripciones</h3>
+                            <p>Consulta planes, frecuencia, estado y próximo despacho desde un solo listado.</p>
+                          </div>
+                          <button className="icon-button" type="button" onClick={refreshSubscriptionCustomers} aria-label="Actualizar suscripciones" title="Actualizar listado" disabled={subscriptionsLoading}><RefreshCw size={18} /></button>
                         </div>
                         <div className="subscription-filters" aria-label="Filtros de suscripciones">
                           <label><Filter size={16} /><span>Estado</span><select value={subscriptionFilter.status} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, status: event.target.value }))}><option value="all">Todos</option><option value="active">Activas</option><option value="paused">Pausadas</option><option value="cancelled">Canceladas</option></select></label>
                           <label><span>Frecuencia</span><select value={subscriptionFilter.frequency} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, frequency: event.target.value }))}><option value="all">Semanal y mensual</option><option value="weekly">Semanal</option><option value="monthly">Mensual</option></select></label>
                           <label><span>Buscar</span><input value={subscriptionFilter.query} onChange={(event) => setSubscriptionFilter((current) => ({ ...current, query: event.target.value }))} placeholder="Nombre, correo o plan…" /></label>
                         </div>
+                        <p className="subscription-results-count" aria-live="polite">{filteredSubscriptions.length} {filteredSubscriptions.length === 1 ? "suscripción encontrada" : "suscripciones encontradas"}</p>
                         {subscriptionsError && <p className="backoffice-alert is-error" role="status">{subscriptionsError}</p>}
                         {subscriptionsLoading ? (
                           <p className="backoffice-muted">Cargando suscripciones…</p>
                         ) : filteredSubscriptions.length ? (
                           <div className="subscription-customer-table" role="table" aria-label="Clientes con suscripción">
-                            <div className="subscription-customer-row is-header" role="row"><span>Cliente</span><span>Plan</span><span>Frecuencia</span><span>Estado</span><span>Próximo despacho</span></div>
+                            <div className="subscription-customer-row is-header" role="row"><span role="columnheader">Cliente</span><span role="columnheader">Plan</span><span role="columnheader">Frecuencia</span><span role="columnheader">Estado</span><span role="columnheader">Próximo despacho</span></div>
                             {filteredSubscriptions.map((subscription) => (
                               <div className="subscription-customer-row" key={subscription.id} role="row">
-                                <span><strong>{subscription.customerName}</strong><small>{subscription.customerEmail}</small></span>
-                                <span>{subscription.planName}</span>
-                                <span>{subscription.frequency === "monthly" ? "Mensual" : "Semanal"}</span>
-                                <span><b className={`subscription-status is-${subscription.status}`}>{subscription.status === "active" ? "Activa" : subscription.status === "paused" ? "Pausada" : "Cancelada"}</b></span>
-                                <span>{formatSubscriptionDate(subscription.nextDeliveryAt)}</span>
+                                <span className="subscription-customer-person" data-label="Cliente" role="cell"><strong>{subscription.customerName}</strong><small>{subscription.customerEmail}</small></span>
+                                <span data-label="Plan" role="cell">{subscription.planName}</span>
+                                <span data-label="Frecuencia" role="cell">{subscription.frequency === "monthly" ? "Mensual" : "Semanal"}</span>
+                                <span data-label="Estado" role="cell"><span className={`subscription-status is-${subscription.status}`}>{subscription.status === "active" ? "Activa" : subscription.status === "paused" ? "Pausada" : "Cancelada"}</span></span>
+                                <span data-label="Próximo despacho" role="cell">{formatSubscriptionDate(subscription.nextDeliveryAt)}</span>
                               </div>
                             ))}
                           </div>
@@ -8981,85 +9006,104 @@ function App() {
                           {shopSettingsError || shopSettingsMessage}
                         </p>
                       )}
-                      <form className="shop-settings-admin-form" onSubmit={submitShopSettings}>
-                        <label>
-                          Eyebrow hero
-                          <input name="heroEyebrow" value={shopSettingsForm.heroEyebrow} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Título hero
-                          <textarea required name="heroTitle" rows="3" value={shopSettingsForm.heroTitle} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Bajada hero
-                          <textarea required name="heroBody" rows="4" value={shopSettingsForm.heroBody} onChange={updateShopSettingsForm} />
-                        </label>
-
-                        <div className="shop-settings-photo">
-                          <div className="backoffice-photo-preview">
-                            {shopSettingsForm.heroImageUrl ? (
-                              <img src={shopSettingsForm.heroImageUrl} alt="" aria-hidden="true" />
-                            ) : (
-                              <UploadCloud size={28} />
-                            )}
+                      <form className="website-content-form shop-settings-admin-form" onSubmit={submitShopSettings}>
+                        <section className="website-content-section">
+                          <header>
+                            <p className="eyebrow">Portada</p>
+                            <h4>Hero de la tienda</h4>
+                            <p>Texto, llamados a la acción e imagen principal de la página de compra.</p>
+                          </header>
+                          <div className="website-content-layout">
+                            <div className="website-content-field-grid">
+                              <label>
+                                Eyebrow hero
+                                <input name="heroEyebrow" value={shopSettingsForm.heroEyebrow} onChange={updateShopSettingsForm} />
+                              </label>
+                              <label className="website-content-field-wide">
+                                Título hero
+                                <textarea required name="heroTitle" rows="3" value={shopSettingsForm.heroTitle} onChange={updateShopSettingsForm} />
+                              </label>
+                              <label className="website-content-field-wide">
+                                Bajada hero
+                                <textarea required name="heroBody" rows="4" value={shopSettingsForm.heroBody} onChange={updateShopSettingsForm} />
+                              </label>
+                              <div className="website-content-field-grid website-content-field-wide">
+                                <label>
+                                  Botón principal
+                                  <input name="heroPrimaryLabel" value={shopSettingsForm.heroPrimaryLabel} onChange={updateShopSettingsForm} />
+                                </label>
+                                <label>
+                                  Botón secundario
+                                  <input name="heroSecondaryLabel" value={shopSettingsForm.heroSecondaryLabel} onChange={updateShopSettingsForm} />
+                                </label>
+                              </div>
+                              <label className="website-content-field-wide">
+                                Métricas hero
+                                <textarea name="heroMetrics" rows="4" value={shopSettingsForm.heroMetrics} onChange={updateShopSettingsForm} placeholder={"5 proteínas independientes\n5 acompañamientos independientes"} />
+                              </label>
+                            </div>
+                            <aside className="website-content-media">
+                              <div className="backoffice-photo-preview">
+                                {shopSettingsForm.heroImageUrl ? (
+                                  <img src={shopSettingsForm.heroImageUrl} alt="" aria-hidden="true" />
+                                ) : (
+                                  <UploadCloud size={28} />
+                                )}
+                              </div>
+                              <label className="upload-control">
+                                <UploadCloud size={18} />
+                                {shopHeroUploading ? "Subiendo…" : "Subir hero"}
+                                <input type="file" accept="image/*" onChange={handleShopHeroPhotoChange} disabled={shopHeroUploading || shopSettingsSaving} />
+                              </label>
+                              <label>
+                                URL imagen hero
+                                <input name="heroImageUrl" value={shopSettingsForm.heroImageUrl} onChange={updateShopSettingsForm} placeholder="/api/media?key=images/meal-preps/…" />
+                              </label>
+                            </aside>
                           </div>
-                          <label className="upload-control">
-                            <UploadCloud size={18} />
-                            {shopHeroUploading ? "Subiendo…" : "Subir hero"}
-                            <input type="file" accept="image/*" onChange={handleShopHeroPhotoChange} disabled={shopHeroUploading || shopSettingsSaving} />
-                          </label>
-                        </div>
+                        </section>
 
-                        <label>
-                          URL imagen hero
-                          <input name="heroImageUrl" value={shopSettingsForm.heroImageUrl} onChange={updateShopSettingsForm} placeholder="/api/media?key=images/meal-preps/…" />
-                        </label>
+                        <section className="website-content-section">
+                          <header>
+                            <p className="eyebrow">Suscripción</p>
+                            <h4>Bloque de suscripción</h4>
+                            <p>Contenido que explica el valor del plan antes de que la persona lo agregue al carrito.</p>
+                          </header>
+                          <div className="website-content-field-grid">
+                            <label>
+                              Eyebrow suscripción
+                              <input name="subscriptionEyebrow" value={shopSettingsForm.subscriptionEyebrow} onChange={updateShopSettingsForm} />
+                            </label>
+                            <label>
+                              Botón suscripción
+                              <input name="subscriptionCtaLabel" value={shopSettingsForm.subscriptionCtaLabel} onChange={updateShopSettingsForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Título suscripción
+                              <textarea required name="subscriptionTitle" rows="3" value={shopSettingsForm.subscriptionTitle} onChange={updateShopSettingsForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Bajada suscripción
+                              <textarea required name="subscriptionBody" rows="3" value={shopSettingsForm.subscriptionBody} onChange={updateShopSettingsForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Beneficios suscripción
+                              <textarea name="subscriptionBenefits" rows="5" value={shopSettingsForm.subscriptionBenefits} onChange={updateShopSettingsForm} placeholder={"4 semanas diferentes cada mes\nMenús renovados constantemente"} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Tabla comparativa
+                              <textarea name="subscriptionComparison" rows="6" value={shopSettingsForm.subscriptionComparison} onChange={updateShopSettingsForm} placeholder={"Precio | Mejor valor | Precio normal\nRenovación | Automática | Manual"} />
+                            </label>
+                          </div>
+                        </section>
 
-                        <div className="shop-settings-two">
-                          <label>
-                            Botón principal
-                            <input name="heroPrimaryLabel" value={shopSettingsForm.heroPrimaryLabel} onChange={updateShopSettingsForm} />
-                          </label>
-                          <label>
-                            Botón secundario
-                            <input name="heroSecondaryLabel" value={shopSettingsForm.heroSecondaryLabel} onChange={updateShopSettingsForm} />
-                          </label>
-                        </div>
-
-                        <label>
-                          Métricas hero
-                          <textarea name="heroMetrics" rows="4" value={shopSettingsForm.heroMetrics} onChange={updateShopSettingsForm} placeholder={"5 proteínas independientes\n5 acompañamientos independientes"} />
-                        </label>
-
-                        <label>
-                          Eyebrow suscripción
-                          <input name="subscriptionEyebrow" value={shopSettingsForm.subscriptionEyebrow} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Título suscripción
-                          <textarea required name="subscriptionTitle" rows="3" value={shopSettingsForm.subscriptionTitle} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Bajada suscripción
-                          <textarea required name="subscriptionBody" rows="3" value={shopSettingsForm.subscriptionBody} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Botón suscripción
-                          <input name="subscriptionCtaLabel" value={shopSettingsForm.subscriptionCtaLabel} onChange={updateShopSettingsForm} />
-                        </label>
-                        <label>
-                          Beneficios suscripción
-                          <textarea name="subscriptionBenefits" rows="5" value={shopSettingsForm.subscriptionBenefits} onChange={updateShopSettingsForm} placeholder={"4 semanas diferentes cada mes\nMenús renovados constantemente"} />
-                        </label>
-                        <label>
-                          Tabla comparativa
-                          <textarea name="subscriptionComparison" rows="6" value={shopSettingsForm.subscriptionComparison} onChange={updateShopSettingsForm} placeholder={"Precio | Mejor valor | Precio normal\nRenovación | Automática | Manual"} />
-                        </label>
-
-                        <button className="primary-button" type="submit" disabled={shopSettingsSaving || shopHeroUploading}>
-                          {shopSettingsSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                          {shopSettingsSaving ? "Guardando…" : "Guardar tienda"}
-                        </button>
+                        <footer className="website-content-actions">
+                          <p>Los cambios se aplican a la tienda cuando guardas.</p>
+                          <button className="primary-button" type="submit" disabled={shopSettingsSaving || shopHeroUploading}>
+                            {shopSettingsSaving ? <RefreshCw size={18} /> : <Save size={18} />}
+                            {shopSettingsSaving ? "Guardando…" : "Guardar tienda"}
+                          </button>
+                        </footer>
                       </form>
                     </section>
                     )}
@@ -9072,72 +9116,101 @@ function App() {
                           {subscriptionPopupAdminError || subscriptionPopupAdminMessage}
                         </p>
                       )}
-                      <form className="subscription-popup-admin-form" onSubmit={submitSubscriptionPopupSettings}>
-                        <label className="backoffice-switch subscription-popup-enabled">
-                          <input
-                            name="enabled"
-                            type="checkbox"
-                            checked={subscriptionPopupForm.enabled}
-                            onChange={updateSubscriptionPopupForm}
-                          />
-                          <span>
-                            {subscriptionPopupForm.enabled ? <Eye size={16} /> : <EyeOff size={16} />}
-                            {subscriptionPopupForm.enabled ? "Activo" : "Inactivo"}
-                          </span>
-                        </label>
-                        <label>
-                          Título pequeño
-                          <input name="eyebrow" value={subscriptionPopupForm.eyebrow} onChange={updateSubscriptionPopupForm} />
-                        </label>
-                        <label>
-                          Texto grande
-                          <textarea required name="title" rows="3" value={subscriptionPopupForm.title} onChange={updateSubscriptionPopupForm} />
-                        </label>
-                        <label>
-                          Bajada
-                          <textarea required name="body" rows="4" value={subscriptionPopupForm.body} onChange={updateSubscriptionPopupForm} />
-                        </label>
-                        <div className="shop-settings-two">
-                          <label>
-                            Botón suscripción
-                            <input name="ctaLabel" value={subscriptionPopupForm.ctaLabel} onChange={updateSubscriptionPopupForm} />
+                      <form className="website-content-form subscription-popup-admin-form" onSubmit={submitSubscriptionPopupSettings}>
+                        <section className="website-content-section">
+                          <header>
+                            <p className="eyebrow">Visibilidad</p>
+                            <h4>Estado del lightbox</h4>
+                            <p>Actívalo sólo cuando quieras invitar a nuevas personas a suscribirse.</p>
+                          </header>
+                          <label className="backoffice-switch subscription-popup-enabled">
+                            <input
+                              name="enabled"
+                              type="checkbox"
+                              checked={subscriptionPopupForm.enabled}
+                              onChange={updateSubscriptionPopupForm}
+                            />
+                            <span>
+                              {subscriptionPopupForm.enabled ? <Eye size={16} /> : <EyeOff size={16} />}
+                              {subscriptionPopupForm.enabled ? "Activo" : "Inactivo"}
+                            </span>
                           </label>
-                          <label>
-                            Botón final
-                            <input name="successCtaLabel" value={subscriptionPopupForm.successCtaLabel} onChange={updateSubscriptionPopupForm} />
-                          </label>
-                        </div>
-                        <label>
-                          Botón secundario
-                          <input name="secondaryCtaLabel" value={subscriptionPopupForm.secondaryCtaLabel} onChange={updateSubscriptionPopupForm} />
-                        </label>
-                        <div className="subscription-popup-admin-preview">
-                          <div className="backoffice-photo-preview">
-                            {subscriptionPopupForm.backgroundUrl ? (
-                              <img src={subscriptionPopupForm.backgroundUrl} alt="" aria-hidden="true" />
-                            ) : (
-                              <UploadCloud size={28} />
-                            )}
+                        </section>
+
+                        <section className="website-content-section">
+                          <header>
+                            <p className="eyebrow">Mensaje</p>
+                            <h4>Contenido y llamados a la acción</h4>
+                            <p>Define qué leerá la persona antes y después de dejar sus datos.</p>
+                          </header>
+                          <div className="website-content-field-grid">
+                            <label>
+                              Título pequeño
+                              <input name="eyebrow" value={subscriptionPopupForm.eyebrow} onChange={updateSubscriptionPopupForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Texto grande
+                              <textarea required name="title" rows="3" value={subscriptionPopupForm.title} onChange={updateSubscriptionPopupForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Bajada
+                              <textarea required name="body" rows="4" value={subscriptionPopupForm.body} onChange={updateSubscriptionPopupForm} />
+                            </label>
+                            <label>
+                              Botón suscripción
+                              <input name="ctaLabel" value={subscriptionPopupForm.ctaLabel} onChange={updateSubscriptionPopupForm} />
+                            </label>
+                            <label>
+                              Botón final
+                              <input name="successCtaLabel" value={subscriptionPopupForm.successCtaLabel} onChange={updateSubscriptionPopupForm} />
+                            </label>
+                            <label className="website-content-field-wide">
+                              Botón secundario
+                              <input name="secondaryCtaLabel" value={subscriptionPopupForm.secondaryCtaLabel} onChange={updateSubscriptionPopupForm} />
+                            </label>
                           </div>
-                          <label className="upload-control">
-                            <UploadCloud size={18} />
-                            {subscriptionPopupUploading ? "Subiendo…" : "Subir fondo"}
-                            <input type="file" accept="image/*" onChange={handleSubscriptionPopupBackgroundChange} disabled={subscriptionPopupUploading} />
-                          </label>
-                        </div>
-                        <label>
-                          URL imagen de fondo
-                          <input name="backgroundUrl" value={subscriptionPopupForm.backgroundUrl} onChange={updateSubscriptionPopupForm} placeholder="/api/media?key=images/…" />
-                        </label>
-                        <div className="subscription-popup-admin-actions">
-                          <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings}>
-                            Restaurar
-                          </button>
-                          <button className="primary-button" type="submit" disabled={subscriptionPopupUploading}>
-                            <Save size={18} />
-                            Guardar lightbox
-                          </button>
-                        </div>
+                        </section>
+
+                        <section className="website-content-section">
+                          <header>
+                            <p className="eyebrow">Imagen</p>
+                            <h4>Fondo del lightbox</h4>
+                            <p>Sube una imagen o pega una URL de R2 para actualizar el fondo.</p>
+                          </header>
+                          <div className="website-content-layout is-media-led">
+                            <div className="website-content-media">
+                              <div className="backoffice-photo-preview">
+                                {subscriptionPopupForm.backgroundUrl ? (
+                                  <img src={subscriptionPopupForm.backgroundUrl} alt="" aria-hidden="true" />
+                                ) : (
+                                  <UploadCloud size={28} />
+                                )}
+                              </div>
+                              <label className="upload-control">
+                                <UploadCloud size={18} />
+                                {subscriptionPopupUploading ? "Subiendo…" : "Subir fondo"}
+                                <input type="file" accept="image/*" onChange={handleSubscriptionPopupBackgroundChange} disabled={subscriptionPopupUploading} />
+                              </label>
+                            </div>
+                            <label className="website-content-url-field">
+                              URL imagen de fondo
+                              <input name="backgroundUrl" value={subscriptionPopupForm.backgroundUrl} onChange={updateSubscriptionPopupForm} placeholder="/api/media?key=images/…" />
+                            </label>
+                          </div>
+                        </section>
+
+                        <footer className="website-content-actions is-split">
+                          <p>Restaurar recupera los valores previamente guardados.</p>
+                          <div>
+                            <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings}>
+                              Restaurar
+                            </button>
+                            <button className="primary-button" type="submit" disabled={subscriptionPopupUploading}>
+                              <Save size={18} />
+                              Guardar lightbox
+                            </button>
+                          </div>
+                        </footer>
                       </form>
                     </section>
                     )}
@@ -9145,50 +9218,69 @@ function App() {
                     {activeBackofficeModule === "web-content" && webContentTab === "community" && (
                     <section className="backoffice-side-panel backoffice-module-panel" id="web-content-community" role="tabpanel" aria-labelledby="web-content-title">
                       <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
-                    <form className="community-admin-form" onSubmit={addCommunityActivity}>
-                      <label>
-                        Fecha
-                        <input
-                          required
-                          name="date"
-                          type="date"
-                          value={communityActivityForm.date}
-                          onChange={updateCommunityActivityForm}
-                        />
-                      </label>
-                      <label>
-                        Descripción
-                        <textarea
-                          required
-                          name="description"
-                          rows="3"
-                          value={communityActivityForm.description}
-                          onChange={updateCommunityActivityForm}
-                          placeholder="Clase de cocina Antinflamatoria…"
-                        />
-                      </label>
-                      <button className="backoffice-command" type="submit">
-                        <Plus size={17} />
-                        Agregar actividad
-                      </button>
-                    </form>
-                    <div className="community-admin-list">
-                      {communityActivities.map((activity, index) => {
-                        const date = formatCommunityActivityDate(activity.date);
+                    <section className="website-content-section community-schedule-section" aria-labelledby="community-schedule-title">
+                      <header>
+                        <p className="eyebrow">Agenda actual</p>
+                        <h4 id="community-schedule-title">Actividades publicadas</h4>
+                        <p>Revisa y ordena las actividades que se muestran en Comunidad.</p>
+                      </header>
+                      <div className="community-admin-list">
+                        {communityActivities.map((activity, index) => {
+                          const date = formatCommunityActivityDate(activity.date);
 
-                        return (
-                          <article key={`${activity.date}-${activity.description}-${index}`}>
-                            <time dateTime={activity.date}>
-                              {date.day} {date.month}
-                            </time>
-                            <p>{activity.description}</p>
-                            <button type="button" onClick={() => removeCommunityActivity(index)} aria-label={`Eliminar ${activity.description}`}>
-                              <Trash2 size={15} />
-                            </button>
-                          </article>
-                        );
-                      })}
-                    </div>
+                          return (
+                            <article key={`${activity.date}-${activity.description}-${index}`}>
+                              <time dateTime={activity.date}>
+                                {date.day} {date.month}
+                              </time>
+                              <p>{activity.description}</p>
+                              <button type="button" onClick={() => removeCommunityActivity(index)} aria-label={`Eliminar ${activity.description}`} title="Eliminar actividad">
+                                <Trash2 size={15} />
+                              </button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </section>
+                    <form className="website-content-form community-admin-form" onSubmit={addCommunityActivity}>
+                      <section className="website-content-section">
+                        <header>
+                          <p className="eyebrow">Nueva actividad</p>
+                          <h4>Agregar a la agenda</h4>
+                          <p>Indica la fecha y una descripción breve para publicar una nueva actividad.</p>
+                        </header>
+                        <div className="website-content-field-grid">
+                          <label>
+                            Fecha
+                            <input
+                              required
+                              name="date"
+                              type="date"
+                              value={communityActivityForm.date}
+                              onChange={updateCommunityActivityForm}
+                            />
+                          </label>
+                          <label>
+                            Descripción
+                            <textarea
+                              required
+                              name="description"
+                              rows="3"
+                              value={communityActivityForm.description}
+                              onChange={updateCommunityActivityForm}
+                              placeholder="Clase de cocina antinflamatoria…"
+                            />
+                          </label>
+                        </div>
+                        <footer className="website-content-actions">
+                          <p>La actividad se agregará al listado de Comunidad.</p>
+                          <button className="backoffice-command" type="submit">
+                            <Plus size={17} />
+                            Agregar actividad
+                          </button>
+                        </footer>
+                      </section>
+                    </form>
                     </section>
                     )}
 
@@ -9373,71 +9465,87 @@ function App() {
 
                     {activeBackofficeModule === "operations" && (
                       <section className="backoffice-side-panel backoffice-module-panel backoffice-operations-panel" aria-labelledby="operations-title">
-                        <div className="backoffice-list-top">
+                        <div className="backoffice-catalog-heading operations-heading">
                           <div>
                             <p className="eyebrow">Operaciones</p>
-                            <h3 id="operations-title">Listados y recuperación</h3>
+                            <h3 id="operations-title">Exportaciones y acceso</h3>
+                            <p>Resuelve tareas operativas sin dar acceso a la base de datos.</p>
                           </div>
                         </div>
 
-                        <div className="operations-export-grid" aria-label="Exportar listados en CSV">
-                          <button
-                            type="button"
-                            onClick={() => downloadBackofficeCsv("subscribers", "Listado de suscritos")}
-                            disabled={Boolean(operationsExporting)}
-                          >
-                            <FileDown size={20} />
-                            <span>
-                              <strong>Suscritos</strong>
-                              <small>Nombre, correo, teléfono y estado de suscripción.</small>
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => downloadBackofficeCsv("customers", "Listado de clientes")}
-                            disabled={Boolean(operationsExporting)}
-                          >
-                            <FileDown size={20} />
-                            <span>
-                              <strong>Clientes</strong>
-                              <small>Datos de contacto, compras y total histórico.</small>
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => downloadBackofficeCsv("sales", "Ventas históricas")}
-                            disabled={Boolean(operationsExporting)}
-                          >
-                            <FileDown size={20} />
-                            <span>
-                              <strong>Ventas históricas</strong>
-                              <small>Órdenes, estados, fechas y montos.</small>
-                            </span>
-                          </button>
-                        </div>
-
-                        <form className="operations-recovery-form" onSubmit={sendAssistedPasswordRecovery}>
-                          <div>
-                            <p className="eyebrow">Ayuda de acceso</p>
-                            <h4>Enviar recuperación de contraseña</h4>
-                            <p>La persona recibirá un enlace seguro para crear una nueva contraseña.</p>
+                        <section className="operations-section" aria-labelledby="operations-export-title">
+                          <header className="operations-section-heading">
+                            <div>
+                              <p className="eyebrow">Datos</p>
+                              <h4 id="operations-export-title">Exportar listados</h4>
+                              <p>Descarga el listado que necesitas en formato CSV.</p>
+                            </div>
+                          </header>
+                          <div className="operations-export-grid" aria-label="Exportar listados en CSV">
+                            <button
+                              className={operationsExporting === "subscribers" ? "is-exporting" : ""}
+                              type="button"
+                              onClick={() => downloadBackofficeCsv("subscribers", "Listado de suscritos")}
+                              disabled={Boolean(operationsExporting)}
+                            >
+                              {operationsExporting === "subscribers" ? <RefreshCw size={20} /> : <FileDown size={20} />}
+                              <span>
+                                <strong>{operationsExporting === "subscribers" ? "Preparando CSV…" : "Suscritos"}</strong>
+                                <small>Nombre, correo, teléfono y estado de suscripción.</small>
+                              </span>
+                            </button>
+                            <button
+                              className={operationsExporting === "customers" ? "is-exporting" : ""}
+                              type="button"
+                              onClick={() => downloadBackofficeCsv("customers", "Listado de clientes")}
+                              disabled={Boolean(operationsExporting)}
+                            >
+                              {operationsExporting === "customers" ? <RefreshCw size={20} /> : <FileDown size={20} />}
+                              <span>
+                                <strong>{operationsExporting === "customers" ? "Preparando CSV…" : "Clientes"}</strong>
+                                <small>Datos de contacto, compras y total histórico.</small>
+                              </span>
+                            </button>
+                            <button
+                              className={operationsExporting === "sales" ? "is-exporting" : ""}
+                              type="button"
+                              onClick={() => downloadBackofficeCsv("sales", "Ventas históricas")}
+                              disabled={Boolean(operationsExporting)}
+                            >
+                              {operationsExporting === "sales" ? <RefreshCw size={20} /> : <FileDown size={20} />}
+                              <span>
+                                <strong>{operationsExporting === "sales" ? "Preparando CSV…" : "Ventas históricas"}</strong>
+                                <small>Órdenes, estados, fechas y montos.</small>
+                              </span>
+                            </button>
                           </div>
-                          <label>
-                            Correo de la persona
-                            <input
-                              type="email"
-                              value={recoveryEmail}
-                              onChange={(event) => setRecoveryEmail(event.target.value)}
-                              placeholder="nombre@correo.com"
-                              autoComplete="email"
-                              required
-                            />
-                          </label>
-                          <button className="primary-button" type="submit" disabled={recoverySending}>
-                            {recoverySending ? <RefreshCw size={18} /> : <KeyRound size={18} />}
-                            {recoverySending ? "Enviando..." : "Enviar recuperación"}
-                          </button>
-                        </form>
+                        </section>
+
+                        <section className="operations-section" aria-labelledby="operations-recovery-title">
+                          <form className="operations-recovery-form" onSubmit={sendAssistedPasswordRecovery}>
+                            <div>
+                              <p className="eyebrow">Ayuda de acceso</p>
+                              <h4 id="operations-recovery-title">Enviar recuperación de contraseña</h4>
+                              <p id="operations-recovery-help">La persona recibirá un enlace seguro para crear una nueva contraseña.</p>
+                            </div>
+                            <label>
+                              Correo de la persona
+                              <input
+                                type="email"
+                                value={recoveryEmail}
+                                onChange={(event) => setRecoveryEmail(event.target.value)}
+                                placeholder="nombre@correo.com"
+                                autoComplete="email"
+                                aria-describedby="operations-recovery-help"
+                                required
+                              />
+                            </label>
+                            <button className="primary-button" type="submit" disabled={recoverySending}>
+                              {recoverySending ? <RefreshCw size={18} /> : <KeyRound size={18} />}
+                              {recoverySending ? "Enviando..." : "Enviar recuperación"}
+                            </button>
+                          </form>
+                        </section>
 
                         {(operationsError || operationsMessage) && (
                           <p className={`backoffice-alert ${operationsError ? "is-error" : "is-success"}`} role="status">

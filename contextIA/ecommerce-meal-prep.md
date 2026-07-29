@@ -151,6 +151,16 @@
 - Los nombres visibles de beneficios y tags aceptan espacios y los conservan al publicar. El código interno se genera automáticamente a partir del nombre, con guiones, y no debe confundirse con el texto que verá la clienta.
 - La explicación de cada beneficio dentro de un mealprep debe conservar todos los espacios mientras se escribe. No aplicar `trim()` ni otra normalización al valor controlado; el saneamiento puede ocurrir recién al persistir la ficha.
 
+### Refinamiento UX Backoffice 2026-07-28
+
+- `Contenido web` usa un único módulo con pestañas `Tienda`, `Lightbox` y `Comunidad`. Cada pestaña se organiza en bandas de edición con encabezado, campos relacionados y una acción final clara; no se debe volver a una columna larga sin agrupación.
+- En `Tienda`, separar el hero y el bloque de suscripción. La imagen debe tener su propia zona de vista previa, carga y URL, mientras que las llamadas a la acción se mantienen junto al texto que modifican.
+- En `Lightbox`, separar visibilidad, mensaje e imagen. Restaurar y guardar viven juntos al final para evitar que una acción destructiva o de confirmación quede perdida entre campos.
+- En `Comunidad`, primero se muestra la agenda actual y luego el formulario para agregar una actividad. Las actividades son filas repetidas, no tarjetas decorativas anidadas.
+- `Clientes` conserva un único buscador y filtros. En escritorio se presenta como tabla alineada; en móvil cada fila se reorganiza con rótulos de columna para que no exista scroll horizontal ni datos ambiguos.
+- `Operaciones` se divide en dos bandas: exportación de CSV y recuperación de contraseña. Cada exportación comunica explícitamente que está preparando el archivo cuando corresponde.
+- Tipografía Backoffice: evitar negritas duras. Usar peso medio (`500`) para controles, etiquetas, estados y énfasis; construir jerarquía con tamaño, aire, color y separación.
+
 ### Recuperacion conservadora 2026-07-28
 
 - Antes de 2026-07-28, la lectura remota confirmó que `backoffice_drafts` no existía en el schema cache productivo (`PGRST205`). La tabla se habilitó posteriormente; los borradores nunca sincronizados antes de esa activación sólo pueden recuperarse desde el `localStorage` del navegador y perfil donde Cecilia trabajó, salvo que exista un respaldo de base tomado mientras la tabla sí estuvo presente.
