@@ -21,7 +21,8 @@ const planPayload = buildMenuItemPayload({
       allergens: "Frutos secos, puede contener trazas de sésamo",
       nutritionDescription: "Debe conservarse en el mealprep.",
       nutritionHighlights: ["Alto en proteina"],
-      nutritionFacts: { protein_g: 99 }
+      nutritionFacts: { protein_g: 99 },
+      rethermalizationInstructions: "Calentar la bolsa sellada a baño María durante 12 minutos."
     }
   ]
 });
@@ -62,6 +63,7 @@ assert.deepEqual(planPayload.included_items, [
     nutritionDescription: "Debe conservarse en el mealprep.",
     nutritionHighlights: ["Alto en proteína"],
     nutritionFacts: { protein_g: 99 },
+    rethermalizationInstructions: "Calentar la bolsa sellada a baño María durante 12 minutos.",
     allergens: ["Frutos secos", "puede contener trazas de sésamo"]
   }
 ]);
@@ -72,7 +74,8 @@ const mealprepPayload = buildMealLibraryPayload({
   allergens: "Pescado\nElaborado en cocina compartida",
   nutritionDescription: "Nutricion del mealprep.",
   nutritionHighlights: ["Alto en proteina"],
-  nutritionFacts: { protein_g: 99, vitamin_b12_mcg: 2.4, source: "Laboratorio" }
+  nutritionFacts: { protein_g: 99, vitamin_b12_mcg: 2.4, source: "Laboratorio" },
+  rethermalizationInstructions: "Calentar a baño María sin abrir la bolsa."
 });
 
 assert.equal(mealprepPayload.nutrition_description, "Nutricion del mealprep.");
@@ -83,15 +86,18 @@ assert.deepEqual(mealprepPayload.nutrition_facts, {
   source: "Laboratorio"
 });
 assert.deepEqual(mealprepPayload.allergens, ["Pescado", "Elaborado en cocina compartida"]);
+assert.equal(mealprepPayload.rethermalization_instructions, "Calentar a baño María sin abrir la bolsa.");
 
 const familyPayload = buildMenuItemPayload({
   slug: "mealprep-familiar-qa",
   name: "Mealprep familiar QA",
   productType: "family",
   description: "Formato familiar de prueba.",
-  allergens: "Mostaza, puede contener trazas de frutos secos"
+  allergens: "Mostaza, puede contener trazas de frutos secos",
+  rethermalizationInstructions: "Calentar a baño María y servir en una fuente."
 });
 
 assert.deepEqual(familyPayload.allergens, ["Mostaza", "puede contener trazas de frutos secos"]);
+assert.equal(familyPayload.recipe_summary, "Calentar a baño María y servir en una fuente.");
 
-console.log("Nutrición y alérgenos validados: los campos libres se conservan en cada mealprep.");
+console.log("Nutrición, alérgenos y retermalización validados en cada mealprep.");

@@ -296,6 +296,9 @@ function normalizeIncludedItems(value, context = createCatalogContext(), library
           ? tags.map((tag) => tag.name)
           : normalizeTextList(source?.nutritionHighlights || source?.nutrition_highlights),
         nutritionFacts: normalizeNutritionFacts(source?.nutritionFacts || source?.nutrition_facts),
+        rethermalizationInstructions: cleanText(
+          source?.rethermalizationInstructions || source?.rethermalization_instructions
+        ),
         allergens: normalizeTextList(source?.allergens)
       };
     })
@@ -321,6 +324,7 @@ function serializeIncludedItems(value) {
     nutritionDescription: item.nutritionDescription,
     nutritionHighlights: item.tags.map((tag) => tag.name),
     nutritionFacts: item.nutritionFacts,
+    rethermalizationInstructions: item.rethermalizationInstructions,
     allergens: item.allergens
   }));
 }
@@ -384,6 +388,7 @@ export function mapMenuItem(row, context = createCatalogContext(), libraryById =
     ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     recipeSummary: row.recipe_summary || "",
     recipeSteps: Array.isArray(row.recipe_steps) ? row.recipe_steps : [],
+    rethermalizationInstructions: productType === "family" ? row.recipe_summary || "" : "",
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
     nutritionDescription: productType === "family" ? row.nutrition_description || "" : "",
     nutritionHighlights: productType === "family"
@@ -432,6 +437,7 @@ export function mapMealLibraryItem(row, context = createCatalogContext()) {
       ? tags.map((tag) => tag.name)
       : Array.isArray(row.nutrition_highlights) ? row.nutrition_highlights : [],
     nutritionFacts: row.nutrition_facts || {},
+    rethermalizationInstructions: row.rethermalization_instructions || "",
     allergens: Array.isArray(row.allergens) ? row.allergens : [],
     isActive: Boolean(row.is_active),
     updatedAt: row.updated_at || ""
@@ -488,6 +494,10 @@ export function buildMenuItemPayload(input) {
   );
   const benefits = directBenefits;
   const tags = directTags;
+  const recipeSummary = nullableText(input.recipeSummary || input.recipe_summary);
+  const rethermalizationInstructions = productType === "family" && input.rethermalizationInstructions !== undefined
+    ? cleanText(input.rethermalizationInstructions)
+    : recipeSummary || "";
 
   return {
     slug: cleanText(input.slug),
@@ -505,7 +515,7 @@ export function buildMenuItemPayload(input) {
     currency: "CLP",
     library_meal_id: productType === "family" ? nullableText(input.libraryMealId || input.library_meal_id) : null,
     ingredients: normalizeTextList(input.ingredients),
-    recipe_summary: nullableText(input.recipeSummary || input.recipe_summary),
+    recipe_summary: productType === "family" ? rethermalizationInstructions || null : recipeSummary,
     recipe_steps: normalizeTextList(input.recipeSteps || input.recipe_steps),
     allergens: normalizeTextList(input.allergens),
     included_items: productType === "plan" ? serializeIncludedItems(includedItems) : [],
@@ -555,6 +565,9 @@ export function buildMealLibraryPayload(input) {
       ? tags.map((tag) => tag.name)
       : normalizeTextList(input.nutritionHighlights || input.nutrition_highlights),
     nutrition_facts: normalizeNutritionFacts(input.nutritionFacts || input.nutrition_facts),
+    rethermalization_instructions: cleanText(
+      input.rethermalizationInstructions ?? input.rethermalization_instructions
+    ),
     allergens: normalizeTextList(input.allergens),
     is_active: Boolean(input.isActive ?? input.is_active)
   };

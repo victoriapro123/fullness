@@ -1267,6 +1267,7 @@ function createIncludedMealForm(index = 0) {
     nutritionDescription: "",
     nutritionHighlights: "",
     nutritionFacts: "{}",
+    rethermalizationInstructions: "",
     allergens: ""
   };
 }
@@ -1291,6 +1292,7 @@ function includedMealToForm(item, index = 0) {
     nutritionDescription: item.nutritionDescription || item.nutrition_description || "",
     nutritionHighlights: (item.nutritionHighlights || item.nutrition_highlights || []).join("\n"),
     nutritionFacts: JSON.stringify(item.nutritionFacts || item.nutrition_facts || {}, null, 2),
+    rethermalizationInstructions: item.rethermalizationInstructions || item.rethermalization_instructions || "",
     allergens: (item.allergens || []).join("\n")
   };
 }
@@ -1313,6 +1315,7 @@ function mealLibraryItemToForm(item) {
     nutritionDescription: item.nutritionDescription || "",
     nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
     nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
+    rethermalizationInstructions: item.rethermalizationInstructions || "",
     allergens: (item.allergens || []).join("\n"),
     isActive: Boolean(item.isActive)
   };
@@ -1350,6 +1353,7 @@ function includedMealToMealLibraryDraftForm(item) {
     nutritionDescription: item?.nutritionDescription || "",
     nutritionHighlights: item?.nutritionHighlights || "",
     nutritionFacts: item?.nutritionFacts || "{}",
+    rethermalizationInstructions: item?.rethermalizationInstructions || "",
     allergens: item?.allergens || "",
     isActive: true
   };
@@ -1378,6 +1382,7 @@ function createMenuForm(displayOrder = 0) {
     nutritionDescription: "",
     nutritionHighlights: "",
     nutritionFacts: "{}",
+    rethermalizationInstructions: "",
     recipeSummary: "",
     recipeSteps: "",
     allergens: "",
@@ -1570,6 +1575,7 @@ function isMeaningfulMealLibraryDraft(form) {
     form.ingredients,
     form.nutritionDescription,
     form.nutritionHighlights,
+    form.rethermalizationInstructions,
     form.allergens
   ];
   const nutritionFacts = String(form.nutritionFacts || "").trim();
@@ -1605,6 +1611,7 @@ function menuItemToForm(item) {
     nutritionDescription: item.nutritionDescription || "",
     nutritionHighlights: (item.nutritionHighlights || []).join("\n"),
     nutritionFacts: JSON.stringify(item.nutritionFacts || {}, null, 2),
+    rethermalizationInstructions: item.rethermalizationInstructions || item.recipeSummary || "",
     recipeSummary: item.recipeSummary || "",
     recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
@@ -1992,6 +1999,7 @@ function parseIncludedMealsFromForm(items, tagDefinitions = []) {
         nutritionDescription: item.nutritionDescription,
         nutritionHighlights: item.nutritionHighlights,
         nutritionFacts,
+        rethermalizationInstructions: item.rethermalizationInstructions,
         allergens: item.allergens
       };
     })
@@ -2603,10 +2611,12 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
             </div>
           )}
 
-          <div className="product-lightbox-block">
-            <h3>Receta resumida</h3>
-            <p>{normalizeMealprepCopy(product.recipeSummary || product.description)}</p>
-          </div>
+          {product.rethermalizationInstructions && (
+            <div className="product-lightbox-block">
+              <h3>Cómo retermalizar / preparar</h3>
+              <p>{normalizeMealprepCopy(product.rethermalizationInstructions)}</p>
+            </div>
+          )}
 
           {includedItems.length > 0 && (
             <div className="product-lightbox-block">
@@ -2698,6 +2708,13 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
             </div>
           )}
 
+          {meal.rethermalizationInstructions && (
+            <div className="product-lightbox-block">
+              <h3>Cómo retermalizar / preparar</h3>
+              <p>{normalizeMealprepCopy(meal.rethermalizationInstructions)}</p>
+            </div>
+          )}
+
           <div className="product-lightbox-block">
             <h3>Alérgenos</h3>
             <p className="product-allergens">{formatAllergenCopy(meal.allergens)}</p>
@@ -2783,8 +2800,8 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 
       <section className="product-detail-content" aria-label="Detalle del producto">
         <div className="product-detail-panel">
-          <h2>Receta</h2>
-          <p>{normalizeMealprepCopy(product.recipeSummary || product.description)}</p>
+          <h2>{isFamilyDish ? "Cómo retermalizar / preparar" : "Receta"}</h2>
+          <p>{normalizeMealprepCopy(product.rethermalizationInstructions || product.recipeSummary || product.description)}</p>
           {recipeSteps.length > 0 && (
             <ol className="recipe-step-list">
               {recipeSteps.map((step) => <li key={step}>{step}</li>)}
@@ -5132,6 +5149,7 @@ function App() {
           nutritionDescription: meal.nutritionDescription,
           nutritionHighlights: meal.nutritionHighlights,
           nutritionFacts,
+          rethermalizationInstructions: meal.rethermalizationInstructions,
           allergens: meal.allergens,
           isActive: true
         });
@@ -5233,6 +5251,7 @@ function App() {
       nutritionDescription: meal.nutritionDescription,
       nutritionHighlights: meal.nutritionHighlights,
       nutritionFacts,
+      rethermalizationInstructions: meal.rethermalizationInstructions,
       allergens: meal.allergens,
       isActive: true
     });
@@ -7113,6 +7132,7 @@ function App() {
       nutritionDescription: menuForm.nutritionDescription,
       nutritionHighlights: menuForm.nutritionHighlights,
       nutritionFacts,
+      rethermalizationInstructions: menuForm.rethermalizationInstructions,
       recipeSummary: menuForm.recipeSummary,
       recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
@@ -8487,6 +8507,15 @@ function App() {
                                         />
                                       </label>
                                     </div>
+                                    <label className="backoffice-wide">
+                                      Cómo retermalizar / preparar (campo libre)
+                                      <textarea
+                                        rows="4"
+                                        value={activeIncludedMeal.rethermalizationInstructions}
+                                        onChange={(event) => updateIncludedMealForm(includedMealEditorIndex, "rethermalizationInstructions", event.target.value)}
+                                        placeholder="Ej.: Mantén la bolsa sellada y calienta a baño María durante 12 minutos. Sirve de inmediato."
+                                      />
+                                    </label>
                                 </section>
 
                                 <section className="backoffice-editor-section" aria-labelledby="complete-dish-wellness-title">
@@ -8810,6 +8839,10 @@ function App() {
                                   <label>Ingredientes<textarea name="ingredients" rows="5" value={mealLibraryForm.ingredients} onChange={updateMealLibraryForm} placeholder={"Pollo\nCamote\nCúrcuma…"} /></label>
                                   <label>Alérgenos (campo libre)<textarea name="allergens" rows="5" value={mealLibraryForm.allergens} onChange={updateMealLibraryForm} placeholder="Ej.: pescado, almendras o elaborado en cocina compartida…" /></label>
                                 </div>
+                                <label className="backoffice-wide">
+                                  Cómo retermalizar / preparar (campo libre)
+                                  <textarea name="rethermalizationInstructions" rows="4" value={mealLibraryForm.rethermalizationInstructions} onChange={updateMealLibraryForm} placeholder="Ej.: Mantén la bolsa sellada y calienta a baño María durante 12 minutos. Sirve de inmediato." />
+                                </label>
                                 <label className="backoffice-wide">Descripción nutricional<textarea name="nutritionDescription" rows="3" value={mealLibraryForm.nutritionDescription} onChange={updateMealLibraryForm} /></label>
                                 <NutritionFactsEditor
                                   value={mealLibraryForm.nutritionFacts}
@@ -9086,6 +9119,10 @@ function App() {
                                     </label>
                                   </div>
                                   <label className="backoffice-wide">
+                                    Cómo retermalizar / preparar (campo libre)
+                                    <textarea name="rethermalizationInstructions" rows="4" value={menuForm.rethermalizationInstructions} onChange={updateMenuForm} placeholder="Ej.: Mantén la bolsa sellada y calienta a baño María durante 12 minutos. Sirve de inmediato." />
+                                  </label>
+                                  <label className="backoffice-wide">
                                     Descripción nutricional
                                     <textarea name="nutritionDescription" rows="3" value={menuForm.nutritionDescription} onChange={updateMenuForm} placeholder="Resume el aporte nutricional del mealprep…" />
                                   </label>
@@ -9097,16 +9134,6 @@ function App() {
                                     }}
                                     idPrefix="family-product-nutrition"
                                   />
-                                  <div className="backoffice-grid">
-                                    <label>
-                                      Resumen de preparación
-                                      <textarea name="recipeSummary" rows="4" value={menuForm.recipeSummary} onChange={updateMenuForm} placeholder="Indicaciones generales…" />
-                                    </label>
-                                    <label>
-                                      Pasos
-                                      <textarea name="recipeSteps" rows="4" value={menuForm.recipeSteps} onChange={updateMenuForm} placeholder={"Retirar del congelador\nCalentar\nServir…"} />
-                                    </label>
-                                  </div>
                                 </section>
                               )}
 
