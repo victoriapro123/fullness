@@ -1710,8 +1710,8 @@ function NutritionFactsEditor({ value, onChange, idPrefix, required = false }) {
           );
         })}
       </div>
-      <details className="backoffice-advanced-fields backoffice-nutrition-json">
-        <summary>Datos nutricionales JSON</summary>
+      <div className="backoffice-nutrition-json">
+        <h5>Datos nutricionales JSON</h5>
         <p>Úsalo para conservar o agregar valores y claves personalizadas. Debe ser un objeto JSON válido.</p>
         <label htmlFor={`${idPrefix}-json`}>
           Datos nutricionales JSON
@@ -1727,7 +1727,7 @@ function NutritionFactsEditor({ value, onChange, idPrefix, required = false }) {
           />
         </label>
         {jsonError && <p className="backoffice-field-error" id={`${idPrefix}-json-error`} role="alert">{jsonError}</p>}
-      </details>
+      </div>
     </fieldset>
   );
 }

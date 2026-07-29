@@ -2436,6 +2436,28 @@
 
 .backoffice-nutrition-json {
   margin-top: 2px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(54, 43, 39, 0.12);
+  border-radius: 6px;
+  background: #f2efea;
+}
+
+.backoffice-nutrition-json h5,
+.backoffice-nutrition-json p {
+  margin: 0;
+}
+
+.backoffice-nutrition-json h5 {
+  color: rgba(35, 30, 27, 0.78);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.backoffice-nutrition-json > p {
+  color: rgba(35, 30, 27, 0.56);
+  font-size: 0.82rem;
 }
 
 .backoffice-nutrition-json textarea {
