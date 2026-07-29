@@ -4214,3 +4214,13 @@
     border-bottom: 0 !important;
   }
 }
+
+/* En escritorio amplio, el copy usa el aire disponible a la izquierda del plato. */
+@media (min-width: 1281px) {
+  .plate-hero-copy {
+    width: min(36vw, 580px) !important;
+    max-width: min(36vw, 580px) !important;
+    margin-left: 0 !important;
+    padding-inline-start: clamp(52px, 4.4vw, 72px) !important;
+  }
+}

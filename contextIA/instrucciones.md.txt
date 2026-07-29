@@ -849,6 +849,11 @@ Impacto proactivo:
 - El PNG remoto `cbe5de9a-232f-4269-9515-13e31e0b9198` de Meal Prep no tiene transparencia y muestra un rectangulo marfil detrás de la caja. La tienda debe sustituir únicamente ese asset legado por `src/assets/ecommerce/fullness-hero-box-dark-cutout-v2.png`, que es RGBA y se integra sobre el fondo oscuro.
 - Las nuevas cargas de hero desde Backoffice se respetan: esta sustitucion aplica solo al identificador del asset opaco ya publicado.
 
+### Ajuste hero landing 2026-07-28
+
+- En escritorio amplio (`>= 1281px`), el bloque editorial del hero usa el aire disponible a la izquierda del plato. Antes de reducir tipografia o permitir que el texto se monte sobre la imagen, desplazar el copy hacia el margen izquierdo.
+- El plato conserva su escala y las reglas de tablet/movil; la separacion entre texto y fotografia se resuelve desde la reticula desktop.
+
 ### Sistema de planes, mealpreps, beneficios y tags 2026-07-28
 
 Cambio:
