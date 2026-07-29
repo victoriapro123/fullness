@@ -2141,11 +2141,41 @@
   position: sticky;
   top: calc(clamp(18px, 2.4vw, 34px) * -1);
   z-index: 4;
+  align-items: center;
   margin: calc(clamp(18px, 2.4vw, 34px) * -1);
   margin-bottom: 0;
   padding: 18px clamp(18px, 2.4vw, 34px);
   border-bottom: 1px solid rgba(54, 43, 39, 0.11);
   background: rgba(250, 249, 246, 0.98);
+}
+
+.backoffice-workspace-form > .backoffice-form-head .backoffice-workspace-title {
+  flex: 1 1 auto;
+}
+
+.backoffice-workspace-form > .backoffice-form-head .backoffice-form-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: 10px;
+}
+
+.backoffice-workspace-form > .backoffice-form-head .backoffice-draft-picker {
+  display: inline-flex;
+  flex: 0 1 clamp(168px, 18vw, 230px);
+  align-items: center;
+  min-width: 0;
+}
+
+.backoffice-workspace-form > .backoffice-form-head .backoffice-draft-picker select {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  min-height: 34px;
 }
 
 .backoffice-workspace-title {
@@ -3129,6 +3159,7 @@
 
   .backoffice-form-head-actions:not(:has(.backoffice-draft-discard)) .backoffice-switch {
     grid-column: 2;
+    grid-row: 1;
   }
 
   .backoffice-intro-note {
