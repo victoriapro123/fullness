@@ -2653,8 +2653,16 @@
   overflow: hidden;
 }
 
-.backoffice-nested-editor-head > .icon-button {
+.backoffice-nested-editor-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
   flex: 0 0 auto;
+}
+
+.backoffice-nested-editor-head-actions .backoffice-draft-status {
+  white-space: nowrap;
 }
 
 .backoffice-editing-context {

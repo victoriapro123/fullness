@@ -1325,6 +1325,36 @@ function createMealLibraryForm() {
   };
 }
 
+function createIncludedMealDraftKey(item) {
+  return createMealLibraryDraftKey(item?.libraryMealId || `plan-meal-${item?.id || "new"}`);
+}
+
+function includedMealToMealLibraryDraftForm(item) {
+  const defaults = createMealLibraryForm();
+
+  return {
+    ...defaults,
+    id: item?.libraryMealId || "",
+    sku: item?.sku || defaults.sku,
+    name: item?.name || "",
+    tag: item?.tag || "",
+    description: item?.description || "",
+    photoUrl: item?.photoUrl || "",
+    photoStoragePath: item?.photoStoragePath || "",
+    secondaryPhotoUrl: item?.secondaryPhotoUrl || "",
+    secondaryPhotoStoragePath: item?.secondaryPhotoStoragePath || "",
+    benefitTags: item?.benefitTags || "",
+    benefitAssignments: Array.isArray(item?.benefitAssignments) ? item.benefitAssignments : [],
+    tagIds: Array.isArray(item?.tagIds) ? item.tagIds : [],
+    ingredients: item?.ingredients || "",
+    nutritionDescription: item?.nutritionDescription || "",
+    nutritionHighlights: item?.nutritionHighlights || "",
+    nutritionFacts: item?.nutritionFacts || "{}",
+    allergens: item?.allergens || "",
+    isActive: true
+  };
+}
+
 function createMenuForm(displayOrder = 0) {
   return {
     id: "",
@@ -3744,6 +3774,12 @@ function App() {
   const [mealPrepEditorOpen, setMealPrepEditorOpen] = useState(false);
   const [mealPrepEditorTab, setMealPrepEditorTab] = useState("general");
   const [includedMealEditorIndex, setIncludedMealEditorIndex] = useState(null);
+  const activeIncludedMeal =
+    includedMealEditorIndex === null ? null : menuForm.includedItems[includedMealEditorIndex] || null;
+  const [includedMealDraftStatus, setIncludedMealDraftStatus] = useState("idle");
+  const includedMealDraftSyncTimerRef = useRef(null);
+  const includedMealDraftSyncVersionRef = useRef(0);
+  const includedMealDraftDirtyIdsRef = useRef(new Set());
   const [familyProductSearch, setFamilyProductSearch] = useState("");
   const [familyProductEditorOpen, setFamilyProductEditorOpen] = useState(false);
   const [familyProductEditorTab, setFamilyProductEditorTab] = useState("general");
@@ -4381,6 +4417,98 @@ function App() {
     void syncMealLibraryDraft(draft, version);
   }
 
+  function buildIncludedMealDraft(item = activeIncludedMeal) {
+    if (!item) return null;
+
+    const form = includedMealToMealLibraryDraftForm(item);
+    return buildMealLibraryDraft(form, createIncludedMealDraftKey(item));
+  }
+
+  function persistIncludedMealDraftLocally(item = activeIncludedMeal) {
+    const draft = buildIncludedMealDraft(item);
+    if (!draft || !isMeaningfulMealLibraryDraft(draft.form)) return null;
+
+    const nextDrafts = mergeMealLibraryDrafts(
+      getStoredMealLibraryDrafts().filter((current) => current.draftKey !== draft.draftKey),
+      [draft]
+    );
+
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    return draft;
+  }
+
+  async function syncIncludedMealDraft(draft, version) {
+    if (!draft || !authUser?.id || !activeIsAdmin) {
+      setIncludedMealDraftStatus(draft ? "local" : "idle");
+      return;
+    }
+
+    const result = await saveBackofficeDraft({
+      ownerId: authUser.id,
+      scope: mealLibraryDraftScope,
+      draftKey: draft.draftKey,
+      title: draft.title,
+      form: draft.form
+    });
+
+    if (includedMealDraftSyncVersionRef.current !== version) return;
+
+    if (result.error || !result.configured) {
+      setIncludedMealDraftStatus("local");
+      return;
+    }
+
+    const nextDrafts = mergeMealLibraryDrafts(
+      getStoredMealLibraryDrafts().filter((current) => current.draftKey !== result.data.draftKey),
+      [result.data]
+    );
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    setIncludedMealDraftStatus("synced");
+  }
+
+  function protectCurrentIncludedMealDraft() {
+    const item = activeIncludedMeal;
+    if (!item || !includedMealDraftDirtyIdsRef.current.has(item.id)) return;
+
+    const draft = persistIncludedMealDraftLocally(item);
+    if (!draft || !authUser?.id || !activeIsAdmin) {
+      setIncludedMealDraftStatus(draft ? "local" : "idle");
+      return;
+    }
+
+    window.clearTimeout(includedMealDraftSyncTimerRef.current);
+    const version = ++includedMealDraftSyncVersionRef.current;
+    void syncIncludedMealDraft(draft, version);
+  }
+
+  function clearIncludedMealDraft(item) {
+    if (!item) return;
+
+    const draftKey = createIncludedMealDraftKey(item);
+    includedMealDraftDirtyIdsRef.current.delete(item.id);
+    includedMealDraftSyncVersionRef.current += 1;
+    window.clearTimeout(includedMealDraftSyncTimerRef.current);
+
+    const nextDrafts = getStoredMealLibraryDrafts().filter((draft) => draft.draftKey !== draftKey);
+    storeMealLibraryDrafts(nextDrafts);
+    setMealLibraryDrafts(nextDrafts);
+    setIncludedMealDraftStatus("idle");
+
+    if (activeIsAdmin) {
+      void deleteBackofficeDraft({ draftKey, scope: mealLibraryDraftScope });
+    }
+  }
+
+  function markIncludedMealDraftChanged(index) {
+    const itemId = menuForm.includedItems[index]?.id;
+    if (!itemId) return;
+
+    includedMealDraftDirtyIdsRef.current.add(itemId);
+    setIncludedMealDraftStatus("saving");
+  }
+
   function clearMealLibraryDraft(draftKey = mealLibraryDraftKey) {
     setMealLibraryFormHasUnsavedChanges(false);
     mealLibraryDraftSyncVersionRef.current += 1;
@@ -4455,16 +4583,23 @@ function App() {
   }
 
   function closeMealPrepEditor() {
+    protectCurrentIncludedMealDraft();
     protectCurrentMenuFormDraft();
     setIncludedMealEditorIndex(null);
     setMealPrepEditorOpen(false);
   }
 
   function openIncludedMealEditor(index) {
+    const item = menuForm.includedItems[index];
+    const savedDraft = item
+      ? getStoredMealLibraryDrafts().find((draft) => draft.draftKey === createIncludedMealDraftKey(item))
+      : null;
+    setIncludedMealDraftStatus(savedDraft ? (savedDraft.isServerCopy ? "synced" : "local") : "idle");
     setIncludedMealEditorIndex(index);
   }
 
   function closeIncludedMealEditor() {
+    protectCurrentIncludedMealDraft();
     setIncludedMealEditorIndex(null);
   }
 
@@ -4573,6 +4708,7 @@ function App() {
 
     if (nextWebContentTab) setWebContentTab(nextWebContentTab);
     if (activeBackofficeModule !== nextModuleId) {
+      protectCurrentIncludedMealDraft();
       protectCurrentMenuFormDraft();
       protectCurrentMealLibraryDraft();
     }
@@ -5007,6 +5143,7 @@ function App() {
         nextItems[index] = { ...meal, libraryMealId: result.data.id, sku: result.data.sku };
         saved.push(result.data);
         replacedMissingReference ||= Boolean(result.replacedMissingReference);
+        clearIncludedMealDraft(meal);
       }
 
       markMenuFormChanged();
@@ -5118,6 +5255,7 @@ function App() {
       }));
       setMealLibrary((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
         .sort((left, right) => left.name.localeCompare(right.name, "es")));
+      clearIncludedMealDraft(meal);
       const replacementNote = result.replacedMissingReference
         ? " Se reemplazó un vínculo anterior: guarda el plan para conservar el nuevo vínculo."
         : "";
@@ -5843,6 +5981,29 @@ function App() {
   }, [mealLibraryForm, mealLibraryDraftKey, mealLibraryFormHasUnsavedChanges, activeIsAdmin, authUser?.id]);
 
   useEffect(() => {
+    if (!activeIncludedMeal || !includedMealDraftDirtyIdsRef.current.has(activeIncludedMeal.id) || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const draft = persistIncludedMealDraftLocally(activeIncludedMeal);
+    if (!draft) return undefined;
+
+    if (!authUser?.id || !activeIsAdmin) {
+      setIncludedMealDraftStatus("local");
+      return undefined;
+    }
+
+    const version = ++includedMealDraftSyncVersionRef.current;
+    setIncludedMealDraftStatus("saving");
+    window.clearTimeout(includedMealDraftSyncTimerRef.current);
+    includedMealDraftSyncTimerRef.current = window.setTimeout(() => {
+      void syncIncludedMealDraft(draft, version);
+    }, 350);
+
+    return () => window.clearTimeout(includedMealDraftSyncTimerRef.current);
+  }, [activeIncludedMeal, activeIsAdmin, authUser?.id]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const persistBeforeExit = (event) => {
@@ -5865,6 +6026,15 @@ function App() {
           void syncMealLibraryDraft(draft, version);
         }
       }
+
+      if (activeIncludedMeal && includedMealDraftDirtyIdsRef.current.has(activeIncludedMeal.id)) {
+        const draft = persistIncludedMealDraftLocally(activeIncludedMeal);
+        if (draft && authUser?.id && activeIsAdmin) {
+          window.clearTimeout(includedMealDraftSyncTimerRef.current);
+          const version = ++includedMealDraftSyncVersionRef.current;
+          void syncIncludedMealDraft(draft, version);
+        }
+      }
     };
 
     window.addEventListener("pagehide", persistBeforeExit);
@@ -5881,6 +6051,7 @@ function App() {
     mealLibraryForm,
     mealLibraryDraftKey,
     mealLibraryFormHasUnsavedChanges,
+    activeIncludedMeal,
     activeIsAdmin,
     authUser?.id
   ]);
@@ -5888,6 +6059,7 @@ function App() {
   useEffect(() => () => {
     window.clearTimeout(menuFormDraftSyncTimerRef.current);
     window.clearTimeout(mealLibraryDraftSyncTimerRef.current);
+    window.clearTimeout(includedMealDraftSyncTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -6689,6 +6861,7 @@ function App() {
   }
 
   function updateIncludedMealForm(index, field, value) {
+    markIncludedMealDraftChanged(index);
     markMenuFormChanged();
     setMenuForm((current) => ({
       ...current,
@@ -6709,6 +6882,7 @@ function App() {
   }
 
   function removeIncludedMeal(indexToRemove) {
+    if (includedMealEditorIndex === indexToRemove) protectCurrentIncludedMealDraft();
     markMenuFormChanged();
     setMenuForm((current) => ({
       ...current,
@@ -6801,6 +6975,7 @@ function App() {
       setPhotoUploadError({ target, message });
       setAdminError(`${photoLabel}: ${message}`);
     } else {
+      if (mealIndex !== null) markIncludedMealDraftChanged(mealIndex);
       markMenuFormChanged();
       setMenuForm((current) => {
         if (mealIndex !== null) {
@@ -7098,8 +7273,6 @@ function App() {
   const relevantMenuFormDrafts = menuFormDrafts.filter((draft) =>
     (draft.form.productType || "plan") === menuForm.productType
   );
-  const activeIncludedMeal =
-    includedMealEditorIndex === null ? null : menuForm.includedItems[includedMealEditorIndex] || null;
   const activeSubscriptionCount = subscriptionCustomers.filter((item) => item.status === "active").length;
   const filteredSubscriptions = useMemo(() => {
     const query = subscriptionFilter.query.trim().toLowerCase();
@@ -8149,14 +8322,28 @@ function App() {
                                 <h3 id="included-meal-editor-title">{activeIncludedMeal.name || "Nuevo mealprep"}</h3>
                               </div>
                             </div>
-                            <button
-                              className="icon-button"
-                              type="button"
-                              onClick={closeIncludedMealEditor}
-                              aria-label="Cerrar editor del mealprep"
-                            >
-                              <X size={20} />
-                            </button>
+                            <div className="backoffice-nested-editor-head-actions">
+                              <div className={`backoffice-draft-status is-${includedMealDraftStatus}`} aria-live="polite" title="Borrador independiente del mealprep">
+                                {includedMealDraftStatus === "saving" ? <RefreshCw size={15} /> : includedMealDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
+                                <span>
+                                  {includedMealDraftStatus === "saving"
+                                    ? "Guardando mealprep"
+                                    : includedMealDraftStatus === "local"
+                                      ? "Mealprep en este equipo"
+                                      : includedMealDraftStatus === "synced"
+                                        ? "Mealprep respaldado"
+                                        : "Sin cambios"}
+                                </span>
+                              </div>
+                              <button
+                                className="icon-button"
+                                type="button"
+                                onClick={closeIncludedMealEditor}
+                                aria-label="Cerrar editor del mealprep"
+                              >
+                                <X size={20} />
+                              </button>
+                            </div>
                           </header>
 
                           <div className="backoffice-editing-context">
@@ -8366,7 +8553,7 @@ function App() {
 
                           <div className="backoffice-nested-editor-actions">
                             <div>
-                              <span>{activeIncludedMeal.libraryMealId ? "Este mealprep se actualiza en Mealpreps." : "Al guardar el plan, este mealprep se incorporará a Mealpreps."}</span>
+                              <span>{activeIncludedMeal.libraryMealId ? "Este mealprep se actualiza en Mealpreps." : "Su ficha se respalda por separado y se incorporará a Mealpreps al guardar."}</span>
                               <small>Sus cambios quedarán protegidos aunque vuelvas al plan.</small>
                             </div>
                             <div>
