@@ -184,3 +184,8 @@
 
 - La vista rápida de un plan o plato debe mostrar siempre la foto completa con `object-fit: contain`, sobre fondo oscuro que continúe la fotografía; no usar `cover` si corta la caja o el plato.
 - En escritorio el lightbox usa una altura acotada y sólo su columna de contenido desplaza. En móvil el overlay completo inicia desde arriba y tiene scroll natural; el botón de cierre queda fijo y visible mientras se revisa una ficha larga. No centrar verticalmente un panel más alto que la pantalla, porque oculta el inicio y aparenta que no existe scroll.
+
+### Jerarquía tipográfica de fichas rápidas 2026-07-28
+
+- Las fichas rápidas de planes y platos no usan negrita como recurso de jerarquía. Encabezados auxiliares, tags, nombres de platos incluidos y acciones usan peso medio (`600`); el contraste editorial se construye con escala, color vino, mayúsculas y espaciado.
+- Los títulos principales pueden mantenerse en peso regular o medio para conservar presencia sin el tono pesado de una interfaz genérica.

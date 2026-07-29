@@ -222,9 +222,13 @@
   margin: 0;
   color: #7d2e3d;
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.product-lightbox-copy .eyebrow {
+  font-weight: 600;
 }
 
 .product-pill-list,
@@ -296,6 +300,7 @@
 
 .product-lightbox-actions .primary-button {
   width: 100%;
+  font-weight: 600;
 }
 
 .product-lightbox-actions a,
@@ -312,7 +317,7 @@
   background: rgba(255, 250, 242, 0.82);
   font-family: var(--font-display);
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -833,6 +838,7 @@
 .product-lightbox-price {
   color: #7d2e3d;
   font-size: clamp(1.35rem, 2vw, 2rem);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -854,7 +860,7 @@
 .included-meals-grid button > span {
   color: #7d2e3d;
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.1em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -864,6 +870,7 @@
   margin-bottom: 12px;
   color: var(--ink);
   font-size: 0.98rem;
+  font-weight: 600;
   line-height: 1.25;
 }
 
