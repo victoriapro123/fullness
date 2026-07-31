@@ -854,6 +854,14 @@ Impacto proactivo:
 - En escritorio amplio (`>= 1281px`), el bloque editorial del hero usa el aire disponible a la izquierda del plato. Antes de reducir tipografia o permitir que el texto se monte sobre la imagen, desplazar el copy hacia el margen izquierdo.
 - El plato conserva su escala y las reglas de tablet/movil; la separacion entre texto y fotografia se resuelve desde la reticula desktop.
 
+### Ajuste móvil landing y tienda 2026-07-31
+
+- En el hero móvil, la hoja y el apio se desplazan 20vw adicionales hacia sus bordes respectivos para no cruzarse entre sí ni competir con el copy.
+- La alcachofa se retira de la cinta de beneficios móvil. El eyebrow `Nuestra filosofía` conserva la jerarquía editorial estándar: cobre, mayúsculas, tamaño compacto y peso alto.
+- En `Alimentarse es`, el plato baja bajo el CTA y la sección reserva espacio real para la fotografía antes de iniciar Meal Prep; no se acepta que la imagen atraviese titular, bajada o botón.
+- En Meal Prep móvil solo permanecen los porotos como fondo bajo las bolsas. Las bolsas se amplían como conjunto, preservando sus espacios internos y con recorte lateral controlado.
+- En la tienda móvil, las etiquetas informativas y los beneficios de cada mealprep se muestran como filas de altura táctil, no como cápsulas o columnas comprimidas.
+
 ### Sistema de planes, mealpreps, beneficios y tags 2026-07-28
 
 Cambio:

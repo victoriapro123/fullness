@@ -4224,3 +4224,38 @@
     padding-inline-start: clamp(52px, 4.4vw, 72px) !important;
   }
 }
+
+/* Mobile: la decoración acompaña la lectura y las fotos nunca la cubren. */
+@media (max-width: 860px) {
+  .plate-hero-illustration--left {
+    left: calc(-38vw - 20vw) !important;
+  }
+
+  .plate-hero-illustration--right {
+    right: calc(-43vw - 20vw) !important;
+  }
+
+  .hero-benefits::before {
+    display: none !important;
+  }
+
+  .philosophy-story-combo .food-editorial .eyebrow {
+    color: var(--editorial-copper) !important;
+    font-family: var(--font-display) !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.18em !important;
+    line-height: 1.35 !important;
+    text-transform: uppercase !important;
+  }
+
+    .philosophy-story-combo .food-story-strip {
+      padding-bottom: min(110vw, 430px) !important;
+  }
+
+  .philosophy-story-combo .food-story-strip .philosophy-story-plate {
+    right: -46vw !important;
+    bottom: -20px !important;
+    width: min(124vw, 484px) !important;
+  }
+}

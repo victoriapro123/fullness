@@ -1,11 +1,47 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml"
+    },
+    {
       "source": "/tienda",
       "destination": "/index.html"
     },
     {
+      "source": "/tienda/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/comunidad",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/comunidad/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/quienes-somos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/quienes-somos/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/preguntas-frecuentes",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/preguntas-frecuentes/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/producto/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/producto/:slug/",
       "destination": "/index.html"
     }
   ]

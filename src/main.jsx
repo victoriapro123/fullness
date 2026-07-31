@@ -77,6 +77,13 @@ import {
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import {
+  buildAnalyticsItem,
+  initializeAnalytics,
+  trackEvent,
+  trackPageView
+} from "./lib/analytics.js";
+import { updateSeoHead } from "./lib/seo.js";
+import {
   BenefitAssignmentEditor,
   BenefitDetailLightbox,
   BenefitIconList,
@@ -2227,8 +2234,8 @@ function ProductNutritionFacts({ product }) {
 function HoverImage({ alt, primary, secondary }) {
   return (
     <span className="hover-image-frame">
-      <img className="hover-image-primary" src={primary} alt={alt} />
-      <img className="hover-image-secondary" src={secondary || primary} alt="" aria-hidden="true" />
+      <img className="hover-image-primary" src={primary} alt={alt} loading="lazy" decoding="async" />
+      <img className="hover-image-secondary" src={secondary || primary} alt="" aria-hidden="true" loading="lazy" decoding="async" />
     </span>
   );
 }
@@ -2775,6 +2782,21 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 
   return (
     <article className="product-detail-page">
+      <nav className="product-breadcrumbs" aria-label="Migas de pan">
+        <a href="/">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <a
+          href={shopPath}
+          onClick={(event) => {
+            event.preventDefault();
+            onBackToShop();
+          }}
+        >
+          Tienda
+        </a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
+      </nav>
       <button className="product-detail-back" type="button" onClick={onBackToShop}>
         <ArrowLeft size={18} />
         Volver a tienda
@@ -3757,6 +3779,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [initialAuthRedirect] = useState(() => readAuthRedirectState());
   const authRedirectHandledRef = useRef(false);
+  const lastTrackedProductSlugRef = useRef("");
   const [passwordSetupOpen, setPasswordSetupOpen] = useState(false);
   const [passwordSetupMode, setPasswordSetupMode] = useState("recovery");
   const [passwordSetupSaving, setPasswordSetupSaving] = useState(false);
@@ -3997,6 +4020,24 @@ function App() {
         if (approved) {
           setCart([]);
           window.localStorage.removeItem("fullness_pending_order");
+          const transactionId = checkoutReturn.orderId || checkoutReturn.paymentId;
+          let purchaseAlreadyTracked = false;
+
+          try {
+            const purchaseKey = `fullness_analytics_purchase_${transactionId}`;
+            purchaseAlreadyTracked = window.localStorage.getItem(purchaseKey) === "1";
+            if (!purchaseAlreadyTracked) window.localStorage.setItem(purchaseKey, "1");
+          } catch {
+            // Analytics deduplication is best-effort and never blocks checkout confirmation.
+          }
+
+          if (!purchaseAlreadyTracked) {
+            trackEvent("purchase", {
+              transaction_id: transactionId,
+              currency: "CLP",
+              value: Number(payload.data?.amount || payload.data?.total || 0)
+            });
+          }
         }
       } catch (error) {
         if (error.name === "AbortError") return;
@@ -6430,7 +6471,50 @@ function App() {
   const isAboutPage = currentPath === aboutPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
 
+  useEffect(() => {
+    const syncSeoHead = () => {
+      updateSeoHead({
+        pathname: currentPath,
+        product: currentProduct,
+        productLoading: productsLoading,
+        faqGroups,
+        authRedirect: initialAuthRedirect.hasAuthParams,
+        checkoutResult: Boolean(checkoutResult) || adminOpen
+      });
+    };
+
+    syncSeoHead();
+    window.addEventListener("hashchange", syncSeoHead);
+
+    return () => {
+      window.removeEventListener("hashchange", syncSeoHead);
+    };
+  }, [currentPath, currentProduct, productsLoading, checkoutResult, adminOpen, initialAuthRedirect.hasAuthParams]);
+
+  useEffect(() => {
+    initializeAnalytics();
+    trackPageView(currentPath || "/");
+  }, [currentPath]);
+
+  useEffect(() => {
+    const slug = currentProductSlug || "";
+    if (!slug || !currentProduct || lastTrackedProductSlugRef.current === slug) return;
+
+    lastTrackedProductSlugRef.current = slug;
+    trackEvent("view_item", {
+      currency: "CLP",
+      value: Number(currentProduct.price) || 0,
+      items: [buildAnalyticsItem(currentProduct)]
+    });
+  }, [currentProductSlug, currentProduct]);
+
   function addToCart(product) {
+    trackEvent("add_to_cart", {
+      currency: "CLP",
+      value: Number(product?.price) || 0,
+      items: [buildAnalyticsItem(product)]
+    });
+
     setCart((items) => {
       const found = items.find((item) => item.id === product.id);
       if (found) {
@@ -6509,6 +6593,12 @@ function App() {
   async function submitCheckout(event) {
     event.preventDefault();
     if (cart.length === 0 || checkoutSubmitting) return;
+
+    trackEvent("begin_checkout", {
+      currency: "CLP",
+      value: cartTotal,
+      items: cart.map((item) => buildAnalyticsItem(item, item.qty)).filter(Boolean)
+    });
 
     setCheckoutSubmitting(true);
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
@@ -7417,7 +7507,8 @@ function App() {
         <h3>Contacto</h3>
         <a href={whatsappUrl} target="_blank" rel="noreferrer">+56 9 9658 8199</a>
         <a href="mailto:hola@fullnesslab.com">hola@fullnesslab.com</a>
-        <span>Vitacura, Santiago</span>
+        <span>Av. La Dehesa 1844, local 204</span>
+        <span>Lo Barnechea, Santiago</span>
       </address>
       <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados • By Prof3sional.com</p>
     </footer>

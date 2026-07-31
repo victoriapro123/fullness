@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0 --port 3101 --strictPort",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 3101 --strictPort",
+    "qa:seo": "node scripts/verify-seo.mjs",
     "qa:catalog": "node scripts/verify-catalog-integrity.mjs",
     "qa:nutrition-scope": "node scripts/verify-nutrition-scope.mjs",
     "qa:parameters": "node scripts/verify-catalog-parameters.mjs",

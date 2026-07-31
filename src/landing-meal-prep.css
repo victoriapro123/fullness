@@ -324,12 +324,18 @@
     top: -4vw;
     left: -26vw;
     width: min(72vw, 330px);
+    display: none;
   }
 
   .meal-prep-illustration--beans {
     right: -43vw;
     bottom: -10vw;
     width: min(88.2vw, 399px);
+  }
+
+  .meal-prep-visual-link {
+    width: 252%;
+    margin: 20px -152% 0 -74%;
   }
 }
 
@@ -353,6 +359,7 @@
   .meal-prep-copy {
     max-width: min(88vw, 390px);
   }
+
 }
 
 @media (max-width: 380px) {

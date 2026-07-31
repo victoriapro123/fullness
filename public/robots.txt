@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*?*
+
+Sitemap: https://www.fullnesslab.com/sitemap.xml
