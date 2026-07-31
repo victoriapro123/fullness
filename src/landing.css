@@ -402,6 +402,58 @@
   }
 }
 
+/* Mobile intro: a single centered video plane with no textual overlays. */
+@media (max-width: 860px) {
+  html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence {
+    height: 100svh;
+    min-height: 100svh;
+  }
+
+  html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence-stage {
+    position: relative;
+    top: 0;
+    height: 100svh;
+    transition: opacity 360ms ease;
+  }
+
+  html.intro-mobile-simple .scroll-sequence-frame {
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  html.intro-mobile-simple .intro-start-logo,
+  html.intro-mobile-simple .intro-skip-button,
+  html.intro-mobile-simple .scroll-sequence-signal-layer {
+    display: none !important;
+  }
+
+  html.intro-mobile-simple:not(.intro-scroll-consumed) .site-header,
+  html.intro-mobile-simple:not(.intro-scroll-consumed) .whatsapp-float {
+    visibility: hidden;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage {
+    opacity: 0;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-copy > *,
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual-stage {
+    animation: none !important;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout {
+    opacity: 0 !important;
+    animation: none !important;
+    transition: opacity 420ms ease !important;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero-blackout {
+    opacity: 1 !important;
+  }
+}
+
 .plate-hero {
   position: relative;
   display: grid;

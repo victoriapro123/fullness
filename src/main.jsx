@@ -2908,6 +2908,7 @@ function IntroScrollSequence() {
     let autoStartTimeout = 0;
     let introIntentStarted = false;
     const playbackMs = 4000;
+    const mobilePlaybackMs = 4000;
     const finalFrameHold = 0.16;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobileIntroMedia = window.matchMedia(introMobileQuery);
@@ -3053,26 +3054,33 @@ function IntroScrollSequence() {
     };
 
     const syncMobileIntroMode = () => {
-      const shouldSkipIntro = mobileIntroMedia.matches;
-      document.documentElement.classList.toggle("intro-mobile-skip", shouldSkipIntro);
+      const isMobileIntro = mobileIntroMedia.matches;
+      document.documentElement.classList.toggle("intro-mobile-simple", isMobileIntro);
 
-      if (!shouldSkipIntro) {
+      if (!isMobileIntro) {
+        document.documentElement.classList.remove("intro-mobile-transition", "intro-mobile-hero-reveal");
+        syncHeaderVisibility();
+        return;
+      }
+
+      if (document.documentElement.classList.contains("intro-mobile-skip") || isIntroConsumed()) {
+        playbackRef.current = null;
+        setScrollLock(false);
+        resetSignals();
+        setVideoProgress(1, false);
+        setPosterFrameVisible(false);
+        setFinalFrameVisible(false);
         syncHeaderVisibility();
         return;
       }
 
       playbackRef.current = null;
       setScrollLock(false);
-      setIntroConsumed(true);
       resetSignals();
-      setVideoProgress(1, false);
-      setPosterFrameVisible(false);
+      setVideoProgress(0, false);
+      setPosterFrameVisible(true);
       setFinalFrameVisible(false);
-
-      if (!window.location.hash || window.location.hash === "#inicio" || window.location.hash === "#programa") {
-        jumpToScroll(0);
-      }
-
+      jumpToScroll(0);
       syncHeaderVisibility();
     };
 
@@ -3096,8 +3104,26 @@ function IntroScrollSequence() {
       }
 
       if (playback.destination >= 1) {
-        setIntroConsumed(true);
-        jumpToScroll(0);
+        if (mobileIntroMedia.matches) {
+          document.documentElement.classList.add("intro-mobile-transition");
+          window.setTimeout(() => {
+            document.documentElement.classList.add("intro-mobile-hero-reveal");
+            setIntroConsumed(true);
+            jumpToScroll(0);
+            syncHeaderVisibility();
+            window.requestAnimationFrame(() => {
+              window.requestAnimationFrame(() => {
+                document.documentElement.classList.remove("intro-mobile-hero-reveal");
+              });
+            });
+            window.setTimeout(() => {
+              document.documentElement.classList.remove("intro-mobile-transition");
+            }, 80);
+          }, 440);
+        } else {
+          setIntroConsumed(true);
+          jumpToScroll(0);
+        }
       } else {
         setIntroConsumed(false);
         jumpToScroll(metrics.sectionTop);
@@ -3106,7 +3132,7 @@ function IntroScrollSequence() {
     };
 
     const startPlayback = (direction) => {
-      if (mobileIntroMedia.matches) return false;
+      const isMobileIntro = mobileIntroMedia.matches;
       if (!isSequenceActive()) return false;
 
       const start = clampProgress(progressRef.current || getProgressFromScroll());
@@ -3137,7 +3163,7 @@ function IntroScrollSequence() {
         start,
         destination,
         startedAt: performance.now(),
-        duration: playbackMs,
+        duration: isMobileIntro ? mobilePlaybackMs : playbackMs,
         nativeVideo: Boolean(canUseNativePlayback),
         nativeEndTime,
         lockedScrollTop: Math.min(
@@ -3150,7 +3176,7 @@ function IntroScrollSequence() {
       setScrollLock(true);
       setPosterFrameVisible(false);
       setFinalFrameVisible(false);
-      setSignalsVisible(true);
+      setSignalsVisible(!isMobileIntro);
       syncHeaderVisibility();
       requestRenderFrame();
 
@@ -3361,7 +3387,14 @@ function IntroScrollSequence() {
     };
 
     syncMobileIntroMode();
-    if (!mobileIntroMedia.matches) {
+    if (mobileIntroMedia.matches && !isIntroConsumed() && !document.documentElement.classList.contains("intro-mobile-skip")) {
+      autoStartTimeout = window.setTimeout(() => {
+        if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
+          markIntroIntent();
+          startPlayback(1);
+        }
+      }, 360);
+    } else if (!mobileIntroMedia.matches) {
       setVideoProgress(getProgressFromScroll());
       autoStartTimeout = window.setTimeout(() => {
         if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
@@ -3945,9 +3978,9 @@ function App() {
       window.history.replaceState(null, "", "#proposito");
     }
 
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-scroll-consumed", "intro-mobile-skip");
-      setHeaderHiddenForHero(false);
+    if (isMobileIntroViewport() && !window.location.hash) {
+      document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
+      setHeaderHiddenForHero(true);
       return;
     }
 
