@@ -20,7 +20,7 @@
   color: #210b11;
   background: var(--gold);
   font-size: 0.75rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .cart-pulse {
@@ -275,7 +275,7 @@
   color: rgba(23, 17, 12, 0.58);
   max-width: 100%;
   font-size: clamp(0.62rem, 1vw, 0.72rem);
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.045em;
   line-height: 1.16;
   text-transform: uppercase;
@@ -458,13 +458,13 @@
   color: #fffaf2;
   background: #7d2e3d;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .product-allergens {
   margin-top: 6px;
   color: #7d2e3d !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .product-detail-state {
@@ -534,7 +534,7 @@
   color: #f0d49b;
   font-family: var(--font-display);
   font-size: 0.88rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -568,6 +568,18 @@
 .cart-item p {
   margin: 0;
   color: rgba(23, 17, 12, 0.78);
+}
+
+.cart-item small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(81, 20, 37, 0.72);
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  line-height: 1.35;
+  text-transform: uppercase;
 }
 
 .cart-total {
@@ -770,7 +782,7 @@
 .meal-prep-shop .section-heading .eyebrow {
   color: var(--fullness-highlight) !important;
   font-family: var(--font-display) !important;
-  font-weight: 900 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
 }
@@ -929,7 +941,7 @@
   color: rgba(23, 17, 12, 0.72);
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -956,7 +968,7 @@
   border-radius: 6px;
   color: rgba(23, 17, 12, 0.76);
   background: #fffaf2;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .checkout-mode input:checked + span {
@@ -978,7 +990,7 @@
   color: rgba(23, 17, 12, 0.72);
   font-family: var(--font-display);
   font-size: 0.76rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1135,7 +1147,7 @@
   color: rgba(23, 17, 12, 0.58);
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1242,7 +1254,7 @@
   color: #7c2530;
   font-family: var(--font-display);
   font-size: clamp(0.74rem, 0.68vw, 0.84rem);
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.18em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1283,7 +1295,7 @@
   border-radius: 0;
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   line-height: 1.18;
   text-align: center;
@@ -1344,7 +1356,7 @@
   gap: 8px;
   min-width: 0;
   font-size: 0.73rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.1em;
   line-height: 1.24;
   text-transform: uppercase;
@@ -1456,14 +1468,14 @@
 .shop-comparison-table thead th {
   font-family: var(--font-display);
   font-size: 0.74rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .shop-comparison-table tbody th {
   text-align: left;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .shop-comparison-table .shop-solid-button {
@@ -1540,7 +1552,7 @@
   background: #7c2530;
   font-family: var(--font-display);
   font-size: 0.67rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1561,6 +1573,20 @@
   display: grid;
 }
 
+.preset-plan-menu-note {
+  margin: 0;
+  color: rgba(58, 45, 37, 0.72);
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  line-height: 1.55;
+}
+
+.product-lightbox-block .preset-plan-menu-note,
+.product-detail-included .preset-plan-menu-note {
+  margin: 0 0 18px;
+}
+
 .shop-plan-title-button {
   gap: 6px;
 }
@@ -1570,7 +1596,7 @@
   color: #7c2530;
   font-family: var(--font-display);
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1610,7 +1636,7 @@
   padding: 0 8px;
   border: 1px solid rgba(116, 31, 41, 0.16);
   font-size: 0.69rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1659,7 +1685,7 @@
 .shop-plan-meals .shop-plan-meal-kicker {
   color: #7c2530;
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.1;
   text-transform: uppercase;
@@ -1685,7 +1711,7 @@
 .shop-plan-footer > strong,
 .shop-family-footer > strong {
   font-size: 1.18rem;
-  font-weight: 900;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1716,7 +1742,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-align: center;
   text-transform: uppercase;
@@ -1741,7 +1767,7 @@
 
 .shop-process-band li > span {
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .shop-process-band svg {
@@ -1753,7 +1779,7 @@
   grid-column: 1 / -1;
   color: #f6ebde;
   font-size: 0.86rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -2441,7 +2467,7 @@
 
 .shop-family-copy h3 {
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.05em;
 }
 
@@ -2523,7 +2549,7 @@
   background: var(--shop-burgundy);
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.12em;
   line-height: 1;
   text-decoration: none;
@@ -2662,7 +2688,7 @@
   color: rgba(23, 17, 12, 0.72);
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -2822,7 +2848,7 @@
     border-bottom: 1px solid rgba(244, 234, 219, 0.12) !important;
     font-family: var(--font-display) !important;
     font-size: 0.66rem !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
     letter-spacing: 0.17em !important;
     line-height: 1.2 !important;
     text-transform: uppercase !important;
@@ -2861,7 +2887,7 @@
     color: rgba(244, 234, 219, 0.5);
     font-family: var(--font-display);
     font-size: 0.58rem;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: 0.14em;
     line-height: 1.15;
     text-transform: uppercase;
@@ -3026,7 +3052,7 @@
   button,
   a
 ) {
-  font-weight: 300 !important;
+  font-weight: 400 !important;
 }
 
 .route-shop .shop-commerce-page :is(
@@ -3797,7 +3823,7 @@
 .route-shop .shop-plan-title-button > span,
 .route-shop .shop-plan-meals .shop-plan-meal-kicker {
   color: #7d2430 !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .route-shop .shop-plan-title-button p,
@@ -3845,7 +3871,7 @@
 .route-shop .shop-plan-meal-card > .shop-plan-meal-main strong {
   color: rgba(33, 23, 17, 0.94);
   font-size: 0.84rem;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   line-height: 1.3;
 }
 
@@ -3887,7 +3913,7 @@
   color: #7d2430 !important;
   font-family: var(--font-body);
   font-size: 0.61rem;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.07em;
   line-height: 1.24;
   text-align: left;

@@ -2243,11 +2243,21 @@ function HoverImage({ alt, primary, secondary }) {
 const shopMetricIcons = [Leaf, CookingPot, Heart];
 const shopProcessSteps = [
   { icon: Leaf, title: "Elige tu objetivo", text: "Define energía, equilibrio o recuperación." },
-  { icon: CookingPot, title: "Selecciona tu formato", text: "Elige un plan o un mealprep familiar." },
+  { icon: CookingPot, title: "Elige tu formato", text: "Escoge un plan semanal o un mealprep familiar." },
   { icon: PackageCheck, title: "Recibe tu box", text: "Cada mealprep llega en su bolsa, listo y etiquetado." },
   { icon: Timer, title: "Calienta en minutos", text: "Lleva la bolsa a baño María siguiendo sus indicaciones." },
   { icon: Heart, title: "Disfruta tu semana", text: "Comida completa sin improvisar." }
 ];
+
+function PresetPlanMenuNotice({ product }) {
+  if (getProductType(product) !== "plan") return null;
+
+  return (
+    <p className="preset-plan-menu-note">
+      Menú semanal preestablecido. Las preparaciones disponibles pertenecen exclusivamente a esta semana y no se combinan con otros planes.
+    </p>
+  );
+}
 
 function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct }) {
   const includedItems = product.includedItems || [];
@@ -2276,6 +2286,8 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
             {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
           </ul>
         )}
+
+        <PresetPlanMenuNotice product={product} />
 
       </div>
 
@@ -2486,7 +2498,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
             <div className="shop-section-heading">
               <p className="eyebrow">Planes</p>
               <h2 id="shop-plans-title">{planHeading}</h2>
-              <p>Cada plan reúne una caja de mealpreps individuales, listos para calentar.</p>
+              <p>Cada semana tiene un menú preestablecido de mealpreps individuales, listo para calentar.</p>
             </div>
             {catalogPlans.length > 0 ? (
               <div className="shop-plan-grid">
@@ -2636,7 +2648,8 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
 
           {includedItems.length > 0 && (
             <div className="product-lightbox-block">
-              <h3>Mealpreps incluidos</h3>
+              <h3>Menú de esta semana</h3>
+              <PresetPlanMenuNotice product={product} />
               <div className="included-meals-grid">
                 {includedItems.map((meal, mealIndex) => (
                   <button
@@ -2866,7 +2879,8 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 
         {includedItems.length > 0 && (
           <div className="product-detail-panel product-detail-included">
-            <h2>Mealpreps del plan</h2>
+            <h2>Menú de esta semana</h2>
+            <PresetPlanMenuNotice product={product} />
             <div className="included-meals-grid">
               {includedItems.map((meal, mealIndex) => (
                 <button
@@ -2906,10 +2920,13 @@ function IntroScrollSequence() {
   useEffect(() => {
     let animationFrame = 0;
     let autoStartTimeout = 0;
+    let mobileTransitionTimeout = 0;
+    let mobileTransitionCleanupTimeout = 0;
     let introIntentStarted = false;
     const playbackMs = 4000;
-    const mobilePlaybackMs = 4000;
     const finalFrameHold = 0.16;
+    const mobileHandoffDelayMs = 120;
+    const mobileHandoffDurationMs = 980;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobileIntroMedia = window.matchMedia(introMobileQuery);
     const scrollBehaviorSnapshot = {
@@ -2949,7 +2966,7 @@ function IntroScrollSequence() {
     const setFinalFrameVisible = (visible) => {
       if (!finalFrameRef.current) return;
 
-      finalFrameRef.current.style.opacity = visible ? "1" : "0";
+      finalFrameRef.current.style.opacity = mobileIntroMedia.matches ? "0" : visible ? "1" : "0";
     };
 
     const setPosterFrameVisible = (visible) => {
@@ -3036,6 +3053,11 @@ function IntroScrollSequence() {
       const video = videoRef.current;
       progressRef.current = nextProgress;
 
+      if (mobileIntroMedia.matches && sectionRef.current) {
+        const exitFade = clampProgress((nextProgress - 0.72) / 0.28);
+        sectionRef.current.style.setProperty("--mobile-intro-fade", String(exitFade));
+      }
+
       setFinalFrameVisible(nextProgress >= 0.995);
       setPosterFrameVisible(nextProgress < 0.015);
 
@@ -3059,6 +3081,7 @@ function IntroScrollSequence() {
 
       if (!isMobileIntro) {
         document.documentElement.classList.remove("intro-mobile-transition", "intro-mobile-hero-reveal");
+        sectionRef.current?.style.removeProperty("--mobile-intro-fade");
         syncHeaderVisibility();
         return;
       }
@@ -3076,12 +3099,43 @@ function IntroScrollSequence() {
 
       playbackRef.current = null;
       setScrollLock(false);
+      if (autoStartTimeout) {
+        window.clearTimeout(autoStartTimeout);
+        autoStartTimeout = 0;
+      }
       resetSignals();
       setVideoProgress(0, false);
       setPosterFrameVisible(true);
       setFinalFrameVisible(false);
       jumpToScroll(0);
       syncHeaderVisibility();
+    };
+
+    const revealMobileScrollIntro = () => {
+      if (
+        !mobileIntroMedia.matches ||
+        isIntroConsumed() ||
+        document.documentElement.classList.contains("intro-mobile-transition")
+      ) {
+        return;
+      }
+
+      document.documentElement.classList.add("intro-mobile-transition", "intro-mobile-hero-reveal");
+      mobileTransitionTimeout = window.setTimeout(() => {
+        setIntroConsumed(true);
+        jumpToScroll(0);
+        syncHeaderVisibility();
+        window.requestAnimationFrame(() => {
+          jumpToScroll(0);
+          window.requestAnimationFrame(() => {
+            jumpToScroll(0);
+            document.documentElement.classList.remove("intro-mobile-hero-reveal");
+          });
+        });
+        mobileTransitionCleanupTimeout = window.setTimeout(() => {
+          document.documentElement.classList.remove("intro-mobile-transition");
+        }, reducedMotion ? 0 : mobileHandoffDurationMs);
+      }, reducedMotion ? 0 : mobileHandoffDelayMs);
     };
 
     const finishPlayback = () => {
@@ -3104,26 +3158,8 @@ function IntroScrollSequence() {
       }
 
       if (playback.destination >= 1) {
-        if (mobileIntroMedia.matches) {
-          document.documentElement.classList.add("intro-mobile-transition");
-          window.setTimeout(() => {
-            document.documentElement.classList.add("intro-mobile-hero-reveal");
-            setIntroConsumed(true);
-            jumpToScroll(0);
-            syncHeaderVisibility();
-            window.requestAnimationFrame(() => {
-              window.requestAnimationFrame(() => {
-                document.documentElement.classList.remove("intro-mobile-hero-reveal");
-              });
-            });
-            window.setTimeout(() => {
-              document.documentElement.classList.remove("intro-mobile-transition");
-            }, 80);
-          }, 440);
-        } else {
-          setIntroConsumed(true);
-          jumpToScroll(0);
-        }
+        setIntroConsumed(true);
+        jumpToScroll(0);
       } else {
         setIntroConsumed(false);
         jumpToScroll(metrics.sectionTop);
@@ -3133,7 +3169,7 @@ function IntroScrollSequence() {
 
     const startPlayback = (direction) => {
       const isMobileIntro = mobileIntroMedia.matches;
-      if (!isSequenceActive()) return false;
+      if (isMobileIntro || !isSequenceActive()) return false;
 
       const start = clampProgress(progressRef.current || getProgressFromScroll());
       const destination = direction > 0 ? 1 : 0;
@@ -3163,7 +3199,7 @@ function IntroScrollSequence() {
         start,
         destination,
         startedAt: performance.now(),
-        duration: isMobileIntro ? mobilePlaybackMs : playbackMs,
+        duration: playbackMs,
         nativeVideo: Boolean(canUseNativePlayback),
         nativeEndTime,
         lockedScrollTop: Math.min(
@@ -3176,7 +3212,7 @@ function IntroScrollSequence() {
       setScrollLock(true);
       setPosterFrameVisible(false);
       setFinalFrameVisible(false);
-      setSignalsVisible(!isMobileIntro);
+      setSignalsVisible(true);
       syncHeaderVisibility();
       requestRenderFrame();
 
@@ -3223,6 +3259,8 @@ function IntroScrollSequence() {
     };
 
     const handleWheel = (event) => {
+      if (mobileIntroMedia.matches) return;
+
       if (playbackRef.current) {
         event.preventDefault();
         return;
@@ -3243,6 +3281,8 @@ function IntroScrollSequence() {
     };
 
     const handleTouchMove = (event) => {
+      if (mobileIntroMedia.matches) return;
+
       if (playbackRef.current) {
         event.preventDefault();
         return;
@@ -3264,6 +3304,8 @@ function IntroScrollSequence() {
     };
 
     const handleKeyDown = (event) => {
+      if (mobileIntroMedia.matches) return;
+
       if (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable='true']")) {
         return;
       }
@@ -3289,8 +3331,25 @@ function IntroScrollSequence() {
     const handleScroll = () => {
       if (playbackRef.current) return;
 
+      const metrics = getMetrics();
+      if (
+        mobileIntroMedia.matches &&
+        !isIntroConsumed() &&
+        metrics &&
+        window.scrollY >= metrics.sectionTop + metrics.scrollDistance
+      ) {
+        setVideoProgress(1);
+        revealMobileScrollIntro();
+        return;
+      }
+
       if (isSequenceActive()) {
-        setVideoProgress(getProgressFromScroll());
+        const progress = getProgressFromScroll();
+        setVideoProgress(progress);
+        if (mobileIntroMedia.matches && progress >= 0.995) {
+          revealMobileScrollIntro();
+          return;
+        }
       }
 
       syncHeaderVisibility();
@@ -3326,6 +3385,12 @@ function IntroScrollSequence() {
       introIntentStarted = false;
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
+      }
+      if (mobileTransitionTimeout) {
+        window.clearTimeout(mobileTransitionTimeout);
+      }
+      if (mobileTransitionCleanupTimeout) {
+        window.clearTimeout(mobileTransitionCleanupTimeout);
       }
       autoStartTimeout = window.setTimeout(() => {
         if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
@@ -3387,14 +3452,7 @@ function IntroScrollSequence() {
     };
 
     syncMobileIntroMode();
-    if (mobileIntroMedia.matches && !isIntroConsumed() && !document.documentElement.classList.contains("intro-mobile-skip")) {
-      autoStartTimeout = window.setTimeout(() => {
-        if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
-          markIntroIntent();
-          startPlayback(1);
-        }
-      }, 360);
-    } else if (!mobileIntroMedia.matches) {
+    if (!mobileIntroMedia.matches) {
       setVideoProgress(getProgressFromScroll());
       autoStartTimeout = window.setTimeout(() => {
         if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
@@ -3423,6 +3481,12 @@ function IntroScrollSequence() {
     return () => {
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
+      }
+      if (mobileTransitionTimeout) {
+        window.clearTimeout(mobileTransitionTimeout);
+      }
+      if (mobileTransitionCleanupTimeout) {
+        window.clearTimeout(mobileTransitionCleanupTimeout);
       }
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
       logoButtonRef.current?.removeEventListener("click", handleStartClick);
@@ -3818,6 +3882,7 @@ function App() {
   const [passwordSetupSaving, setPasswordSetupSaving] = useState(false);
   const [passwordSetupMessage, setPasswordSetupMessage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const confirmedAdminUserIdRef = useRef("");
   const [operationsExporting, setOperationsExporting] = useState("");
   const [operationsMessage, setOperationsMessage] = useState("");
   const [operationsError, setOperationsError] = useState("");
@@ -4898,63 +4963,91 @@ function App() {
   }
 
   async function submitBenefitDefinition(form) {
-    if (!activeIsAdmin) return null;
+    if (!activeIsAdmin || catalogParametersSaving) return null;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
     setCatalogParametersMessage("");
-    const result = await saveBenefitDefinition(form);
 
-    if (result.error || !result.configured) {
-      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el beneficio."));
-      setCatalogParametersSaving(false);
+    try {
+      const result = await saveBenefitDefinition(form);
+
+      if (result.error || !result.configured || !result.data) {
+        setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el beneficio."));
+        return null;
+      }
+
+      setBenefitDefinitions((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
+        .sort((left, right) => left.displayOrder - right.displayOrder || left.name.localeCompare(right.name, "es")));
+      setCatalogParametersMessage(`Beneficio “${result.data.name}” guardado.`);
+      void Promise.all([
+        refreshCatalogParameters({ silent: true }),
+        refreshPublicProducts()
+      ]).catch(() => {});
+      return result.data;
+    } catch (error) {
+      setCatalogParametersError(getSupabaseErrorMessage(error, "No pudimos guardar el beneficio."));
       return null;
+    } finally {
+      setCatalogParametersSaving(false);
     }
-
-    setCatalogParametersMessage(`Beneficio “${result.data.name}” guardado.`);
-    await refreshCatalogParameters({ silent: true });
-    await refreshPublicProducts();
-    setCatalogParametersSaving(false);
-    return result.data;
   }
 
   async function removeBenefitDefinition(item) {
     if (!window.confirm(`¿Eliminar el beneficio “${item.name}”? Los mealpreps conservarán la copia publicada hasta que se editen.`)) return;
+    if (catalogParametersSaving) return;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
     setCatalogParametersMessage("");
-    const result = await deleteBenefitDefinition(item.id);
 
-    if (result.error || !result.configured) {
-      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el beneficio."));
-    } else {
+    try {
+      const result = await deleteBenefitDefinition(item.id);
+
+      if (result.error || !result.configured) {
+        setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el beneficio."));
+        return;
+      }
+
+      setBenefitDefinitions((current) => current.filter((definition) => definition.id !== item.id));
       setCatalogParametersMessage("Beneficio eliminado.");
-      await refreshCatalogParameters({ silent: true });
+      void refreshCatalogParameters({ silent: true }).catch(() => {});
+    } catch (error) {
+      setCatalogParametersError(getSupabaseErrorMessage(error, "No pudimos eliminar el beneficio."));
+    } finally {
+      setCatalogParametersSaving(false);
     }
-
-    setCatalogParametersSaving(false);
   }
 
   async function submitTagDefinition(form) {
-    if (!activeIsAdmin) return null;
+    if (!activeIsAdmin || catalogParametersSaving) return null;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
     setCatalogParametersMessage("");
-    const result = await saveTagDefinition(form);
 
-    if (result.error || !result.configured) {
-      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el tag."));
-      setCatalogParametersSaving(false);
+    try {
+      const result = await saveTagDefinition(form);
+
+      if (result.error || !result.configured || !result.data) {
+        setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos guardar el tag."));
+        return null;
+      }
+
+      setTagDefinitions((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
+        .sort((left, right) => left.displayOrder - right.displayOrder || left.name.localeCompare(right.name, "es")));
+      setCatalogParametersMessage(`Tag “${result.data.name}” guardado.`);
+      void Promise.all([
+        refreshCatalogParameters({ silent: true }),
+        refreshPublicProducts()
+      ]).catch(() => {});
+      return result.data;
+    } catch (error) {
+      setCatalogParametersError(getSupabaseErrorMessage(error, "No pudimos guardar el tag."));
       return null;
+    } finally {
+      setCatalogParametersSaving(false);
     }
-
-    setCatalogParametersMessage(`Tag “${result.data.name}” guardado.`);
-    await refreshCatalogParameters({ silent: true });
-    await refreshPublicProducts();
-    setCatalogParametersSaving(false);
-    return result.data;
   }
 
   function findExistingCatalogDefinition(definitions, name) {
@@ -4975,20 +5068,25 @@ function App() {
     const existing = findExistingCatalogDefinition(benefitDefinitions, form.name);
     if (existing) return { data: existing, error: "", existing: true };
 
-    const result = await saveBenefitDefinition(form);
-    if (result.error || !result.configured || !result.data) {
-      return {
-        data: null,
-        error: getSupabaseErrorMessage(result.error, "No pudimos crear el beneficio.")
-      };
+    try {
+      const result = await saveBenefitDefinition(form);
+      if (result.error || !result.configured || !result.data) {
+        return {
+          data: null,
+          error: getSupabaseErrorMessage(result.error, "No pudimos crear el beneficio.")
+        };
+      }
+
+      setBenefitDefinitions((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
+        .sort((left, right) => left.displayOrder - right.displayOrder || left.name.localeCompare(right.name, "es")));
+      void Promise.all([
+        refreshCatalogParameters({ silent: true }),
+        refreshPublicProducts()
+      ]).catch(() => {});
+      return { data: result.data, error: "", existing: false };
+    } catch (error) {
+      return { data: null, error: getSupabaseErrorMessage(error, "No pudimos crear el beneficio.") };
     }
-
-    await Promise.all([
-      refreshCatalogParameters({ silent: true }),
-      refreshPublicProducts()
-    ]);
-
-    return { data: result.data, error: "", existing: false };
   }
 
   async function createQuickTagDefinition(form) {
@@ -4999,52 +5097,71 @@ function App() {
     const existing = findExistingCatalogDefinition(tagDefinitions, form.name);
     if (existing) return { data: existing, error: "", existing: true };
 
-    const result = await saveTagDefinition(form);
-    if (result.error || !result.configured || !result.data) {
-      return {
-        data: null,
-        error: getSupabaseErrorMessage(result.error, "No pudimos crear el tag.")
-      };
+    try {
+      const result = await saveTagDefinition(form);
+      if (result.error || !result.configured || !result.data) {
+        return {
+          data: null,
+          error: getSupabaseErrorMessage(result.error, "No pudimos crear el tag.")
+        };
+      }
+
+      setTagDefinitions((current) => [...current.filter((item) => item.id !== result.data.id), result.data]
+        .sort((left, right) => left.displayOrder - right.displayOrder || left.name.localeCompare(right.name, "es")));
+      void Promise.all([
+        refreshCatalogParameters({ silent: true }),
+        refreshPublicProducts()
+      ]).catch(() => {});
+      return { data: result.data, error: "", existing: false };
+    } catch (error) {
+      return { data: null, error: getSupabaseErrorMessage(error, "No pudimos crear el tag.") };
     }
-
-    await Promise.all([
-      refreshCatalogParameters({ silent: true }),
-      refreshPublicProducts()
-    ]);
-
-    return { data: result.data, error: "", existing: false };
   }
 
   async function removeTagDefinition(item) {
     if (!window.confirm(`¿Eliminar el tag “${item.name}”? Los mealpreps conservarán la copia publicada hasta que se editen.`)) return;
+    if (catalogParametersSaving) return;
 
     setCatalogParametersSaving(true);
     setCatalogParametersError("");
     setCatalogParametersMessage("");
-    const result = await deleteTagDefinition(item.id);
 
-    if (result.error || !result.configured) {
-      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el tag."));
-    } else {
+    try {
+      const result = await deleteTagDefinition(item.id);
+
+      if (result.error || !result.configured) {
+        setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos eliminar el tag."));
+        return;
+      }
+
+      setTagDefinitions((current) => current.filter((definition) => definition.id !== item.id));
       setCatalogParametersMessage("Tag eliminado.");
-      await refreshCatalogParameters({ silent: true });
+      void refreshCatalogParameters({ silent: true }).catch(() => {});
+    } catch (error) {
+      setCatalogParametersError(getSupabaseErrorMessage(error, "No pudimos eliminar el tag."));
+    } finally {
+      setCatalogParametersSaving(false);
     }
-
-    setCatalogParametersSaving(false);
   }
 
   async function uploadBenefitIcon(file) {
     setCatalogParametersError("");
     setCatalogParametersMessage("");
-    const result = await uploadMenuPhoto(file, "images/benefits");
 
-    if (result.error || !result.configured) {
-      setCatalogParametersError(getSupabaseErrorMessage(result.error, "No pudimos subir el icono."));
+    try {
+      const result = await uploadMenuPhoto(file, "images/benefits");
+
+      if (result.error || !result.configured || !result.data) {
+        setCatalogParametersError(getPhotoUploadErrorMessage(result.error, "No pudimos subir el icono."));
+        return null;
+      }
+
+      setCatalogParametersMessage("Icono cargado en R2.");
+      return result.data;
+    } catch (error) {
+      setCatalogParametersError(getPhotoUploadErrorMessage(error, "No pudimos subir el icono."));
       return null;
     }
-
-    setCatalogParametersMessage("Icono cargado en R2.");
-    return result.data;
   }
 
   async function refreshSubscriptionCustomers() {
@@ -5925,20 +6042,36 @@ function App() {
 
     async function loadAdminProfile() {
       if (!authUser || !isSupabaseConfigured) {
+        confirmedAdminUserIdRef.current = "";
         setIsAdmin(false);
         return;
       }
 
-      const supabase = await getSupabaseClient();
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", authUser.id)
-        .maybeSingle();
+      try {
+        const supabase = await getSupabaseClient();
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", authUser.id)
+          .maybeSingle();
 
-      if (ignore) return;
+        if (ignore) return;
 
-      setIsAdmin(Boolean(data?.is_admin && !error));
+        if (error) {
+          // A transient request error must not throw an administrator out of
+          // the backoffice. A genuine SIGNED_OUT event still clears authUser.
+          if (confirmedAdminUserIdRef.current !== authUser.id) setIsAdmin(false);
+          return;
+        }
+
+        const nextIsAdmin = Boolean(data?.is_admin);
+        confirmedAdminUserIdRef.current = nextIsAdmin ? authUser.id : "";
+        setIsAdmin(nextIsAdmin);
+      } catch {
+        if (!ignore && confirmedAdminUserIdRef.current !== authUser.id) {
+          setIsAdmin(false);
+        }
+      }
     }
 
     loadAdminProfile();
@@ -6542,22 +6675,34 @@ function App() {
   }, [currentProductSlug, currentProduct]);
 
   function addToCart(product) {
+    const productSlug = getProductSlug(product);
+    const catalogProduct = products.find((candidate) =>
+      candidate.id === product?.id || getProductSlug(candidate) === productSlug
+    ) || product;
+    const cartProduct = getProductType(catalogProduct) === "plan"
+      ? {
+          ...catalogProduct,
+          includedItems: (catalogProduct.includedItems || []).map((meal) => ({ ...meal })),
+          menuConfiguration: "preset"
+        }
+      : catalogProduct;
+
     trackEvent("add_to_cart", {
       currency: "CLP",
-      value: Number(product?.price) || 0,
-      items: [buildAnalyticsItem(product)]
+      value: Number(cartProduct?.price) || 0,
+      items: [buildAnalyticsItem(cartProduct)]
     });
 
     setCart((items) => {
-      const found = items.find((item) => item.id === product.id);
+      const found = items.find((item) => item.id === cartProduct.id);
       if (found) {
         return items.map((item) =>
-          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+          item.id === cartProduct.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
-      return [...items, { ...product, qty: 1 }];
+      return [...items, { ...cartProduct, qty: 1 }];
     });
-    setCartNotice({ id: Date.now(), name: product.name });
+    setCartNotice({ id: Date.now(), name: cartProduct.name });
     window.clearTimeout(window.fullnessCartNoticeTimer);
     window.fullnessCartNoticeTimer = window.setTimeout(() => {
       setCartNotice(null);
@@ -8372,7 +8517,7 @@ function App() {
                           <div>
                             <p className="eyebrow">Paso 2</p>
                             <h3>Mealpreps del plan</h3>
-                            <p className="backoffice-section-copy">Cada mealprep conserva su propia nutrición, tags y beneficios. El plan los reúne sin duplicar su información.</p>
+                            <p className="backoffice-section-copy">Define aquí el menú autorizado de esta semana. El cliente solo verá estas preparaciones y no podrá incorporar mealpreps de otros planes.</p>
                           </div>
                           <div className="included-editor-actions">
                             <select
@@ -9975,6 +10120,7 @@ function App() {
                     <div>
                       <h3>{item.name}</h3>
                       <p>{formatPrice(item.price)}</p>
+                      {getProductType(item) === "plan" && <small>Menú semanal preestablecido</small>}
                     </div>
                     <div className="qty">
                       <button type="button" onClick={() => updateQty(item.id, -1)} aria-label={`Restar ${item.name}`}>

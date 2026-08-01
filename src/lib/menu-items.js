@@ -603,6 +603,37 @@ async function getConfiguredSupabase() {
   return getSupabaseClient();
 }
 
+/**
+ * Mutations in the backoffice must not rely on a token that may have expired
+ * while the administrator was editing a form. Refresh it shortly before a
+ * write, but never sign the user out or discard their draft when it fails.
+ */
+async function getAuthenticatedSupabase() {
+  const supabase = await getConfiguredSupabase();
+  if (!supabase) return { supabase: null, session: null };
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+
+  let session = data?.session || null;
+  const expiresAt = Number(session?.expires_at || 0) * 1000;
+  const shouldRefresh = session && expiresAt && expiresAt - Date.now() < 2 * 60 * 1000;
+
+  if (shouldRefresh) {
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.error || !refreshed.data?.session) {
+      throw refreshed.error || new Error("Tu sesión de administradora venció. Inicia sesión nuevamente; tu trabajo no se perderá.");
+    }
+    session = refreshed.data.session;
+  }
+
+  if (!session?.access_token) {
+    throw new Error("Tu sesión de administradora venció. Inicia sesión nuevamente; tu trabajo no se perderá.");
+  }
+
+  return { supabase, session };
+}
+
 async function fetchCatalogContext(supabase, { includeInactive = false } = {}) {
   let benefitQuery = supabase
     .from("benefit_definitions")
@@ -851,66 +882,82 @@ export async function listCatalogParameters({ includeInactive = false } = {}) {
 }
 
 export async function saveBenefitDefinition(input) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const payload = {
-    slug: slugifyParameter(input.slug || input.name),
-    name: cleanText(input.name),
-    icon_url: cleanText(input.iconUrl || input.icon_url),
-    icon_storage_path: nullableText(input.iconStoragePath || input.icon_storage_path),
-    default_description: cleanText(input.defaultDescription || input.default_description),
-    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
-    is_active: Boolean(input.isActive ?? input.is_active)
-  };
-  const query = input.id
-    ? supabase.from("benefit_definitions").update(payload).eq("id", input.id)
-    : supabase.from("benefit_definitions").insert(payload);
-  const { data, error } = await query.select(BENEFIT_DEFINITION_COLUMNS).single();
+    const payload = {
+      slug: slugifyParameter(input.slug || input.name),
+      name: cleanText(input.name),
+      icon_url: cleanText(input.iconUrl || input.icon_url),
+      icon_storage_path: nullableText(input.iconStoragePath || input.icon_storage_path),
+      default_description: cleanText(input.defaultDescription || input.default_description),
+      display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
+      is_active: Boolean(input.isActive ?? input.is_active)
+    };
+    const query = input.id
+      ? supabase.from("benefit_definitions").update(payload).eq("id", input.id)
+      : supabase.from("benefit_definitions").insert(payload);
+    const { data, error } = await query.select(BENEFIT_DEFINITION_COLUMNS).single();
 
-  return {
-    data: data ? mapBenefitDefinition(data) : null,
-    error,
-    configured: true
-  };
+    return {
+      data: data ? mapBenefitDefinition(data) : null,
+      error,
+      configured: true
+    };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function deleteBenefitDefinition(id) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const { error } = await supabase.from("benefit_definitions").delete().eq("id", id);
-  return { data: error ? null : id, error, configured: true };
+    const { error } = await supabase.from("benefit_definitions").delete().eq("id", id);
+    return { data: error ? null : id, error, configured: true };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function saveTagDefinition(input) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const payload = {
-    slug: slugifyParameter(input.slug || input.name),
-    name: cleanText(input.name),
-    display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
-    is_active: Boolean(input.isActive ?? input.is_active)
-  };
-  const query = input.id
-    ? supabase.from("tag_definitions").update(payload).eq("id", input.id)
-    : supabase.from("tag_definitions").insert(payload);
-  const { data, error } = await query.select(TAG_DEFINITION_COLUMNS).single();
+    const payload = {
+      slug: slugifyParameter(input.slug || input.name),
+      name: cleanText(input.name),
+      display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
+      is_active: Boolean(input.isActive ?? input.is_active)
+    };
+    const query = input.id
+      ? supabase.from("tag_definitions").update(payload).eq("id", input.id)
+      : supabase.from("tag_definitions").insert(payload);
+    const { data, error } = await query.select(TAG_DEFINITION_COLUMNS).single();
 
-  return {
-    data: data ? mapTagDefinition(data) : null,
-    error,
-    configured: true
-  };
+    return {
+      data: data ? mapTagDefinition(data) : null,
+      error,
+      configured: true
+    };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function deleteTagDefinition(id) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const { error } = await supabase.from("tag_definitions").delete().eq("id", id);
-  return { data: error ? null : id, error, configured: true };
+    const { error } = await supabase.from("tag_definitions").delete().eq("id", id);
+    return { data: error ? null : id, error, configured: true };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function getShopSettings() {
@@ -981,26 +1028,15 @@ export async function deleteMenuItem(id) {
 }
 
 export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-
-  if (sessionError || !token) {
-    return {
-      data: null,
-      error: sessionError || new Error("Debes iniciar sesión como administrador para subir imágenes."),
-      configured: true
-    };
-  }
-
   try {
+    const { supabase, session } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
+
     const base64 = await fileToBase64(file);
     const response = await fetch("/api/upload-media", {
       method: "POST",
       headers: {
-        "authorization": `Bearer ${token}`,
+        "authorization": `Bearer ${session.access_token}`,
         "content-type": "application/json"
       },
       body: JSON.stringify({

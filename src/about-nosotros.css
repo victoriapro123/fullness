@@ -87,7 +87,7 @@
 .about-v2 h2 {
   margin: 0;
   font-family: var(--font-display, "Avenir Next", Avenir, Inter, sans-serif);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.09em;
   line-height: 1.2;
   text-transform: uppercase;
@@ -140,7 +140,7 @@
   color: rgba(244, 234, 219, 0.88);
   font-family: var(--font-body, "Avenir Next", Avenir, Inter, sans-serif);
   font-size: clamp(0.9rem, 0.95vw, 1.06rem);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.045em;
   line-height: 1.82;
   text-transform: uppercase;
@@ -196,7 +196,7 @@
   color: rgba(24, 18, 15, 0.8);
   font-family: var(--font-body, "Avenir Next", Avenir, Inter, sans-serif);
   font-size: clamp(0.94rem, 1vw, 1.08rem);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.025em;
   line-height: 1.9;
 }
@@ -242,7 +242,7 @@
   color: rgba(244, 234, 219, 0.9);
   font-family: var(--font-display, "Avenir Next", Avenir, Inter, sans-serif);
   font-size: clamp(0.76rem, 0.9vw, 0.94rem);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.09em;
   line-height: 1.65;
   text-transform: uppercase;
@@ -284,7 +284,7 @@
   color: rgba(244, 234, 219, 0.78);
   font-family: var(--font-body, "Avenir Next", Avenir, Inter, sans-serif);
   font-size: clamp(0.98rem, 1.05vw, 1.1rem);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.018em;
   line-height: 1.9;
 }

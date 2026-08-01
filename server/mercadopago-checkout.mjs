@@ -118,7 +118,17 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
       tag: product.tag,
       photoUrl: product.photo_url,
       benefitTags: product.benefit_tags,
-      servingLabel: product.serving_label
+      servingLabel: product.serving_label,
+      presetMenu: product.product_type === "plan"
+        ? (Array.isArray(product.included_items)
+          ? product.included_items.map((meal) => ({
+            id: meal?.id || null,
+            libraryMealId: meal?.libraryMealId || meal?.library_meal_id || null,
+            name: meal?.name || "",
+            sku: meal?.sku || null
+          }))
+          : [])
+        : []
     },
     ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
     nutrition_description: product.nutrition_description || null

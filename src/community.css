@@ -268,7 +268,7 @@
   color: #f4eadb;
   font-family: var(--font-display);
   font-size: clamp(0.72rem, 0.82vw, 0.94rem);
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.18em;
   text-decoration: none;
   text-transform: uppercase;
@@ -335,7 +335,7 @@
   color: #f4eadb;
   font-family: var(--font-display);
   font-size: clamp(0.86rem, 1vw, 1.12rem);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -408,7 +408,7 @@
 
 .community-activity time span {
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.16em;
 }
 
@@ -468,7 +468,7 @@
   gap: 8px;
   color: rgba(244, 234, 219, 0.62);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -556,7 +556,7 @@
 
 .community-admin-list time {
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -748,7 +748,7 @@
   padding: 14px 12px !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.62rem, 0.66vw, 0.76rem) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.09em !important;
   line-height: 1.35 !important;
   text-transform: uppercase !important;
@@ -835,7 +835,7 @@
   background: transparent !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.66rem, 0.68vw, 0.78rem) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.16em !important;
   line-height: 1.2 !important;
   text-transform: uppercase !important;
@@ -885,7 +885,7 @@
   margin-bottom: clamp(14px, 1.5vw, 22px) !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.76rem, 0.86vw, 1rem) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.22em !important;
   line-height: 1.18 !important;
   text-transform: uppercase !important;
@@ -1048,7 +1048,7 @@
   color: rgba(244, 234, 219, 0.82) !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.56rem, 0.58vw, 0.68rem) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.1em !important;
   line-height: 1.28 !important;
   text-transform: uppercase !important;
@@ -1251,7 +1251,7 @@
   color: rgba(23, 17, 12, 0.72);
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

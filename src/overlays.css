@@ -138,7 +138,7 @@
   color: #f4eadb;
   background: rgba(107, 22, 39, 0.78);
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -170,7 +170,7 @@
   color: rgba(244, 234, 219, 0.76);
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -530,17 +530,17 @@
 
 .subscription-lightbox .eyebrow {
   color: var(--highlight);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .subscription-lightbox h2 {
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .subscription-lightbox-content > p:not(.eyebrow),
 .subscription-lightbox-success p:not(.eyebrow) {
   color: rgba(244, 234, 219, 0.84);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .subscription-lightbox-benefits {
@@ -554,7 +554,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-body);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: 0.12em;
 }
 

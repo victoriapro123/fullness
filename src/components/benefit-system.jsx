@@ -685,6 +685,7 @@ export function CatalogParametersAdmin({
   const [benefitSearch, setBenefitSearch] = useState("");
   const [tagSearch, setTagSearch] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const filteredBenefits = useMemo(() => {
     const query = cleanText(benefitSearch).toLocaleLowerCase("es");
     if (!query) return benefits;
@@ -716,14 +717,26 @@ export function CatalogParametersAdmin({
 
   async function submitBenefit(event) {
     event.preventDefault();
-    const saved = await onSaveBenefit(benefitForm);
-    if (saved) setBenefitForm(createBenefitForm(benefits.length * 10 + 20));
+    setActionError("");
+
+    try {
+      const saved = await onSaveBenefit(benefitForm);
+      if (saved) setBenefitForm(createBenefitForm(benefits.length * 10 + 20));
+    } catch {
+      setActionError("No pudimos guardar el beneficio. Revisa tu conexión e inténtalo nuevamente.");
+    }
   }
 
   async function submitTag(event) {
     event.preventDefault();
-    const saved = await onSaveTag(tagForm);
-    if (saved) setTagForm(createTagForm(tags.length * 10 + 20));
+    setActionError("");
+
+    try {
+      const saved = await onSaveTag(tagForm);
+      if (saved) setTagForm(createTagForm(tags.length * 10 + 20));
+    } catch {
+      setActionError("No pudimos guardar el tag. Revisa tu conexión e inténtalo nuevamente.");
+    }
   }
 
   async function uploadBenefitIcon(event) {
@@ -731,16 +744,26 @@ export function CatalogParametersAdmin({
     if (!file) return;
 
     setUploading(true);
-    const uploaded = await onUploadBenefitIcon(file);
-    if (uploaded) {
+    setActionError("");
+
+    try {
+      const uploaded = await onUploadBenefitIcon(file);
+      if (!uploaded?.photoUrl) {
+        setActionError("No pudimos subir el ícono. Inténtalo nuevamente; tu beneficio sigue intacto.");
+        return;
+      }
+
       setBenefitForm((current) => ({
         ...current,
         iconUrl: uploaded.photoUrl,
         iconStoragePath: uploaded.photoStoragePath
       }));
+    } catch {
+      setActionError("No pudimos subir el ícono. Inténtalo nuevamente; tu beneficio sigue intacto.");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
     }
-    setUploading(false);
-    event.target.value = "";
   }
 
   return (
@@ -755,9 +778,9 @@ export function CatalogParametersAdmin({
         </button>
       </header>
 
-      {(message || error) && (
-        <p className={`backoffice-alert ${error ? "is-error" : "is-success"}`} role="status">
-          {error || message}
+      {(actionError || message || error) && (
+        <p className={`backoffice-alert ${actionError || error ? "is-error" : "is-success"}`} role="status">
+          {actionError || error || message}
         </p>
       )}
 

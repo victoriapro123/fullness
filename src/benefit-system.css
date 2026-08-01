@@ -48,7 +48,7 @@
   color: #74232e;
   font-family: var(--font-display);
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.075em;
   line-height: 1.24;
   overflow-wrap: anywhere;
@@ -154,7 +154,7 @@
   color: #d58a91;
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.1em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -213,7 +213,7 @@
   color: rgba(23, 17, 12, 0.76);
   font-family: var(--font-display);
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -234,7 +234,7 @@
   background: rgba(255, 250, 242, 0.8);
   font-family: var(--font-display);
   font-size: 0.62rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.065em;
   line-height: 1;
   text-transform: uppercase;
@@ -310,7 +310,7 @@
   color: rgba(23, 17, 12, 0.76);
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
@@ -376,7 +376,7 @@
   background: rgba(255, 250, 242, 0.82);
   font-family: var(--font-display);
   font-size: 0.67rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -453,7 +453,7 @@
   background: #fffaf2;
   font-family: var(--font-display);
   font-size: 0.66rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -485,7 +485,7 @@
   color: rgba(23, 17, 12, 0.76);
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }
@@ -580,7 +580,7 @@
   background: transparent;
   font-family: var(--font-display);
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.065em;
   text-transform: uppercase;
   cursor: pointer;
@@ -870,7 +870,7 @@
   gap: 6px;
   color: rgba(23, 17, 12, 0.72);
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .parameter-library-search > div {
@@ -1017,7 +1017,7 @@
   min-width: 0;
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.07em;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -1038,7 +1038,7 @@
   color: rgba(23, 17, 12, 0.72);
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.075em;
   text-transform: uppercase;
 }

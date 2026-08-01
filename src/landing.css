@@ -40,7 +40,7 @@
   letter-spacing: 0.16em;
   font-family: var(--font-display);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 600;
   background: rgba(120, 52, 42, 0.12);
 }
 
@@ -250,7 +250,7 @@
   color: #fff;
   font-family: var(--font-display);
   font-size: clamp(0.88rem, 1.05vw, 1.05rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.22em;
   line-height: 1;
   text-transform: uppercase;
@@ -341,7 +341,7 @@
   color: inherit;
   font-family: var(--font-display);
   font-size: clamp(0.94rem, 1.16vw, 1.22rem);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: 0.18em;
   text-align: left;
@@ -405,15 +405,28 @@
 /* Mobile intro: a single centered video plane with no textual overlays. */
 @media (max-width: 860px) {
   html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence {
-    height: 100svh;
-    min-height: 100svh;
+    height: 200svh;
+    min-height: 200svh;
+    overflow: visible;
   }
 
   html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence-stage {
-    position: relative;
+    position: sticky;
     top: 0;
     height: 100svh;
-    transition: opacity 360ms ease;
+  }
+
+  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .scroll-sequence-stage {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  html.intro-mobile-simple .scroll-sequence-stage::after {
+    display: block;
+    opacity: var(--mobile-intro-fade, 0);
+    background: #020403;
   }
 
   html.intro-mobile-simple .scroll-sequence-frame {
@@ -427,15 +440,25 @@
     display: none !important;
   }
 
-  html.intro-mobile-simple:not(.intro-scroll-consumed) .site-header,
-  html.intro-mobile-simple:not(.intro-scroll-consumed) .whatsapp-float {
+  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .site-header,
+  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .whatsapp-float,
+  html.intro-mobile-simple.intro-mobile-transition .site-header,
+  html.intro-mobile-simple.intro-mobile-transition .whatsapp-float {
     visibility: hidden;
     opacity: 0 !important;
     pointer-events: none !important;
   }
 
   html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: block !important;
+    width: 100%;
+    height: 100svh;
     opacity: 0;
+    pointer-events: none;
+    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   html.intro-mobile-simple.intro-scroll-consumed .plate-hero-copy > *,
@@ -443,14 +466,36 @@
     animation: none !important;
   }
 
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    transition:
+      opacity 980ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 980ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero {
+    opacity: 0.42;
+    transform: translate3d(0, 12svh, 0);
+  }
+
   html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout {
     opacity: 0 !important;
     animation: none !important;
-    transition: opacity 420ms ease !important;
+    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
 
   html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero-blackout {
     opacity: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero,
+  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage,
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout {
+    transition: none !important;
   }
 }
 
@@ -522,7 +567,7 @@
   border: 1px solid rgba(208, 173, 115, 0.66);
   border-radius: 0;
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
   transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
 }
@@ -567,7 +612,7 @@
 
 .plate-hero-signal .signal-title {
   font-size: clamp(0.78rem, 0.82vw, 0.94rem);
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.13em;
   line-height: 1.18;
 }
@@ -871,7 +916,7 @@
   color: #d6aa72;
   font-family: var(--font-display);
   font-size: clamp(1rem, 1.05vw, 1.18rem);
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.105em;
   text-transform: uppercase;
 }
@@ -1593,7 +1638,7 @@
 .plate-hero-copy .eyebrow {
   color: #b87878 !important;
   font-size: clamp(0.64rem, 0.58vw, 0.76rem) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.18em !important;
 }
 
@@ -1676,7 +1721,7 @@
   margin: 0 0 9px !important;
   color: #f4eadb !important;
   font-size: clamp(0.78rem, 0.8vw, 1rem) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.22 !important;
   text-transform: uppercase !important;
 }
@@ -2060,7 +2105,7 @@
   background: transparent !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.66rem, 0.68vw, 0.78rem) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.16em !important;
   line-height: 1.2 !important;
   text-transform: uppercase !important;
@@ -2116,7 +2161,7 @@
   margin-bottom: clamp(14px, 1.5vw, 22px) !important;
   font-family: var(--font-display) !important;
   font-size: clamp(0.76rem, 0.86vw, 1rem) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.22em !important;
   line-height: 1.18 !important;
   text-transform: uppercase !important;
@@ -2173,7 +2218,7 @@
 .hero-manifesto {
   color: var(--fullness-highlight) !important;
   font-family: var(--font-body) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .plate-hero-primary,
@@ -4295,7 +4340,7 @@
     color: var(--editorial-copper) !important;
     font-family: var(--font-display) !important;
     font-size: 0.72rem !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
     letter-spacing: 0.18em !important;
     line-height: 1.35 !important;
     text-transform: uppercase !important;
@@ -4309,5 +4354,42 @@
     right: -46vw !important;
     bottom: -20px !important;
     width: min(124vw, 484px) !important;
+  }
+}
+
+/* Mobile intro handoff: one continuous fade between the scroll-controlled video
+   and the hero. Keep this last so historical hero reveal rules cannot restart
+   text, plate, or blackout animations after the video ends. */
+@media (max-width: 860px) {
+  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage {
+    opacity: 0 !important;
+    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero {
+    opacity: 1 !important;
+    transform: translate3d(0, 0, 0) !important;
+    transition:
+      opacity 980ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+    will-change: opacity, transform;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero {
+    opacity: 0 !important;
+    transform: translate3d(0, 10svh, 0) !important;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout,
+  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero-blackout {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    animation: none !important;
+  }
+
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-copy > *,
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual,
+  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual-stage {
+    animation: none !important;
   }
 }
