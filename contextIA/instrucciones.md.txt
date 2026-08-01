@@ -910,3 +910,12 @@ Cambio:
 
 Impacto proactivo:
 - La jerarquía editorial debe resolverse con escala, espaciado, color y mayúsculas antes que subir peso tipográfico. Si aparece un nuevo texto que requiera contraste, usar `500` o `600`, nunca un bold superior.
+
+### QA de intro móvil y eyebrows 2026-07-31
+
+Cambio:
+- El video introductorio se omite en pantallas de hasta 860 px: su recorte vertical no conservaba una composición natural. La experiencia móvil entra directo al hero; el video de escritorio se conserva.
+- Los eyebrows editoriales del landing (`Nutrir desde la raíz`, `Nuestra filosofía` y `Alimentarse es`) usan una única escala, color cobre, mayúsculas y peso semibold. `Nuestra filosofía` no puede recibir una escala contextual mayor.
+
+Impacto proactivo:
+- Si se reintroduce un video móvil, debe existir un encuadre vertical dedicado y aprobarse mediante QA visual a 390 px antes de activarlo.

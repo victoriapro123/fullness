@@ -4393,3 +4393,25 @@
     animation: none !important;
   }
 }
+
+/* Contextual blocks inherit the landing eyebrow system without changing scale. */
+#proposito .eyebrow,
+.philosophy-story-combo .food-story-strip .eyebrow {
+  color: var(--fullness-highlight) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(0.76rem, 0.86vw, 1rem) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.22em !important;
+  line-height: 1.18 !important;
+  text-transform: uppercase !important;
+}
+
+@media (max-width: 860px) {
+  #proposito .eyebrow,
+  .philosophy-story-combo .food-story-strip .eyebrow {
+    color: var(--editorial-copper) !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.16em !important;
+    line-height: 1.35 !important;
+  }
+}

@@ -3080,23 +3080,21 @@ function IntroScrollSequence() {
       document.documentElement.classList.toggle("intro-mobile-simple", isMobileIntro);
 
       if (!isMobileIntro) {
-        document.documentElement.classList.remove("intro-mobile-transition", "intro-mobile-hero-reveal");
+        document.documentElement.classList.remove(
+          "intro-mobile-skip",
+          "intro-mobile-transition",
+          "intro-mobile-hero-reveal"
+        );
         sectionRef.current?.style.removeProperty("--mobile-intro-fade");
         syncHeaderVisibility();
         return;
       }
 
-      if (document.documentElement.classList.contains("intro-mobile-skip") || isIntroConsumed()) {
-        playbackRef.current = null;
-        setScrollLock(false);
-        resetSignals();
-        setVideoProgress(1, false);
-        setPosterFrameVisible(false);
-        setFinalFrameVisible(false);
-        syncHeaderVisibility();
-        return;
-      }
-
+      // The vertical crop of the opening sequence cannot preserve the desktop
+      // composition on narrow screens. Mobile enters the editorial hero directly
+      // instead of presenting a broken or partial video frame.
+      document.documentElement.classList.add("intro-mobile-skip");
+      document.documentElement.classList.remove("intro-mobile-transition", "intro-mobile-hero-reveal");
       playbackRef.current = null;
       setScrollLock(false);
       if (autoStartTimeout) {
@@ -3104,9 +3102,10 @@ function IntroScrollSequence() {
         autoStartTimeout = 0;
       }
       resetSignals();
-      setVideoProgress(0, false);
-      setPosterFrameVisible(true);
+      setVideoProgress(1, false);
+      setPosterFrameVisible(false);
       setFinalFrameVisible(false);
+      setIntroConsumed(true);
       jumpToScroll(0);
       syncHeaderVisibility();
     };
