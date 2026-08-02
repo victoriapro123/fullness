@@ -747,6 +747,14 @@ const introScrollVideoDuration = 15.04;
 const introMobileQuery = "(max-width: 860px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
+const isDocumentReload = () => {
+  if (typeof window === "undefined") return false;
+
+  const navigationEntry = window.performance?.getEntriesByType?.("navigation")?.[0];
+  if (navigationEntry?.type) return navigationEntry.type === "reload";
+
+  return window.performance?.navigation?.type === window.performance?.navigation?.TYPE_RELOAD;
+};
 const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
@@ -2921,13 +2929,9 @@ function IntroScrollSequence() {
   useEffect(() => {
     let animationFrame = 0;
     let autoStartTimeout = 0;
-    let mobileTransitionTimeout = 0;
-    let mobileTransitionCleanupTimeout = 0;
     let introIntentStarted = false;
     const playbackMs = 4000;
     const finalFrameHold = 0.16;
-    const mobileHandoffDelayMs = 120;
-    const mobileHandoffDurationMs = 980;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobileIntroMedia = window.matchMedia(introMobileQuery);
     const scrollBehaviorSnapshot = {
@@ -2967,7 +2971,7 @@ function IntroScrollSequence() {
     const setFinalFrameVisible = (visible) => {
       if (!finalFrameRef.current) return;
 
-      finalFrameRef.current.style.opacity = mobileIntroMedia.matches ? "0" : visible ? "1" : "0";
+      finalFrameRef.current.style.opacity = visible ? "1" : "0";
     };
 
     const setPosterFrameVisible = (visible) => {
@@ -3054,11 +3058,6 @@ function IntroScrollSequence() {
       const video = videoRef.current;
       progressRef.current = nextProgress;
 
-      if (mobileIntroMedia.matches && sectionRef.current) {
-        const exitFade = clampProgress((nextProgress - 0.72) / 0.28);
-        sectionRef.current.style.setProperty("--mobile-intro-fade", String(exitFade));
-      }
-
       setFinalFrameVisible(nextProgress >= 0.995);
       setPosterFrameVisible(nextProgress < 0.015);
 
@@ -3076,26 +3075,14 @@ function IntroScrollSequence() {
 
     };
 
-    const syncMobileIntroMode = () => {
-      const isMobileIntro = mobileIntroMedia.matches;
-      document.documentElement.classList.toggle("intro-mobile-simple", isMobileIntro);
-
-      if (!isMobileIntro) {
-        document.documentElement.classList.remove(
-          "intro-mobile-skip",
-          "intro-mobile-transition",
-          "intro-mobile-hero-reveal"
-        );
-        sectionRef.current?.style.removeProperty("--mobile-intro-fade");
+    const enforceIntroViewport = () => {
+      if (!mobileIntroMedia.matches) {
         syncHeaderVisibility();
         return;
       }
 
-      // The vertical crop of the opening sequence cannot preserve the desktop
-      // composition on narrow screens. Mobile enters the editorial hero directly
-      // instead of presenting a broken or partial video frame.
-      document.documentElement.classList.add("intro-mobile-skip");
-      document.documentElement.classList.remove("intro-mobile-transition", "intro-mobile-hero-reveal");
+      // The sequence is landscape. On narrow viewports we enter the hero directly
+      // rather than expose a cropped frame or a second mobile-only animation.
       playbackRef.current = null;
       setScrollLock(false);
       if (autoStartTimeout) {
@@ -3109,33 +3096,6 @@ function IntroScrollSequence() {
       setIntroConsumed(true);
       jumpToScroll(0);
       syncHeaderVisibility();
-    };
-
-    const revealMobileScrollIntro = () => {
-      if (
-        !mobileIntroMedia.matches ||
-        isIntroConsumed() ||
-        document.documentElement.classList.contains("intro-mobile-transition")
-      ) {
-        return;
-      }
-
-      document.documentElement.classList.add("intro-mobile-transition", "intro-mobile-hero-reveal");
-      mobileTransitionTimeout = window.setTimeout(() => {
-        setIntroConsumed(true);
-        jumpToScroll(0);
-        syncHeaderVisibility();
-        window.requestAnimationFrame(() => {
-          jumpToScroll(0);
-          window.requestAnimationFrame(() => {
-            jumpToScroll(0);
-            document.documentElement.classList.remove("intro-mobile-hero-reveal");
-          });
-        });
-        mobileTransitionCleanupTimeout = window.setTimeout(() => {
-          document.documentElement.classList.remove("intro-mobile-transition");
-        }, reducedMotion ? 0 : mobileHandoffDurationMs);
-      }, reducedMotion ? 0 : mobileHandoffDelayMs);
     };
 
     const finishPlayback = () => {
@@ -3331,25 +3291,9 @@ function IntroScrollSequence() {
     const handleScroll = () => {
       if (playbackRef.current) return;
 
-      const metrics = getMetrics();
-      if (
-        mobileIntroMedia.matches &&
-        !isIntroConsumed() &&
-        metrics &&
-        window.scrollY >= metrics.sectionTop + metrics.scrollDistance
-      ) {
-        setVideoProgress(1);
-        revealMobileScrollIntro();
-        return;
-      }
-
       if (isSequenceActive()) {
         const progress = getProgressFromScroll();
         setVideoProgress(progress);
-        if (mobileIntroMedia.matches && progress >= 0.995) {
-          revealMobileScrollIntro();
-          return;
-        }
       }
 
       syncHeaderVisibility();
@@ -3359,9 +3303,9 @@ function IntroScrollSequence() {
       setVideoProgress(progressRef.current);
     };
 
-    const handleIntroReset = () => {
+    const handleIntroReset = (event) => {
       if (mobileIntroMedia.matches) {
-        syncMobileIntroMode();
+        enforceIntroViewport();
         return;
       }
 
@@ -3385,20 +3329,18 @@ function IntroScrollSequence() {
       introIntentStarted = false;
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
+        autoStartTimeout = 0;
       }
-      if (mobileTransitionTimeout) {
-        window.clearTimeout(mobileTransitionTimeout);
-      }
-      if (mobileTransitionCleanupTimeout) {
-        window.clearTimeout(mobileTransitionCleanupTimeout);
-      }
-      autoStartTimeout = window.setTimeout(() => {
-        if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
-          markIntroIntent();
-          startPlayback(1);
-        }
-      }, 2000);
       syncHeaderVisibility();
+
+      if (event.detail?.autoplay) {
+        window.requestAnimationFrame(() => {
+          if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
+            markIntroIntent();
+            startPlayback(1);
+          }
+        });
+      }
     };
 
     const handleStartClick = (event) => {
@@ -3413,7 +3355,7 @@ function IntroScrollSequence() {
     };
 
     const handleMobileIntroChange = () => {
-      syncMobileIntroMode();
+      enforceIntroViewport();
     };
 
     const renderFrame = () => {
@@ -3451,7 +3393,7 @@ function IntroScrollSequence() {
       }
     };
 
-    syncMobileIntroMode();
+    enforceIntroViewport();
     if (!mobileIntroMedia.matches) {
       setVideoProgress(getProgressFromScroll());
       autoStartTimeout = window.setTimeout(() => {
@@ -3482,12 +3424,6 @@ function IntroScrollSequence() {
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
       }
-      if (mobileTransitionTimeout) {
-        window.clearTimeout(mobileTransitionTimeout);
-      }
-      if (mobileTransitionCleanupTimeout) {
-        window.clearTimeout(mobileTransitionCleanupTimeout);
-      }
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
       logoButtonRef.current?.removeEventListener("click", handleStartClick);
       skipButtonRef.current?.removeEventListener("click", handleSkipClick);
@@ -3507,10 +3443,6 @@ function IntroScrollSequence() {
       setScrollLock(false);
       resetSignals();
       document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing");
-      if (!mobileIntroMedia.matches) {
-        setIntroConsumed(false);
-        document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
-      }
     };
   }, []);
 
@@ -3861,6 +3793,9 @@ function App() {
   const [cartNotice, setCartNotice] = useState(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [headerHiddenForHero, setHeaderHiddenForHero] = useState(false);
+  const [introConsumed, setIntroConsumed] = useState(() =>
+    document.documentElement.classList.contains("intro-scroll-consumed")
+  );
   const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
@@ -4016,6 +3951,7 @@ function App() {
 
     if (productSlug) {
       document.documentElement.classList.add("intro-scroll-consumed");
+      setIntroConsumed(true);
       setHeaderHiddenForHero(false);
       return;
     }
@@ -4024,6 +3960,7 @@ function App() {
       window.history.replaceState(null, "", shopPath);
       setCurrentPath(shopPath);
       document.documentElement.classList.add("intro-scroll-consumed");
+      setIntroConsumed(true);
       setHeaderHiddenForHero(false);
       return;
     }
@@ -4035,6 +3972,7 @@ function App() {
       window.location.pathname === aboutPath
     ) {
       document.documentElement.classList.add("intro-scroll-consumed");
+      setIntroConsumed(true);
       setHeaderHiddenForHero(false);
       return;
     }
@@ -4043,18 +3981,28 @@ function App() {
       window.history.replaceState(null, "", "#proposito");
     }
 
-    if (isMobileIntroViewport() && !window.location.hash) {
-      document.documentElement.classList.remove("intro-scroll-consumed", "intro-mobile-skip");
-      setHeaderHiddenForHero(true);
+    if (isMobileIntroViewport() || isDocumentReload() || sectionHashes.has(window.location.hash)) {
+      document.documentElement.classList.add("intro-scroll-consumed");
+      setIntroConsumed(true);
+      setHeaderHiddenForHero(false);
       return;
     }
 
-    document.documentElement.classList.remove("intro-mobile-skip");
+    setIntroConsumed(document.documentElement.classList.contains("intro-scroll-consumed"));
+  }, []);
 
-    if (sectionHashes.has(window.location.hash)) {
-      document.documentElement.classList.add("intro-scroll-consumed");
-      setHeaderHiddenForHero(false);
-    }
+  useEffect(() => {
+    const syncIntroState = (event) => {
+      const consumed = event.detail?.consumed ?? document.documentElement.classList.contains("intro-scroll-consumed");
+      setIntroConsumed(Boolean(consumed));
+    };
+
+    syncIntroState({});
+    window.addEventListener("fullness:intro-state-change", syncIntroState);
+
+    return () => {
+      window.removeEventListener("fullness:intro-state-change", syncIntroState);
+    };
   }, []);
 
   useEffect(() => {
@@ -4259,9 +4207,6 @@ function App() {
     };
 
     document.documentElement.classList.add("intro-scroll-consumed");
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-mobile-skip");
-    }
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
@@ -4288,6 +4233,21 @@ function App() {
 
     return true;
   };
+
+  function replayIntro() {
+    if (isMobileIntroViewport() || window.location.pathname !== "/" || currentProductSlug) return;
+
+    setMenuOpen(false);
+    setCartOpen(false);
+    setAccountOpen(false);
+    setProductPreviewSlug("");
+    setMealPreview(null);
+    document.documentElement.classList.remove("intro-scroll-consumed", "intro-scroll-active", "intro-scroll-playing");
+    setIntroConsumed(false);
+    setHeaderHiddenForHero(true);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.dispatchEvent(new CustomEvent("fullness:intro-reset", { detail: { autoplay: true } }));
+  }
 
   function openCommunityPage(event) {
     event?.preventDefault();
@@ -4318,9 +4278,6 @@ function App() {
     setCartOpen(false);
     setAccountOpen(false);
     document.documentElement.classList.add("intro-scroll-consumed");
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-mobile-skip");
-    }
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
@@ -4341,9 +4298,6 @@ function App() {
     setCartOpen(false);
     setAccountOpen(false);
     document.documentElement.classList.add("intro-scroll-consumed");
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-mobile-skip");
-    }
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
@@ -4380,9 +4334,6 @@ function App() {
     setCartOpen(false);
     setAccountOpen(false);
     document.documentElement.classList.add("intro-scroll-consumed");
-    if (isMobileIntroViewport()) {
-      document.documentElement.classList.add("intro-mobile-skip");
-    }
     window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
     setHeaderHiddenForHero(false);
 
@@ -6636,6 +6587,7 @@ function App() {
   const isFaqPage = currentPath === faqPath && !currentProductSlug;
   const isAboutPage = currentPath === aboutPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
+  const showIntroReplay = currentPath === "/" && !currentProductSlug && introConsumed && !isMobileIntroViewport();
 
   useEffect(() => {
     const syncSeoHead = () => {
@@ -7723,6 +7675,18 @@ function App() {
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
+          {showIntroReplay && (
+            <button
+              className="intro-replay-button"
+              type="button"
+              onClick={replayIntro}
+              aria-label="Volver a ver animación"
+              title="Volver a ver animación"
+            >
+              <RefreshCw size={15} aria-hidden="true" />
+              <span>Volver a ver animación</span>
+            </button>
+          )}
           <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} />
             <span>{memberButtonLabel}</span>

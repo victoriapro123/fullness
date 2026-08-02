@@ -121,17 +121,8 @@
   overflow: hidden;
 }
 
-.intro-mobile-skip .scroll-sequence {
-  display: none;
-  height: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
 .intro-scroll-consumed .scroll-sequence::after,
-.intro-scroll-consumed .scroll-sequence-stage,
-.intro-mobile-skip .scroll-sequence::after,
-.intro-mobile-skip .scroll-sequence-stage {
+.intro-scroll-consumed .scroll-sequence-stage {
   display: none;
 }
 
@@ -284,8 +275,7 @@
 }
 
 .intro-scroll-playing .intro-skip-button,
-.intro-scroll-consumed .intro-skip-button,
-.intro-mobile-skip .intro-skip-button {
+.intro-scroll-consumed .intro-skip-button {
   opacity: 0;
   pointer-events: none;
 }
@@ -406,103 +396,6 @@
   .scroll-sequence-signal-layer .signal-title {
     font-size: 0.82rem;
     letter-spacing: 0.13em;
-  }
-}
-
-/* Mobile intro: a single centered video plane with no textual overlays. */
-@media (max-width: 860px) {
-  html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence {
-    height: 200svh;
-    min-height: 200svh;
-    overflow: visible;
-  }
-
-  html.intro-mobile-simple:not(.intro-scroll-consumed):not(.intro-mobile-skip) .scroll-sequence-stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-  }
-
-  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .scroll-sequence-stage {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  html.intro-mobile-simple .scroll-sequence-stage::after {
-    display: block;
-    opacity: var(--mobile-intro-fade, 0);
-    background: #020403;
-  }
-
-  html.intro-mobile-simple .scroll-sequence-frame {
-    object-fit: cover;
-    object-position: center center;
-  }
-
-  html.intro-mobile-simple .intro-start-logo,
-  html.intro-mobile-simple .intro-skip-button,
-  html.intro-mobile-simple .scroll-sequence-signal-layer {
-    display: none !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .site-header,
-  html.intro-mobile-simple.intro-scroll-active:not(.intro-scroll-consumed) .whatsapp-float,
-  html.intro-mobile-simple.intro-mobile-transition .site-header,
-  html.intro-mobile-simple.intro-mobile-transition .whatsapp-float {
-    visibility: hidden;
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
-
-  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: block !important;
-    width: 100%;
-    height: 100svh;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-copy > *,
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual-stage {
-    animation: none !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-    transition:
-      opacity 980ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 980ms cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero {
-    opacity: 0.42;
-    transform: translate3d(0, 12svh, 0);
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout {
-    opacity: 0 !important;
-    animation: none !important;
-    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero-blackout {
-    opacity: 1 !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero,
-  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage,
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout {
-    transition: none !important;
   }
 }
 
@@ -4361,43 +4254,6 @@
     right: -46vw !important;
     bottom: -20px !important;
     width: min(124vw, 484px) !important;
-  }
-}
-
-/* Mobile intro handoff: one continuous fade between the scroll-controlled video
-   and the hero. Keep this last so historical hero reveal rules cannot restart
-   text, plate, or blackout animations after the video ends. */
-@media (max-width: 860px) {
-  html.intro-mobile-simple.intro-mobile-transition .scroll-sequence-stage {
-    opacity: 0 !important;
-    transition: opacity 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero {
-    opacity: 1 !important;
-    transform: translate3d(0, 0, 0) !important;
-    transition:
-      opacity 980ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 980ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-    will-change: opacity, transform;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero {
-    opacity: 0 !important;
-    transform: translate3d(0, 10svh, 0) !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-blackout,
-  html.intro-mobile-simple.intro-scroll-consumed.intro-mobile-hero-reveal .plate-hero-blackout {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    animation: none !important;
-  }
-
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-copy > *,
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual,
-  html.intro-mobile-simple.intro-scroll-consumed .plate-hero-visual-stage {
-    animation: none !important;
   }
 }
 
