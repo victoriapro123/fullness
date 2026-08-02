@@ -4059,7 +4059,7 @@ function App() {
           ...payload.data,
           syncing: false,
           message: approved
-            ? "Recibimos tu pago y registramos los datos de entrega indicados."
+            ? "Recibimos tu pago y enviamos la confirmación de compra a tu correo."
             : "Mercado Pago dejo la operacion pendiente. Te avisaremos cuando cambie de estado."
         });
 

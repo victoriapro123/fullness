@@ -192,6 +192,13 @@
 - La vista rápida de un plan o plato debe mostrar siempre la foto completa con `object-fit: contain`, sobre fondo oscuro que continúe la fotografía; no usar `cover` si corta la caja o el plato.
 - En escritorio el lightbox usa una altura acotada y sólo su columna de contenido desplaza. En móvil el overlay completo inicia desde arriba y tiene scroll natural; el botón de cierre queda fijo y visible mientras se revisa una ficha larga. No centrar verticalmente un panel más alto que la pantalla, porque oculta el inicio y aparenta que no existe scroll.
 
+### Confirmaciones de compra 2026-08-02
+
+- Un pago `approved` de Mercado Pago dispara dos correos independientes y deduplicados en `email_deliveries`: `order_confirmation:<orden>` al cliente y `order_notification:<orden>` a operaciones. Ambos se ejecutan desde el mismo estado confirmado, tanto si llega por webhook como si se sincroniza al volver desde Checkout Pro.
+- El aviso operativo incluye número de orden, productos, total, datos de contacto, modalidad, dirección/comuna cuando aplica y notas. Producción usa `ORDER_NOTIFICATION_RECIPIENT=cecilia@fullnesslab.com`; no reemplazarlo por el correo de la persona compradora.
+- Si una entrega no es aceptada por Resend, el procesamiento devuelve error para conservar el evento de pago reintentable. Las entregas ya aceptadas no se duplican; las fallidas vuelven a intentarse en la siguiente sincronización del pago.
+- `npm run qa:checkout-emails` cubre el correo de cliente, el aviso a operaciones, la deduplicación y el desvío completo al destinatario de QA cuando `MERCADOPAGO_TEST_MODE=true`.
+
 ### Jerarquía tipográfica de fichas rápidas 2026-07-28
 
 - Las fichas rápidas de planes y platos no usan negrita como recurso de jerarquía. Encabezados auxiliares, tags, nombres de platos incluidos y acciones usan peso medio (`500`); el contraste editorial se construye con escala, color vino, mayúsculas y espaciado.

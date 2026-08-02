@@ -5,6 +5,7 @@ const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const RESEND_API_URL = "https://api.resend.com";
 const DEFAULT_SITE_URL = "https://fullnesslab.com";
 const DEFAULT_EMAIL_LOGO_URL = "https://pub-16818329ca464c2e9bff6605b2f520f4.r2.dev/assets/brand/fullness-lab-horizontal-contrast-2026.png";
+const DEFAULT_ORDER_NOTIFICATION_RECIPIENT = "cecilia@fullnesslab.com";
 let supabaseAdmin;
 
 export async function registerEmailSubscriber({email, name, phone}) {
@@ -97,6 +98,71 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
       ctaLabel: "Ver planes"
     })
   });
+}
+
+export async function sendOrderNotificationEmail({order, items, supabase}) {
+  await localEnvReady;
+  const customer = order.customer_snapshot || {};
+  const orderReference = formatOrderReference(order.id);
+  const amount = formatClp(order.total_clp);
+  const deliveryMode = customer.mode === "pickup" ? "Retiro en local" : "Despacho a domicilio";
+  const orderLines = (items || []).map((item) => `${item.quantity}x ${item.product_name}`);
+  const details = [
+    `Orden ${orderReference}`,
+    ...orderLines,
+    `Total: ${amount}`,
+    `Cliente: ${cleanText(customer.name) || "Por confirmar"}`,
+    `Correo: ${cleanText(customer.email) || "Por confirmar"}`,
+    `Teléfono: ${cleanText(customer.phone) || "Por confirmar"}`,
+    `Modalidad: ${deliveryMode}`,
+    ...(customer.mode === "delivery" ? [
+      `Dirección: ${cleanText(customer.address) || "Por confirmar"}`,
+      `Comuna: ${cleanText(customer.comuna) || "Por confirmar"}`
+    ] : []),
+    ...(cleanText(customer.instructions) ? [`Notas: ${cleanText(customer.instructions)}`] : [])
+  ];
+
+  return sendEmailOnce({
+    deliveryKey: `order-notification:${order.id}`,
+    kind: "order_notification",
+    recipientEmail: resolveRecipient(resolveOrderNotificationRecipient()),
+    orderId: order.id,
+    supabase,
+    subject: `Nuevo pedido pagado ${orderReference} · ${amount}`,
+    text: [
+      "Se aprobó un pago en Fullness Lab.",
+      "",
+      ...details,
+      "",
+      "Revisa la orden en el Backoffice para continuar con su preparación."
+    ].join("\n"),
+    html: renderEmail({
+      eyebrow: "Nuevo pedido pagado",
+      title: `Orden ${orderReference}`,
+      body: "El pago fue aprobado. Revisa sus datos y coordina la preparación, despacho o retiro.",
+      details,
+      ctaHref: siteUrl("/#backoffice"),
+      ctaLabel: "Abrir Backoffice"
+    })
+  });
+}
+
+export async function sendApprovedOrderEmails({order, items, supabase}) {
+  const [customer, operations] = await Promise.all([
+    sendOrderConfirmationEmail({order, items, supabase}),
+    sendOrderNotificationEmail({order, items, supabase})
+  ]);
+
+  const failures = [
+    !customer.sent && "la confirmación al cliente",
+    !operations.sent && "el aviso operativo"
+  ].filter(Boolean);
+
+  if (failures.length > 0) {
+    throw statusError(502, `No pudimos enviar ${failures.join(" y ")}. Se reintentará automáticamente.`);
+  }
+
+  return {customer, operations};
 }
 
 async function sendEmailOnce({
@@ -221,6 +287,14 @@ function resolveRecipient(email) {
   return email;
 }
 
+function resolveOrderNotificationRecipient() {
+  return cleanText(
+    process.env.ORDER_NOTIFICATION_RECIPIENT
+    || process.env.ORDER_CONFIRMATION_RECIPIENT
+    || DEFAULT_ORDER_NOTIFICATION_RECIPIENT
+  );
+}
+
 function renderEmail({eyebrow, title, body, details = [], ctaHref, ctaLabel}) {
   const detailList = details.length
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0;border-top:1px solid #3a302b;">${details.map((detail) => `<tr><td style="padding:11px 0;border-bottom:1px solid #3a302b;color:#d8cfc3;font-size:15px;line-height:1.55;">${escapeHtml(detail)}</td></tr>`).join("")}</table>`
@@ -237,6 +311,11 @@ function siteUrl(path = "/") {
 
 function formatClp(value) {
   return new Intl.NumberFormat("es-CL", {style: "currency", currency: "CLP", maximumFractionDigits: 0}).format(Number(value || 0));
+}
+
+function formatOrderReference(orderId) {
+  const normalized = cleanText(orderId).replace(/-/g, "").slice(0, 8).toUpperCase();
+  return normalized ? `#${normalized}` : "Fullness";
 }
 
 function escapeHtml(value) {

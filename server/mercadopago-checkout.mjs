@@ -1,7 +1,7 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 import {loadEnvFile} from "./r2-media.mjs";
-import {sendOrderConfirmationEmail} from "./transactional-email.mjs";
+import {sendApprovedOrderEmails} from "./transactional-email.mjs";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
@@ -305,15 +305,18 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     throw statusError(502, "No pudimos actualizar el estado de la orden.", orderUpdateError);
   }
 
+  let emailDelivery = null;
   if (paymentStatus === "approved") {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
       .select("product_name,quantity")
       .eq("order_id", order.id);
 
-    if (!emailItemsError) {
-      await sendOrderConfirmationEmail({order, items: emailItems || [], supabase});
+    if (emailItemsError) {
+      throw statusError(502, "No pudimos cargar los productos para confirmar la orden.", emailItemsError);
     }
+
+    emailDelivery = await sendApprovedOrderEmails({order, items: emailItems || [], supabase});
   }
 
   return {
@@ -322,7 +325,9 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     paymentId: String(payment.id),
     status: paymentStatus,
     statusDetail: cleanText(payment.status_detail),
-    total: Number(order.total_clp)
+    total: Number(order.total_clp),
+    customerConfirmationSent: Boolean(emailDelivery?.customer?.sent),
+    operationsNotificationSent: Boolean(emailDelivery?.operations?.sent)
   };
 }
 
