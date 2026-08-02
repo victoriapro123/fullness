@@ -97,7 +97,11 @@ function findMatchingDefinition(definitions, name) {
   ));
 }
 
-const benefitImagePrompt = "Crea una ilustración cuadrada 1:1 de un símbolo para el beneficio '[NOMBRE DEL BENEFICIO]' de Fullness Lab. Estilo editorial botánico contemporáneo, línea fina y orgánica en burdeo #762531 sobre fondo transparente. Sin texto, letras, números, marco ni sombras. Composición centrada, alto contraste, trazos limpios y legibles a tamaño pequeño. Entrega la imagen como PNG.";
+const benefitImagePromptTemplate = "Crea una ilustración cuadrada 1:1 de un símbolo para el beneficio '[NOMBRE DEL BENEFICIO]' de Fullness Lab. Estilo editorial botánico contemporáneo, línea fina y orgánica en burdeo #762531 sobre fondo transparente. Sin texto, letras, números, marco ni sombras. Composición centrada, alto contraste, trazos limpios y legibles a tamaño pequeño. Entrega la imagen como PNG.";
+
+function buildBenefitImagePrompt(name) {
+  return benefitImagePromptTemplate.replace("[NOMBRE DEL BENEFICIO]", cleanText(name) || "[NOMBRE DEL BENEFICIO]");
+}
 
 function QuickParameterDialog({
   kind,
@@ -123,6 +127,7 @@ function QuickParameterDialog({
   const isBenefit = kind === "benefit";
   const singular = isBenefit ? "beneficio" : "tag";
   const dialogTitleId = `quick-${kind}-title`;
+  const populatedBenefitImagePrompt = buildBenefitImagePrompt(name);
 
   useEffect(() => {
     setName("");
@@ -176,11 +181,11 @@ function QuickParameterDialog({
     let copied = false;
 
     try {
-      await navigator.clipboard.writeText(benefitImagePrompt);
+      await navigator.clipboard.writeText(populatedBenefitImagePrompt);
       copied = true;
     } catch {
       const temporaryField = document.createElement("textarea");
-      temporaryField.value = benefitImagePrompt;
+      temporaryField.value = populatedBenefitImagePrompt;
       temporaryField.setAttribute("readonly", "");
       temporaryField.style.position = "fixed";
       temporaryField.style.opacity = "0";
@@ -321,7 +326,7 @@ function QuickParameterDialog({
               )}
               <div className="quick-parameter-ai-prompt">
                 <p>Si vas a usar IA para la imagen, copia este prompt base</p>
-                <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={benefitImagePrompt} />
+                <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={populatedBenefitImagePrompt} />
                 <button type="button" onClick={copyBenefitImagePrompt}>
                   <Copy size={15} aria-hidden="true" />
                   Copiar prompt
