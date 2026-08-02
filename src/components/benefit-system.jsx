@@ -97,7 +97,7 @@ function findMatchingDefinition(definitions, name) {
   ));
 }
 
-const benefitImagePromptTemplate = `Diseña un ícono de interfaz cuadrado 1:1 para el beneficio "[NOMBRE DEL BENEFICIO]" de Fullness Lab. Es un recurso pequeño para web, pensado para leerse a unos 80 px: entrega un PNG transparente de 512 x 512 px, optimizado y liviano. Fullness Lab es una marca chilena de mealpreps de alimentación consciente: comida real, ingredientes naturales y nutrición funcional para el bienestar diario.
+const benefitImagePromptTemplate = `Diseña un ícono de interfaz cuadrado 1:1 para el beneficio "[NOMBRE DEL BENEFICIO]" de Fullness Lab. Es un recurso pequeño para web, pensado para leerse a unos 80 px: entrega un PNG transparente de 512 x 512 px, optimizado y liviano. La transparencia debe ser real, con canal alfa: el fondo debe quedar completamente vacío al poner el archivo sobre una página color crema. No dibujes ni simules un damero, cuadrícula, patrón gris/blanco, fondo blanco ni sombra. Fullness Lab es una marca chilena de mealpreps de alimentación consciente: comida real, ingredientes naturales y nutrición funcional para el bienestar diario.
 
 Traduce el beneficio a una sola metáfora natural y alimentaria, inspirada en un ingrediente, una planta, una raíz, una hoja, una semilla o un gesto de cuidado. No ilustres el concepto de forma literal ni uses iconografía genérica. El resultado debe sentirse parte de una colección editorial botánica ya existente: simple, serena y fácil de reconocer a tamaño pequeño.
 
