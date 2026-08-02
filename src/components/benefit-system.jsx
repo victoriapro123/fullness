@@ -13,6 +13,39 @@ import {
   X
 } from "lucide-react";
 
+const acceptedImageTypes = "image/avif,image/gif,image/jpeg,image/png,image/webp";
+
+export class BackofficeModuleErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  reset = () => {
+    this.setState({ hasError: false });
+    this.props.onRecover?.();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="backoffice-module-recovery" role="alert">
+          <p className="eyebrow">Parámetros</p>
+          <h3>No pudimos mostrar este módulo</h3>
+          <p>Tu sesión sigue activa. Vuelve a abrir los parámetros para continuar.</p>
+          <button className="primary-button" type="button" onClick={this.reset}>Reabrir parámetros</button>
+        </section>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function cleanText(value) {
   return String(value || "").trim();
 }
@@ -277,7 +310,7 @@ function QuickParameterDialog({
                 <label className="quick-parameter-upload">
                   <ImagePlus size={17} aria-hidden="true" />
                   {uploadingIcon ? "Subiendo imagen..." : "Subir imagen personalizada"}
-                  <input type="file" accept="image/*" onChange={uploadCustomIcon} disabled={saving || uploadingIcon} />
+                  <input type="file" accept={acceptedImageTypes} onChange={uploadCustomIcon} disabled={saving || uploadingIcon} />
                 </label>
               )}
               {customIcon && (
@@ -933,7 +966,7 @@ export function CatalogParametersAdmin({
                 <label className="upload-control">
                   <ImagePlus size={17} aria-hidden="true" />
                   {uploading ? "Subiendo…" : "Subir icono"}
-                  <input type="file" accept="image/*" onChange={uploadBenefitIcon} disabled={uploading || saving} />
+                  <input type="file" accept={acceptedImageTypes} onChange={uploadBenefitIcon} disabled={uploading || saving} />
                 </label>
                 <label>
                   URL del icono

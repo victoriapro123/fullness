@@ -8,6 +8,15 @@ const MEAL_LIBRARY_COLUMNS = "*";
 const BENEFIT_DEFINITION_COLUMNS = "*";
 const TAG_DEFINITION_COLUMNS = "*";
 const CUSTOMER_SUBSCRIPTION_COLUMNS = "*, plan:menu_items(id,name,plan_frequency)";
+const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const MAX_BENEFIT_ICON_BYTES = 3 * 1024 * 1024;
+const IMAGE_CONTENT_TYPES = new Set([
+  "image/avif",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+]);
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -597,6 +606,42 @@ function unavailableResult() {
   return { data: null, error: null, configured: false };
 }
 
+function imageContentTypeForFile(file) {
+  const reportedType = String(file?.type || "").toLowerCase();
+  if (IMAGE_CONTENT_TYPES.has(reportedType)) return reportedType;
+
+  const extension = String(file?.name || "").split(".").pop()?.toLowerCase();
+  return {
+    avif: "image/avif",
+    gif: "image/gif",
+    jpeg: "image/jpeg",
+    jpg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp"
+  }[extension] || "";
+}
+
+function validateImageUpload(file, folder) {
+  if (!file || typeof file.arrayBuffer !== "function") {
+    return new Error("Selecciona una imagen para continuar.");
+  }
+
+  const contentType = imageContentTypeForFile(file);
+  if (!contentType) {
+    return new Error("Elige una imagen PNG, WebP, JPEG, GIF o AVIF.");
+  }
+
+  const isBenefitIcon = String(folder || "").replace(/\/+$/, "") === "images/benefits";
+  const maxBytes = isBenefitIcon ? MAX_BENEFIT_ICON_BYTES : DEFAULT_MAX_UPLOAD_BYTES;
+  if (Number(file.size || 0) > maxBytes) {
+    return new Error(isBenefitIcon
+      ? "El ícono debe pesar como máximo 3 MB. Reduce su tamaño e inténtalo nuevamente."
+      : "La imagen supera el tamaño máximo permitido. Reduce su peso e inténtalo nuevamente.");
+  }
+
+  return null;
+}
+
 async function getConfiguredSupabase() {
   if (!isSupabaseConfigured) return null;
 
@@ -1029,30 +1074,53 @@ export async function deleteMenuItem(id) {
 
 export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
   try {
+    const validationError = validateImageUpload(file, folder);
+    if (validationError) return { data: null, error: validationError, configured: true };
+
     const { supabase, session } = await getAuthenticatedSupabase();
     if (!supabase) return unavailableResult();
 
     const base64 = await fileToBase64(file);
-    const response = await fetch("/api/upload-media", {
-      method: "POST",
-      headers: {
-        "authorization": `Bearer ${session.access_token}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        contentType: file.type || "image/jpeg",
-        dataBase64: base64,
-        fileName: file.name,
-        folder
-      })
-    });
+    const requestController = typeof AbortController === "undefined" ? null : new AbortController();
+    const timeoutId = requestController
+      ? setTimeout(() => requestController.abort(), 45000)
+      : null;
+    let response;
 
-    const payload = await response.json().catch(() => ({}));
+    try {
+      response = await fetch("/api/upload-media", {
+        method: "POST",
+        headers: {
+          "authorization": `Bearer ${session.access_token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          contentType: imageContentTypeForFile(file),
+          dataBase64: base64,
+          fileName: file.name,
+          folder
+        }),
+        signal: requestController?.signal
+      });
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+
+    const rawPayload = await response.text();
+    let payload = {};
+    try {
+      payload = rawPayload ? JSON.parse(rawPayload) : {};
+    } catch {
+      payload = {};
+    }
 
     if (!response.ok) {
+      const tooLarge = response.status === 413;
       return {
         data: null,
-        error: new Error(payload.error || "No pudimos subir la imagen a R2."),
+        error: new Error(payload.error || (tooLarge
+          ? "La imagen supera el tamaño máximo permitido. Reduce su peso e inténtalo nuevamente."
+          : "No pudimos subir la imagen a R2.")),
         configured: true
       };
     }
@@ -1066,9 +1134,12 @@ export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
       configured: true
     };
   } catch (error) {
+    const timedOut = error?.name === "AbortError";
     return {
       data: null,
-      error: error instanceof Error ? error : new Error("No pudimos preparar la imagen para subirla."),
+      error: timedOut
+        ? new Error("La carga tardó demasiado. Revisa tu conexión e inténtalo nuevamente.")
+        : error instanceof Error ? error : new Error("No pudimos preparar la imagen para subirla."),
       configured: true
     };
   }

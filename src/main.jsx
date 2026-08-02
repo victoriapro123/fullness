@@ -84,6 +84,7 @@ import {
 } from "./lib/analytics.js";
 import { updateSeoHead } from "./lib/seo.js";
 import {
+  BackofficeModuleErrorBoundary,
   BenefitAssignmentEditor,
   BenefitDetailLightbox,
   BenefitIconList,
@@ -9471,20 +9472,22 @@ function App() {
                     )}
 
                     {activeBackofficeModule === "parameters" && (
-                      <CatalogParametersAdmin
-                        benefits={benefitDefinitions}
-                        tags={tagDefinitions}
-                        loading={catalogParametersLoading}
-                        saving={catalogParametersSaving}
-                        message={catalogParametersMessage}
-                        error={catalogParametersError}
-                        onRefresh={() => refreshCatalogParameters()}
-                        onSaveBenefit={submitBenefitDefinition}
-                        onDeleteBenefit={removeBenefitDefinition}
-                        onSaveTag={submitTagDefinition}
-                        onDeleteTag={removeTagDefinition}
-                        onUploadBenefitIcon={uploadBenefitIcon}
-                      />
+                      <BackofficeModuleErrorBoundary onRecover={() => refreshCatalogParameters()}>
+                        <CatalogParametersAdmin
+                          benefits={benefitDefinitions}
+                          tags={tagDefinitions}
+                          loading={catalogParametersLoading}
+                          saving={catalogParametersSaving}
+                          message={catalogParametersMessage}
+                          error={catalogParametersError}
+                          onRefresh={() => refreshCatalogParameters()}
+                          onSaveBenefit={submitBenefitDefinition}
+                          onDeleteBenefit={removeBenefitDefinition}
+                          onSaveTag={submitTagDefinition}
+                          onDeleteTag={removeTagDefinition}
+                          onUploadBenefitIcon={uploadBenefitIcon}
+                        />
+                      </BackofficeModuleErrorBoundary>
                     )}
 
                     {activeBackofficeModule === "subscriptions" && (

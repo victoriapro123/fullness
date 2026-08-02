@@ -9,6 +9,7 @@ import {
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const DEFAULT_MAX_BENEFIT_ICON_BYTES = 3 * 1024 * 1024;
 const IMAGE_CONTENT_TYPES = new Set([
   "image/avif",
   "image/gif",
@@ -45,18 +46,22 @@ export default async function handler(req, res) {
       throw statusError(415, "Formato de imagen no soportado.");
     }
 
+    const folder = sanitizeFolder(body.folder || process.env.MULTIMEDIA_UPLOAD_PREFIX || "images/meal-preps");
     const buffer = Buffer.from(String(body.dataBase64 || ""), "base64");
-    const maxBytes = Number(process.env.MULTIMEDIA_MAX_UPLOAD_BYTES || DEFAULT_MAX_UPLOAD_BYTES);
+    const maxBytes = folder === "images/benefits"
+      ? Number(process.env.MULTIMEDIA_MAX_BENEFIT_ICON_BYTES || DEFAULT_MAX_BENEFIT_ICON_BYTES)
+      : Number(process.env.MULTIMEDIA_MAX_UPLOAD_BYTES || DEFAULT_MAX_UPLOAD_BYTES);
 
     if (!buffer.byteLength) {
       throw statusError(400, "La imagen está vacía.");
     }
 
     if (buffer.byteLength > maxBytes) {
-      throw statusError(413, "La imagen supera el tamaño máximo permitido.");
+      throw statusError(413, folder === "images/benefits"
+        ? "El ícono debe pesar como máximo 3 MB. Reduce su tamaño e inténtalo nuevamente."
+        : "La imagen supera el tamaño máximo permitido.");
     }
 
-    const folder = sanitizeFolder(body.folder || process.env.MULTIMEDIA_UPLOAD_PREFIX || "images/meal-preps");
     const extension = extensionForContentType(contentType, body.fileName);
     const randomId =
       typeof crypto !== "undefined" && crypto.randomUUID

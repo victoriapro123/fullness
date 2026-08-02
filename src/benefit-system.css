@@ -771,6 +771,41 @@
   margin: 0;
 }
 
+.backoffice-module-recovery {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid rgba(142, 38, 60, 0.24);
+  border-radius: 8px;
+  color: var(--ink);
+  background: rgba(255, 250, 242, 0.9);
+}
+
+.backoffice-module-recovery :is(.eyebrow, h3, p) {
+  margin: 0;
+}
+
+.backoffice-module-recovery h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.28rem, 2.2vw, 1.68rem);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.backoffice-module-recovery p:not(.eyebrow) {
+  max-width: 48ch;
+  color: rgba(23, 17, 12, 0.64);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.backoffice-module-recovery .primary-button {
+  min-height: 44px;
+  margin-top: 4px;
+}
+
 .catalog-parameters-heading,
 .parameter-section-heading,
 .parameter-form-heading {
