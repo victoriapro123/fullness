@@ -1,7 +1,7 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 import {loadEnvFile} from "./r2-media.mjs";
-import {sendApprovedOrderEmails} from "./transactional-email.mjs";
+import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
@@ -243,7 +243,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
   const supabase = getSupabaseAdmin();
   const {data: order, error: orderError} = await supabase
     .from("orders")
-    .select("id,total_clp,currency,customer_snapshot")
+    .select("id,status,total_clp,currency,customer_snapshot")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -317,6 +317,20 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     }
 
     emailDelivery = await sendApprovedOrderEmails({order, items: emailItems || [], supabase});
+  } else if (order.status !== orderUpdate.status) {
+    const {data: emailItems, error: emailItemsError} = await supabase
+      .from("order_items")
+      .select("product_name,quantity")
+      .eq("order_id", order.id);
+
+    if (!emailItemsError) {
+      await sendOrderStatusUpdateEmail({
+        order: {...order, ...orderUpdate},
+        items: emailItems || [],
+        nextStatus: orderUpdate.status,
+        supabase
+      });
+    }
   }
 
   return {
@@ -328,6 +342,98 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     total: Number(order.total_clp),
     customerConfirmationSent: Boolean(emailDelivery?.customer?.sent),
     operationsNotificationSent: Boolean(emailDelivery?.operations?.sent)
+  };
+}
+
+export async function refundMercadoPagoPayment({orderId}) {
+  await localEnvReady;
+
+  const cleanOrderId = cleanText(orderId);
+  if (!cleanOrderId) throw statusError(400, "No encontramos la orden a reembolsar.");
+
+  const supabase = getSupabaseAdmin();
+  const {data: order, error: orderError} = await supabase
+    .from("orders")
+    .select("id,status,payment_status,total_clp,currency,customer_snapshot,paid_at")
+    .eq("id", cleanOrderId)
+    .maybeSingle();
+
+  if (orderError || !order) throw statusError(404, "No encontramos la orden a reembolsar.", orderError);
+  if (["refunded", "cancelled"].includes(order.status) || order.payment_status === "refunded") {
+    throw statusError(409, "Esta orden ya fue cancelada o reembolsada.");
+  }
+
+  const {data: payment, error: paymentError} = await supabase
+    .from("payments")
+    .select("id,provider,provider_payment_id,status,transaction_amount_clp,currency,paid_at,raw_payload")
+    .eq("order_id", order.id)
+    .eq("provider", "mercado_pago")
+    .eq("status", "approved")
+    .order("paid_at", {ascending: false, nullsFirst: false})
+    .limit(1)
+    .maybeSingle();
+
+  if (paymentError) throw statusError(502, "No pudimos revisar el pago de la orden.", paymentError);
+  if (!payment?.provider_payment_id) {
+    throw statusError(422, "Sólo se pueden reembolsar pedidos con un pago aprobado por Mercado Pago.");
+  }
+
+  const paidAt = payment.paid_at || order.paid_at;
+  if (paidAt && Date.now() - new Date(paidAt).getTime() > 180 * 24 * 60 * 60 * 1000) {
+    throw statusError(422, "Mercado Pago permite reembolsos hasta 180 días después de aprobar el pago.");
+  }
+
+  const amount = Math.round(Number(payment.transaction_amount_clp || order.total_clp));
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw statusError(422, "No encontramos un monto válido para reembolsar.");
+  }
+
+  const providerRefund = await mercadoPagoRequest(
+    `/v1/payments/${encodeURIComponent(payment.provider_payment_id)}/refunds`,
+    {
+      body: {amount},
+      idempotencyKey: order.id,
+      method: "POST"
+    }
+  );
+
+  const {error: paymentUpdateError} = await supabase
+    .from("payments")
+    .update({
+      raw_payload: {
+        ...(payment.raw_payload && typeof payment.raw_payload === "object" ? payment.raw_payload : {}),
+        refund: providerRefund
+      },
+      status: "refunded",
+      status_detail: "refunded_by_backoffice"
+    })
+    .eq("id", payment.id);
+
+  if (paymentUpdateError) throw statusError(502, "Mercado Pago aprobó el reembolso, pero no pudimos registrarlo.", paymentUpdateError);
+
+  const {error: orderUpdateError} = await supabase
+    .from("orders")
+    .update({
+      delivery_status: "cancelled",
+      payment_status: "refunded",
+      status: "refunded"
+    })
+    .eq("id", order.id);
+
+  if (orderUpdateError) throw statusError(502, "Mercado Pago aprobó el reembolso, pero no pudimos actualizar la orden.", orderUpdateError);
+
+  return {
+    order: {
+      ...order,
+      delivery_status: "cancelled",
+      payment_status: "refunded",
+      status: "refunded"
+    },
+    payment: {
+      ...payment,
+      status: "refunded"
+    },
+    providerRefund
   };
 }
 
@@ -554,7 +660,7 @@ function buildItemDescription(product) {
   return [product.tag, product.serving_label].map(cleanText).filter(Boolean).join(" - ").slice(0, 250);
 }
 
-async function mercadoPagoRequest(path, {body, method = "GET"} = {}) {
+async function mercadoPagoRequest(path, {body, idempotencyKey = randomUUID(), method = "GET"} = {}) {
   const token = cleanText(process.env.MERCADOPAGO_ACCESS_TOKEN);
   if (!token) {
     throw statusError(500, "Falta configurar Mercado Pago.");
@@ -565,7 +671,7 @@ async function mercadoPagoRequest(path, {body, method = "GET"} = {}) {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": randomUUID()
+      "X-Idempotency-Key": idempotencyKey
     },
     body: body ? JSON.stringify(body) : undefined
   });
@@ -589,10 +695,10 @@ function orderUpdateForPayment(status, dateApproved) {
     return {status: "paid", payment_status: "approved", paid_at: dateApproved || new Date().toISOString()};
   }
   if (["rejected", "cancelled"].includes(status)) {
-    return {status: "cancelled", payment_status: status};
+    return {delivery_status: "cancelled", status: "cancelled", payment_status: status};
   }
   if (["refunded", "charged_back"].includes(status)) {
-    return {status: "refunded", payment_status: status};
+    return {delivery_status: "cancelled", status: "refunded", payment_status: status};
   }
   return {status: "pending_payment", payment_status: status};
 }

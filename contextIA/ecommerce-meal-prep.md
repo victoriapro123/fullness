@@ -199,6 +199,13 @@
 - Si una entrega no es aceptada por Resend, el procesamiento devuelve error para conservar el evento de pago reintentable. Las entregas ya aceptadas no se duplican; las fallidas vuelven a intentarse en la siguiente sincronización del pago.
 - `npm run qa:checkout-emails` cubre el correo de cliente, el aviso a operaciones, la deduplicación y el desvío completo al destinatario de QA cuando `MERCADOPAGO_TEST_MODE=true`.
 
+### Operación de pedidos 2026-08-02
+
+- El backoffice agrega un módulo propio de `Pedidos`: listado buscable con filtros de avance/pago, detalle de productos, datos del cliente y dirección, además de enlaces precompuestos a WhatsApp y `mailto:`. La información expuesta se limita a lo necesario para ejecutar el pedido.
+- La progresión operativa válida es `paid -> preparing -> ready -> out_for_delivery/delivered`, con cancelación desde cualquier estado en curso. `pending_payment` sólo se puede cancelar; los pedidos cancelados, reembolsados o entregados no vuelven hacia atrás desde la UI.
+- Cada transición manual se registra en `order_status_events` y dispara un correo de estado una sola vez. No duplicar la confirmación original cuando Mercado Pago mueve la orden a `paid`, porque la confirmación de pago ya cumple ese aviso.
+- El reembolso disponible en Backoffice es total: sólo se habilita cuando existe un pago Mercado Pago aprobado, usa `POST /v1/payments/{id}/refunds` con monto total y `X-Idempotency-Key` igual al UUID de la orden. Mercado Pago permite este reembolso hasta 180 días después de la aprobación y exige saldo disponible.
+
 ### Jerarquía tipográfica de fichas rápidas 2026-07-28
 
 - Las fichas rápidas de planes y platos no usan negrita como recurso de jerarquía. Encabezados auxiliares, tags, nombres de platos incluidos y acciones usan peso medio (`500`); el contraste editorial se construye con escala, color vino, mayúsculas y espaciado.

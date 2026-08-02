@@ -32,7 +32,7 @@ try {
     });
   };
 
-  const {sendApprovedOrderEmails} = await import("../server/transactional-email.mjs");
+  const {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} = await import("../server/transactional-email.mjs");
   const supabase = createEmailDeliveryStore();
   const order = {
     id: "620b9baa-8b74-4baf-8d30-3dd552ae1b6d",
@@ -67,6 +67,26 @@ try {
   assert.equal(duplicateDelivery.operations.duplicate, true);
   assert.equal(messages.length, 2, "Un reintento no debe reenviar correos aceptados.");
 
+  const statusDelivery = await sendOrderStatusUpdateEmail({
+    order,
+    items,
+    nextStatus: "preparing",
+    supabase
+  });
+  assert.equal(statusDelivery.sent, true);
+  assert.equal(messages.length, 3);
+  assert.equal(messages[2].to[0], "cliente@example.com");
+  assert.match(messages[2].subject, /preparando/i);
+
+  const duplicateStatusDelivery = await sendOrderStatusUpdateEmail({
+    order,
+    items,
+    nextStatus: "preparing",
+    supabase
+  });
+  assert.equal(duplicateStatusDelivery.duplicate, true);
+  assert.equal(messages.length, 3, "Un mismo cambio de estado no debe reenviar el correo.");
+
   process.env.MERCADOPAGO_TEST_MODE = "true";
   const sandboxSupabase = createEmailDeliveryStore();
   await sendApprovedOrderEmails({
@@ -74,10 +94,10 @@ try {
     items,
     supabase: sandboxSupabase
   });
-  assert.equal(messages[2].to[0], "qa@fullnesslab.com");
   assert.equal(messages[3].to[0], "qa@fullnesslab.com");
+  assert.equal(messages[4].to[0], "qa@fullnesslab.com");
 
-  console.log("Checkout email QA OK: confirmación cliente, aviso operativo, deduplicación y sandbox verificados.");
+  console.log("Checkout email QA OK: confirmación cliente, aviso operativo, cambios de estado, deduplicación y sandbox verificados.");
 } finally {
   globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnvironment)) {

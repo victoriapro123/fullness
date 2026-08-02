@@ -91,6 +91,7 @@ import {
   CatalogParametersAdmin,
   TagSelector
 } from "./components/benefit-system.jsx";
+import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
 import storyPlateCutoutSrc from "./assets/fullness-story-plate-vegetable-cutout.png";
@@ -3821,6 +3822,17 @@ function App() {
   const [operationsExporting, setOperationsExporting] = useState("");
   const [operationsMessage, setOperationsMessage] = useState("");
   const [operationsError, setOperationsError] = useState("");
+  const [backofficeOrders, setBackofficeOrders] = useState([]);
+  const [backofficeOrdersLoading, setBackofficeOrdersLoading] = useState(false);
+  const [backofficeOrdersError, setBackofficeOrdersError] = useState("");
+  const [backofficeOrdersMessage, setBackofficeOrdersMessage] = useState("");
+  const [backofficeOrderAction, setBackofficeOrderAction] = useState("");
+  const [backofficeOrderFilters, setBackofficeOrderFilters] = useState({
+    payment: "all",
+    progress: "pending",
+    query: ""
+  });
+  const [selectedBackofficeOrderId, setSelectedBackofficeOrderId] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoverySending, setRecoverySending] = useState(false);
   const [technicalTables, setTechnicalTables] = useState([]);
@@ -5615,6 +5627,112 @@ function App() {
     }
   }
 
+  async function loadBackofficeOrders({ silent = false } = {}) {
+    if (!activeIsAdmin) return;
+
+    if (!silent) {
+      setBackofficeOrdersLoading(true);
+      setBackofficeOrdersError("");
+      setBackofficeOrdersMessage("");
+    }
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/orders", {
+        headers: {authorization: `Bearer ${token}`}
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos cargar los pedidos.");
+
+      const orders = payload.data?.orders || [];
+      setBackofficeOrders(orders);
+      setSelectedBackofficeOrderId((current) =>
+        orders.some((order) => order.id === current) ? current : orders[0]?.id || ""
+      );
+    } catch (error) {
+      setBackofficeOrdersError(getSupabaseErrorMessage(error, "No pudimos cargar los pedidos."));
+    } finally {
+      if (!silent) setBackofficeOrdersLoading(false);
+    }
+  }
+
+  async function updateBackofficeOrderStatus(order, status) {
+    if (!order?.id || !status) return;
+
+    setBackofficeOrderAction(`status:${order.id}`);
+    setBackofficeOrdersError("");
+    setBackofficeOrdersMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/orders", {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({action: "update-status", orderId: order.id, status})
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos actualizar el pedido.");
+
+      const updatedOrder = payload.data?.order;
+      if (updatedOrder?.id) {
+        setBackofficeOrders((current) => current.map((item) => item.id === updatedOrder.id ? updatedOrder : item));
+      }
+      setBackofficeOrdersMessage(payload.data?.message || "Estado actualizado.");
+    } catch (error) {
+      setBackofficeOrdersError(getSupabaseErrorMessage(error, "No pudimos actualizar el pedido."));
+    } finally {
+      setBackofficeOrderAction("");
+    }
+  }
+
+  async function refundBackofficeOrder(order) {
+    if (!order?.id) return;
+
+    const total = new Intl.NumberFormat("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      maximumFractionDigits: 0
+    }).format(Number(order.totalClp || 0));
+    const confirmed = window.confirm(
+      `Solicitarás el reembolso completo de ${total} por Mercado Pago. Esta acción no se puede deshacer. ¿Continuar?`
+    );
+    if (!confirmed) return;
+
+    setBackofficeOrderAction(`refund:${order.id}`);
+    setBackofficeOrdersError("");
+    setBackofficeOrdersMessage("");
+
+    try {
+      const token = await getBackofficeAccessToken();
+      const response = await fetch("/api/backoffice/orders", {
+        method: "PATCH",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({action: "refund", orderId: order.id})
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) throw new Error(payload.error || "No pudimos solicitar el reembolso.");
+
+      const updatedOrder = payload.data?.order;
+      if (updatedOrder?.id) {
+        setBackofficeOrders((current) => current.map((item) => item.id === updatedOrder.id ? updatedOrder : item));
+      }
+      setBackofficeOrdersMessage(payload.data?.message || "Reembolso completo solicitado.");
+    } catch (error) {
+      setBackofficeOrdersError(getSupabaseErrorMessage(error, "No pudimos solicitar el reembolso."));
+    } finally {
+      setBackofficeOrderAction("");
+    }
+  }
+
   async function loadTechnicalTables() {
     if (!activeIsAdmin) return;
 
@@ -6254,6 +6372,12 @@ function App() {
   useEffect(() => {
     if (adminOpen && activeIsAdmin && activeBackofficeModule === "site-tools") {
       loadTechnicalTables();
+    }
+  }, [activeBackofficeModule, activeIsAdmin, adminOpen]);
+
+  useEffect(() => {
+    if (adminOpen && activeIsAdmin && activeBackofficeModule === "orders") {
+      loadBackofficeOrders();
     }
   }, [activeBackofficeModule, activeIsAdmin, adminOpen]);
 
@@ -7570,6 +7694,12 @@ function App() {
             label: "Clientes",
             description: `${activeSubscriptionCount} suscripciones activas`,
             Icon: Users
+          },
+          {
+            id: "orders",
+            label: "Pedidos",
+            description: `${backofficeOrders.filter((order) => !["delivered", "cancelled", "refunded"].includes(order.status)).length} pendientes`,
+            Icon: PackageCheck
           },
           {
             id: "web-content",
@@ -9490,6 +9620,23 @@ function App() {
                           <p className="backoffice-muted">Sin clientes para estos filtros.</p>
                         )}
                       </section>
+                    )}
+
+                    {activeBackofficeModule === "orders" && (
+                      <OrderOperationsAdmin
+                        actionKey={backofficeOrderAction}
+                        error={backofficeOrdersError}
+                        filters={backofficeOrderFilters}
+                        loading={backofficeOrdersLoading}
+                        message={backofficeOrdersMessage}
+                        onFiltersChange={setBackofficeOrderFilters}
+                        onRefresh={loadBackofficeOrders}
+                        onRefund={refundBackofficeOrder}
+                        onSelectOrder={setSelectedBackofficeOrderId}
+                        onUpdateStatus={updateBackofficeOrderStatus}
+                        orders={backofficeOrders}
+                        selectedOrderId={selectedBackofficeOrderId}
+                      />
                     )}
 
                     {activeBackofficeModule === "web-content" && webContentTab === "shop" && (

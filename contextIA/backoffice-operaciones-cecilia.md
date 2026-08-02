@@ -29,3 +29,11 @@ El acceso completo se limita al backoffice de Fullness. No concede entrada al da
 - La entrada directa al panel es `https://www.fullnesslab.com/#backoffice`.
 - La taxonomia definitiva del panel es `Mealpreps familiares`, `Planes` y `Mealpreps`, además de `Clientes`, `Parámetros`, `Contenido web`, `Respaldo y conexión` y `Operaciones`.
 - La contrasena temporal de la cuenta de prueba se roto el 2026-07-24 y se verifico su inicio de sesion; no registrar contrasenas en este documento.
+
+## Pedidos Y Seguimiento
+
+- El módulo `Pedidos` es la vista operativa de órdenes. Cecilia puede buscar pedidos, distinguir pendientes de completados, revisar productos, cliente, dirección, pago y modalidad de entrega sin acceder a Supabase.
+- Cada ficha construye enlaces directos de WhatsApp y correo con un mensaje predefinido que incluye el número y estado actual del pedido. No requiere guardar el teléfono en contactos.
+- Los cambios siguen una secuencia operativa acotada: pagado -> preparación -> listo -> en reparto o completado. Una cancelación es independiente del reembolso financiero.
+- Un reembolso es siempre completo, sólo se habilita con un pago Mercado Pago aprobado y requiere confirmación explícita. Usa una clave de idempotencia basada en la orden para no duplicar la operación.
+- Cada transición registrada en el backoffice genera un correo automático e idempotente al cliente. El pago aprobado conserva su correo de confirmación; los siguientes estados se guardan como `order-status:<orden>:<estado>` en `email_deliveries`.

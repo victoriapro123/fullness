@@ -100,6 +100,49 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
   });
 }
 
+export async function sendOrderStatusUpdateEmail({order, items, nextStatus, supabase}) {
+  await localEnvReady;
+
+  const customerEmail = cleanText(order.customer_snapshot?.email).toLowerCase();
+  if (!customerEmail) return {sent: false, skipped: true, reason: "missing-recipient"};
+
+  const update = orderStatusEmailCopy({order, nextStatus});
+  const orderReference = formatOrderReference(order.id);
+  const amount = formatClp(order.total_clp);
+  const itemLines = (items || []).map((item) => `${item.quantity}x ${item.product_name}`).join("\n");
+
+  return sendEmailOnce({
+    deliveryKey: `order-status:${order.id}:${nextStatus}`,
+    kind: "order_status_update",
+    recipientEmail: resolveRecipient(customerEmail),
+    orderId: order.id,
+    supabase,
+    subject: `${update.subject} · ${orderReference}`,
+    text: [
+      `Hola ${cleanText(order.customer_snapshot?.name) || ""},`,
+      "",
+      update.text,
+      itemLines,
+      "",
+      `Total: ${amount}`,
+      "",
+      "Fullness Lab"
+    ].filter(Boolean).join("\n"),
+    html: renderEmail({
+      eyebrow: "Actualización de pedido",
+      title: update.title,
+      body: update.text,
+      details: [
+        `Pedido ${orderReference}`,
+        ...((items || []).map((item) => `${item.quantity}x ${item.product_name}`)),
+        `Total: ${amount}`
+      ],
+      ctaHref: siteUrl("/tienda"),
+      ctaLabel: "Ver planes"
+    })
+  });
+}
+
 export async function sendOrderNotificationEmail({order, items, supabase}) {
   await localEnvReady;
   const customer = order.customer_snapshot || {};
@@ -293,6 +336,50 @@ function resolveOrderNotificationRecipient() {
     || process.env.ORDER_CONFIRMATION_RECIPIENT
     || DEFAULT_ORDER_NOTIFICATION_RECIPIENT
   );
+}
+
+function orderStatusEmailCopy({order, nextStatus}) {
+  const pickup = order.customer_snapshot?.mode === "pickup";
+  const copies = {
+    preparing: {
+      subject: "Estamos preparando tu pedido Fullness Lab",
+      title: "Tu pedido está en preparación.",
+      text: "Ya comenzamos a preparar tu pedido con mucho cuidado. Te avisaremos apenas esté listo."
+    },
+    ready: {
+      subject: "Tu pedido Fullness Lab está listo",
+      title: pickup ? "Tu pedido está listo para retiro." : "Tu pedido está listo.",
+      text: pickup
+        ? "Tu pedido ya está preparado y listo para que puedas retirarlo."
+        : "Tu pedido ya está preparado y estamos coordinando su despacho."
+    },
+    out_for_delivery: {
+      subject: "Tu pedido Fullness Lab va en camino",
+      title: "Tu pedido va en camino.",
+      text: "Tu pedido ya salió a despacho y pronto llegará a la dirección indicada."
+    },
+    delivered: {
+      subject: "Tu pedido Fullness Lab fue completado",
+      title: pickup ? "Tu retiro fue completado." : "Tu pedido fue entregado.",
+      text: "Esperamos que disfrutes esta experiencia pensada para nutrirte desde la raíz."
+    },
+    cancelled: {
+      subject: "Actualización de tu pedido Fullness Lab",
+      title: "Tu pedido fue cancelado.",
+      text: "Tu pedido fue cancelado. Si corresponde un reembolso, te avisaremos una vez que esté gestionado."
+    },
+    refunded: {
+      subject: "Tu reembolso Fullness Lab fue solicitado",
+      title: "Tu reembolso ya fue gestionado.",
+      text: "Solicitamos el reembolso completo a Mercado Pago. El abono se reflejará según los plazos de tu medio de pago."
+    }
+  };
+
+  return copies[nextStatus] || {
+    subject: "Actualización de tu pedido Fullness Lab",
+    title: "Tu pedido fue actualizado.",
+    text: "Actualizamos el estado de tu pedido. Si necesitas ayuda, puedes responder a este correo."
+  };
 }
 
 function renderEmail({eyebrow, title, body, details = [], ctaHref, ctaLabel}) {
