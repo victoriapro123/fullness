@@ -198,8 +198,7 @@ function QuickParameterDialog({
     setPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
   }
 
-  async function submitQuickDefinition(event) {
-    event.preventDefault();
+  async function submitQuickDefinition() {
     const trimmedName = cleanText(name);
 
     if (!trimmedName) {
@@ -251,6 +250,14 @@ function QuickParameterDialog({
     onClose();
   }
 
+  function handleQuickDefinitionKeyDown(event) {
+    if (event.key !== "Enter" || event.shiftKey || event.target?.tagName !== "INPUT" || event.target?.type !== "text") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    void submitQuickDefinition();
+  }
+
   return (
     <div
       className="overlay quick-parameter-lightbox"
@@ -261,7 +268,7 @@ function QuickParameterDialog({
         if (event.target === event.currentTarget && !saving && !uploadingIcon) onClose();
       }}
     >
-      <form className="quick-parameter-dialog" onSubmit={submitQuickDefinition}>
+      <section className="quick-parameter-dialog" onKeyDown={handleQuickDefinitionKeyDown}>
         <header>
           <div>
             <p className="eyebrow">Mientras editas este mealprep</p>
@@ -369,11 +376,11 @@ function QuickParameterDialog({
 
         <div className="quick-parameter-actions">
           <button type="button" onClick={onClose} disabled={saving || uploadingIcon}>Cancelar</button>
-          <button className="primary-button" type="submit" disabled={saving || uploadingIcon}>
+          <button className="primary-button" type="button" onClick={() => void submitQuickDefinition()} disabled={saving || uploadingIcon}>
             {saving ? "Guardando..." : `Crear y agregar ${singular}`}
           </button>
         </div>
-      </form>
+      </section>
     </div>
   );
 }
