@@ -1178,8 +1178,25 @@
   gap: 0;
 }
 
-.parameter-icon-control .upload-control {
-  margin-bottom: 8px;
+.parameter-icon-tools {
+  gap: 10px !important;
+  min-width: 0;
+}
+
+.parameter-icon-tools .quick-parameter-upload {
+  margin: 0;
+}
+
+.parameter-icon-tools .quick-parameter-ai-prompt {
+  margin: 0;
+}
+
+.parameter-icon-tools .quick-parameter-ai-prompt textarea {
+  min-height: 116px;
+}
+
+.parameter-icon-url {
+  margin: 0;
 }
 
 .parameter-form > .primary-button {

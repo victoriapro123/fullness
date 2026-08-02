@@ -103,6 +103,24 @@ function buildBenefitImagePrompt(name) {
   return benefitImagePromptTemplate.replace("[NOMBRE DEL BENEFICIO]", cleanText(name) || "[NOMBRE DEL BENEFICIO]");
 }
 
+async function copyText(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    const temporaryField = document.createElement("textarea");
+    temporaryField.value = value;
+    temporaryField.setAttribute("readonly", "");
+    temporaryField.style.position = "fixed";
+    temporaryField.style.opacity = "0";
+    document.body.appendChild(temporaryField);
+    temporaryField.select();
+    const copied = document.execCommand("copy");
+    temporaryField.remove();
+    return copied;
+  }
+}
+
 function QuickParameterDialog({
   kind,
   definitions,
@@ -178,23 +196,7 @@ function QuickParameterDialog({
   }
 
   async function copyBenefitImagePrompt() {
-    let copied = false;
-
-    try {
-      await navigator.clipboard.writeText(populatedBenefitImagePrompt);
-      copied = true;
-    } catch {
-      const temporaryField = document.createElement("textarea");
-      temporaryField.value = populatedBenefitImagePrompt;
-      temporaryField.setAttribute("readonly", "");
-      temporaryField.style.position = "fixed";
-      temporaryField.style.opacity = "0";
-      document.body.appendChild(temporaryField);
-      temporaryField.select();
-      copied = document.execCommand("copy");
-      temporaryField.remove();
-    }
-
+    const copied = await copyText(populatedBenefitImagePrompt);
     setPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
   }
 
@@ -731,6 +733,8 @@ export function CatalogParametersAdmin({
   const [tagSearch, setTagSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [benefitPromptCopyMessage, setBenefitPromptCopyMessage] = useState("");
+  const populatedBenefitImagePrompt = buildBenefitImagePrompt(benefitForm.name);
   const filteredBenefits = useMemo(() => {
     const query = cleanText(benefitSearch).toLocaleLowerCase("es");
     if (!query) return benefits;
@@ -809,6 +813,11 @@ export function CatalogParametersAdmin({
       setUploading(false);
       event.target.value = "";
     }
+  }
+
+  async function copyParameterBenefitImagePrompt() {
+    const copied = await copyText(populatedBenefitImagePrompt);
+    setBenefitPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
   }
 
   return (
@@ -974,13 +983,22 @@ export function CatalogParametersAdmin({
                   <ImagePlus size={28} aria-hidden="true" />
                 )}
               </figure>
-              <div>
-                <label className="upload-control">
+              <div className="parameter-icon-tools">
+                <label className="quick-parameter-upload">
                   <ImagePlus size={17} aria-hidden="true" />
-                  {uploading ? "Subiendo…" : "Subir icono"}
+                  {uploading ? "Subiendo imagen..." : "Subir imagen personalizada"}
                   <input type="file" accept={acceptedImageTypes} onChange={uploadBenefitIcon} disabled={uploading || saving} />
                 </label>
-                <label>
+                <div className="quick-parameter-ai-prompt">
+                  <p>Si vas a usar IA para la imagen, copia este prompt base</p>
+                  <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={populatedBenefitImagePrompt} />
+                  <button type="button" onClick={copyParameterBenefitImagePrompt}>
+                    <Copy size={15} aria-hidden="true" />
+                    Copiar prompt
+                  </button>
+                  {benefitPromptCopyMessage && <span role="status">{benefitPromptCopyMessage}</span>}
+                </div>
+                <label className="parameter-icon-url">
                   URL del icono
                   <input
                     required
