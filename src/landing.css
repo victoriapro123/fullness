@@ -89,8 +89,15 @@
   pointer-events: none;
 }
 
-.intro-scroll-active .site-header {
+.intro-scroll-active:not(.intro-scroll-consumed) .site-header {
   transform: translateY(-105%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The opening sequence is a full-bleed cinematic moment. */
+.intro-scroll-active:not(.intro-scroll-consumed) .whatsapp-float {
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
