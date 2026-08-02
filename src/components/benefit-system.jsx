@@ -97,7 +97,13 @@ function findMatchingDefinition(definitions, name) {
   ));
 }
 
-const benefitImagePromptTemplate = "Crea una ilustración cuadrada 1:1 de un símbolo para el beneficio '[NOMBRE DEL BENEFICIO]' de Fullness Lab. Estilo editorial botánico contemporáneo, línea fina y orgánica en burdeo #762531 sobre fondo transparente. Sin texto, letras, números, marco ni sombras. Composición centrada, alto contraste, trazos limpios y legibles a tamaño pequeño. Entrega la imagen como PNG.";
+const benefitImagePromptTemplate = `Diseña un ícono cuadrado 1:1 para el beneficio "[NOMBRE DEL BENEFICIO]" de Fullness Lab. Fullness Lab es una marca chilena de mealpreps de alimentación consciente: comida real, ingredientes naturales y nutrición funcional para el bienestar diario.
+
+Traduce el beneficio a una sola metáfora natural y alimentaria, inspirada en un ingrediente, una planta, una raíz, una hoja, una semilla o un gesto de cuidado. No ilustres el concepto de forma literal ni uses iconografía genérica. El resultado debe sentirse parte de una colección editorial botánica ya existente: simple, serena y fácil de reconocer a tamaño pequeño.
+
+Ejemplos de criterio: para "Fuerza", representa dos manos estilizadas sosteniendo una raíz o alimento natural pesado, no un bíceps ni un árbol complejo. Para "Regeneración Celular", representa una hélice biológica mínima formada por una rama joven y dos hojas, no una cadena científica detallada.
+
+Composición: un motivo central, máximo tres elementos principales, mucho espacio vacío y silueta clara. Ilustración monocromática en tinta burdeos #762531, línea orgánica fina y continua, estética editorial botánica contemporánea. Fondo transparente. Sin texto, letras, números, logo, marco, sombras, degradados, acuarela, color adicional, escena completa, árbol frondoso, exceso de ramas ni detalles pequeños. Entrega solamente el ícono como PNG con transparencia.`;
 
 function buildBenefitImagePrompt(name) {
   return benefitImagePromptTemplate.replace("[NOMBRE DEL BENEFICIO]", cleanText(name) || "[NOMBRE DEL BENEFICIO]");
