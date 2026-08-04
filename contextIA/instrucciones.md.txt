@@ -953,3 +953,12 @@ Impacto proactivo:
 - `Ir a Fullness` no puede saltar de inmediato al último cuadro: recorre los fotogramas pendientes en 3 segundos y reserva 1 segundo adicional para que el hero entre completo.
 - Al terminar el relevo, la apertura queda consumida y se colapsa fuera del documento. Al hacer scroll hacia arriba debe seguir viéndose el hero, nunca reaparecer el último cuadro. El único camino para restaurarla es `Volver a ver animación`.
 - La marca vertical oficial de Fullness se muestra también en la apertura móvil. La flecha de orientación conserva su animación aprobada, pero usa el doble de altura, grosor y resplandor.
+
+### Fluidez de la secuencia 2026-08-04
+
+- La apertura no puede esperar a que se descargue el cuadro exacto que el usuario ya alcanzó. Mantener un buffer amplio de WebP ya cargados y decodificados antes y después de la posición actual; al desplazarse rápido, mostrar el cuadro listo más cercano en la dirección de avance en vez de congelar el último.
+- El salto `Ir a Fullness` debe despachar todos los fotogramas pendientes y actualizar el cuadro desde su propio ciclo de animación, sin depender de eventos de scroll que los navegadores móviles pueden agrupar o retrasar.
+- Para el recorrido automático usar una curva seno de entrada/salida: progresiva al iniciar, constante en el centro y con detención gradual. No usar una curva de salida agresiva que dispare al comienzo y parezca aplicar un freno de mano al final.
+- El logo de la apertura es visual, no un control: no debe capturar gestos de arrastre ni retrasar el scroll táctil.
+- Escritorio conserva los cuadros de 1280×720. Móvil usa la misma secuencia recompuesta a 720×405 (`src/assets/scroll-intro-frames-mobile/`) para bajar la memoria de decodificación a menos de un tercio, sin cambiar el encuadre ni sustituirla por video.
+- La marca vertical sobre la apertura móvil usa el doble del tamaño base: 236 px de ancho mínimo y un límite proporcional de altura. No altera la marca de escritorio ni captura interacciones táctiles.

@@ -22,7 +22,7 @@ Puntos a destacar:
 
 - Antes del hero aparece una secuencia cinematográfica vinculada directamente al scroll. Al bajar, los 160 cuadros avanzan de forma continua; al subir, la animación retrocede de manera natural. Una flecha blanca de energía indica que hay que seguir bajando.
 - Al alcanzar el último cuadro, el sitio completa suavemente el último tramo hasta dejar el hero entero en pantalla, sin que aparezca un espacio negro. El botón `Ir a Fullness` recorre la secuencia en tres segundos y revela el hero durante un segundo adicional. Después, la animación queda cerrada y solo vuelve con `Volver a ver animación`.
-- La misma secuencia de fotogramas funciona en computador y móvil; en el teléfono llena el encuadre para mantener el plato protagonista. El MP4 original sigue resguardado como fuente y respaldo de la animación, sin reproducirse en la interfaz.
+- La misma secuencia de fotogramas funciona en computador y móvil; mantiene un buffer de cuadros preparado para que al deslizar o usar `Ir a Fullness` avance de manera continua. En el teléfono llena el encuadre para mantener el plato protagonista. El MP4 original sigue resguardado como fuente y respaldo de la animación, sin reproducirse en la interfaz.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.
 - Mensaje clave: el bienestar comienza desde adentro; no se cuentan calorias, se aprende a nutrirse.

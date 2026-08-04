@@ -284,8 +284,8 @@
   border-radius: 0;
   background: transparent;
   transform: translate(-50%, -50%);
-  cursor: pointer;
-  pointer-events: auto;
+  cursor: default;
+  pointer-events: none;
   transition: opacity 1600ms ease, transform 1600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -437,6 +437,11 @@
    escritorio, evita el parpadeo de seek del MP4 y permite volver atrás con el
    propio scroll. El video fuente se conserva, pero no participa en esta vista. */
 @media (max-width: 860px) {
+  .intro-start-logo {
+    width: clamp(236px, 60vw, 320px);
+    max-height: 68svh;
+  }
+
   html:not(.intro-scroll-consumed) .scroll-sequence {
     height: 400svh;
     min-height: 400svh;

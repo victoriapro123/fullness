@@ -755,6 +755,15 @@ const introScrollFrameSources = Object.entries(
 )
   .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
   .map(([, source]) => source);
+const introMobileFrameSources = Object.entries(
+  import.meta.glob("./assets/scroll-intro-frames-mobile/frame-*.webp", {
+    eager: true,
+    import: "default",
+    query: "?url"
+  })
+)
+  .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
+  .map(([, source]) => source);
 const introMobileQuery = "(max-width: 860px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
@@ -2998,21 +3007,29 @@ function IntroScrollSequence() {
   const requestedFrameIndexRef = useRef(0);
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
+  const introFrameSources =
+    isMobileIntroViewport() && introMobileFrameSources.length
+      ? introMobileFrameSources
+      : introScrollFrameSources;
 
   useEffect(() => {
     /* La apertura usa la misma secuencia de cuadros en todos los formatos. Así
        el avance responde directamente al scroll, sin los saltos de seek que
        producía el video nativo en pantallas táctiles. El MP4 original queda
        conservado como respaldo del material fuente. */
-    if (introScrollFrameSources.length) {
+    if (introFrameSources.length) {
       let animationFrame = 0;
       let autoHandoffFrame = 0;
       let completionFrame = 0;
       let autoHandoffRunning = false;
       let autoHandoffStarted = false;
+      let lastRequestedFrameIndex = 0;
       const frameCache = new Map();
       const root = document.documentElement;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const isMobileIntro = window.matchMedia("(max-width: 860px)").matches;
+      const frameBufferBehind = isMobileIntro ? 44 : 32;
+      const frameBufferAhead = isMobileIntro ? 80 : 64;
       const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
       const setHandoffState = (active) => {
         const wasActive = root.classList.contains("intro-scroll-handoff");
@@ -3040,13 +3057,14 @@ function IntroScrollSequence() {
         };
       };
       const loadFrame = (frameIndex) => {
-        if (frameIndex < 0 || frameIndex >= introScrollFrameSources.length) return null;
+        if (frameIndex < 0 || frameIndex >= introFrameSources.length) return null;
 
         const cachedFrame = frameCache.get(frameIndex);
         if (cachedFrame) return cachedFrame;
 
         const frame = new Image();
         frame.decoding = "async";
+        frame.fetchPriority = frameIndex <= frameBufferAhead ? "high" : "auto";
         const cacheEntry = { frame, ready: false };
         frameCache.set(frameIndex, cacheEntry);
 
@@ -3059,18 +3077,33 @@ function IntroScrollSequence() {
           }
 
           cacheEntry.ready = true;
-          if (requestedFrameIndexRef.current === frameIndex) {
+          if (Math.abs(requestedFrameIndexRef.current - frameIndex) <= 3) {
             scheduleRender();
           }
         };
-        frame.src = introScrollFrameSources[frameIndex];
+        frame.src = introFrameSources[frameIndex];
         return cacheEntry;
       };
-      const applyReadyFrame = (frameIndex) => {
-        const cachedFrame = loadFrame(frameIndex);
-        if (!cachedFrame?.ready || !sequenceFrameRef.current || frameIndexRef.current === frameIndex) return false;
+      const applyReadyFrame = (requestedFrameIndex, direction) => {
+        if (!sequenceFrameRef.current) return false;
 
-        frameIndexRef.current = frameIndex;
+        const preferredOffset = direction >= 0 ? -1 : 1;
+        const candidateIndexes = [requestedFrameIndex];
+        for (let offset = 1; offset <= frameBufferAhead; offset += 1) {
+          candidateIndexes.push(requestedFrameIndex + preferredOffset * offset);
+        }
+
+        const readyFrameIndex = candidateIndexes.find((frameIndex) => {
+          const cachedFrame = loadFrame(frameIndex);
+          return cachedFrame?.ready;
+        });
+
+        if (readyFrameIndex == null || frameIndexRef.current === readyFrameIndex) return false;
+
+        const cachedFrame = frameCache.get(readyFrameIndex);
+        if (!cachedFrame) return false;
+
+        frameIndexRef.current = readyFrameIndex;
         sequenceFrameRef.current.src = cachedFrame.frame.currentSrc || cachedFrame.frame.src;
         return true;
       };
@@ -3078,8 +3111,8 @@ function IntroScrollSequence() {
         for (let index = start; index <= end; index += 1) loadFrame(index);
       };
       const retainNearbyFrames = (frameIndex) => {
-        const firstKeptFrame = Math.max(0, frameIndex - 18);
-        const lastKeptFrame = Math.min(introScrollFrameSources.length - 1, frameIndex + 30);
+        const firstKeptFrame = Math.max(0, frameIndex - frameBufferBehind);
+        const lastKeptFrame = Math.min(introFrameSources.length - 1, frameIndex + frameBufferAhead);
 
         frameCache.forEach((_, cachedIndex) => {
           if (cachedIndex < firstKeptFrame || cachedIndex > lastKeptFrame) {
@@ -3088,15 +3121,20 @@ function IntroScrollSequence() {
         });
       };
       const setFrame = (progress) => {
-        if (!introScrollFrameSources.length || !sequenceFrameRef.current) return;
+        if (!introFrameSources.length || !sequenceFrameRef.current) return;
 
         const nextProgress = clampProgress(progress);
-        const nextFrameIndex = Math.round(nextProgress * (introScrollFrameSources.length - 1));
+        const nextFrameIndex = Math.round(nextProgress * (introFrameSources.length - 1));
+        const direction = nextFrameIndex >= lastRequestedFrameIndex ? 1 : -1;
         progressRef.current = nextProgress;
         requestedFrameIndexRef.current = nextFrameIndex;
-        retainNearbyFrames(nextFrameIndex);
-        preloadFrameRange(nextFrameIndex - 8, nextFrameIndex + 24);
-        applyReadyFrame(nextFrameIndex);
+        lastRequestedFrameIndex = nextFrameIndex;
+        /* Durante el salto mantenemos la secuencia completa viva. Así no se
+           descarta un cuadro que el precargador acaba de preparar antes de que
+           el avance automático llegue a él. */
+        if (!autoHandoffRunning) retainNearbyFrames(nextFrameIndex);
+        preloadFrameRange(nextFrameIndex - frameBufferBehind, nextFrameIndex + frameBufferAhead);
+        applyReadyFrame(nextFrameIndex, direction);
       };
       const cancelAutoHandoff = () => {
         if (!autoHandoffRunning) return;
@@ -3111,6 +3149,7 @@ function IntroScrollSequence() {
         autoHandoffRunning = false;
         root.classList.remove("intro-scroll-auto-handoff", "intro-scroll-active");
         root.classList.add("intro-scroll-consumed");
+        frameCache.clear();
         setHandoffState(false);
         setReplayReady(false);
         window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
@@ -3137,7 +3176,10 @@ function IntroScrollSequence() {
 
         autoHandoffStarted = true;
         autoHandoffRunning = true;
-        preloadFrameRange(Math.max(0, introScrollFrameSources.length - 12), introScrollFrameSources.length - 1);
+        /* El salto recorre los cuadros durante varios segundos. Despachamos el
+           material pendiente completo antes de mover el viewport y el buffer
+           cercano conserva los cuadros ya decodificados en cada sentido. */
+        preloadFrameRange(0, introFrameSources.length - 1);
         root.classList.add("intro-scroll-auto-handoff");
 
         if (reducedMotion) {
@@ -3150,10 +3192,11 @@ function IntroScrollSequence() {
           const startedAt = performance.now();
           const advance = (now) => {
             const progress = Math.min(1, (now - startedAt) / duration);
-            const eased = 1 - Math.pow(1 - progress, 4);
+            const eased = 0.5 - Math.cos(Math.PI * progress) / 2;
             const nextScrollTop = from + (to - from) * eased;
 
             window.scrollTo(0, nextScrollTop);
+            setFrame((nextScrollTop - metrics.sectionTop) / metrics.scrollDistance);
             if (progress < 1) {
               autoHandoffFrame = window.requestAnimationFrame(advance);
               return;
@@ -3249,7 +3292,7 @@ function IntroScrollSequence() {
         cancelAutoHandoff();
       };
 
-      preloadFrameRange(0, Math.min(39, introScrollFrameSources.length - 1));
+      preloadFrameRange(0, Math.min(frameBufferAhead, introFrameSources.length - 1));
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         root.classList.add("intro-scroll-consumed");
@@ -3933,7 +3976,7 @@ function IntroScrollSequence() {
         <img
           ref={sequenceFrameRef}
           className="scroll-sequence-frame scroll-sequence-image-frame"
-          src={introScrollFrameSources[0]}
+          src={introFrameSources[0]}
           alt=""
           aria-hidden="true"
           decoding="async"
