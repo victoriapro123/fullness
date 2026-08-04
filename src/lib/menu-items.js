@@ -484,6 +484,15 @@ export function mapShopSettings(row) {
     subscriptionCtaLabel: row.subscription_cta_label || "",
     subscriptionBenefits: Array.isArray(row.subscription_benefits) ? row.subscription_benefits : [],
     subscriptionComparison: normalizeComparisonRows(row.subscription_comparison),
+    lightboxEnabled: row.lightbox_enabled === undefined ? true : Boolean(row.lightbox_enabled),
+    lightboxEyebrow: row.lightbox_eyebrow || "",
+    lightboxTitle: row.lightbox_title || "",
+    lightboxBody: row.lightbox_body || "",
+    lightboxCtaLabel: row.lightbox_cta_label || "",
+    lightboxSecondaryCtaLabel: row.lightbox_secondary_cta_label || "",
+    lightboxSuccessCtaLabel: row.lightbox_success_cta_label || "",
+    lightboxBackgroundUrl: row.lightbox_background_url || "",
+    lightboxBackgroundStoragePath: row.lightbox_background_storage_path || "",
     updatedAt: row.updated_at || ""
   };
 }
@@ -598,7 +607,18 @@ function buildShopSettingsPayload(input) {
     subscription_body: nullableText(input.subscriptionBody || input.subscription_body),
     subscription_cta_label: nullableText(input.subscriptionCtaLabel || input.subscription_cta_label),
     subscription_benefits: normalizeTextList(input.subscriptionBenefits || input.subscription_benefits),
-    subscription_comparison: normalizeComparisonRows(input.subscriptionComparison || input.subscription_comparison)
+    subscription_comparison: normalizeComparisonRows(input.subscriptionComparison || input.subscription_comparison),
+    lightbox_enabled: input.lightboxEnabled === undefined && input.lightbox_enabled === undefined
+      ? true
+      : Boolean(input.lightboxEnabled ?? input.lightbox_enabled),
+    lightbox_eyebrow: nullableText(input.lightboxEyebrow || input.lightbox_eyebrow),
+    lightbox_title: nullableText(input.lightboxTitle || input.lightbox_title),
+    lightbox_body: nullableText(input.lightboxBody || input.lightbox_body),
+    lightbox_cta_label: nullableText(input.lightboxCtaLabel || input.lightbox_cta_label),
+    lightbox_secondary_cta_label: nullableText(input.lightboxSecondaryCtaLabel || input.lightbox_secondary_cta_label),
+    lightbox_success_cta_label: nullableText(input.lightboxSuccessCtaLabel || input.lightbox_success_cta_label),
+    lightbox_background_url: nullableText(input.lightboxBackgroundUrl || input.lightbox_background_url),
+    lightbox_background_storage_path: nullableText(input.lightboxBackgroundStoragePath || input.lightbox_background_storage_path)
   };
 }
 
@@ -1046,21 +1066,25 @@ export async function saveMenuItem(input) {
 }
 
 export async function saveShopSettings(input) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const payload = buildShopSettingsPayload(input);
-  const { data, error } = await supabase
-    .from("ecommerce_shop_settings")
-    .upsert(payload, { onConflict: "id" })
-    .select(SHOP_SETTINGS_COLUMNS)
-    .single();
+    const payload = buildShopSettingsPayload(input);
+    const { data, error } = await supabase
+      .from("ecommerce_shop_settings")
+      .upsert(payload, { onConflict: "id" })
+      .select(SHOP_SETTINGS_COLUMNS)
+      .single();
 
-  if (error) {
+    if (error) {
+      return { data: null, error, configured: true };
+    }
+
+    return { data: mapShopSettings(data), error: null, configured: true };
+  } catch (error) {
     return { data: null, error, configured: true };
   }
-
-  return { data: mapShopSettings(data), error: null, configured: true };
 }
 
 export async function deleteMenuItem(id) {

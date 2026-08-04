@@ -1090,7 +1090,16 @@ function createDefaultShopSettings() {
       { label: "Menús", subscription: "4 semanas", weekly: "1 semana" },
       { label: "Prioridad", subscription: "Sí", weekly: "No" },
       { label: "Flexibilidad", subscription: "Cancela cuando quieras", weekly: "Compra cuando quieras" }
-    ]
+    ],
+    lightboxEnabled: true,
+    lightboxEyebrow: "Experiencia Fullness",
+    lightboxTitle: "Nutre tu cuerpo. Reconecta con tu esencia.",
+    lightboxBody: "Suscríbete a Fullness Lab y recibe novedades, planes y experiencias pensadas para nutrirte desde la raíz.",
+    lightboxCtaLabel: "Quiero ser parte",
+    lightboxSecondaryCtaLabel: "Conocer la experiencia",
+    lightboxSuccessCtaLabel: "Descubre nuestros planes",
+    lightboxBackgroundUrl: communitySceneSrc,
+    lightboxBackgroundStoragePath: ""
   };
 }
 
@@ -1184,6 +1193,54 @@ function parseShopSettingsForm(form) {
     heroMetrics: form.heroMetrics,
     subscriptionBenefits: form.subscriptionBenefits,
     subscriptionComparison: parseShopComparisonRows(form.subscriptionComparison)
+  };
+}
+
+function createSubscriptionPopupSettingsFromShopSettings(settings = createDefaultShopSettings()) {
+  const merged = mergeShopSettings(settings);
+
+  return normalizeSubscriptionPopupSettings({
+    backgroundStoragePath: merged.lightboxBackgroundStoragePath,
+    backgroundUrl: merged.lightboxBackgroundUrl,
+    body: merged.lightboxBody,
+    ctaLabel: merged.lightboxCtaLabel,
+    enabled: merged.lightboxEnabled,
+    eyebrow: merged.lightboxEyebrow,
+    secondaryCtaLabel: merged.lightboxSecondaryCtaLabel,
+    successCtaLabel: merged.lightboxSuccessCtaLabel,
+    title: merged.lightboxTitle
+  });
+}
+
+function hasPersistedSubscriptionPopupSettings(settings = {}) {
+  if (settings.lightboxEnabled === false) return true;
+
+  return [
+    settings.lightboxEyebrow,
+    settings.lightboxTitle,
+    settings.lightboxBody,
+    settings.lightboxCtaLabel,
+    settings.lightboxSecondaryCtaLabel,
+    settings.lightboxSuccessCtaLabel,
+    settings.lightboxBackgroundUrl,
+    settings.lightboxBackgroundStoragePath
+  ].some((value) => String(value || "").trim());
+}
+
+function mergeSubscriptionPopupIntoShopSettings(settings, popupSettings) {
+  const popup = normalizeSubscriptionPopupSettings(popupSettings);
+
+  return {
+    ...mergeShopSettings(settings),
+    lightboxBackgroundStoragePath: popup.backgroundStoragePath,
+    lightboxBackgroundUrl: popup.backgroundUrl,
+    lightboxBody: popup.body,
+    lightboxCtaLabel: popup.ctaLabel,
+    lightboxEnabled: popup.enabled,
+    lightboxEyebrow: popup.eyebrow,
+    lightboxSecondaryCtaLabel: popup.secondaryCtaLabel,
+    lightboxSuccessCtaLabel: popup.successCtaLabel,
+    lightboxTitle: popup.title
   };
 }
 
@@ -4064,8 +4121,10 @@ function App() {
     setActiveBackofficeModule("web-content");
   }, [activeBackofficeModule]);
   const [subscriptionPopupUploading, setSubscriptionPopupUploading] = useState(false);
+  const [subscriptionPopupSaving, setSubscriptionPopupSaving] = useState(false);
   const [subscriptionPopupAdminMessage, setSubscriptionPopupAdminMessage] = useState("");
   const [subscriptionPopupAdminError, setSubscriptionPopupAdminError] = useState("");
+  const subscriptionPopupImageInputRef = useRef(null);
   const subscriptionPopupTimerRef = useRef(null);
   const subscriptionPopupOpenedRef = useRef(false);
   const [accessMode, setAccessMode] = useState(() => {
@@ -6126,8 +6185,19 @@ function App() {
       if (ignore || result.error || !result.configured || !result.data) return;
 
       const merged = mergeShopSettings(result.data);
+      const popupSettings = hasPersistedSubscriptionPopupSettings(result.data)
+        ? createSubscriptionPopupSettingsFromShopSettings(merged)
+        : loadStoredSubscriptionPopupSettings();
       setShopSettings(merged);
       setShopSettingsForm(createShopSettingsForm(merged));
+      setSubscriptionPopupSettings(popupSettings);
+      setSubscriptionPopupForm(popupSettings);
+
+      try {
+        window.localStorage.setItem(subscriptionPopupStorageKey, JSON.stringify(popupSettings));
+      } catch {
+        // The remote configuration is the source of truth; the local cache is optional.
+      }
     }
 
     loadShopSettings();
@@ -7133,7 +7203,10 @@ function App() {
 
     setSubscriptionPopupForm((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
+      ...(name === "backgroundUrl" && value !== current.backgroundUrl
+        ? { backgroundStoragePath: "" }
+        : {})
     }));
     setSubscriptionPopupAdminMessage("");
     setSubscriptionPopupAdminError("");
@@ -7147,24 +7220,29 @@ function App() {
     setSubscriptionPopupAdminMessage("");
     setSubscriptionPopupAdminError("");
 
-    const result = await uploadMenuPhoto(file);
+    try {
+      const result = await uploadMenuPhoto(file, "images/lightbox");
 
-    if (result.error || !result.configured) {
-      setSubscriptionPopupAdminError(getSupabaseErrorMessage(result.error, "No pudimos subir la imagen del lightbox."));
-    } else {
+      if (result.error || !result.configured || !result.data) {
+        setSubscriptionPopupAdminError(getPhotoUploadErrorMessage(result.error, "No pudimos subir la imagen del lightbox."));
+        return;
+      }
+
       setSubscriptionPopupForm((current) => ({
         ...current,
         backgroundUrl: result.data.photoUrl,
         backgroundStoragePath: result.data.photoStoragePath
       }));
-      setSubscriptionPopupAdminMessage("Imagen del lightbox cargada.");
+      setSubscriptionPopupAdminMessage("Imagen cargada. Guarda el lightbox para publicarla.");
+    } catch (error) {
+      setSubscriptionPopupAdminError(getPhotoUploadErrorMessage(error, "No pudimos subir la imagen del lightbox."));
+    } finally {
+      setSubscriptionPopupUploading(false);
+      event.target.value = "";
     }
-
-    setSubscriptionPopupUploading(false);
-    event.target.value = "";
   }
 
-  function submitSubscriptionPopupSettings(event) {
+  async function submitSubscriptionPopupSettings(event) {
     event.preventDefault();
 
     if (!activeIsAdmin) {
@@ -7172,26 +7250,45 @@ function App() {
       return;
     }
 
-    const nextSettings = normalizeSubscriptionPopupSettings(subscriptionPopupForm);
+    setSubscriptionPopupSaving(true);
+    setSubscriptionPopupAdminError("");
+    setSubscriptionPopupAdminMessage("");
 
     try {
-      window.localStorage.setItem(subscriptionPopupStorageKey, JSON.stringify(nextSettings));
-    } catch {
-      setSubscriptionPopupAdminError("No pudimos guardar la configuración en este navegador.");
-      return;
-    }
+      const nextSettings = normalizeSubscriptionPopupSettings(subscriptionPopupForm);
+      const result = await saveShopSettings(
+        mergeSubscriptionPopupIntoShopSettings(shopSettings, nextSettings)
+      );
 
-    setSubscriptionPopupSettings(nextSettings);
-    setSubscriptionPopupForm(nextSettings);
-    setSubscriptionPopupAdminError("");
-    setSubscriptionPopupAdminMessage("Lightbox guardado.");
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos guardar el lightbox en el servidor.");
+      }
+
+      const mergedShopSettings = mergeShopSettings(result.data);
+      const persistedPopupSettings = createSubscriptionPopupSettingsFromShopSettings(mergedShopSettings);
+      setShopSettings(mergedShopSettings);
+      setShopSettingsForm(createShopSettingsForm(mergedShopSettings));
+      setSubscriptionPopupSettings(persistedPopupSettings);
+      setSubscriptionPopupForm(persistedPopupSettings);
+
+      try {
+        window.localStorage.setItem(subscriptionPopupStorageKey, JSON.stringify(persistedPopupSettings));
+      } catch {
+        // The saved server state is already active even when the browser cache is unavailable.
+      }
+
+      setSubscriptionPopupAdminMessage("Lightbox guardado y publicado.");
+    } catch (error) {
+      setSubscriptionPopupAdminError(getSupabaseErrorMessage(error, "No pudimos guardar el lightbox en el servidor."));
+    } finally {
+      setSubscriptionPopupSaving(false);
+    }
   }
 
   function resetSubscriptionPopupSettings() {
-    const defaults = createDefaultSubscriptionPopupSettings();
-    setSubscriptionPopupForm(defaults);
+    setSubscriptionPopupForm(subscriptionPopupSettings);
     setSubscriptionPopupAdminError("");
-    setSubscriptionPopupAdminMessage("Configuración restaurada para revisar antes de guardar.");
+    setSubscriptionPopupAdminMessage("Configuración guardada recuperada para revisar.");
   }
 
   function submitCommunityMember(event) {
@@ -9956,11 +10053,24 @@ function App() {
                                   <UploadCloud size={28} />
                                 )}
                               </div>
-                              <label className="upload-control">
+                              <button
+                                className="upload-control"
+                                type="button"
+                                onClick={() => subscriptionPopupImageInputRef.current?.click()}
+                                disabled={subscriptionPopupUploading || subscriptionPopupSaving}
+                              >
                                 <UploadCloud size={18} />
-                                {subscriptionPopupUploading ? "Subiendo…" : "Subir fondo"}
-                                <input type="file" accept="image/*" onChange={handleSubscriptionPopupBackgroundChange} disabled={subscriptionPopupUploading} />
-                              </label>
+                                {subscriptionPopupUploading ? "Subiendo imagen…" : "Elegir imagen"}
+                              </button>
+                              <input
+                                ref={subscriptionPopupImageInputRef}
+                                className="lightbox-file-input"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+                                onChange={handleSubscriptionPopupBackgroundChange}
+                                disabled={subscriptionPopupUploading || subscriptionPopupSaving}
+                              />
+                              <p className="website-content-image-hint">JPG, PNG, WEBP, GIF o AVIF. Máximo 8 MB.</p>
                             </div>
                             <label className="website-content-url-field">
                               URL imagen de fondo
@@ -9970,14 +10080,14 @@ function App() {
                         </section>
 
                         <footer className="website-content-actions is-split">
-                          <p>Restaurar recupera los valores previamente guardados.</p>
+                          <p>La imagen queda publicada al guardar el lightbox.</p>
                           <div>
-                            <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings}>
+                            <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings} disabled={subscriptionPopupUploading || subscriptionPopupSaving}>
                               Restaurar
                             </button>
-                            <button className="primary-button" type="submit" disabled={subscriptionPopupUploading}>
-                              <Save size={18} />
-                              Guardar lightbox
+                            <button className="primary-button" type="submit" disabled={subscriptionPopupUploading || subscriptionPopupSaving}>
+                              {subscriptionPopupSaving ? <RefreshCw size={18} /> : <Save size={18} />}
+                              {subscriptionPopupSaving ? "Guardando…" : "Guardar lightbox"}
                             </button>
                           </div>
                         </footer>

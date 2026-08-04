@@ -192,6 +192,12 @@
 - La vista rápida de un plan o plato debe mostrar siempre la foto completa con `object-fit: contain`, sobre fondo oscuro que continúe la fotografía; no usar `cover` si corta la caja o el plato.
 - En escritorio el lightbox usa una altura acotada y sólo su columna de contenido desplaza. En móvil el overlay completo inicia desde arriba y tiene scroll natural; el botón de cierre queda fijo y visible mientras se revisa una ficha larga. No centrar verticalmente un panel más alto que la pantalla, porque oculta el inicio y aparenta que no existe scroll.
 
+### Lightbox De Suscripción 2026-08-03
+
+- La configuración del lightbox es contenido remoto de `ecommerce_shop_settings`, no un ajuste exclusivo de `localStorage`. Incluye visibilidad, textos, CTAs, URL de fondo y clave R2 para que el resultado se conserve entre equipos, sesiones y recargas.
+- En Backoffice > Contenido web > Lightbox, usar el botón explícito `Elegir imagen` para abrir el selector de archivos del sistema. La carga usa R2 bajo `images/lightbox/` y sólo se publica al pulsar `Guardar lightbox`; después de subir, la interfaz debe decirlo con claridad.
+- El guardado de tienda/lightbox refresca la sesión antes de escribir para evitar que una sesión vencida se perciba como pérdida de datos. Validar cada cambio con recarga de la página y lectura de la fila `main` en Supabase.
+
 ### Confirmaciones de compra 2026-08-02
 
 - Un pago `approved` de Mercado Pago dispara dos correos independientes y deduplicados en `email_deliveries`: `order_confirmation:<orden>` al cliente y `order_notification:<orden>` a operaciones. Ambos se ejecutan desde el mismo estado confirmado, tanto si llega por webhook como si se sincroniza al volver desde Checkout Pro.
