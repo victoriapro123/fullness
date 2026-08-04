@@ -20,7 +20,8 @@ Usar siempre este puerto para presentar y revisar la demo local.
 
 Puntos a destacar:
 
-- Antes del hero aparece una secuencia cinematográfica vinculada directamente al scroll. Al bajar, los 160 cuadros avanzan de forma continua; al subir, la animación retrocede de manera natural. El sitio no bloquea el desplazamiento y, al terminar la secuencia, el hero y la banda siguiente suben sobre el último cuadro con el mismo fondo negro opaco de la página.
+- Antes del hero aparece una secuencia cinematográfica vinculada directamente al scroll. Al bajar, los 160 cuadros avanzan de forma continua; al subir, la animación retrocede de manera natural. Una flecha blanca de energía indica que hay que seguir bajando.
+- Al alcanzar el último cuadro, el sitio completa suavemente el último tramo hasta dejar el hero entero en pantalla, sin que aparezca un espacio negro. El botón `Ir a Fullness` permite llegar a ese mismo punto de inmediato.
 - La misma secuencia de fotogramas funciona en computador y móvil; en el teléfono llena el encuadre para mantener el plato protagonista. El MP4 original sigue resguardado como fuente y respaldo de la animación, sin reproducirse en la interfaz.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.

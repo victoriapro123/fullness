@@ -935,3 +935,15 @@ Cambio:
 Impacto proactivo:
 - Todo nuevo panel, tabla o carril horizontal debe reordenar su contenido por breakpoint antes de necesitar desplazamiento, pero nunca usar `overflow-x: hidden` o `clip` para ocultar contenido funcional.
 - Al cambiar formularios del Backoffice, verificar que los elementos hijos tengan `min-width: 0`, que la barra vertical quede disponible y que el desplazamiento horizontal automático actúe como respaldo cuando realmente haga falta.
+
+### Nota 2026-08-04 — Orientación y relevo del intro
+
+Cambio:
+- La secuencia de apertura usa los 160 cuadros WebP en escritorio y móvil; el MP4 original continúa guardado solo como respaldo del material fuente.
+- Durante el scrub aparece una flecha blanca con una línea de energía que se carga hacia abajo. Es una señal visual sin texto y desaparece al entrar al relevo; se detiene para `prefers-reduced-motion`.
+- El control visible `Ir a Fullness` lleva al mismo relevo que el final natural de la secuencia. Al llegar al último cuadro, el sitio completa automáticamente solo el último viewport de scroll hasta que el hero queda entero en pantalla, sobre el cuadro final y sin una franja negra intermedia.
+- Una rueda, toque o tecla del usuario cancela el avance automático y mantiene el scroll manual disponible. Con movimiento reducido, el relevo llega directamente al hero.
+
+Impacto proactivo:
+- No aumentar el tramo automático ni usarlo para recorrer contenido editorial: su única función es cerrar el último cuadro de la apertura y dejar el hero totalmente visible.
+- Si cambia la duración o la altura de `.scroll-sequence`, mantener el destino en el final real de la sección para que el hero empiece en `top: 0` al concluir.

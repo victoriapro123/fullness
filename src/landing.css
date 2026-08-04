@@ -250,7 +250,6 @@
   .scroll-sequence-poster-frame,
   .scroll-sequence-final-frame,
   .intro-start-logo,
-  .intro-skip-button,
   .scroll-sequence-signal-layer {
     display: none;
   }
@@ -304,36 +303,38 @@
 .intro-skip-button {
   position: absolute;
   z-index: 7;
-  top: calc(50% + clamp(210px, 26svh, 310px));
-  left: 50%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
+  right: clamp(20px, 3vw, 42px);
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, 0.96);
+  background: rgba(2, 4, 3, 0.32);
   font-family: var(--font-display);
-  font-size: clamp(0.88rem, 1.05vw, 1.05rem);
+  font-size: clamp(0.64rem, 0.72vw, 0.76rem);
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   line-height: 1;
   text-transform: uppercase;
-  transform: translateX(-50%);
+  opacity: 0;
   cursor: pointer;
-  pointer-events: auto;
-  transition: color 220ms ease, opacity 420ms ease, transform 220ms ease;
+  pointer-events: none;
+  transition: color 220ms ease, border-color 220ms ease, background-color 220ms ease, opacity 260ms ease, transform 220ms ease;
 }
 
 .intro-skip-button:hover {
   color: rgb(216, 177, 112);
-  transform: translateX(-50%) translateY(-2px);
+  border-color: rgb(216, 177, 112);
+  background: rgba(2, 4, 3, 0.56);
+  transform: translateY(-2px);
 }
 
 .intro-skip-button:focus-visible {
   outline: 1px solid rgb(216, 177, 112);
   outline-offset: 8px;
-}
-
-.intro-skip-label-mobile {
-  display: none;
 }
 
 .intro-scroll-playing .intro-start-logo {
@@ -343,9 +344,93 @@
 }
 
 .intro-scroll-playing .intro-skip-button,
+.intro-scroll-handoff .intro-skip-button,
+.intro-scroll-auto-handoff .intro-skip-button,
 .intro-scroll-consumed .intro-skip-button {
   opacity: 0;
   pointer-events: none;
+}
+
+.intro-scroll-active:not(.intro-scroll-consumed):not(.intro-scroll-handoff):not(.intro-scroll-auto-handoff) .intro-skip-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.intro-scroll-cue {
+  position: absolute;
+  z-index: 6;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  width: 28px;
+  height: 64px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 220ms ease;
+}
+
+.intro-scroll-cue::before {
+  width: 1px;
+  height: 38px;
+  content: "";
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.98) 50%, rgba(255, 255, 255, 0));
+  box-shadow: 0 0 13px rgba(255, 255, 255, 0.7);
+  animation: intro-scroll-energy 1.6s cubic-bezier(0.54, 0, 0.32, 1) infinite;
+}
+
+.intro-scroll-cue span {
+  width: 10px;
+  height: 10px;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.96);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.96);
+  box-shadow: 3px 3px 10px rgba(255, 255, 255, 0.38);
+  transform: rotate(45deg);
+  animation: intro-scroll-chevron 1.6s cubic-bezier(0.54, 0, 0.32, 1) infinite;
+}
+
+.intro-scroll-active:not(.intro-scroll-consumed):not(.intro-scroll-handoff):not(.intro-scroll-auto-handoff) .intro-scroll-cue {
+  opacity: 1;
+}
+
+@keyframes intro-scroll-energy {
+  0% {
+    opacity: 0.18;
+    transform: scaleY(0.2);
+    transform-origin: top;
+  }
+
+  48% {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+
+  100% {
+    opacity: 0.12;
+    transform: translateY(10px) scaleY(0.36);
+    transform-origin: bottom;
+  }
+}
+
+@keyframes intro-scroll-chevron {
+  0%,
+  28% {
+    opacity: 0.2;
+    transform: translateY(-5px) rotate(45deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(2px) rotate(45deg);
+  }
+
+  100% {
+    opacity: 0.16;
+    transform: translateY(7px) rotate(45deg);
+  }
 }
 
 /* En móvil se reutiliza el scrub de cuadros: conserva el avance natural del
@@ -374,9 +459,15 @@
   .scroll-sequence-poster-frame,
   .scroll-sequence-final-frame,
   .intro-start-logo,
-  .intro-skip-button,
   .scroll-sequence-signal-layer {
     display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-scroll-cue::before,
+  .intro-scroll-cue span {
+    animation: none;
   }
 }
 

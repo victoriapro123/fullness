@@ -3006,8 +3006,12 @@ function IntroScrollSequence() {
        conservado como respaldo del material fuente. */
     if (introScrollFrameSources.length) {
       let animationFrame = 0;
+      let autoHandoffFrame = 0;
+      let autoHandoffRunning = false;
+      let autoHandoffStarted = false;
       const frameCache = new Map();
       const root = document.documentElement;
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
       const setHandoffState = (active) => {
         const wasActive = root.classList.contains("intro-scroll-handoff");
@@ -3093,6 +3097,66 @@ function IntroScrollSequence() {
         preloadFrameRange(nextFrameIndex - 8, nextFrameIndex + 24);
         applyReadyFrame(nextFrameIndex);
       };
+      const cancelAutoHandoff = () => {
+        if (!autoHandoffRunning) return;
+
+        window.cancelAnimationFrame(autoHandoffFrame);
+        autoHandoffFrame = 0;
+        autoHandoffRunning = false;
+        root.classList.remove("intro-scroll-auto-handoff");
+      };
+      const startAutoHandoff = ({ skip = false } = {}) => {
+        if (autoHandoffRunning || root.classList.contains("intro-scroll-consumed")) return;
+
+        const metrics = getMetrics();
+        if (!metrics) return;
+
+        const targetScrollTop = metrics.sectionEnd;
+        const startScrollTop = window.scrollY;
+        if (targetScrollTop <= startScrollTop + 1) {
+          window.scrollTo(0, targetScrollTop);
+          scheduleRender();
+          return;
+        }
+
+        autoHandoffStarted = true;
+        autoHandoffRunning = true;
+        preloadFrameRange(Math.max(0, introScrollFrameSources.length - 12), introScrollFrameSources.length - 1);
+        setFrame(1);
+        setHandoffState(true);
+        setReplayReady(true);
+        root.classList.add("intro-scroll-auto-handoff");
+
+        if (reducedMotion) {
+          window.scrollTo(0, targetScrollTop);
+          autoHandoffRunning = false;
+          root.classList.remove("intro-scroll-auto-handoff");
+          scheduleRender();
+          return;
+        }
+
+        const duration = skip ? 680 : 880;
+        const startedAt = performance.now();
+        const advance = (now) => {
+          const progress = Math.min(1, (now - startedAt) / duration);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          const nextScrollTop = startScrollTop + (targetScrollTop - startScrollTop) * eased;
+
+          window.scrollTo(0, nextScrollTop);
+          if (progress < 1) {
+            autoHandoffFrame = window.requestAnimationFrame(advance);
+            return;
+          }
+
+          window.scrollTo(0, targetScrollTop);
+          autoHandoffFrame = 0;
+          autoHandoffRunning = false;
+          root.classList.remove("intro-scroll-auto-handoff");
+          scheduleRender();
+        };
+
+        autoHandoffFrame = window.requestAnimationFrame(advance);
+      };
       const renderFromScroll = () => {
         animationFrame = 0;
         if (root.classList.contains("intro-scroll-consumed")) {
@@ -3113,16 +3177,27 @@ function IntroScrollSequence() {
           setReplayReady(true);
         } else if (window.scrollY < handoffStart - 2) {
           setReplayReady(false);
+          if (!autoHandoffRunning) autoHandoffStarted = false;
         }
         root.classList.toggle(
           "intro-scroll-active",
           window.scrollY >= metrics.sectionTop - 2 && window.scrollY < metrics.sectionEnd - 2
         );
+
+        if (
+          progress >= 0.998 &&
+          window.scrollY < metrics.sectionEnd - 2 &&
+          !autoHandoffStarted
+        ) {
+          startAutoHandoff();
+        }
       };
       const scheduleRender = () => {
         if (!animationFrame) animationFrame = window.requestAnimationFrame(renderFromScroll);
       };
       const handleReset = () => {
+        cancelAutoHandoff();
+        autoHandoffStarted = false;
         root.classList.remove(
           "intro-scroll-consumed",
           "intro-scroll-active",
@@ -3138,6 +3213,13 @@ function IntroScrollSequence() {
         window.scrollTo({ top: sectionRef.current?.offsetTop || 0, left: 0, behavior: "instant" });
         scheduleRender();
       };
+      const handleSkip = (event) => {
+        event.preventDefault();
+        startAutoHandoff({ skip: true });
+      };
+      const handleUserInterruption = () => {
+        cancelAutoHandoff();
+      };
 
       preloadFrameRange(0, Math.min(39, introScrollFrameSources.length - 1));
 
@@ -3151,12 +3233,21 @@ function IntroScrollSequence() {
       window.addEventListener("scroll", scheduleRender, { passive: true });
       window.addEventListener("resize", scheduleRender);
       window.addEventListener("fullness:intro-reset", handleReset);
+      window.addEventListener("wheel", handleUserInterruption, { passive: true });
+      window.addEventListener("touchstart", handleUserInterruption, { passive: true });
+      window.addEventListener("keydown", handleUserInterruption);
+      skipButtonRef.current?.addEventListener("click", handleSkip);
 
       return () => {
         window.removeEventListener("scroll", scheduleRender);
         window.removeEventListener("resize", scheduleRender);
         window.removeEventListener("fullness:intro-reset", handleReset);
+        window.removeEventListener("wheel", handleUserInterruption);
+        window.removeEventListener("touchstart", handleUserInterruption);
+        window.removeEventListener("keydown", handleUserInterruption);
+        skipButtonRef.current?.removeEventListener("click", handleSkip);
         window.cancelAnimationFrame(animationFrame);
+        cancelAutoHandoff();
         root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-replay-ready");
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
         window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
@@ -3807,7 +3898,7 @@ function IntroScrollSequence() {
       className="scroll-sequence scroll-sequence-intro"
       id="inicio"
       ref={sectionRef}
-      aria-label="Video introductorio Fullness Lab"
+      aria-label="Secuencia de apertura Fullness Lab"
     >
       <div className="scroll-sequence-stage">
         <img
@@ -3852,9 +3943,11 @@ function IntroScrollSequence() {
           ref={skipButtonRef}
           aria-label="Ir a Fullness"
         >
-          <span className="intro-skip-label-desktop">Saltar</span>
-          <span className="intro-skip-label-mobile">Ir a Fullness</span>
+          Ir a Fullness
         </button>
+        <div className="intro-scroll-cue" aria-hidden="true">
+          <span />
+        </div>
         <div className="scroll-sequence-signal-layer" ref={signalLayerRef} aria-hidden="true">
           {introTechSignals.map((signal) => (
             <div className={`intro-signal intro-signal-${signal.id}`} data-signal={signal.id} key={signal.id}>
