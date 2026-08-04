@@ -363,6 +363,7 @@
 }
 
 .quick-parameter-upload {
+  appearance: none;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -388,13 +389,24 @@
   background: rgba(142, 38, 60, 0.08);
 }
 
-.quick-parameter-upload input {
+.backoffice-file-input {
   position: absolute;
   width: 1px;
   height: 1px;
   min-height: 0;
   padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
   opacity: 0;
+  white-space: nowrap;
+}
+
+.quick-parameter-upload:disabled {
+  cursor: wait;
+  opacity: 0.58;
 }
 
 .quick-parameter-custom-preview {

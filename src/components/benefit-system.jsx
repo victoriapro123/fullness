@@ -12,6 +12,7 @@ import {
   Trash2,
   X
 } from "lucide-react";
+import { FilePickerButton } from "./file-picker-button.jsx";
 
 const acceptedImageTypes = "image/avif,image/gif,image/jpeg,image/png,image/webp";
 
@@ -193,8 +194,8 @@ function QuickParameterDialog({
         iconStoragePath: uploaded.photoStoragePath || ""
       });
       setSelectedIconId("");
-    } catch {
-      setError("No pudimos subir la imagen. Intenta nuevamente.");
+    } catch (error) {
+      setError(error?.message || "No pudimos subir la imagen. Intenta nuevamente.");
     } finally {
       setUploadingIcon(false);
       event.target.value = "";
@@ -327,11 +328,16 @@ function QuickParameterDialog({
 
             <div className="quick-parameter-image-tools">
               {onUploadIcon && (
-                <label className="quick-parameter-upload">
+                <FilePickerButton
+                  className="quick-parameter-upload"
+                  ariaLabel="Subir imagen personalizada del beneficio"
+                  accept={acceptedImageTypes}
+                  onChange={uploadCustomIcon}
+                  disabled={saving || uploadingIcon}
+                >
                   <ImagePlus size={17} aria-hidden="true" />
                   {uploadingIcon ? "Subiendo imagen..." : "Subir imagen personalizada"}
-                  <input type="file" accept={acceptedImageTypes} onChange={uploadCustomIcon} disabled={saving || uploadingIcon} />
-                </label>
+                </FilePickerButton>
               )}
               {customIcon && (
                 <div className="quick-parameter-custom-preview">
@@ -813,8 +819,8 @@ export function CatalogParametersAdmin({
         iconUrl: uploaded.photoUrl,
         iconStoragePath: uploaded.photoStoragePath
       }));
-    } catch {
-      setActionError("No pudimos subir el ícono. Inténtalo nuevamente; tu beneficio sigue intacto.");
+    } catch (error) {
+      setActionError(error?.message || "No pudimos subir el ícono. Inténtalo nuevamente; tu beneficio sigue intacto.");
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -990,11 +996,16 @@ export function CatalogParametersAdmin({
                 )}
               </figure>
               <div className="parameter-icon-tools">
-                <label className="quick-parameter-upload">
+                <FilePickerButton
+                  className="quick-parameter-upload"
+                  ariaLabel="Subir imagen personalizada del beneficio"
+                  accept={acceptedImageTypes}
+                  onChange={uploadBenefitIcon}
+                  disabled={uploading || saving}
+                >
                   <ImagePlus size={17} aria-hidden="true" />
                   {uploading ? "Subiendo imagen..." : "Subir imagen personalizada"}
-                  <input type="file" accept={acceptedImageTypes} onChange={uploadBenefitIcon} disabled={uploading || saving} />
-                </label>
+                </FilePickerButton>
                 <div className="quick-parameter-ai-prompt">
                   <p>Si vas a usar IA para la imagen, copia este prompt base</p>
                   <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={populatedBenefitImagePrompt} />

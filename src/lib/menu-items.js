@@ -356,6 +356,18 @@ function normalizeComparisonRows(value) {
     .filter(Boolean);
 }
 
+function normalizeCommunityActivities(value) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => ({
+      date: cleanText(item?.date),
+      description: cleanText(item?.description)
+    }))
+    .filter((item) => item.date && item.description)
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
 export function mapMenuItem(row, context = createCatalogContext(), libraryById = new Map()) {
   const productType = row.product_type || "family";
   const includedItems = normalizeIncludedItems(row.included_items, context, libraryById);
@@ -493,6 +505,10 @@ export function mapShopSettings(row) {
     lightboxSuccessCtaLabel: row.lightbox_success_cta_label || "",
     lightboxBackgroundUrl: row.lightbox_background_url || "",
     lightboxBackgroundStoragePath: row.lightbox_background_storage_path || "",
+    communityActivities: Array.isArray(row.community_activities)
+      ? normalizeCommunityActivities(row.community_activities)
+      : null,
+    communityActivitiesConfigured: Array.isArray(row.community_activities),
     updatedAt: row.updated_at || ""
   };
 }
@@ -618,7 +634,10 @@ function buildShopSettingsPayload(input) {
     lightbox_secondary_cta_label: nullableText(input.lightboxSecondaryCtaLabel || input.lightbox_secondary_cta_label),
     lightbox_success_cta_label: nullableText(input.lightboxSuccessCtaLabel || input.lightbox_success_cta_label),
     lightbox_background_url: nullableText(input.lightboxBackgroundUrl || input.lightbox_background_url),
-    lightbox_background_storage_path: nullableText(input.lightboxBackgroundStoragePath || input.lightbox_background_storage_path)
+    lightbox_background_storage_path: nullableText(input.lightboxBackgroundStoragePath || input.lightbox_background_storage_path),
+    community_activities: input.communityActivitiesConfigured === true
+      ? normalizeCommunityActivities(input.communityActivities || input.community_activities)
+      : null
   };
 }
 
@@ -843,10 +862,10 @@ export async function listMealLibraryItems() {
 }
 
 export async function saveMealLibraryItem(input) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
-
   try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
+
     const payload = buildMealLibraryPayload(input);
     let data;
     let error;
@@ -902,11 +921,15 @@ export async function saveMealLibraryItem(input) {
 }
 
 export async function deleteMealLibraryItem(id) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const { error } = await supabase.from("meal_library_items").delete().eq("id", id);
-  return { data: error ? null : id, error, configured: true };
+    const { error } = await supabase.from("meal_library_items").delete().eq("id", id);
+    return { data: error ? null : id, error, configured: true };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function listAdminCustomerSubscriptions() {
@@ -1043,26 +1066,30 @@ export async function getShopSettings() {
 }
 
 export async function saveMenuItem(input) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const payload = buildMenuItemPayload(input);
-  const query = input.id
-    ? supabase.from("menu_items").update(payload).eq("id", input.id)
-    : supabase.from("menu_items").insert(payload);
+    const payload = buildMenuItemPayload(input);
+    const query = input.id
+      ? supabase.from("menu_items").update(payload).eq("id", input.id)
+      : supabase.from("menu_items").insert(payload);
 
-  const { data, error } = await query.select(MENU_ITEM_COLUMNS).single();
+    const { data, error } = await query.select(MENU_ITEM_COLUMNS).single();
 
-  if (error) {
+    if (error) {
+      return { data: null, error, configured: true };
+    }
+
+    const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
+    return {
+      data: mapMenuItem(data, parameterResult.context),
+      error: null,
+      configured: true
+    };
+  } catch (error) {
     return { data: null, error, configured: true };
   }
-
-  const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
-  return {
-    data: mapMenuItem(data, parameterResult.context),
-    error: null,
-    configured: true
-  };
 }
 
 export async function saveShopSettings(input) {
@@ -1088,12 +1115,16 @@ export async function saveShopSettings(input) {
 }
 
 export async function deleteMenuItem(id) {
-  const supabase = await getConfiguredSupabase();
-  if (!supabase) return unavailableResult();
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
 
-  const { error } = await supabase.from("menu_items").delete().eq("id", id);
+    const { error } = await supabase.from("menu_items").delete().eq("id", id);
 
-  return { data: error ? null : id, error, configured: true };
+    return { data: error ? null : id, error, configured: true };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
 }
 
 export async function uploadMenuPhoto(file, folder = "images/meal-preps") {

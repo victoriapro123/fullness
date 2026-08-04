@@ -198,6 +198,13 @@
 - En Backoffice > Contenido web > Lightbox, usar el botón explícito `Elegir imagen` para abrir el selector de archivos del sistema. La carga usa R2 bajo `images/lightbox/` y sólo se publica al pulsar `Guardar lightbox`; después de subir, la interfaz debe decirlo con claridad.
 - El guardado de tienda/lightbox refresca la sesión antes de escribir para evitar que una sesión vencida se perciba como pérdida de datos. Validar cada cambio con recarga de la página y lectura de la fila `main` en Supabase.
 
+### Contenido Web Persistente 2026-08-03
+
+- Los contenidos editables de Backoffice usan R2 para imágenes y `ecommerce_shop_settings` como fuente remota para los textos, tienda, lightbox y agenda de Comunidad. La agenda se serializa como `community_activities` JSONB; `null` representa una instalación heredada que aún puede conservar su respaldo local, mientras que `[]` es una agenda publicada intencionalmente vacía.
+- Las imágenes de mealpreps, mealpreps familiares, planes, hero de tienda, lightbox y beneficios deben abrir el selector nativo del sistema desde un botón explícito. La carga nunca puede cerrar el editor actual; informa el error junto al campo que falló y conserva el formulario.
+- Todo cambio manual de URL de imagen debe limpiar su clave R2 asociada. Las cargas exitosas muestran que falta guardar/publicar cuando corresponde.
+- Antes de crear, editar o eliminar mealpreps y planes, refrescar la sesión de Supabase. Si falla la red o vence la sesión, mantener el borrador y explicar cómo reintentar, sin mostrar errores técnicos crudos.
+
 ### Confirmaciones de compra 2026-08-02
 
 - Un pago `approved` de Mercado Pago dispara dos correos independientes y deduplicados en `email_deliveries`: `order_confirmation:<orden>` al cliente y `order_notification:<orden>` a operaciones. Ambos se ejecutan desde el mismo estado confirmado, tanto si llega por webhook como si se sincroniza al volver desde Checkout Pro.

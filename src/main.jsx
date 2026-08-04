@@ -91,6 +91,7 @@ import {
   CatalogParametersAdmin,
   TagSelector
 } from "./components/benefit-system.jsx";
+import { FilePickerButton } from "./components/file-picker-button.jsx";
 import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
@@ -1033,6 +1034,18 @@ const defaultCommunityActivities = [
   { date: "2026-08-19", description: "Taller de Bienestar" }
 ];
 
+function normalizeCommunityActivities(items) {
+  if (!Array.isArray(items)) return [];
+
+  return items
+    .map((item) => ({
+      date: String(item?.date || "").trim(),
+      description: String(item?.description || "").trim()
+    }))
+    .filter((item) => item.date && item.description)
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
 function WhatsAppIcon({ size = 24 }) {
   return (
     <svg
@@ -1099,13 +1112,17 @@ function createDefaultShopSettings() {
     lightboxSecondaryCtaLabel: "Conocer la experiencia",
     lightboxSuccessCtaLabel: "Descubre nuestros planes",
     lightboxBackgroundUrl: communitySceneSrc,
-    lightboxBackgroundStoragePath: ""
+    lightboxBackgroundStoragePath: "",
+    communityActivities: null,
+    communityActivitiesConfigured: false
   };
 }
 
 function mergeShopSettings(settings) {
   const defaults = createDefaultShopSettings();
   if (!settings) return defaults;
+
+  const communityActivitiesConfigured = Array.isArray(settings.communityActivities);
 
   return {
     ...defaults,
@@ -1117,7 +1134,11 @@ function mergeShopSettings(settings) {
       : defaults.subscriptionBenefits,
     subscriptionComparison: settings.subscriptionComparison?.length
       ? settings.subscriptionComparison
-      : defaults.subscriptionComparison
+      : defaults.subscriptionComparison,
+    communityActivities: communityActivitiesConfigured
+      ? normalizeCommunityActivities(settings.communityActivities)
+      : null,
+    communityActivitiesConfigured
   };
 }
 
@@ -1187,8 +1208,9 @@ function parseShopComparisonRows(value) {
     .filter(Boolean);
 }
 
-function parseShopSettingsForm(form) {
+function parseShopSettingsForm(form, existingSettings = createDefaultShopSettings()) {
   return {
+    ...existingSettings,
     ...form,
     heroMetrics: form.heroMetrics,
     subscriptionBenefits: form.subscriptionBenefits,
@@ -1252,14 +1274,7 @@ function loadStoredCommunityActivities() {
     const parsed = stored ? JSON.parse(stored) : null;
     if (!Array.isArray(parsed)) return defaultCommunityActivities;
 
-    const clean = parsed
-      .map((item) => ({
-        date: String(item?.date || "").trim(),
-        description: String(item?.description || "").trim()
-      }))
-      .filter((item) => item.date && item.description);
-
-    return clean.length > 0 ? clean : defaultCommunityActivities;
+    return normalizeCommunityActivities(parsed);
   } catch {
     return defaultCommunityActivities;
   }
@@ -1835,18 +1850,16 @@ function BackofficePhotoEditor({
               <UploadCloud size={30} aria-hidden="true" />
             )}
           </div>
-          <label className="upload-control">
+          <FilePickerButton
+            className="upload-control"
+            inputName={`${idPrefix}-primary-photo`}
+            ariaLabel="Elegir foto principal"
+            onChange={onPrimaryFile}
+            disabled={disabled}
+          >
             <UploadCloud size={18} aria-hidden="true" />
             {uploading ? "Subiendo foto…" : primaryUrl ? "Cambiar foto" : "Elegir foto"}
-            <input
-              name={`${idPrefix}-primary-photo`}
-              type="file"
-              accept="image/*"
-              aria-label="Elegir foto principal"
-              onChange={onPrimaryFile}
-              disabled={disabled}
-            />
-          </label>
+          </FilePickerButton>
           {primaryUrl && <p className="backoffice-image-ready"><CheckCircle2 size={16} aria-hidden="true" />Foto lista</p>}
           {primaryError && <p className="backoffice-photo-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{primaryError}</p>}
         </section>
@@ -1864,18 +1877,16 @@ function BackofficePhotoEditor({
                 <ImagePlus size={30} aria-hidden="true" />
               )}
             </div>
-            <label className="upload-control">
+            <FilePickerButton
+              className="upload-control"
+              inputName={`${idPrefix}-secondary-photo`}
+              ariaLabel="Elegir segunda foto"
+              onChange={onSecondaryFile}
+              disabled={disabled}
+            >
               <ImagePlus size={18} aria-hidden="true" />
               {uploading ? "Subiendo foto…" : secondaryUrl ? "Cambiar foto" : "Elegir foto"}
-              <input
-                name={`${idPrefix}-secondary-photo`}
-                type="file"
-                accept="image/*"
-                aria-label="Elegir segunda foto"
-                onChange={onSecondaryFile}
-                disabled={disabled}
-              />
-            </label>
+            </FilePickerButton>
             {secondaryUrl && <p className="backoffice-image-ready"><CheckCircle2 size={16} aria-hidden="true" />Foto lista</p>}
             {secondaryError && <p className="backoffice-photo-error" role="alert"><AlertCircle size={16} aria-hidden="true" />{secondaryError}</p>}
           </section>
@@ -4039,6 +4050,7 @@ function App() {
   const [photoUploadError, setPhotoUploadError] = useState({ target: "", message: "" });
   const [shopSettings, setShopSettings] = useState(createDefaultShopSettings);
   const [shopSettingsForm, setShopSettingsForm] = useState(() => createShopSettingsForm());
+  const [shopSettingsReady, setShopSettingsReady] = useState(false);
   const [shopSettingsSaving, setShopSettingsSaving] = useState(false);
   const [shopHeroUploading, setShopHeroUploading] = useState(false);
   const [shopSettingsMessage, setShopSettingsMessage] = useState("");
@@ -4098,6 +4110,9 @@ function App() {
   const [subscriptionFilter, setSubscriptionFilter] = useState({ frequency: "all", query: "", status: "active" });
   const [communityActivities, setCommunityActivities] = useState(loadStoredCommunityActivities);
   const [communityActivityForm, setCommunityActivityForm] = useState({ date: "", description: "" });
+  const [communityActivitiesSaving, setCommunityActivitiesSaving] = useState(false);
+  const [communityActivitiesMessage, setCommunityActivitiesMessage] = useState("");
+  const [communityActivitiesError, setCommunityActivitiesError] = useState("");
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [communityMemberMessage, setCommunityMemberMessage] = useState("");
   const [subscriptionPopupSettings, setSubscriptionPopupSettings] = useState(loadStoredSubscriptionPopupSettings);
@@ -5303,15 +5318,15 @@ function App() {
       const result = await uploadMenuPhoto(file, "images/benefits");
 
       if (result.error || !result.configured || !result.data) {
-        setCatalogParametersError(getPhotoUploadErrorMessage(result.error, "No pudimos subir el icono."));
-        return null;
+        throw result.error || new Error("No pudimos subir el icono.");
       }
 
       setCatalogParametersMessage("Icono cargado en R2.");
       return result.data;
     } catch (error) {
-      setCatalogParametersError(getPhotoUploadErrorMessage(error, "No pudimos subir el icono."));
-      return null;
+      const message = getPhotoUploadErrorMessage(error, "No pudimos subir el icono.");
+      setCatalogParametersError(message);
+      throw new Error(message);
     }
   }
 
@@ -5651,22 +5666,26 @@ function App() {
     setMealLibraryPhotoUploading(true);
     setMealLibraryError("");
     setMealLibraryPhotoUploadError({ target: "", message: "" });
-    const result = await uploadMenuPhoto(file);
+    try {
+      const result = await uploadMenuPhoto(file, "images/meal-preps");
 
-    if (result.error || !result.configured) {
-      const message = getPhotoUploadErrorMessage(result.error, "No pudimos subir la foto.");
-      setMealLibraryPhotoUploadError({ target, message });
-      setMealLibraryError(`${photoLabel}: ${message}`);
-    } else {
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos subir la foto.");
+      }
+
       markMealLibraryFormChanged();
       setMealLibraryForm((current) => target === "secondary"
         ? { ...current, secondaryPhotoUrl: result.data.photoUrl, secondaryPhotoStoragePath: result.data.photoStoragePath }
         : { ...current, photoUrl: result.data.photoUrl, photoStoragePath: result.data.photoStoragePath });
       setMealLibraryMessage("Foto cargada.");
+    } catch (error) {
+      const message = getPhotoUploadErrorMessage(error, "No pudimos subir la foto.");
+      setMealLibraryPhotoUploadError({ target, message });
+      setMealLibraryError(`${photoLabel}: ${message}`);
+    } finally {
+      setMealLibraryPhotoUploading(false);
+      event.target.value = "";
     }
-
-    setMealLibraryPhotoUploading(false);
-    event.target.value = "";
   }
 
   function addSelectedLibraryMealToPlan() {
@@ -6133,21 +6152,68 @@ function App() {
     }));
   }
 
-  function addCommunityActivity(event) {
+  async function persistCommunityActivities(nextActivities) {
+    if (!activeIsAdmin) {
+      setCommunityActivitiesError("Tu cuenta no tiene acceso de administración.");
+      return false;
+    }
+
+    if (!shopSettingsReady) {
+      setCommunityActivitiesError("Estamos cargando la configuración publicada. Espera un momento antes de actualizar la agenda.");
+      return false;
+    }
+
+    setCommunityActivitiesSaving(true);
+    setCommunityActivitiesError("");
+    setCommunityActivitiesMessage("");
+
+    try {
+      const result = await saveShopSettings({
+        ...shopSettings,
+        communityActivities: nextActivities,
+        communityActivitiesConfigured: true
+      });
+
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos guardar la agenda en el servidor.");
+      }
+
+      const merged = mergeShopSettings(result.data);
+      const persistedActivities = normalizeCommunityActivities(result.data.communityActivities);
+      setShopSettings(merged);
+      setShopSettingsForm(createShopSettingsForm(merged));
+      setCommunityActivities(persistedActivities);
+      setShopSettingsReady(true);
+      setCommunityActivitiesMessage("Agenda guardada y publicada.");
+      return true;
+    } catch (error) {
+      setCommunityActivitiesError(`${getSupabaseErrorMessage(error, "No pudimos guardar la agenda en el servidor.")} Tu cambio permanece resguardado en este equipo.`);
+      return false;
+    } finally {
+      setCommunityActivitiesSaving(false);
+    }
+  }
+
+  async function addCommunityActivity(event) {
     event.preventDefault();
 
     const date = communityActivityForm.date.trim();
     const description = communityActivityForm.description.trim();
     if (!date || !description) return;
 
-    setCommunityActivities((items) =>
-      [...items, { date, description }].sort((left, right) => left.date.localeCompare(right.date))
-    );
+    const nextActivities = normalizeCommunityActivities([
+      ...communityActivities,
+      { date, description }
+    ]);
+    setCommunityActivities(nextActivities);
     setCommunityActivityForm({ date: "", description: "" });
+    await persistCommunityActivities(nextActivities);
   }
 
-  function removeCommunityActivity(indexToRemove) {
-    setCommunityActivities((items) => items.filter((_item, index) => index !== indexToRemove));
+  async function removeCommunityActivity(indexToRemove) {
+    const nextActivities = communityActivities.filter((_item, index) => index !== indexToRemove);
+    setCommunityActivities(nextActivities);
+    await persistCommunityActivities(nextActivities);
   }
 
   useEffect(() => {
@@ -6185,11 +6251,16 @@ function App() {
       if (ignore || result.error || !result.configured || !result.data) return;
 
       const merged = mergeShopSettings(result.data);
+      const persistedActivities = result.data.communityActivitiesConfigured
+        ? normalizeCommunityActivities(result.data.communityActivities)
+        : loadStoredCommunityActivities();
       const popupSettings = hasPersistedSubscriptionPopupSettings(result.data)
         ? createSubscriptionPopupSettingsFromShopSettings(merged)
         : loadStoredSubscriptionPopupSettings();
       setShopSettings(merged);
       setShopSettingsForm(createShopSettingsForm(merged));
+      setCommunityActivities(persistedActivities);
+      setShopSettingsReady(true);
       setSubscriptionPopupSettings(popupSettings);
       setSubscriptionPopupForm(popupSettings);
 
@@ -7467,7 +7538,14 @@ function App() {
     setMenuForm((current) => ({
       ...current,
       includedItems: current.includedItems.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
+        itemIndex === index
+          ? {
+              ...item,
+              [field]: value,
+              ...(field === "photoUrl" ? { photoStoragePath: "" } : {}),
+              ...(field === "secondaryPhotoUrl" ? { secondaryPhotoStoragePath: "" } : {})
+            }
+          : item
       )
     }));
   }
@@ -7501,7 +7579,10 @@ function App() {
 
     setShopSettingsForm((current) => ({
       ...current,
-      [name]: value
+      [name]: value,
+      ...(name === "heroImageUrl" && value !== current.heroImageUrl
+        ? { heroImageStoragePath: "" }
+        : {})
     }));
     setShopSettingsError("");
     setShopSettingsMessage("");
@@ -7515,21 +7596,25 @@ function App() {
     setShopSettingsError("");
     setShopSettingsMessage("");
 
-    const result = await uploadMenuPhoto(file);
+    try {
+      const result = await uploadMenuPhoto(file, "images/shop");
 
-    if (result.error || !result.configured) {
-      setShopSettingsError(getSupabaseErrorMessage(result.error, "No pudimos subir la imagen del hero."));
-    } else {
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos subir la imagen del hero.");
+      }
+
       setShopSettingsForm((current) => ({
         ...current,
         heroImageUrl: result.data.photoUrl,
         heroImageStoragePath: result.data.photoStoragePath
       }));
-      setShopSettingsMessage("Imagen de tienda cargada.");
+      setShopSettingsMessage("Imagen de tienda cargada. Guarda la tienda para publicarla.");
+    } catch (error) {
+      setShopSettingsError(getPhotoUploadErrorMessage(error, "No pudimos subir la imagen del hero."));
+    } finally {
+      setShopHeroUploading(false);
+      event.target.value = "";
     }
-
-    setShopHeroUploading(false);
-    event.target.value = "";
   }
 
   async function submitShopSettings(event) {
@@ -7544,7 +7629,7 @@ function App() {
     setShopSettingsError("");
     setShopSettingsMessage("");
 
-    const result = await saveShopSettings(parseShopSettingsForm(shopSettingsForm));
+    const result = await saveShopSettings(parseShopSettingsForm(shopSettingsForm, shopSettings));
 
     if (result.error || !result.configured) {
       setShopSettingsError(getSupabaseErrorMessage(result.error, "No pudimos guardar la tienda."));
@@ -7568,14 +7653,13 @@ function App() {
     setAdminError("");
     setAdminMessage("");
     setPhotoUploadError({ target: "", message: "" });
+    try {
+      const result = await uploadMenuPhoto(file, "images/meal-preps");
 
-    const result = await uploadMenuPhoto(file);
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos subir la foto.");
+      }
 
-    if (result.error || !result.configured) {
-      const message = getPhotoUploadErrorMessage(result.error, "No pudimos subir la foto.");
-      setPhotoUploadError({ target, message });
-      setAdminError(`${photoLabel}: ${message}`);
-    } else {
       if (mealIndex !== null) markIncludedMealDraftChanged(mealIndex);
       markMenuFormChanged();
       setMenuForm((current) => {
@@ -7617,10 +7701,14 @@ function App() {
         };
       });
       setAdminMessage("Foto cargada.");
+    } catch (error) {
+      const message = getPhotoUploadErrorMessage(error, "No pudimos subir la foto.");
+      setPhotoUploadError({ target, message });
+      setAdminError(`${photoLabel}: ${message}`);
+    } finally {
+      setPhotoUploading(false);
+      event.target.value = "";
     }
-
-    setPhotoUploading(false);
-    event.target.value = "";
   }
 
   async function submitMenuItem(event) {
@@ -8784,11 +8872,11 @@ function App() {
                       onSecondaryFile={(event) => handleMenuPhotoChange(event, "secondary")}
                       onPrimaryUrlChange={(photoUrl) => {
                         markMenuFormChanged();
-                        setMenuForm((current) => ({ ...current, photoUrl }));
+                        setMenuForm((current) => ({ ...current, photoUrl, photoStoragePath: "" }));
                       }}
                       onSecondaryUrlChange={(secondaryPhotoUrl) => {
                         markMenuFormChanged();
-                        setMenuForm((current) => ({ ...current, secondaryPhotoUrl }));
+                        setMenuForm((current) => ({ ...current, secondaryPhotoUrl, secondaryPhotoStoragePath: "" }));
                       }}
                       disabled={photoUploading || adminSaving}
                       uploading={photoUploading}
@@ -9396,11 +9484,11 @@ function App() {
                                   onSecondaryFile={(event) => handleMealLibraryPhotoChange(event, "secondary")}
                                   onPrimaryUrlChange={(photoUrl) => {
                                     markMealLibraryFormChanged();
-                                    setMealLibraryForm((current) => ({ ...current, photoUrl }));
+                                    setMealLibraryForm((current) => ({ ...current, photoUrl, photoStoragePath: "" }));
                                   }}
                                   onSecondaryUrlChange={(secondaryPhotoUrl) => {
                                     markMealLibraryFormChanged();
-                                    setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl }));
+                                    setMealLibraryForm((current) => ({ ...current, secondaryPhotoUrl, secondaryPhotoStoragePath: "" }));
                                   }}
                                   disabled={mealLibrarySaving || mealLibraryPhotoUploading}
                                   uploading={mealLibraryPhotoUploading}
@@ -9666,11 +9754,11 @@ function App() {
                                     onSecondaryFile={(event) => handleMenuPhotoChange(event, "secondary")}
                                     onPrimaryUrlChange={(photoUrl) => {
                                       markMenuFormChanged();
-                                      setMenuForm((current) => ({ ...current, photoUrl }));
+                                      setMenuForm((current) => ({ ...current, photoUrl, photoStoragePath: "" }));
                                     }}
                                     onSecondaryUrlChange={(secondaryPhotoUrl) => {
                                       markMenuFormChanged();
-                                      setMenuForm((current) => ({ ...current, secondaryPhotoUrl }));
+                                      setMenuForm((current) => ({ ...current, secondaryPhotoUrl, secondaryPhotoStoragePath: "" }));
                                     }}
                                     disabled={photoUploading || adminSaving}
                                     uploading={photoUploading}
@@ -9917,11 +10005,15 @@ function App() {
                                   <UploadCloud size={28} />
                                 )}
                               </div>
-                              <label className="upload-control">
+                              <FilePickerButton
+                                className="upload-control"
+                                ariaLabel="Subir imagen hero de la tienda"
+                                onChange={handleShopHeroPhotoChange}
+                                disabled={shopHeroUploading || shopSettingsSaving}
+                              >
                                 <UploadCloud size={18} />
-                                {shopHeroUploading ? "Subiendo…" : "Subir hero"}
-                                <input type="file" accept="image/*" onChange={handleShopHeroPhotoChange} disabled={shopHeroUploading || shopSettingsSaving} />
-                              </label>
+                                {shopHeroUploading ? "Subiendo…" : "Elegir imagen hero"}
+                              </FilePickerButton>
                               <label>
                                 URL imagen hero
                                 <input name="heroImageUrl" value={shopSettingsForm.heroImageUrl} onChange={updateShopSettingsForm} placeholder="/api/media?key=images/meal-preps/…" />
@@ -10098,6 +10190,11 @@ function App() {
                     {activeBackofficeModule === "web-content" && webContentTab === "community" && (
                     <section className="backoffice-side-panel backoffice-module-panel" id="web-content-community" role="tabpanel" aria-labelledby="web-content-title">
                       <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
+                    {(communityActivitiesError || communityActivitiesMessage) && (
+                      <p className={`backoffice-alert ${communityActivitiesError ? "is-error" : "is-success"}`} role="status">
+                        {communityActivitiesError || communityActivitiesMessage}
+                      </p>
+                    )}
                     <section className="website-content-section community-schedule-section" aria-labelledby="community-schedule-title">
                       <header>
                         <p className="eyebrow">Agenda actual</p>
@@ -10114,7 +10211,7 @@ function App() {
                                 {date.day} {date.month}
                               </time>
                               <p>{activity.description}</p>
-                              <button type="button" onClick={() => removeCommunityActivity(index)} aria-label={`Eliminar ${activity.description}`} title="Eliminar actividad">
+                              <button type="button" onClick={() => removeCommunityActivity(index)} disabled={communityActivitiesSaving || !shopSettingsReady} aria-label={`Eliminar ${activity.description}`} title="Eliminar actividad">
                                 <Trash2 size={15} />
                               </button>
                             </article>
@@ -10153,10 +10250,10 @@ function App() {
                           </label>
                         </div>
                         <footer className="website-content-actions">
-                          <p>La actividad se agregará al listado de Comunidad.</p>
-                          <button className="backoffice-command" type="submit">
-                            <Plus size={17} />
-                            Agregar actividad
+                          <p>La actividad se publica al agregarla y queda resguardada en el servidor.</p>
+                          <button className="backoffice-command" type="submit" disabled={communityActivitiesSaving || !shopSettingsReady}>
+                            {communityActivitiesSaving ? <RefreshCw size={17} /> : <Plus size={17} />}
+                            {communityActivitiesSaving ? "Publicando…" : "Agregar actividad"}
                           </button>
                         </footer>
                       </section>
