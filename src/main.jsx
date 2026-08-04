@@ -2930,9 +2930,13 @@ function IntroScrollSequence() {
   useEffect(() => {
     let animationFrame = 0;
     let autoStartTimeout = 0;
+    let mobileTransitionFrame = 0;
+    let mobileTransitionTimeout = 0;
+    let mobilePlaybackStarted = false;
     let introIntentStarted = false;
     const playbackMs = 4000;
     const finalFrameHold = 0.16;
+    const mobileTransitionMs = 820;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobileIntroMedia = window.matchMedia(introMobileQuery);
     const scrollBehaviorSnapshot = {
@@ -3001,6 +3005,14 @@ function IntroScrollSequence() {
     };
 
     const isIntroConsumed = () => document.documentElement.classList.contains("intro-scroll-consumed");
+
+    const setMobileIntroState = (state = "") => {
+      if (state) {
+        document.documentElement.dataset.mobileIntro = state;
+      } else {
+        delete document.documentElement.dataset.mobileIntro;
+      }
+    };
 
     const setScrollLock = (locked) => {
       document.documentElement.classList.toggle("intro-scroll-playing", locked);
@@ -3078,25 +3090,90 @@ function IntroScrollSequence() {
 
     const enforceIntroViewport = () => {
       if (!mobileIntroMedia.matches) {
+        setMobileIntroState();
         syncHeaderVisibility();
         return;
       }
 
-      // The sequence is landscape. On narrow viewports we enter the hero directly
-      // rather than expose a cropped frame or a second mobile-only animation.
       playbackRef.current = null;
-      setScrollLock(false);
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
         autoStartTimeout = 0;
       }
       resetSignals();
-      setVideoProgress(1, false);
+      setVideoProgress(0, false);
       setPosterFrameVisible(false);
       setFinalFrameVisible(false);
+      if (!isIntroConsumed()) {
+        setMobileIntroState("playing");
+        setScrollLock(true);
+      } else {
+        setMobileIntroState();
+        setScrollLock(false);
+      }
+      jumpToScroll(0);
+      syncHeaderVisibility();
+    };
+
+    const finishMobilePlayback = () => {
+      if (!mobileIntroMedia.matches || isIntroConsumed()) return;
+
+      const video = videoRef.current;
+      mobilePlaybackStarted = false;
+      playbackRef.current = null;
+      resetSignals();
+      setPosterFrameVisible(false);
+      setFinalFrameVisible(false);
+      setMobileIntroState("transition");
+
+      if (video) {
+        video.pause();
+        video.playbackRate = 1;
+      }
+
       setIntroConsumed(true);
       jumpToScroll(0);
       syncHeaderVisibility();
+
+      if (reducedMotion) {
+        setMobileIntroState();
+        setScrollLock(false);
+        return;
+      }
+
+      mobileTransitionFrame = window.requestAnimationFrame(() => {
+        mobileTransitionFrame = window.requestAnimationFrame(() => {
+          setMobileIntroState("reveal");
+          mobileTransitionTimeout = window.setTimeout(() => {
+            setMobileIntroState();
+            setScrollLock(false);
+            syncHeaderVisibility();
+          }, mobileTransitionMs);
+        });
+      });
+    };
+
+    const startMobilePlayback = () => {
+      if (!mobileIntroMedia.matches || isIntroConsumed() || mobilePlaybackStarted) return;
+
+      const video = videoRef.current;
+      mobilePlaybackStarted = true;
+      setMobileIntroState("playing");
+      setScrollLock(true);
+      setPosterFrameVisible(false);
+      setFinalFrameVisible(false);
+
+      if (!video) return;
+
+      video.pause();
+      video.playbackRate = 1;
+      if (video.readyState >= 1) {
+        video.currentTime = 0;
+      }
+      video.play().catch(() => {
+        // Muted playback can still be declined by a browser. The visible CTA remains
+        // the reliable, accessible path into the landing in that case.
+      });
     };
 
     const finishPlayback = () => {
@@ -3198,6 +3275,11 @@ function IntroScrollSequence() {
 
     const skipIntro = () => {
       markIntroIntent();
+      if (mobileIntroMedia.matches) {
+        finishMobilePlayback();
+        return;
+      }
+
       const video = videoRef.current;
       playbackRef.current = null;
       setScrollLock(false);
@@ -3301,12 +3383,27 @@ function IntroScrollSequence() {
     };
 
     const handleLoadedMetadata = () => {
+      if (mobileIntroMedia.matches) {
+        setPosterFrameVisible(false);
+        setFinalFrameVisible(false);
+        startMobilePlayback();
+        return;
+      }
+
       setVideoProgress(progressRef.current);
+    };
+
+    const handleVideoEnded = () => {
+      if (mobileIntroMedia.matches) {
+        finishMobilePlayback();
+      }
     };
 
     const handleIntroReset = (event) => {
       if (mobileIntroMedia.matches) {
+        setIntroConsumed(false);
         enforceIntroViewport();
+        startMobilePlayback();
         return;
       }
 
@@ -3347,6 +3444,10 @@ function IntroScrollSequence() {
     const handleStartClick = (event) => {
       event.preventDefault();
       markIntroIntent();
+      if (mobileIntroMedia.matches) {
+        startMobilePlayback();
+        return;
+      }
       startPlayback(1);
     };
 
@@ -3356,7 +3457,17 @@ function IntroScrollSequence() {
     };
 
     const handleMobileIntroChange = () => {
+      mobilePlaybackStarted = false;
+      if (mobileTransitionTimeout) {
+        window.clearTimeout(mobileTransitionTimeout);
+        mobileTransitionTimeout = 0;
+      }
+      if (mobileTransitionFrame) {
+        window.cancelAnimationFrame(mobileTransitionFrame);
+        mobileTransitionFrame = 0;
+      }
       enforceIntroViewport();
+      startMobilePlayback();
     };
 
     const renderFrame = () => {
@@ -3395,7 +3506,9 @@ function IntroScrollSequence() {
     };
 
     enforceIntroViewport();
-    if (!mobileIntroMedia.matches) {
+    if (mobileIntroMedia.matches) {
+      startMobilePlayback();
+    } else {
       setVideoProgress(getProgressFromScroll());
       autoStartTimeout = window.setTimeout(() => {
         if (!introIntentStarted && !isIntroConsumed() && isSequenceActive()) {
@@ -3406,6 +3519,7 @@ function IntroScrollSequence() {
     }
 
     videoRef.current?.addEventListener("loadedmetadata", handleLoadedMetadata);
+    videoRef.current?.addEventListener("ended", handleVideoEnded);
     if (mobileIntroMedia.addEventListener) {
       mobileIntroMedia.addEventListener("change", handleMobileIntroChange);
     } else {
@@ -3425,7 +3539,11 @@ function IntroScrollSequence() {
       if (autoStartTimeout) {
         window.clearTimeout(autoStartTimeout);
       }
+      if (mobileTransitionTimeout) {
+        window.clearTimeout(mobileTransitionTimeout);
+      }
       videoRef.current?.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      videoRef.current?.removeEventListener("ended", handleVideoEnded);
       logoButtonRef.current?.removeEventListener("click", handleStartClick);
       skipButtonRef.current?.removeEventListener("click", handleSkipClick);
       if (mobileIntroMedia.removeEventListener) {
@@ -3441,8 +3559,10 @@ function IntroScrollSequence() {
       window.removeEventListener("resize", handleScroll);
       window.removeEventListener("fullness:intro-reset", handleIntroReset);
       window.cancelAnimationFrame(animationFrame);
+      window.cancelAnimationFrame(mobileTransitionFrame);
       setScrollLock(false);
       resetSignals();
+      setMobileIntroState();
       document.documentElement.classList.remove("intro-scroll-active", "intro-scroll-playing");
     };
   }, []);
@@ -3483,8 +3603,14 @@ function IntroScrollSequence() {
         <button className="intro-start-logo" type="button" ref={logoButtonRef} aria-label="Iniciar animación Fullness Lab">
           <img src={logoVerticalSrc} alt="" aria-hidden="true" />
         </button>
-        <button className="intro-skip-button" type="button" ref={skipButtonRef}>
-          Saltar
+        <button
+          className="intro-skip-button"
+          type="button"
+          ref={skipButtonRef}
+          aria-label="Ir a Fullness"
+        >
+          <span className="intro-skip-label-desktop">Saltar</span>
+          <span className="intro-skip-label-mobile">Ir a Fullness</span>
         </button>
         <div className="scroll-sequence-signal-layer" ref={signalLayerRef} aria-hidden="true">
           {introTechSignals.map((signal) => (
@@ -3993,7 +4119,10 @@ function App() {
       window.history.replaceState(null, "", "#proposito");
     }
 
-    if (isMobileIntroViewport() || isDocumentReload() || sectionHashes.has(window.location.hash)) {
+    if (
+      (!isMobileIntroViewport() && isDocumentReload()) ||
+      sectionHashes.has(window.location.hash)
+    ) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setIntroConsumed(true);
       setHeaderHiddenForHero(false);

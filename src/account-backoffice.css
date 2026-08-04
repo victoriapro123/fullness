@@ -1121,7 +1121,11 @@
 }
 
 .backoffice-panel {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   color: var(--ink);
 }
 
@@ -2670,6 +2674,9 @@
   display: grid;
   place-items: center;
   padding: clamp(10px, 2vw, 24px);
+  overflow-x: clip;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   background: rgba(31, 26, 23, 0.48);
 }
 
@@ -2679,8 +2686,12 @@
 
 .backoffice-workspace-form {
   width: min(1260px, calc(100vw - 28px));
+  min-width: 0;
+  max-width: 100%;
   max-height: calc(100svh - 28px);
+  overflow-x: clip;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   gap: 20px;
   padding: clamp(18px, 2.4vw, 34px);
   border-color: rgba(54, 43, 39, 0.14);
@@ -2788,13 +2799,9 @@
 .backoffice-editor-tabs {
   display: flex;
   gap: 0;
-  overflow-x: auto;
+  min-width: 0;
+  overflow-x: clip;
   border-bottom: 1px solid rgba(54, 43, 39, 0.14);
-  scrollbar-width: none;
-}
-
-.backoffice-editor-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .backoffice-editor-tabs button {
@@ -3227,6 +3234,7 @@
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   min-width: 0;
   width: min(1120px, calc(100vw - 28px));
+  max-width: 100%;
   max-height: calc(100svh - 28px);
   overflow: hidden;
   border: 1px solid rgba(54, 43, 39, 0.14);
@@ -3338,10 +3346,13 @@
 }
 
 .backoffice-nested-editor-body {
+  min-width: 0;
+  overflow-x: clip;
   overflow-y: auto;
   display: grid;
   gap: 18px;
   padding: 18px 20px 24px;
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
 
@@ -3590,14 +3601,14 @@
   }
 
   .backoffice-module-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
+    overflow-x: clip;
   }
 
   .backoffice-module-button {
-    flex: 0 0 176px;
+    min-width: 0;
     grid-template-columns: 28px minmax(0, 1fr);
     min-height: 52px;
   }
@@ -3608,20 +3619,6 @@
 }
 
 @media (max-width: 720px) {
-  .backoffice-panel,
-  .backoffice-workspace-form,
-  .backoffice-nested-editor-body,
-  .backoffice-module-buttons {
-    scrollbar-width: none;
-  }
-
-  .backoffice-panel::-webkit-scrollbar,
-  .backoffice-workspace-form::-webkit-scrollbar,
-  .backoffice-nested-editor-body::-webkit-scrollbar,
-  .backoffice-module-buttons::-webkit-scrollbar {
-    display: none;
-  }
-
   .backoffice-catalog-heading,
   .backoffice-catalog-tools,
   .backoffice-form-head,
@@ -3768,6 +3765,10 @@
     grid-template-columns: 1fr;
   }
 
+  .backoffice-photo-row.backoffice-photo-row-double {
+    grid-template-columns: 1fr;
+  }
+
   .included-editor-card {
     grid-template-columns: 1fr;
   }
@@ -3818,6 +3819,10 @@
 
   .backoffice-module-content {
     padding: 14px;
+  }
+
+  .backoffice-module-buttons {
+    grid-template-columns: 1fr;
   }
 
   .backoffice-catalog-list .backoffice-menu-main {
