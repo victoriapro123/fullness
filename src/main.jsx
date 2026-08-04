@@ -765,8 +765,11 @@ const introMobileFrameSources = Object.entries(
   .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
   .map(([, source]) => source);
 const introMobileQuery = "(max-width: 860px)";
+const introTabletQuery = "(max-width: 1180px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
+const isTabletIntroViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(introTabletQuery).matches;
 const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
@@ -3008,7 +3011,7 @@ function IntroScrollSequence() {
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
   const introFrameSources =
-    isMobileIntroViewport() && introMobileFrameSources.length
+    isTabletIntroViewport() && introMobileFrameSources.length
       ? introMobileFrameSources
       : introScrollFrameSources;
 
@@ -3027,9 +3030,9 @@ function IntroScrollSequence() {
       const frameCache = new Map();
       const root = document.documentElement;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const isMobileIntro = window.matchMedia("(max-width: 860px)").matches;
-      const frameBufferBehind = isMobileIntro ? 44 : 32;
-      const frameBufferAhead = isMobileIntro ? 80 : 64;
+      const isTabletIntro = window.matchMedia(introTabletQuery).matches;
+      const frameBufferBehind = isTabletIntro ? 44 : 32;
+      const frameBufferAhead = isTabletIntro ? 80 : 64;
       const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
       const setHandoffState = (active) => {
         const wasActive = root.classList.contains("intro-scroll-handoff");
@@ -4670,9 +4673,17 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (introConsumed || !subscriptionPopupOpen) return;
+
+    setSubscriptionPopupOpen(false);
+    setSubscriptionPopupMessage("");
+  }, [introConsumed, subscriptionPopupOpen]);
+
+  useEffect(() => {
     if (!subscriptionPopupSettings.enabled) return undefined;
     if (subscriptionPopupDismissed || subscriptionPopupOpenedRef.current) return undefined;
     if (currentPath !== "/" || currentProductSlug) return undefined;
+    if (!introConsumed) return undefined;
     if (accountOpen || cartOpen || adminOpen || menuOpen || passwordSetupOpen) return undefined;
 
     const clearPopupTimer = () => {
@@ -4714,6 +4725,7 @@ function App() {
     currentProductSlug,
     menuOpen,
     passwordSetupOpen,
+    introConsumed,
     subscriptionPopupDismissed,
     subscriptionPopupSettings.enabled
   ]);
@@ -4809,6 +4821,8 @@ function App() {
     setMenuOpen(false);
     setCartOpen(false);
     setAccountOpen(false);
+    setSubscriptionPopupOpen(false);
+    setSubscriptionPopupMessage("");
     setProductPreviewSlug("");
     setMealPreview(null);
     document.documentElement.classList.remove(

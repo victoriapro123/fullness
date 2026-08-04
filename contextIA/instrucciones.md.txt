@@ -962,3 +962,5 @@ Impacto proactivo:
 - El logo de la apertura es visual, no un control: no debe capturar gestos de arrastre ni retrasar el scroll táctil.
 - Escritorio conserva los cuadros de 1280×720. Móvil usa la misma secuencia recompuesta a 720×405 (`src/assets/scroll-intro-frames-mobile/`) para bajar la memoria de decodificación a menos de un tercio, sin cambiar el encuadre ni sustituirla por video.
 - La marca vertical sobre la apertura móvil usa el doble del tamaño base: 236 px de ancho mínimo y un límite proporcional de altura. No altera la marca de escritorio ni captura interacciones táctiles.
+- El pop-up de suscripción permanece bloqueado mientras la intro no esté consumida, incluido el relevo automático y una repetición de la animación. Solo puede programarse después de que el hero ya quedó activo.
+- El iPad en horizontal (861–1180 px) pertenece al flujo optimizado de tablet: usa WebP de 720×405, buffer amplio, altura de scrub de 360 `svh` y un hero con fondo negro opaco. No puede quedar en una rama intermedia de escritorio con frames pesados o transparencia.

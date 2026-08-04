@@ -53,6 +53,37 @@
   }
 }
 
+/* El iPad apaisado queda entre los breakpoints de teléfono y escritorio. Usa
+   los cuadros optimizados desde JS y necesita la misma base estable para que
+   el sticky no deje transparentar la secuencia cuando entra el hero. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  html:not(.intro-scroll-consumed) .scroll-sequence {
+    height: 360svh;
+    min-height: 360svh;
+  }
+
+  html:not(.intro-scroll-consumed) .scroll-sequence-stage {
+    position: sticky;
+    top: 0;
+    background: #020202;
+  }
+
+  html:not(.intro-scroll-consumed) .scroll-sequence-image-frame {
+    display: block !important;
+    object-fit: cover;
+    object-position: center;
+    background: #020202;
+  }
+
+  html .plate-hero {
+    background: #020202 !important;
+  }
+
+  html .plate-hero::before {
+    background: linear-gradient(180deg, #020202 0%, #020202 100%) !important;
+  }
+}
+
 @media (max-width: 620px) {
   .food-editorial {
     padding-left: 22px;
