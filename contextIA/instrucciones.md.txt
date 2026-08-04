@@ -947,3 +947,9 @@ Cambio:
 Impacto proactivo:
 - No aumentar el tramo automático ni usarlo para recorrer contenido editorial: su única función es cerrar el último cuadro de la apertura y dejar el hero totalmente visible.
 - Si cambia la duración o la altura de `.scroll-sequence`, mantener el destino en el final real de la sección para que el hero empiece en `top: 0` al concluir.
+
+### Ajuste de cierre del intro 2026-08-04
+
+- `Ir a Fullness` no puede saltar de inmediato al último cuadro: recorre los fotogramas pendientes en 3 segundos y reserva 1 segundo adicional para que el hero entre completo.
+- Al terminar el relevo, la apertura queda consumida y se colapsa fuera del documento. Al hacer scroll hacia arriba debe seguir viéndose el hero, nunca reaparecer el último cuadro. El único camino para restaurarla es `Volver a ver animación`.
+- La marca vertical oficial de Fullness se muestra también en la apertura móvil. La flecha de orientación conserva su animación aprobada, pero usa el doble de altura, grosor y resplandor.

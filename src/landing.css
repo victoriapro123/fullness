@@ -359,13 +359,13 @@
 .intro-scroll-cue {
   position: absolute;
   z-index: 6;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   display: grid;
   justify-items: center;
-  gap: 7px;
-  width: 28px;
-  height: 64px;
+  gap: 14px;
+  width: 56px;
+  height: 128px;
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%);
@@ -373,20 +373,20 @@
 }
 
 .intro-scroll-cue::before {
-  width: 1px;
-  height: 38px;
+  width: 2px;
+  height: 76px;
   content: "";
   background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.98) 50%, rgba(255, 255, 255, 0));
-  box-shadow: 0 0 13px rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.78);
   animation: intro-scroll-energy 1.6s cubic-bezier(0.54, 0, 0.32, 1) infinite;
 }
 
 .intro-scroll-cue span {
-  width: 10px;
-  height: 10px;
-  border-right: 1.5px solid rgba(255, 255, 255, 0.96);
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.96);
-  box-shadow: 3px 3px 10px rgba(255, 255, 255, 0.38);
+  width: 20px;
+  height: 20px;
+  border-right: 3px solid rgba(255, 255, 255, 0.96);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.96);
+  box-shadow: 6px 6px 16px rgba(255, 255, 255, 0.45);
   transform: rotate(45deg);
   animation: intro-scroll-chevron 1.6s cubic-bezier(0.54, 0, 0.32, 1) infinite;
 }
@@ -458,7 +458,6 @@
   .scroll-sequence-video-frame,
   .scroll-sequence-poster-frame,
   .scroll-sequence-final-frame,
-  .intro-start-logo,
   .scroll-sequence-signal-layer {
     display: none !important;
   }

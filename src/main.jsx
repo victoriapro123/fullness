@@ -3007,6 +3007,7 @@ function IntroScrollSequence() {
     if (introScrollFrameSources.length) {
       let animationFrame = 0;
       let autoHandoffFrame = 0;
+      let completionFrame = 0;
       let autoHandoffRunning = false;
       let autoHandoffStarted = false;
       const frameCache = new Map();
@@ -3105,6 +3106,21 @@ function IntroScrollSequence() {
         autoHandoffRunning = false;
         root.classList.remove("intro-scroll-auto-handoff");
       };
+      const completeSequence = () => {
+        autoHandoffFrame = 0;
+        autoHandoffRunning = false;
+        root.classList.remove("intro-scroll-auto-handoff", "intro-scroll-active");
+        root.classList.add("intro-scroll-consumed");
+        setHandoffState(false);
+        setReplayReady(false);
+        window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+
+        completionFrame = window.requestAnimationFrame(() => {
+          completionFrame = 0;
+          const hero = document.querySelector(".plate-hero");
+          window.scrollTo({ top: hero?.offsetTop || 0, left: 0, behavior: "instant" });
+        });
+      };
       const startAutoHandoff = ({ skip = false } = {}) => {
         if (autoHandoffRunning || root.classList.contains("intro-scroll-consumed")) return;
 
@@ -3113,49 +3129,58 @@ function IntroScrollSequence() {
 
         const targetScrollTop = metrics.sectionEnd;
         const startScrollTop = window.scrollY;
+        const handoffStart = metrics.sectionTop + metrics.scrollDistance;
         if (targetScrollTop <= startScrollTop + 1) {
-          window.scrollTo(0, targetScrollTop);
-          scheduleRender();
+          completeSequence();
           return;
         }
 
         autoHandoffStarted = true;
         autoHandoffRunning = true;
         preloadFrameRange(Math.max(0, introScrollFrameSources.length - 12), introScrollFrameSources.length - 1);
-        setFrame(1);
-        setHandoffState(true);
-        setReplayReady(true);
         root.classList.add("intro-scroll-auto-handoff");
 
         if (reducedMotion) {
           window.scrollTo(0, targetScrollTop);
-          autoHandoffRunning = false;
-          root.classList.remove("intro-scroll-auto-handoff");
-          scheduleRender();
+          completeSequence();
           return;
         }
 
-        const duration = skip ? 680 : 880;
-        const startedAt = performance.now();
-        const advance = (now) => {
-          const progress = Math.min(1, (now - startedAt) / duration);
-          const eased = 1 - Math.pow(1 - progress, 4);
-          const nextScrollTop = startScrollTop + (targetScrollTop - startScrollTop) * eased;
+        const animateScroll = (from, to, duration, onComplete) => {
+          const startedAt = performance.now();
+          const advance = (now) => {
+            const progress = Math.min(1, (now - startedAt) / duration);
+            const eased = 1 - Math.pow(1 - progress, 4);
+            const nextScrollTop = from + (to - from) * eased;
 
-          window.scrollTo(0, nextScrollTop);
-          if (progress < 1) {
-            autoHandoffFrame = window.requestAnimationFrame(advance);
-            return;
-          }
+            window.scrollTo(0, nextScrollTop);
+            if (progress < 1) {
+              autoHandoffFrame = window.requestAnimationFrame(advance);
+              return;
+            }
 
-          window.scrollTo(0, targetScrollTop);
-          autoHandoffFrame = 0;
-          autoHandoffRunning = false;
-          root.classList.remove("intro-scroll-auto-handoff");
-          scheduleRender();
+            window.scrollTo(0, to);
+            onComplete();
+          };
+
+          autoHandoffFrame = window.requestAnimationFrame(advance);
         };
 
-        autoHandoffFrame = window.requestAnimationFrame(advance);
+        const revealHero = () => {
+          setFrame(1);
+          setHandoffState(true);
+          setReplayReady(true);
+          animateScroll(handoffStart, targetScrollTop, 1000, completeSequence);
+        };
+
+        if (skip && startScrollTop < handoffStart - 1) {
+          setHandoffState(false);
+          setReplayReady(false);
+          animateScroll(startScrollTop, handoffStart, 3000, revealHero);
+          return;
+        }
+
+        revealHero();
       };
       const renderFromScroll = () => {
         animationFrame = 0;
@@ -3197,13 +3222,16 @@ function IntroScrollSequence() {
       };
       const handleReset = () => {
         cancelAutoHandoff();
+        window.cancelAnimationFrame(completionFrame);
+        completionFrame = 0;
         autoHandoffStarted = false;
         root.classList.remove(
           "intro-scroll-consumed",
           "intro-scroll-active",
           "intro-scroll-playing",
           "intro-scroll-handoff",
-          "intro-scroll-replay-ready"
+          "intro-scroll-replay-ready",
+          "intro-scroll-auto-handoff"
         );
         window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: false } }));
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
@@ -3247,8 +3275,9 @@ function IntroScrollSequence() {
         window.removeEventListener("keydown", handleUserInterruption);
         skipButtonRef.current?.removeEventListener("click", handleSkip);
         window.cancelAnimationFrame(animationFrame);
+        window.cancelAnimationFrame(completionFrame);
         cancelAutoHandoff();
-        root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-replay-ready");
+        root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-replay-ready", "intro-scroll-auto-handoff");
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
         window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
       };
