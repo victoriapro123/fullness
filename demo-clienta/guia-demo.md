@@ -20,13 +20,12 @@ Usar siempre este puerto para presentar y revisar la demo local.
 
 Puntos a destacar:
 
-- Antes del hero aparece una secuencia de video: el logo Fullness Lab queda al centro y al hacer click, scroll, touch o Page Down activa un scrub automatico y fluido de 4 segundos. Durante ese tramo el desplazamiento real del sitio queda bloqueado, el video cubre todo el alto visible, el menu se oculta y recien al terminar aterriza en el hero.
-- Desde el hero no se puede volver al video ni al tramo negro con scroll. Para repetir la secuencia se usa el boton tecnico transparente `Volver a la animacion`, ubicado arriba a la derecha del hero con icono de video.
-- En el intro aparecen cuatro tags tecnologicos simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Empiezan despues del segundo 1 y encienden uno a uno con titileo e iluminacion suave.
+- Antes del hero aparece una secuencia cinematográfica vinculada directamente al scroll. Al bajar, los 160 cuadros avanzan de forma continua; al subir, la animación retrocede de manera natural. El sitio no bloquea el desplazamiento y, al terminar la secuencia, el hero y la banda siguiente suben sobre el último cuadro con el mismo fondo negro opaco de la página.
+- La misma secuencia de fotogramas funciona en computador y móvil; en el teléfono llena el encuadre para mantener el plato protagonista. El MP4 original sigue resguardado como fuente y respaldo de la animación, sin reproducirse en la interfaz.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.
 - Mensaje clave: el bienestar comienza desde adentro; no se cuentan calorias, se aprende a nutrirse.
-- El boton principal del hero dice `Explorar Fullness Lab` y baja a `Nuestro proposito`.
+- El boton principal del hero dice `Ver planes` y lleva a la oferta disponible.
 - El logo del header y el isotipo de betarraga aparecen con mas protagonismo y tonos marfil/dorado suave.
 
 ## 3. Mostrar Plato Food Porn

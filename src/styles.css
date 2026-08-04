@@ -92,7 +92,7 @@ html {
   scroll-behavior: smooth;
   min-height: 100%;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: auto;
   overflow-y: scroll;
   scrollbar-gutter: stable;
 }
@@ -101,7 +101,7 @@ body {
   margin: 0;
   min-width: 320px;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: visible;
   font-family: var(--font-body);
   font-size: 18px;
   font-weight: var(--font-weight-light);
@@ -110,7 +110,7 @@ body {
 #root {
   min-width: 0;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: visible;
 }
 
 /* Los controles nunca deben ampliar una grilla, un panel ni el viewport. */
@@ -962,6 +962,32 @@ body {
   letter-spacing: 0.16em;
 }
 
+@media (min-width: 1121px) {
+  /* El isotipo ocupa más alto que el wordmark; este ajuste óptico alinea el
+     texto del menú con la línea de lectura real de la marca, no con su caja. */
+  .site-header .desktop-nav {
+    transform: translateY(19px);
+  }
+}
+
+/* La acción de repetir la apertura ocupa una columna completa. Antes de que
+   esa acción, la cuenta y la navegación se monten, el menú pasa al drawer. */
+@media (max-width: 2200px) {
+  .site-header .desktop-nav,
+  .site-header .member-link {
+    display: none;
+  }
+
+  .site-header {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+
+  .site-header .menu-toggle {
+    display: grid;
+  }
+}
+
 .header-actions {
   order: 3;
 }
@@ -1492,7 +1518,16 @@ main {
   main {
     width: 100% !important;
     max-width: 100% !important;
-    overflow-x: hidden !important;
+  }
+
+  html {
+    overflow-x: auto !important;
+  }
+
+  body,
+  #root,
+  main {
+    overflow-x: visible !important;
   }
 
   main {
@@ -1666,7 +1701,15 @@ main {
   body,
   #root {
     max-width: 100%;
-    overflow-x: hidden !important;
+  }
+
+  html {
+    overflow-x: auto !important;
+  }
+
+  body,
+  #root {
+    overflow-x: visible !important;
   }
 
   body {
@@ -1684,7 +1727,7 @@ main {
   main {
     width: 100%;
     max-width: 100vw;
-    overflow-x: hidden !important;
+    overflow-x: visible !important;
     background: var(--editorial-black) !important;
   }
 

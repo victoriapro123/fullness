@@ -1123,7 +1123,7 @@
 .backoffice-panel {
   min-width: 0;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
   color: var(--ink);
@@ -2025,7 +2025,7 @@
   line-height: 1.35;
 }
 
-.backoffice-module-buttons {
+  .backoffice-module-buttons {
   display: grid;
   gap: 8px;
 }
@@ -2674,7 +2674,7 @@
   display: grid;
   place-items: center;
   padding: clamp(10px, 2vw, 24px);
-  overflow-x: clip;
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
   background: rgba(31, 26, 23, 0.48);
@@ -2684,12 +2684,101 @@
   z-index: 66;
 }
 
+/* La ficha de biblioteca debe reflowear, nunca pedir desplazamiento lateral.
+   Se acota cada capa para que las grillas internas puedan encogerse antes de
+   pasar a una columna. */
+.backoffice-meal-library-editor-overlay {
+  overflow-x: hidden;
+}
+
+.backoffice-workspace-form.backoffice-meal-library-form {
+  width: min(960px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  overflow-x: hidden;
+}
+
+.backoffice-meal-library-form > *,
+.backoffice-meal-library-form :is(.backoffice-editor-section, .backoffice-photo-editor, .backoffice-photo-row, .backoffice-photo-block, .backoffice-nutrition-editor, .benefit-assignment-editor, .tag-selector, .benefit-choice-grid, .tag-choice-grid, .selector-legend) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-meal-library-form :is(input, select, textarea, button, img) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-meal-library-form .backoffice-grid,
+.backoffice-meal-library-form .backoffice-wide,
+.backoffice-meal-library-form .backoffice-photo-row.backoffice-photo-row-double {
+  width: 100%;
+  max-width: 100%;
+}
+
+.backoffice-meal-library-form .backoffice-photo-row.backoffice-photo-row-double {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.backoffice-meal-library-form .backoffice-photo-preview {
+  max-width: 100%;
+}
+
+.backoffice-meal-library-form .backoffice-form-actions,
+.backoffice-meal-library-form .backoffice-action-buttons,
+.backoffice-meal-library-form .backoffice-form-head-actions {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.backoffice-meal-library-form .backoffice-draft-status,
+.backoffice-meal-library-form .backoffice-draft-picker,
+.backoffice-meal-library-form .backoffice-switch {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-meal-library-form .backoffice-draft-status span,
+.backoffice-meal-library-form .selector-legend > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.backoffice-meal-library-form .selector-legend {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .backoffice-meal-library-form > .backoffice-form-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .backoffice-meal-library-form > .backoffice-form-head .backoffice-form-head-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .backoffice-meal-library-form .backoffice-grid,
+  .backoffice-meal-library-form .backoffice-photo-row.backoffice-photo-row-double,
+  .backoffice-meal-library-form .backoffice-nutrition-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .backoffice-meal-library-form .backoffice-photo-preview {
+    width: min(100%, 420px);
+  }
+}
+
 .backoffice-workspace-form {
-  width: min(1260px, calc(100vw - 28px));
+  box-sizing: border-box;
+  width: min(1080px, calc(100vw - 28px));
   min-width: 0;
   max-width: 100%;
   max-height: calc(100svh - 28px);
-  overflow-x: clip;
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
   gap: 20px;
@@ -2721,7 +2810,7 @@
   align-items: center;
   justify-content: flex-end;
   flex: 0 1 auto;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   min-width: 0;
   gap: 10px;
 }
@@ -2800,7 +2889,7 @@
   display: flex;
   gap: 0;
   min-width: 0;
-  overflow-x: clip;
+  overflow-x: auto;
   border-bottom: 1px solid rgba(54, 43, 39, 0.14);
 }
 
@@ -2932,6 +3021,7 @@
 
 .backoffice-photo-row.backoffice-photo-row-double {
   gap: 16px;
+  width: min(100%, 920px);
 }
 
 .backoffice-photo-row.backoffice-photo-row-double.is-single {
@@ -2967,6 +3057,11 @@
   aspect-ratio: 16 / 9;
   border-radius: 4px;
   background: #efede9;
+}
+
+.backoffice-workspace-form .backoffice-grid,
+.backoffice-workspace-form .backoffice-wide {
+  width: min(100%, 920px);
 }
 
 .backoffice-image-ready {
@@ -3347,7 +3442,7 @@
 
 .backoffice-nested-editor-body {
   min-width: 0;
-  overflow-x: clip;
+  overflow-x: auto;
   overflow-y: auto;
   display: grid;
   gap: 18px;
@@ -3365,6 +3460,7 @@
 .backoffice-workspace-form::-webkit-scrollbar,
 .backoffice-nested-editor-body::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 
 .backoffice-workspace-form::-webkit-scrollbar-thumb,
@@ -3600,11 +3696,11 @@
     display: none;
   }
 
-  .backoffice-module-buttons {
+.backoffice-module-buttons {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
-    overflow-x: clip;
+    overflow-x: auto;
   }
 
   .backoffice-module-button {

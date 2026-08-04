@@ -746,17 +746,18 @@ const introScrollVideoSrc = mediaSrc("assets/scroll-intro/fullness-intro-sequenc
 const introScrollPosterSrc = mediaSrc("assets/scroll-intro/fullness-intro-poster.jpg");
 const introScrollFinalFrameSrc = mediaSrc("assets/scroll-intro/fullness-intro-final.jpg");
 const introScrollVideoDuration = 15.04;
+const introScrollFrameSources = Object.entries(
+  import.meta.glob("./assets/scroll-intro-frames/frame-*.webp", {
+    eager: true,
+    import: "default",
+    query: "?url"
+  })
+)
+  .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
+  .map(([, source]) => source);
 const introMobileQuery = "(max-width: 860px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
-const isDocumentReload = () => {
-  if (typeof window === "undefined") return false;
-
-  const navigationEntry = window.performance?.getEntriesByType?.("navigation")?.[0];
-  if (navigationEntry?.type) return navigationEntry.type === "reload";
-
-  return window.performance?.navigation?.type === window.performance?.navigation?.TYPE_RELOAD;
-};
 const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
@@ -2986,16 +2987,182 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
 function IntroScrollSequence() {
   const sectionRef = useRef(null);
   const videoRef = useRef(null);
+  const sequenceFrameRef = useRef(null);
   const posterFrameRef = useRef(null);
   const finalFrameRef = useRef(null);
   const signalLayerRef = useRef(null);
   const logoButtonRef = useRef(null);
   const skipButtonRef = useRef(null);
   const progressRef = useRef(0);
+  const frameIndexRef = useRef(-1);
+  const requestedFrameIndexRef = useRef(0);
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
 
   useEffect(() => {
+    /* La apertura usa la misma secuencia de cuadros en todos los formatos. Así
+       el avance responde directamente al scroll, sin los saltos de seek que
+       producía el video nativo en pantallas táctiles. El MP4 original queda
+       conservado como respaldo del material fuente. */
+    if (introScrollFrameSources.length) {
+      let animationFrame = 0;
+      const frameCache = new Map();
+      const root = document.documentElement;
+      const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
+      const setHandoffState = (active) => {
+        const wasActive = root.classList.contains("intro-scroll-handoff");
+        if (wasActive === active) return;
+
+        root.classList.toggle("intro-scroll-handoff", active);
+        window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active } }));
+      };
+      const setReplayReady = (ready) => {
+        const wasReady = root.classList.contains("intro-scroll-replay-ready");
+        if (wasReady === ready) return;
+
+        root.classList.toggle("intro-scroll-replay-ready", ready);
+        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready } }));
+      };
+      const getMetrics = () => {
+        if (!sectionRef.current) return null;
+
+        const sectionTop = sectionRef.current.offsetTop;
+        const sectionHeight = Math.max(1, sectionRef.current.offsetHeight);
+        return {
+          sectionTop,
+          scrollDistance: Math.max(1, sectionHeight - window.innerHeight),
+          sectionEnd: sectionTop + sectionHeight
+        };
+      };
+      const loadFrame = (frameIndex) => {
+        if (frameIndex < 0 || frameIndex >= introScrollFrameSources.length) return null;
+
+        const cachedFrame = frameCache.get(frameIndex);
+        if (cachedFrame) return cachedFrame;
+
+        const frame = new Image();
+        frame.decoding = "async";
+        const cacheEntry = { frame, ready: false };
+        frameCache.set(frameIndex, cacheEntry);
+
+        frame.onload = async () => {
+          try {
+            await frame.decode?.();
+          } catch {
+            // `decode()` can reject for an already decoded image. Its pixels are
+            // still ready to use in that case.
+          }
+
+          cacheEntry.ready = true;
+          if (requestedFrameIndexRef.current === frameIndex) {
+            scheduleRender();
+          }
+        };
+        frame.src = introScrollFrameSources[frameIndex];
+        return cacheEntry;
+      };
+      const applyReadyFrame = (frameIndex) => {
+        const cachedFrame = loadFrame(frameIndex);
+        if (!cachedFrame?.ready || !sequenceFrameRef.current || frameIndexRef.current === frameIndex) return false;
+
+        frameIndexRef.current = frameIndex;
+        sequenceFrameRef.current.src = cachedFrame.frame.currentSrc || cachedFrame.frame.src;
+        return true;
+      };
+      const preloadFrameRange = (start, end) => {
+        for (let index = start; index <= end; index += 1) loadFrame(index);
+      };
+      const retainNearbyFrames = (frameIndex) => {
+        const firstKeptFrame = Math.max(0, frameIndex - 18);
+        const lastKeptFrame = Math.min(introScrollFrameSources.length - 1, frameIndex + 30);
+
+        frameCache.forEach((_, cachedIndex) => {
+          if (cachedIndex < firstKeptFrame || cachedIndex > lastKeptFrame) {
+            frameCache.delete(cachedIndex);
+          }
+        });
+      };
+      const setFrame = (progress) => {
+        if (!introScrollFrameSources.length || !sequenceFrameRef.current) return;
+
+        const nextProgress = clampProgress(progress);
+        const nextFrameIndex = Math.round(nextProgress * (introScrollFrameSources.length - 1));
+        progressRef.current = nextProgress;
+        requestedFrameIndexRef.current = nextFrameIndex;
+        retainNearbyFrames(nextFrameIndex);
+        preloadFrameRange(nextFrameIndex - 8, nextFrameIndex + 24);
+        applyReadyFrame(nextFrameIndex);
+      };
+      const renderFromScroll = () => {
+        animationFrame = 0;
+        if (root.classList.contains("intro-scroll-consumed")) {
+          root.classList.remove("intro-scroll-active");
+          setHandoffState(false);
+          return;
+        }
+
+        const metrics = getMetrics();
+        if (!metrics) return;
+
+        const progress = clampProgress((window.scrollY - metrics.sectionTop) / metrics.scrollDistance);
+        setFrame(progress);
+        const handoffStart = metrics.sectionTop + metrics.scrollDistance;
+        const isHandoff = window.scrollY >= handoffStart - 2 && window.scrollY < metrics.sectionEnd - 2;
+        setHandoffState(isHandoff);
+        if (isHandoff) {
+          setReplayReady(true);
+        } else if (window.scrollY < handoffStart - 2) {
+          setReplayReady(false);
+        }
+        root.classList.toggle(
+          "intro-scroll-active",
+          window.scrollY >= metrics.sectionTop - 2 && window.scrollY < metrics.sectionEnd - 2
+        );
+      };
+      const scheduleRender = () => {
+        if (!animationFrame) animationFrame = window.requestAnimationFrame(renderFromScroll);
+      };
+      const handleReset = () => {
+        root.classList.remove(
+          "intro-scroll-consumed",
+          "intro-scroll-active",
+          "intro-scroll-playing",
+          "intro-scroll-handoff",
+          "intro-scroll-replay-ready"
+        );
+        window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: false } }));
+        window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
+        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
+        frameIndexRef.current = -1;
+        requestedFrameIndexRef.current = 0;
+        window.scrollTo({ top: sectionRef.current?.offsetTop || 0, left: 0, behavior: "instant" });
+        scheduleRender();
+      };
+
+      preloadFrameRange(0, Math.min(39, introScrollFrameSources.length - 1));
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        root.classList.add("intro-scroll-consumed");
+        window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
+      } else {
+        scheduleRender();
+      }
+
+      window.addEventListener("scroll", scheduleRender, { passive: true });
+      window.addEventListener("resize", scheduleRender);
+      window.addEventListener("fullness:intro-reset", handleReset);
+
+      return () => {
+        window.removeEventListener("scroll", scheduleRender);
+        window.removeEventListener("resize", scheduleRender);
+        window.removeEventListener("fullness:intro-reset", handleReset);
+        window.cancelAnimationFrame(animationFrame);
+        root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-replay-ready");
+        window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
+        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
+      };
+    }
+
     let animationFrame = 0;
     let autoStartTimeout = 0;
     let mobileTransitionFrame = 0;
@@ -3640,18 +3807,26 @@ function IntroScrollSequence() {
       className="scroll-sequence scroll-sequence-intro"
       id="inicio"
       ref={sectionRef}
-      style={{ "--scroll-sequence-final-bg": `url("${introScrollFinalFrameSrc}")` }}
       aria-label="Video introductorio Fullness Lab"
     >
       <div className="scroll-sequence-stage">
+        <img
+          ref={sequenceFrameRef}
+          className="scroll-sequence-frame scroll-sequence-image-frame"
+          src={introScrollFrameSources[0]}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          fetchPriority="high"
+        />
         <video
           ref={videoRef}
-          className="scroll-sequence-frame"
+          className="scroll-sequence-frame scroll-sequence-video-frame"
           src={introScrollVideoSrc}
           poster={introScrollPosterSrc}
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-hidden="true"
         />
         <img
@@ -3991,6 +4166,9 @@ function App() {
   const [introConsumed, setIntroConsumed] = useState(() =>
     document.documentElement.classList.contains("intro-scroll-consumed")
   );
+  const [introReplayReady, setIntroReplayReady] = useState(() =>
+    document.documentElement.classList.contains("intro-scroll-replay-ready")
+  );
   const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
@@ -4193,10 +4371,7 @@ function App() {
       window.history.replaceState(null, "", "#proposito");
     }
 
-    if (
-      (!isMobileIntroViewport() && isDocumentReload()) ||
-      sectionHashes.has(window.location.hash)
-    ) {
+    if (sectionHashes.has(window.location.hash)) {
       document.documentElement.classList.add("intro-scroll-consumed");
       setIntroConsumed(true);
       setHeaderHiddenForHero(false);
@@ -4217,6 +4392,20 @@ function App() {
 
     return () => {
       window.removeEventListener("fullness:intro-state-change", syncIntroState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncReplayReady = (event) => {
+      const ready = event.detail?.ready ?? document.documentElement.classList.contains("intro-scroll-replay-ready");
+      setIntroReplayReady(Boolean(ready));
+    };
+
+    syncReplayReady({});
+    window.addEventListener("fullness:intro-replay-ready-change", syncReplayReady);
+
+    return () => {
+      window.removeEventListener("fullness:intro-replay-ready-change", syncReplayReady);
     };
   }, []);
 
@@ -4457,8 +4646,15 @@ function App() {
     setAccountOpen(false);
     setProductPreviewSlug("");
     setMealPreview(null);
-    document.documentElement.classList.remove("intro-scroll-consumed", "intro-scroll-active", "intro-scroll-playing");
+    document.documentElement.classList.remove(
+      "intro-scroll-consumed",
+      "intro-scroll-active",
+      "intro-scroll-playing",
+      "intro-scroll-handoff",
+      "intro-scroll-replay-ready"
+    );
     setIntroConsumed(false);
+    setIntroReplayReady(false);
     setHeaderHiddenForHero(true);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     window.dispatchEvent(new CustomEvent("fullness:intro-reset", { detail: { autoplay: true } }));
@@ -6814,7 +7010,9 @@ function App() {
 
       const sequenceTop = introSequence.offsetTop;
       const sequenceEnd = sequenceTop + introSequence.offsetHeight;
-      const isInsideIntroScroll = window.scrollY >= sequenceTop - 2 && window.scrollY < sequenceEnd - 2;
+      const isHandoff = document.documentElement.classList.contains("intro-scroll-handoff");
+      const isInsideIntroScroll =
+        !isHandoff && window.scrollY >= sequenceTop - 2 && window.scrollY < sequenceEnd - 2;
 
       setHeaderHiddenForHero((current) => (current === isInsideIntroScroll ? current : isInsideIntroScroll));
     };
@@ -6823,12 +7021,14 @@ function App() {
     window.addEventListener("scroll", updateHeaderVisibility, { passive: true });
     window.addEventListener("resize", updateHeaderVisibility);
     window.addEventListener("fullness:intro-state-change", updateHeaderVisibility);
+    window.addEventListener("fullness:intro-handoff-state-change", updateHeaderVisibility);
     window.addEventListener("fullness:intro-reset", updateHeaderVisibility);
 
     return () => {
       window.removeEventListener("scroll", updateHeaderVisibility);
       window.removeEventListener("resize", updateHeaderVisibility);
       window.removeEventListener("fullness:intro-state-change", updateHeaderVisibility);
+      window.removeEventListener("fullness:intro-handoff-state-change", updateHeaderVisibility);
       window.removeEventListener("fullness:intro-reset", updateHeaderVisibility);
     };
   }, []);
@@ -6981,7 +7181,11 @@ function App() {
   const isFaqPage = currentPath === faqPath && !currentProductSlug;
   const isAboutPage = currentPath === aboutPath && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
-  const showIntroReplay = currentPath === "/" && !currentProductSlug && introConsumed && !isMobileIntroViewport();
+  const showIntroReplay =
+    currentPath === "/" &&
+    !currentProductSlug &&
+    (introConsumed || introReplayReady) &&
+    !isMobileIntroViewport();
 
   useEffect(() => {
     const syncSeoHead = () => {
@@ -9397,8 +9601,8 @@ function App() {
                         </section>
 
                         {mealLibraryEditorOpen && (
-                          <div className="backoffice-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="meal-library-editor-title">
-                            <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMealLibraryItem}>
+                          <div className="backoffice-editor-overlay backoffice-meal-library-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="meal-library-editor-title">
+                            <form className="backoffice-form backoffice-workspace-form backoffice-meal-library-form" noValidate onSubmit={submitMealLibraryItem}>
                               <div className="backoffice-form-head">
                                 <div className="backoffice-workspace-title">
                                   <button className="backoffice-back-button" type="button" onClick={closeMealLibraryEditor} aria-label="Volver al listado de mealpreps">

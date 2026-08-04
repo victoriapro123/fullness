@@ -6,12 +6,13 @@
 - Se reemplazo el video de portada por la imagen final entregada como fondo.
 - Se mantuvo el enfoque visual en comida real, ingredientes frescos y energia natural.
 - Se aplico el logo oficial entregado por la clienta.
-- El video introductorio anterior al hero muestra el logo Fullness Lab centrado sobre el video. La animacion avanza de forma autonoma y fluida durante 4 segundos cuando el usuario hace click en el logo o intenta bajar; durante ese tramo se bloquea el desplazamiento real del sitio, el video cubre todo el alto visible y el menu permanece oculto hasta aterrizar en el hero.
-- Los elementos tecnologicos quedaron como cuatro tags simples apilados a la izquierda, mas grandes, transparentes, solo con borde y texto: `Antinflamatorio`, `Nutrientes`, `Origen de calidad` y `Energia real`. Encienden uno a uno con titileo e iluminacion suave.
-- Desde el hero no se puede volver al video ni al tramo negro con scroll; se agrego un boton transparente con icono de video para `Volver a la animacion`, que reabre y resetea el intro.
+- El video introductorio se convirtió en una secuencia de 160 cuadros WebP ligada al scroll en escritorio y móvil: avanza al bajar y retrocede al subir, sin bloquear la navegación. En el teléfono se encuadra a pantalla completa y no reproduce el video nativo. Al pasar al hero y a la banda siguiente, el mismo fondo negro opaco de la página cubre por completo el cuadro final que queda detrás. El MP4 original se mantiene disponible como fuente y respaldo.
+- Las cabeceras principales de Comunidad y Nosotros comparten con el landing la misma escala, grosor y espaciado de eyebrow, título y descripción.
+- La ventana `Mealpreps / Editar` se compactó para que sus campos y fotos entren en una retícula legible; solo conserva scroll vertical y apila sus columnas antes de exceder el ancho disponible.
+- El menú principal del header se alinea ópticamente con el wordmark del logo horizontal en escritorio. Cuando la cabecera se reduce bajo 2200 px, la navegación pasa al menú hamburguesa antes de montar links, usuario o control de replay.
 - El logo del header se aumento y se ajusto a una lectura marfil/dorado suave para no verse blanco ni generico.
 - Se agrego isotipo de betarraga como favicon, marca visual de secciones, marca de agua suave y footer.
-- El CTA principal del hero ahora dice `Explorar Fullness Lab` y baja a `Nuestro proposito`.
+- El CTA principal del hero ahora dice `Ver planes` y lleva a la oferta disponible.
 - Las transiciones entre secciones usan veladuras organicas cuando ayudan a unir hero, betarraga, tienda y comunidad.
 
 ## Texto principal

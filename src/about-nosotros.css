@@ -489,3 +489,37 @@
     border-bottom: 0;
   }
 }
+
+/* Nosotros comparte la misma escala y ritmo editorial de eyebrow, título y
+   descripción que el landing. Los párrafos largos del relato quedan intactos. */
+.about-v2__eyebrow {
+  margin: 0 0 clamp(14px, 1.5vw, 22px);
+  font-size: clamp(0.76rem, 0.86vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  line-height: 1.18;
+}
+
+.about-v2__hero h1,
+.about-v2__origin-copy h2,
+.about-v2__story-heading h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 2.05vw, 2.72rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+}
+
+.about-v2__rule {
+  margin: clamp(18px, 1.7vw, 24px) 0 clamp(20px, 2vw, 28px);
+}
+
+.about-v2__hero-question,
+.about-v2__origin-copy .about-v2__origin-lead {
+  margin: 0;
+  font-size: clamp(0.96rem, 0.9vw, 1.12rem);
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.62;
+  text-transform: none;
+}
