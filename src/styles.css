@@ -2061,3 +2061,95 @@ main {
     display: grid !important;
   }
 }
+
+/* La elección explícita del usuario prevalece sobre los breakpoints. Esta
+   variante conserva el menú horizontal de escritorio, pero limita su escala
+   para que quepa en el viewport lógico de un iPad sin superposiciones. */
+html[data-viewport-mode="desktop"] {
+  --forced-desktop-header-height: clamp(118px, 12vw, 160px);
+  --forced-desktop-header-line-height: clamp(82.6px, 8.4vw, 112px);
+  --forced-desktop-header-optical-offset: clamp(16px, 1.5vw, 22px);
+  --forced-desktop-header-actions-gap: clamp(10px, 0.9vw, 14px);
+}
+
+html[data-viewport-mode="desktop"] .site-header {
+  height: var(--forced-desktop-header-height) !important;
+  min-height: var(--forced-desktop-header-height) !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  justify-content: normal !important;
+  gap: clamp(12px, 1.4vw, 20px) !important;
+  padding: clamp(12px, 1.3vw, 19px) clamp(18px, 2vw, 30px) !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .brand {
+  width: clamp(170px, 15vw, 230px) !important;
+  min-width: 0 !important;
+  height: auto !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .brand-reference-logo {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .desktop-nav {
+  display: flex !important;
+  align-self: center !important;
+  justify-self: center !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  gap: clamp(18px, 1.8vw, 28px) !important;
+  font-size: clamp(0.75rem, 0.9vw, 0.94rem) !important;
+  font-weight: 500 !important;
+  transform: translateY(var(--forced-desktop-header-optical-offset)) !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .desktop-nav a {
+  height: auto !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .header-actions {
+  align-self: center !important;
+  align-items: center !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  gap: var(--forced-desktop-header-actions-gap) !important;
+  transform: translateY(var(--forced-desktop-header-optical-offset)) !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .member-link {
+  display: inline-flex !important;
+  align-self: center !important;
+  margin-top: 0 !important;
+  padding: 10px var(--forced-desktop-header-actions-gap) !important;
+  font-size: clamp(0.72rem, 0.78vw, 0.88rem) !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .member-link::before {
+  top: calc(50% - var(--forced-desktop-header-optical-offset)) !important;
+  height: var(--forced-desktop-header-line-height) !important;
+  transform: translateY(-50%);
+}
+
+html[data-viewport-mode="desktop"] .site-header :is(.intro-replay-button, .icon-button) {
+  align-self: center !important;
+  width: clamp(40px, 3.2vw, 46px) !important;
+  min-width: clamp(40px, 3.2vw, 46px) !important;
+  height: clamp(40px, 3.2vw, 46px) !important;
+  min-height: clamp(40px, 3.2vw, 46px) !important;
+  margin-top: 0 !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header :is(.intro-replay-button, .icon-button) > svg {
+  width: clamp(18px, 1.5vw, 22px) !important;
+  height: clamp(18px, 1.5vw, 22px) !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .menu-toggle {
+  display: none !important;
+}
+
+html[data-viewport-mode="desktop"] .site-header .viewport-mode-toggle {
+  display: grid !important;
+}
