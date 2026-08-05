@@ -298,48 +298,71 @@ const faqGroups = [
   },
   {
     id: "envios",
-    eyebrow: "Políticas de envío",
-    title: "Despacho cuidado, cadena de frío y tiempos claros.",
+    eyebrow: "Políticas de Envío",
+    title: "En Fullness Lab nos preocupamos de que cada preparación llegue en óptimas condiciones, manteniendo su frescura, calidad y seguridad alimentaria.",
     navLabel: "Envíos",
     items: [
       {
         question: "Cobertura de despacho",
-        answer: ["Actualmente realizamos despachos dentro de la Región Metropolitana en comunas seleccionadas."]
-      },
-      {
-        question: "Días de entrega",
-        answer: ["Los despachos se realizan de lunes a viernes."]
-      },
-      {
-        question: "Horarios de entrega",
-        answer: ["Las entregas se efectúan entre las 9:00 y las 20:00 horas."]
-      },
-      {
-        question: "Costo de despacho",
-        answer: ["El valor del despacho se calcula automáticamente según la dirección de entrega y se informa antes de finalizar la compra."]
-      },
-      {
-        question: "Recepción del pedido",
-        answer: ["Es responsabilidad del cliente asegurarse de que exista una persona disponible para recibir el pedido dentro del horario informado."]
-      },
-      {
-        question: "Cadena de frío",
-        answer: ["Todos nuestros productos son transportados manteniendo las condiciones adecuadas de refrigeración o congelación."]
-      },
-      {
-        question: "Ausencia en el domicilio",
         answer: [
-          "Si no hay nadie para recibir el pedido:",
-          ["El transportista intentará contactar al cliente.", "Si la entrega no puede realizarse, podrá coordinarse un nuevo despacho con costo adicional."]
+          "Actualmente realizamos despachos dentro de la Región Metropolitana de Santiago. Si deseas recibir un pedido fuera de nuestra zona habitual de cobertura, contáctanos para evaluar la factibilidad de entrega."
         ]
       },
       {
-        question: "Modificaciones de dirección",
-        answer: ["Los cambios de dirección deben solicitarse con al menos 24 horas hábiles de anticipación a la fecha de entrega."]
+        question: "Días de despacho",
+        answer: [
+          "Los despachos se realizan todos los martes y jueves, según la programación vigente de Fullness Lab.",
+          "Los pedidos deberán realizarse dentro de los plazos informados en la página web para ser considerados en la siguiente fecha de despacho."
+        ]
       },
       {
-        question: "Retrasos por fuerza mayor",
-        answer: ["En situaciones excepcionales como cortes de ruta, condiciones climáticas extremas o contingencias externas, los tiempos de entrega podrían verse afectados."]
+        question: "Horario de entrega",
+        answer: [
+          "Las entregas se realizan dentro de una franja horaria previamente informada. Debido a factores externos, como el tránsito o las condiciones climáticas, no podemos garantizar una hora exacta de entrega."
+        ]
+      },
+      {
+        question: "Costo de despacho",
+        answer: ["El valor del despacho se calcula según la comuna de destino y será informado antes de finalizar la compra."]
+      },
+      {
+        question: "Recepción del pedido",
+        answer: [
+          "Es responsabilidad del cliente contar con una persona disponible para recibir el pedido en la dirección indicada durante el horario de entrega.",
+          "Una vez entregado el pedido, la responsabilidad por su correcta conservación pasa al cliente."
+        ]
+      },
+      {
+        question: "Conservación y cadena de frío",
+        answer: [
+          "Todos nuestros productos son transportados manteniendo la cadena de frío para preservar su calidad y seguridad alimentaria.",
+          "Recomendamos refrigerar o congelar los productos inmediatamente después de recibirlos, siguiendo las instrucciones indicadas en cada etiqueta."
+        ]
+      },
+      {
+        question: "Ausencia al momento de la entrega",
+        answer: [
+          "Si al momento del despacho no es posible realizar la entrega debido a la ausencia del receptor o por información incorrecta de la dirección, el pedido regresará a nuestras instalaciones.",
+          "En estos casos, el cliente podrá coordinar un nuevo despacho, cuyo costo será de su cargo."
+        ]
+      },
+      {
+        question: "Cambios en la dirección de entrega",
+        answer: [
+          "Las solicitudes de cambio de dirección deberán realizarse con al menos 24 horas hábiles de anticipación a la fecha programada para el despacho.",
+          "Los cambios estarán sujetos a disponibilidad y cobertura."
+        ]
+      },
+      {
+        question: "Retrasos por causas de fuerza mayor",
+        answer: [
+          "En situaciones excepcionales, como accidentes, cortes de tránsito, condiciones climáticas u otros eventos fuera de nuestro control, los tiempos de entrega podrán verse afectados.",
+          "Si esto ocurriera, nos pondremos en contacto contigo para informar el estado de tu pedido y coordinar una nueva entrega si fuera necesario."
+        ]
+      },
+      {
+        question: "Contacto",
+        answer: ["Si tienes cualquier duda sobre tu despacho, puedes comunicarte con nosotros a través de nuestros canales de atención. Estaremos encantados de ayudarte."]
       }
     ]
   },

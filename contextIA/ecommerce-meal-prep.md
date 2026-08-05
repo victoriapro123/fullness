@@ -8,6 +8,7 @@
 - En el e-commerce hay tres conceptos: `Planes` semanales o mensuales, `Mealpreps` individuales dentro de esos planes y `Mealpreps familiares` vendidos directamente.
 - El hover de plan, mealprep familiar o mealprep incluido debe mostrar la segunda foto cuando exista.
 - El checkout debe pedir despacho con dirección/comuna o retiro en local.
+- La política de envíos publicada debe usar el texto aprobado por cliente: cobertura en la Región Metropolitana de Santiago, despachos todos los martes y jueves, franja horaria sin prometer hora exacta, costo por comuna, responsabilidad de recepción y conservación, cadena de frío, nuevo despacho a cargo del cliente ante ausencia/dirección errónea, cambios de dirección con 24 horas hábiles y comunicación ante fuerza mayor. No resumir ni sustituir esta política sin aprobación explícita.
 - La migración `20260709001000_ecommerce_shop_settings.sql` quedó aplicada y la fila `main` de `ecommerce_shop_settings` responde desde Supabase.
 - No usar un vector plano para el hero del e-commerce: se ve poco realista y no calza con la estética del sitio.
 - Para el hero del e-commerce, usar fotografia de producto realista, con etiqueta circular `FULLNESS LAB` como la de los pouches de la seccion meal prep del landing, fondo transparente para vivir sobre el hero oscuro y sombra natural aplicada por CSS.
