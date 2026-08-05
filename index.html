@@ -2,7 +2,29 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta id="fullness-viewport" name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (() => {
+        try {
+          const forcedDesktop = window.localStorage.getItem("fullness_viewport_mode") === "desktop";
+          document.documentElement.dataset.viewportMode = forcedDesktop ? "desktop" : "responsive";
+
+          if (forcedDesktop) {
+            document.getElementById("fullness-viewport")?.setAttribute(
+              "content",
+              "width=1440, initial-scale=1.0"
+            );
+          }
+
+          if (window.sessionStorage.getItem("fullness_preserve_intro_consumed") === "1") {
+            document.documentElement.classList.add("intro-scroll-consumed");
+            window.sessionStorage.removeItem("fullness_preserve_intro_consumed");
+          }
+        } catch {
+          document.documentElement.dataset.viewportMode = "responsive";
+        }
+      })();
+    </script>
     <meta name="theme-color" content="#030405" />
     <meta name="description" content="Fullness Lab ofrece meal prep saludable, alimentación consciente y preparaciones listas para calentar en Santiago." />
     <meta name="robots" content="index, follow, max-image-preview:large" />

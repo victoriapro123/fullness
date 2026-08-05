@@ -53,9 +53,9 @@
   }
 }
 
-/* El iPad apaisado queda entre los breakpoints de teléfono y escritorio. Usa
-   los cuadros optimizados desde JS y necesita la misma base estable para que
-   el sticky no deje transparentar la secuencia cuando entra el hero. */
+/* Los anchos intermedios conservan una composición estable y un header que no
+   se monta. La plataforma decide por separado si la animación usa el perfil
+   ligero de tablet o el recorrido completo de un notebook. */
 @media (min-width: 861px) and (max-width: 1366px) {
   html:not(.intro-scroll-consumed) .scroll-sequence {
     height: 360svh;
@@ -81,6 +81,11 @@
 
   html .plate-hero::before {
     background: linear-gradient(180deg, #020202 0%, #020202 100%) !important;
+  }
+
+  html[data-intro-device="desktop"]:not(.intro-scroll-consumed) .scroll-sequence {
+    height: 460svh;
+    min-height: 460svh;
   }
 }
 
@@ -275,6 +280,14 @@
   backface-visibility: hidden;
   transform: translateZ(0);
   transition: opacity 100ms linear;
+}
+
+.scroll-sequence-canvas-frame {
+  background-color: #020403;
+  background-position: center;
+  background-size: cover;
+  contain: strict;
+  transition: none;
 }
 
 .scroll-sequence-video-frame {
@@ -510,6 +523,10 @@
     object-fit: cover;
     object-position: center;
     background: #020403;
+  }
+
+  .scroll-sequence-video-frame {
+    display: none !important;
   }
 
   .scroll-sequence-poster-frame,

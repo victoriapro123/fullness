@@ -32,6 +32,7 @@ import {
   MapPin,
   Menu,
   Minus,
+  Monitor,
   PackageCheck,
   Pencil,
   Plus,
@@ -44,6 +45,7 @@ import {
   Sprout,
   Store,
   Tags,
+  Tablet,
   Timer,
   Trash2,
   Truck,
@@ -790,14 +792,36 @@ const introMobileFrameSources = Object.entries(
   .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
   .map(([, source]) => source);
 const introMobileQuery = "(max-width: 860px)";
-/* Los iPad, incluido el Pro apaisado, comparten el flujo ligero de tablet.
-   El desktop real comienza una vez que la cabecera puede conservar sus links
-   y acciones sin convertirlos en una segunda fila. */
 const introTabletQuery = "(max-width: 1366px)";
+const getIntroDeviceProfile = () => {
+  if (typeof window === "undefined") return "tablet";
+
+  const browserNavigator = window.navigator;
+  const userAgent = browserNavigator.userAgent || "";
+  const platform = browserNavigator.userAgentData?.platform || browserNavigator.platform || "";
+  const touchPoints = browserNavigator.maxTouchPoints || 0;
+  const isIPadOS = /iPad|iPhone|iPod/i.test(userAgent) || (/Mac/i.test(platform) && touchPoints > 1);
+  const isAndroid = /Android/i.test(userAgent);
+  const reportsMobilePlatform = Boolean(browserNavigator.userAgentData?.mobile);
+
+  if (isIPadOS || isAndroid || reportsMobilePlatform) return "tablet";
+
+  const reportsDesktopPlatform = /Win|Mac|CrOS|Chrome OS|Linux/i.test(`${platform} ${userAgent}`);
+  const hasFinePointer = window.matchMedia("(any-pointer: fine)").matches;
+  return reportsDesktopPlatform || hasFinePointer ? "desktop" : "tablet";
+};
+const introDeviceProfile = getIntroDeviceProfile();
+
+if (typeof document !== "undefined") {
+  document.documentElement.dataset.introDevice = introDeviceProfile;
+}
+
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
 const isTabletIntroViewport = () =>
-  typeof window !== "undefined" && window.matchMedia(introTabletQuery).matches;
+  typeof window !== "undefined" &&
+  window.matchMedia(introTabletQuery).matches &&
+  (isMobileIntroViewport() || introDeviceProfile === "tablet");
 const whatsappBaseUrl = "https://wa.me/56996588199";
 const createWhatsappUrl = (message) => `${whatsappBaseUrl}?text=${encodeURIComponent(message)}`;
 const whatsappUrl = createWhatsappUrl("Hola Fullness Lab, quiero hacer un pedido.");
@@ -815,6 +839,8 @@ const mealLibraryDraftScope = "meal-library";
 const adminAccessModeStorageKey = "fullness_carlos_access_mode";
 const adminPersonaEmail = "carlos@prof3sional.com";
 const checkoutCartStorageKey = "fullness_checkout_cart";
+const viewportModeStorageKey = "fullness_viewport_mode";
+const preserveIntroConsumedStorageKey = "fullness_preserve_intro_consumed";
 const checkoutTestMode = import.meta.env.VITE_CHECKOUT_TEST_MODE === "true";
 const subscriptionLightboxHighlights = [
   { label: "Alimentación consciente", image: consciousFoodIconSrc },
@@ -917,18 +943,16 @@ function SubscriptionLightbox({
 
         {!isFormMode && !isSuccessMode && (
           <div className="subscription-lightbox-content">
-            <img className="subscription-lightbox-logo" src={logoHeaderFooterSrc} alt="Fullness Lab" />
+            <img
+              className="subscription-lightbox-logo"
+              src={logoHeaderFooterSrc}
+              alt="Fullness Lab"
+              width="1600"
+              height="756"
+            />
             <p className="eyebrow">{settings.eyebrow}</p>
             <h2 id="subscription-lightbox-title">{settings.title}</h2>
             <p>{settings.body}</p>
-            <div className="subscription-lightbox-benefits" aria-label="Beneficios de la experiencia Fullness">
-              {subscriptionLightboxHighlights.map(({ label, image }) => (
-                <span key={label}>
-                  <img src={image} alt="" aria-hidden="true" loading="lazy" />
-                  {label}
-                </span>
-              ))}
-            </div>
             <div className="subscription-lightbox-actions">
               <button className="subscription-lightbox-primary" type="button" onClick={onOpenForm}>
                 {settings.ctaLabel}
@@ -940,6 +964,14 @@ function SubscriptionLightbox({
                   <ArrowUpRight size={18} aria-hidden="true" />
                 </button>
               )}
+            </div>
+            <div className="subscription-lightbox-benefits" aria-label="Beneficios de la experiencia Fullness">
+              {subscriptionLightboxHighlights.map(({ label, image }) => (
+                <span key={label}>
+                  <img src={image} alt="" aria-hidden="true" width="27" height="27" loading="lazy" />
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
         )}
@@ -954,15 +986,15 @@ function SubscriptionLightbox({
             </label>
             <label>
               Teléfono
-              <input required name="subscriberPhone" autoComplete="tel" placeholder="+56 9…" />
+              <input required name="subscriberPhone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+56 9…" />
             </label>
             <label>
               Mail
-              <input required name="subscriberEmail" type="email" autoComplete="email" placeholder="nombre@dominio.cl…" />
+              <input required name="subscriberEmail" type="email" autoComplete="email" spellCheck="false" placeholder="nombre@dominio.cl…" />
             </label>
             {message && <p className="subscription-lightbox-message" role="status">{message}</p>}
             <button className="subscription-lightbox-primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Inscribiendo..." : "Suscribirme"}
+              {isSubmitting ? "Inscribiendo…" : "Suscribirme"}
               <ArrowUpRight size={18} aria-hidden="true" />
             </button>
           </form>
@@ -3132,8 +3164,9 @@ function IntroScrollSequence() {
   const requestedFrameIndexRef = useRef(0);
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
+  const useCanvasFrames = isTabletIntroViewport();
   const introFrameSources =
-    isTabletIntroViewport() && introMobileFrameSources.length
+    useCanvasFrames && introMobileFrameSources.length
       ? introMobileFrameSources
       : introScrollFrameSources;
 
@@ -3152,7 +3185,7 @@ function IntroScrollSequence() {
       const frameCache = new Map();
       const root = document.documentElement;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const isTabletIntro = window.matchMedia(introTabletQuery).matches;
+      const isTabletIntro = isTabletIntroViewport();
       const frameBufferBehind = isTabletIntro ? 44 : 32;
       const frameBufferAhead = isTabletIntro ? 80 : 64;
       const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
@@ -3202,6 +3235,34 @@ function IntroScrollSequence() {
         frame.src = introFrameSources[frameIndex];
         return cacheEntry;
       };
+      const drawFrameToCanvas = (canvas, frame, frameIndex) => {
+        const canvasWidth = Math.max(1, Math.round(canvas.clientWidth || window.innerWidth));
+        const canvasHeight = Math.max(1, Math.round(canvas.clientHeight || window.innerHeight));
+        const dimensionsChanged = canvas.width !== canvasWidth || canvas.height !== canvasHeight;
+        const renderedFrameIndex = Number(canvas.dataset.frameIndex ?? -1);
+        if (!dimensionsChanged && renderedFrameIndex === frameIndex) return false;
+
+        if (dimensionsChanged) {
+          canvas.width = canvasWidth;
+          canvas.height = canvasHeight;
+        }
+
+        const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
+        if (!context || !frame.naturalWidth || !frame.naturalHeight) return false;
+
+        const coverScale = Math.max(canvasWidth / frame.naturalWidth, canvasHeight / frame.naturalHeight);
+        const renderedWidth = frame.naturalWidth * coverScale;
+        const renderedHeight = frame.naturalHeight * coverScale;
+        const renderedX = (canvasWidth - renderedWidth) / 2;
+        const renderedY = (canvasHeight - renderedHeight) / 2;
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
+        context.fillStyle = "#020403";
+        context.fillRect(0, 0, canvasWidth, canvasHeight);
+        context.drawImage(frame, renderedX, renderedY, renderedWidth, renderedHeight);
+        canvas.dataset.frameIndex = String(frameIndex);
+        return true;
+      };
       const applyReadyFrame = (requestedFrameIndex, direction) => {
         if (!sequenceFrameRef.current) return false;
 
@@ -3216,13 +3277,22 @@ function IntroScrollSequence() {
           return cachedFrame?.ready;
         });
 
-        if (readyFrameIndex == null || frameIndexRef.current === readyFrameIndex) return false;
+        if (readyFrameIndex == null) return false;
 
         const cachedFrame = frameCache.get(readyFrameIndex);
         if (!cachedFrame) return false;
 
+        const frameSurface = sequenceFrameRef.current;
+        if (frameSurface instanceof HTMLCanvasElement) {
+          const rendered = drawFrameToCanvas(frameSurface, cachedFrame.frame, readyFrameIndex);
+          if (!rendered) return false;
+          frameIndexRef.current = readyFrameIndex;
+          return true;
+        }
+
+        if (frameIndexRef.current === readyFrameIndex) return false;
         frameIndexRef.current = readyFrameIndex;
-        sequenceFrameRef.current.src = cachedFrame.frame.currentSrc || cachedFrame.frame.src;
+        frameSurface.src = cachedFrame.frame.currentSrc || cachedFrame.frame.src;
         return true;
       };
       const preloadFrameRange = (start, end) => {
@@ -3412,6 +3482,24 @@ function IntroScrollSequence() {
 
           autoHandoffFrame = window.requestAnimationFrame(advance);
         };
+        const animateFrames = (fromProgress, duration, onComplete) => {
+          const startedAt = performance.now();
+          const advance = (now) => {
+            if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
+            const progress = Math.min(1, (now - startedAt) / duration);
+            const eased = 0.5 - Math.cos(Math.PI * progress) / 2;
+            setFrame(fromProgress + (1 - fromProgress) * eased);
+            if (progress < 1) {
+              autoHandoffFrame = window.requestAnimationFrame(advance);
+              return;
+            }
+
+            setFrame(1);
+            onComplete();
+          };
+
+          autoHandoffFrame = window.requestAnimationFrame(advance);
+        };
 
         const revealHero = () => {
           if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
@@ -3427,6 +3515,17 @@ function IntroScrollSequence() {
         if (skip && startScrollTop < handoffStart - 1) {
           setHandoffState(false);
           const startProgress = clampProgress((startScrollTop - metrics.sectionTop) / metrics.scrollDistance);
+          if (isTabletIntro) {
+            stopAutoVideo();
+            const firstPlaybackFrame = Math.max(
+              0,
+              Math.round(startProgress * (introFrameSources.length - 1)) - frameBufferBehind
+            );
+            preloadFrameRange(firstPlaybackFrame, introFrameSources.length - 1);
+            animateFrames(startProgress, 3000, revealHero);
+            return;
+          }
+
           const preparedVideo = await prepareAutoVideo(startProgress);
           if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
 
@@ -3472,7 +3571,7 @@ function IntroScrollSequence() {
       };
       const renderFromScroll = () => {
         animationFrame = 0;
-        if (autoHandoffRunning && root.classList.contains("intro-scroll-video-playback")) return;
+        if (autoHandoffRunning) return;
         if (root.classList.contains("intro-scroll-consumed")) {
           root.classList.remove("intro-scroll-active");
           setHandoffState(false);
@@ -3482,8 +3581,13 @@ function IntroScrollSequence() {
         const metrics = getMetrics();
         if (!metrics) return;
 
-        const progress = clampProgress((window.scrollY - metrics.sectionTop) / metrics.scrollDistance);
-        setFrame(progress);
+        const scrollProgress = clampProgress((window.scrollY - metrics.sectionTop) / metrics.scrollDistance);
+        const maximumMobileStep = 2 / Math.max(1, introFrameSources.length - 1);
+        const progressDifference = scrollProgress - progressRef.current;
+        const frameProgress = isTabletIntro && Math.abs(progressDifference) > maximumMobileStep
+          ? progressRef.current + Math.sign(progressDifference) * maximumMobileStep
+          : scrollProgress;
+        setFrame(frameProgress);
         const handoffStart = metrics.sectionTop + metrics.scrollDistance;
         const hero = document.querySelector(".plate-hero");
         const heroTop = hero?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
@@ -3496,6 +3600,11 @@ function IntroScrollSequence() {
 
         if (!autoHandoffRunning && isHandoff && heroTop <= 0) {
           completeSequence({ keepHeroAtViewportTop: true });
+          return;
+        }
+
+        if (isTabletIntro && Math.abs(scrollProgress - progressRef.current) > maximumMobileStep / 2) {
+          animationFrame = window.requestAnimationFrame(renderFromScroll);
         }
       };
       const scheduleRender = () => {
@@ -3515,8 +3624,13 @@ function IntroScrollSequence() {
         );
         window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: false } }));
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
+        progressRef.current = 0;
         frameIndexRef.current = -1;
         requestedFrameIndexRef.current = 0;
+        if (sequenceFrameRef.current instanceof HTMLCanvasElement) {
+          sequenceFrameRef.current.width = sequenceFrameRef.current.width;
+          delete sequenceFrameRef.current.dataset.frameIndex;
+        }
         window.scrollTo({ top: sectionRef.current?.offsetTop || 0, left: 0, behavior: "instant" });
         scheduleRender();
       };
@@ -4208,15 +4322,24 @@ function IntroScrollSequence() {
       aria-label="Secuencia de apertura Fullness Lab"
     >
       <div className="scroll-sequence-stage">
-        <img
-          ref={sequenceFrameRef}
-          className="scroll-sequence-frame scroll-sequence-image-frame"
-          src={introFrameSources[0]}
-          alt=""
-          aria-hidden="true"
-          decoding="async"
-          fetchPriority="high"
-        />
+        {useCanvasFrames ? (
+          <canvas
+            ref={sequenceFrameRef}
+            className="scroll-sequence-frame scroll-sequence-image-frame scroll-sequence-canvas-frame"
+            aria-hidden="true"
+            style={{ backgroundImage: `url(${introFrameSources[0]})` }}
+          />
+        ) : (
+          <img
+            ref={sequenceFrameRef}
+            className="scroll-sequence-frame scroll-sequence-image-frame"
+            src={introFrameSources[0]}
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            fetchPriority="high"
+          />
+        )}
         <video
           ref={videoRef}
           className="scroll-sequence-frame scroll-sequence-video-frame"
@@ -5055,6 +5178,29 @@ function App() {
     window.dispatchEvent(new CustomEvent("fullness:intro-reset", { detail: { autoplay: true } }));
   }
 
+  function toggleDesktopViewport() {
+    const currentlyForced = document.documentElement.dataset.viewportMode === "desktop";
+    const nextMode = currentlyForced ? "responsive" : "desktop";
+
+    try {
+      window.localStorage.setItem(viewportModeStorageKey, nextMode);
+
+      if (document.documentElement.classList.contains("intro-scroll-consumed")) {
+        window.sessionStorage.setItem(preserveIntroConsumedStorageKey, "1");
+      }
+
+      window.location.reload();
+    } catch {
+      const viewport = document.querySelector('meta[name="viewport"]');
+      viewport?.setAttribute(
+        "content",
+        nextMode === "desktop" ? "width=1440, initial-scale=1.0" : "width=device-width, initial-scale=1.0"
+      );
+      document.documentElement.dataset.viewportMode = nextMode;
+      window.dispatchEvent(new Event("resize"));
+    }
+  }
+
   function openCommunityPage(event) {
     event?.preventDefault();
     setCurrentProductSlug("");
@@ -5159,7 +5305,7 @@ function App() {
     ? getMemberLabel(authUser).split(/[ @]/)[0]
     : member
       ? member.name.split(" ")[0]
-      : "Acceso miembros";
+      : "Miembros";
 
   function buildMenuFormDraft(form = menuForm, draftKey = menuFormDraftKey) {
     return normalizeMenuFormDraft({
@@ -7704,6 +7850,7 @@ function App() {
     !currentProductSlug &&
     introConsumed &&
     !isMobileIntroViewport();
+  const desktopViewportForced = document.documentElement.dataset.viewportMode === "desktop";
 
   useEffect(() => {
     const syncSeoHead = () => {
@@ -8837,12 +8984,29 @@ function App() {
             navigateToSection("#programa");
           }}
         >
-          <img className="brand-reference-logo" src={logoHeaderFooterSrc} alt="Fullness Lab" />
+          <img
+            className="brand-reference-logo"
+            src={logoHeaderFooterSrc}
+            alt="Fullness Lab"
+            width="1600"
+            height="756"
+          />
         </a>
 
         <nav className="desktop-nav">{nav}</nav>
 
         <div className="header-actions">
+          <button
+            className="icon-button viewport-mode-toggle"
+            type="button"
+            onClick={toggleDesktopViewport}
+            aria-label={desktopViewportForced ? "Volver a vista para iPad" : "Forzar vista de escritorio"}
+            title={desktopViewportForced ? "Volver a vista para iPad" : "Forzar vista de escritorio"}
+          >
+            {desktopViewportForced
+              ? <Tablet size={22} aria-hidden="true" />
+              : <Monitor size={22} aria-hidden="true" />}
+          </button>
           {showIntroReplay && (
             <button
               className="intro-replay-button"
@@ -8855,7 +9019,7 @@ function App() {
             </button>
           )}
           <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
-            <Sprout size={18} />
+            <Sprout size={18} aria-hidden="true" />
             <span>{memberButtonLabel}</span>
           </button>
           <button
@@ -8865,11 +9029,11 @@ function App() {
             data-testid="open-cart"
             aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
           >
-            <ShoppingBag size={20} />
+            <ShoppingBag size={20} aria-hidden="true" />
             {cartCount > 0 && <span aria-hidden="true">{cartCount}</span>}
           </button>
           <button className="icon-button menu-toggle" type="button" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
-            <Menu size={22} />
+            <Menu size={22} aria-hidden="true" />
           </button>
         </div>
       </header>

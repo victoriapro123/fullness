@@ -16,6 +16,7 @@
   --beet-night: #210814;
   --beet-shadow: #311020;
   --beet-glow: #ad465c;
+  --menu-beet: #180611;
   --copper: #b87878;
   --gold: #b87878;
   --sage: #b9c3ad;
@@ -350,6 +351,10 @@ main .reveal-on-scroll.is-visible {
   display: none;
 }
 
+.viewport-mode-toggle {
+  display: none;
+}
+
 @media (max-width: 760px) {
   footer .footer-column a,
   footer .footer-contact a {
@@ -618,7 +623,7 @@ footer strong {
   align-content: center;
   justify-items: center;
   gap: 28px;
-  background: rgba(24, 6, 17, 0.97);
+  background: var(--menu-beet);
   color: #fff8f0;
   font-family: var(--font-display);
   font-size: 1.18rem;
@@ -932,7 +937,7 @@ body {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: clamp(20px, 3vw, 54px);
   padding: 18px clamp(22px, 3.8vw, 64px);
-  background: rgba(9, 8, 6, 0.94);
+  background: var(--menu-beet);
   border-bottom: 1px solid rgba(184, 120, 120, 0.2);
 }
 
@@ -982,6 +987,16 @@ body {
   .site-header .menu-toggle {
     display: grid;
   }
+}
+
+@media (min-width: 861px) and (max-width: 1366px) {
+  .site-header .viewport-mode-toggle {
+    display: grid;
+  }
+}
+
+html[data-viewport-mode="desktop"] .site-header .viewport-mode-toggle {
+  display: grid;
 }
 
 .header-actions {
@@ -1866,5 +1881,181 @@ main {
     width: 44px !important;
     min-width: 44px !important;
     height: 44px !important;
+  }
+}
+
+/* Geometria proporcional definitiva del header de escritorio.
+   Menu y usuario parten desde Y65 del logo; los controles redondos centran
+   su propio Ymedio en el Ymedio de esa linea de texto. */
+@media (min-width: 1367px) {
+  :root {
+    --site-header-space: 20svh;
+    --site-header-height: 20svh;
+    --desktop-header-padding-y: 2svh;
+    --desktop-header-logo-height: 16svh;
+    --desktop-header-menu-font-size: 2.2svh;
+    --desktop-header-text-y0: 10.4svh;
+    --desktop-header-text-ymedio: calc(var(--desktop-header-text-y0) + 1.1svh);
+    --desktop-header-line-height: 14svh;
+    --desktop-header-line-y0: 1svh;
+    --desktop-header-round-size: 7.08svh;
+    --desktop-header-replay-size: 6.46svh;
+    --desktop-header-round-top: calc(var(--desktop-header-text-ymedio) - 3.54svh);
+    --desktop-header-replay-top: calc(var(--desktop-header-text-ymedio) - 3.23svh);
+    --desktop-header-member-padding-y: 1.1svh;
+  }
+
+  .site-header {
+    height: var(--site-header-height) !important;
+    min-height: var(--site-header-height) !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    gap: clamp(18px, 2vw, 30px) !important;
+    padding-block: var(--desktop-header-padding-y) !important;
+  }
+
+  .site-header .brand {
+    align-self: center !important;
+    width: auto !important;
+    height: var(--desktop-header-logo-height) !important;
+    min-width: 0 !important;
+  }
+
+  .site-header .brand-reference-logo {
+    display: block !important;
+    width: auto !important;
+    height: 100% !important;
+    max-width: none !important;
+    aspect-ratio: 1600 / 756;
+    object-fit: contain !important;
+  }
+
+  .site-header .desktop-nav {
+    align-self: start !important;
+    align-items: center !important;
+    height: var(--desktop-header-menu-font-size) !important;
+    margin-top: var(--desktop-header-text-y0) !important;
+    gap: clamp(32px, 3vw, 48px) !important;
+    font-size: var(--desktop-header-menu-font-size) !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+    transform: none !important;
+  }
+
+  .site-header .desktop-nav a {
+    display: inline-flex;
+    align-items: center;
+    height: var(--desktop-header-menu-font-size);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .site-header .header-actions {
+    align-self: start !important;
+    align-items: flex-start !important;
+    height: 100% !important;
+    margin-top: 0 !important;
+    gap: clamp(12px, 1.1vw, 18px) !important;
+    transform: none !important;
+  }
+
+  .site-header .member-link {
+    position: relative;
+    align-self: flex-start !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin-top: calc(var(--desktop-header-text-y0) - var(--desktop-header-member-padding-y)) !important;
+    padding: var(--desktop-header-member-padding-y) clamp(14px, 1.3vw, 20px) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: var(--fullness-highlight) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-family: var(--font-display) !important;
+    font-size: clamp(0.82rem, 0.74vw, 0.94rem) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.15em !important;
+    line-height: 1 !important;
+    transition: color 180ms ease, background-color 180ms ease;
+  }
+
+  .site-header .member-link::before {
+    content: "";
+    position: absolute;
+    left: clamp(-9px, -0.55vw, -6px);
+    top: calc(
+      var(--desktop-header-line-y0) - var(--desktop-header-text-y0) +
+      var(--desktop-header-member-padding-y)
+    );
+    width: 1px;
+    height: var(--desktop-header-line-height);
+    background: rgba(184, 120, 120, 0.46);
+    pointer-events: none;
+  }
+
+  .site-header .member-link > svg {
+    display: block !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex: 0 0 18px;
+  }
+
+  .site-header .member-link:hover,
+  .site-header .member-link:focus-visible {
+    color: var(--fullness-highlight) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .site-header .intro-replay-button {
+    align-self: flex-start !important;
+    width: var(--desktop-header-replay-size) !important;
+    min-width: var(--desktop-header-replay-size) !important;
+    height: var(--desktop-header-replay-size) !important;
+    min-height: var(--desktop-header-replay-size) !important;
+    margin-top: var(--desktop-header-replay-top) !important;
+  }
+
+  .site-header .intro-replay-button svg {
+    width: 2.77svh !important;
+    height: 2.77svh !important;
+  }
+
+  .site-header .icon-button {
+    align-self: flex-start !important;
+    width: var(--desktop-header-round-size) !important;
+    min-width: var(--desktop-header-round-size) !important;
+    height: var(--desktop-header-round-size) !important;
+    margin-top: var(--desktop-header-round-top) !important;
+  }
+
+  .site-header .cart-button > svg {
+    width: 3.08svh !important;
+    height: 3.08svh !important;
+  }
+
+  .site-header .cart-button > span {
+    top: -0.92svh !important;
+    right: -0.77svh !important;
+    min-width: 3.38svh !important;
+    height: 3.38svh !important;
+    font-size: 1.85svh !important;
+  }
+}
+
+/* El perfil de animacion puede seguir siendo de computador, pero la
+   navegacion se compacta cuando la relacion ancho/alto no alcanza para los
+   cinco enlaces, usuario, replay y carrito sin superposiciones. */
+@media (min-width: 1367px) and (max-width: calc(123svh + 620px)) {
+  .site-header .desktop-nav,
+  .site-header .member-link {
+    display: none !important;
+  }
+
+  .site-header {
+    grid-template-columns: auto auto !important;
+    justify-content: space-between !important;
+  }
+
+  .site-header .menu-toggle {
+    display: grid !important;
   }
 }

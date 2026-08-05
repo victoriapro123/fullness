@@ -2058,37 +2058,39 @@
   background: var(--shop-dark);
 }
 
-.route-shop {
-  --site-header-space: 86px;
-  --site-header-height: 86px;
-}
+@media (max-width: 1366px) {
+  .route-shop {
+    --site-header-space: 86px;
+    --site-header-height: 86px;
+  }
 
-.route-shop .site-header {
-  min-height: var(--site-header-height) !important;
-  padding-block: 12px !important;
-}
+  .route-shop .site-header {
+    min-height: var(--site-header-height) !important;
+    padding-block: 12px !important;
+  }
 
-.route-shop .brand {
-  min-width: clamp(170px, 14vw, 230px) !important;
-}
+  .route-shop .brand {
+    min-width: clamp(170px, 14vw, 230px) !important;
+  }
 
-.route-shop .brand-reference-logo {
-  width: clamp(170px, 14vw, 230px) !important;
-  height: clamp(54px, 4.5vw, 70px) !important;
-}
+  .route-shop .brand-reference-logo {
+    width: clamp(170px, 14vw, 230px) !important;
+    height: clamp(54px, 4.5vw, 70px) !important;
+  }
 
-.route-shop .desktop-nav {
-  font-size: clamp(0.62rem, 0.55vw, 0.73rem);
-}
+  .route-shop .desktop-nav {
+    font-size: clamp(0.62rem, 0.55vw, 0.73rem);
+  }
 
-.route-shop .member-link {
-  min-height: 42px;
-  font-size: clamp(0.72rem, 0.66vw, 0.84rem);
-}
+  .route-shop .member-link {
+    min-height: 42px;
+    font-size: clamp(0.72rem, 0.66vw, 0.84rem);
+  }
 
-.route-shop .icon-button {
-  width: 42px;
-  height: 42px;
+  .route-shop .icon-button {
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .shop-page-shell .shop-commerce-page {
