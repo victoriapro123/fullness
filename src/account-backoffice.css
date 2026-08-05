@@ -1885,24 +1885,24 @@
   gap: 13px;
 }
 
-.subscription-popup-admin-form label {
+.backoffice-panel .subscription-popup-admin-form label:not(.backoffice-switch) {
   display: grid;
   gap: 8px;
   min-width: 0;
-  color: rgba(244, 234, 219, 0.65);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: rgba(35, 30, 27, 0.76);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.subscription-popup-admin-form input,
-.subscription-popup-admin-form textarea {
+.backoffice-panel .subscription-popup-admin-form input,
+.backoffice-panel .subscription-popup-admin-form textarea {
   width: 100%;
   min-width: 0;
-  border: 1px solid rgba(244, 234, 219, 0.14);
-  background: rgba(8, 8, 7, 0.62);
-  color: #f4eadb;
+  border: 1px solid rgba(54, 43, 39, 0.16);
+  background: #fff;
+  color: var(--ink);
   font: inherit;
   letter-spacing: 0;
   text-transform: none;
@@ -4165,12 +4165,27 @@
 }
 
 .website-content-actions {
+  position: static;
   display: flex;
+  min-height: 0;
+  margin: 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 18px;
+  padding: 18px 0 0;
   border-top: 1px solid rgba(54, 43, 39, 0.12);
+  color: var(--ink);
+  background: transparent;
+  overflow: visible;
+}
+
+.website-content-actions::before {
+  content: none;
+}
+
+.website-content-actions > * {
+  position: static;
+  z-index: auto;
 }
 
 .website-content-actions > p {
@@ -4197,6 +4212,116 @@
 
 .website-content-actions.is-split button {
   min-height: 48px;
+}
+
+.website-content-version-history {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 28px;
+  border-top: 1px solid rgba(54, 43, 39, 0.12);
+}
+
+.website-content-version-history > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.website-content-version-history > header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.website-content-version-history > header h4 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 500;
+}
+
+.website-content-version-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 0;
+  color: #36664e;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.website-content-history-error {
+  margin: 0;
+  color: #9a3545;
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+.website-content-version-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(54, 43, 39, 0.1);
+}
+
+.website-content-version-list > li {
+  min-width: 0;
+  border-bottom: 1px solid rgba(54, 43, 39, 0.1);
+}
+
+.website-content-version-list article {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 10px 0;
+}
+
+.website-content-version-list article.is-text-only {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.website-content-version-list img {
+  width: 56px;
+  height: 52px;
+  border: 1px solid rgba(54, 43, 39, 0.12);
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.website-content-version-list article > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.website-content-version-list time {
+  color: var(--ink);
+  font-size: 0.83rem;
+  font-weight: 500;
+}
+
+.website-content-version-list p {
+  overflow: hidden;
+  margin: 0;
+  color: rgba(35, 30, 27, 0.58);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.website-content-version-list .backoffice-command {
+  min-height: 38px;
+  padding-inline: 11px;
+  font-size: 0.76rem;
+  white-space: nowrap;
 }
 
 .community-schedule-section {
@@ -4448,6 +4573,24 @@
   .website-content-actions.is-split button {
     width: 100%;
     min-width: 0;
+  }
+
+  .website-content-version-list article {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .website-content-version-list article.is-text-only {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .website-content-version-list img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .website-content-version-list .backoffice-command {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 
   .subscription-customer-table {

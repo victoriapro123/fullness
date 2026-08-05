@@ -205,6 +205,13 @@
 - Todo cambio manual de URL de imagen debe limpiar su clave R2 asociada. Las cargas exitosas muestran que falta guardar/publicar cuando corresponde.
 - Antes de crear, editar o eliminar mealpreps y planes, refrescar la sesión de Supabase. Si falla la red o vence la sesión, mantener el borrador y explicar cómo reintentar, sin mostrar errores técnicos crudos.
 
+### Historial de Contenido Web 2026-08-04
+
+- Tienda, Lightbox y Comunidad conservan historial remoto en `ecommerce_content_versions`. La migración `20260804001000_ecommerce_content_version_history.sql` captura automáticamente la versión vigente antes de cada actualización relevante de `ecommerce_shop_settings`; no depender de `localStorage` para recuperar una promoción temporal.
+- Restaurar una versión publica esa instantánea y deja archivada automáticamente la versión que estaba vigente, por lo que Cecilia puede alternar entre una oferta, una imagen habitual o una agenda anterior sin perder ninguna de las dos.
+- El historial se muestra por pestaña, con fecha, resumen y miniatura cuando corresponde. La versión actual se identifica como publicada; la acción sobre el formulario de Lightbox que sólo descarta ediciones sin guardar se llama `Descartar cambios`, nunca `Restaurar`.
+- Los pies de acción del contenido web deben neutralizar el `footer` público global: fondo claro, texto de contraste suficiente y botones visibles. No reutilizar reglas oscuras heredadas de formularios antiguos de Lightbox dentro de este módulo.
+
 ### Confirmaciones de compra 2026-08-02
 
 - Un pago `approved` de Mercado Pago dispara dos correos independientes y deduplicados en `email_deliveries`: `order_confirmation:<orden>` al cliente y `order_notification:<orden>` a operaciones. Ambos se ejecutan desde el mismo estado confirmado, tanto si llega por webhook como si se sincroniza al volver desde Checkout Pro.

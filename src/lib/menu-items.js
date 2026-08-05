@@ -8,6 +8,7 @@ const MEAL_LIBRARY_COLUMNS = "*";
 const BENEFIT_DEFINITION_COLUMNS = "*";
 const TAG_DEFINITION_COLUMNS = "*";
 const CUSTOMER_SUBSCRIPTION_COLUMNS = "*, plan:menu_items(id,name,plan_frequency)";
+const CONTENT_VERSION_SCOPES = new Set(["shop", "lightbox", "community"]);
 const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_BENEFIT_ICON_BYTES = 3 * 1024 * 1024;
 const IMAGE_CONTENT_TYPES = new Set([
@@ -510,6 +511,62 @@ export function mapShopSettings(row) {
       : null,
     communityActivitiesConfigured: Array.isArray(row.community_activities),
     updatedAt: row.updated_at || ""
+  };
+}
+
+function normalizeContentVersionSnapshot(scope, value) {
+  const snapshot = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+
+  if (scope === "shop") {
+    return {
+      heroEyebrow: snapshot.heroEyebrow || "",
+      heroTitle: snapshot.heroTitle || "",
+      heroBody: snapshot.heroBody || "",
+      heroImageUrl: snapshot.heroImageUrl || "",
+      heroImageStoragePath: snapshot.heroImageStoragePath || "",
+      heroPrimaryLabel: snapshot.heroPrimaryLabel || "",
+      heroSecondaryLabel: snapshot.heroSecondaryLabel || "",
+      heroMetrics: Array.isArray(snapshot.heroMetrics) ? snapshot.heroMetrics : [],
+      subscriptionEyebrow: snapshot.subscriptionEyebrow || "",
+      subscriptionTitle: snapshot.subscriptionTitle || "",
+      subscriptionBody: snapshot.subscriptionBody || "",
+      subscriptionCtaLabel: snapshot.subscriptionCtaLabel || "",
+      subscriptionBenefits: Array.isArray(snapshot.subscriptionBenefits) ? snapshot.subscriptionBenefits : [],
+      subscriptionComparison: normalizeComparisonRows(snapshot.subscriptionComparison)
+    };
+  }
+
+  if (scope === "lightbox") {
+    return {
+      enabled: snapshot.enabled === undefined ? true : Boolean(snapshot.enabled),
+      eyebrow: snapshot.eyebrow || "",
+      title: snapshot.title || "",
+      body: snapshot.body || "",
+      ctaLabel: snapshot.ctaLabel || "",
+      secondaryCtaLabel: snapshot.secondaryCtaLabel || "",
+      successCtaLabel: snapshot.successCtaLabel || "",
+      backgroundUrl: snapshot.backgroundUrl || "",
+      backgroundStoragePath: snapshot.backgroundStoragePath || ""
+    };
+  }
+
+  return {
+    communityActivities: Array.isArray(snapshot.communityActivities)
+      ? normalizeCommunityActivities(snapshot.communityActivities)
+      : null,
+    communityActivitiesConfigured: Boolean(snapshot.communityActivitiesConfigured)
+  };
+}
+
+export function mapEcommerceContentVersion(row) {
+  const scope = CONTENT_VERSION_SCOPES.has(row.scope) ? row.scope : "shop";
+
+  return {
+    id: row.id,
+    scope,
+    snapshot: normalizeContentVersionSnapshot(scope, row.snapshot),
+    createdAt: row.created_at || "",
+    createdBy: row.created_by || ""
   };
 }
 
@@ -1063,6 +1120,32 @@ export async function getShopSettings() {
   }
 
   return { data: data ? mapShopSettings(data) : null, error: null, configured: true };
+}
+
+export async function listEcommerceContentVersions(scope) {
+  if (!CONTENT_VERSION_SCOPES.has(scope)) {
+    return { data: [], error: new Error("El contenido solicitado no tiene historial."), configured: true };
+  }
+
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
+
+    const { data, error } = await supabase
+      .from("ecommerce_content_versions")
+      .select("id, scope, snapshot, created_at, created_by")
+      .eq("scope", scope)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    return {
+      data: error ? [] : (data || []).map(mapEcommerceContentVersion),
+      error,
+      configured: true
+    };
+  } catch (error) {
+    return { data: [], error, configured: true };
+  }
 }
 
 export async function saveMenuItem(input) {

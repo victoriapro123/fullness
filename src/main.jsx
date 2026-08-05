@@ -58,6 +58,7 @@ import {
   deleteMealLibraryItem,
   deleteTagDefinition,
   getShopSettings,
+  listEcommerceContentVersions,
   listCatalogParameters,
   listAdminCustomerSubscriptions,
   listActiveMenuItems,
@@ -2035,6 +2036,100 @@ function WebsiteContentHeading({ activeTab, onChange }) {
       </div>
       <WebsiteContentTabs activeTab={activeTab} onChange={onChange} />
     </div>
+  );
+}
+
+function formatWebContentVersionDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Versión anterior";
+
+  return new Intl.DateTimeFormat("es-CL", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(date);
+}
+
+function getWebContentVersionSummary(version) {
+  const snapshot = version?.snapshot || {};
+
+  if (version?.scope === "shop") {
+    return snapshot.heroTitle || snapshot.subscriptionTitle || "Contenido de tienda";
+  }
+
+  if (version?.scope === "lightbox") {
+    return snapshot.title || "Lightbox de suscripción";
+  }
+
+  const count = Array.isArray(snapshot.communityActivities) ? snapshot.communityActivities.length : 0;
+  return `${count} ${count === 1 ? "actividad" : "actividades"}`;
+}
+
+function getWebContentVersionImage(version) {
+  if (version?.scope === "shop") return version.snapshot?.heroImageUrl || "";
+  if (version?.scope === "lightbox") return version.snapshot?.backgroundUrl || "";
+  return "";
+}
+
+function WebsiteContentVersionHistory({ error, loading, onRefresh, onRestore, restoringId, scope, versions }) {
+  const imageByVersion = new Map(versions.map((version) => [version.id, getWebContentVersionImage(version)]));
+
+  return (
+    <section className="website-content-version-history" aria-labelledby={`content-version-history-${scope}`}>
+      <header>
+        <div>
+          <p className="eyebrow">Historial</p>
+          <h4 id={`content-version-history-${scope}`}>Versiones anteriores</h4>
+        </div>
+        <button
+          className="icon-button"
+          type="button"
+          onClick={onRefresh}
+          disabled={loading || Boolean(restoringId)}
+          aria-label="Actualizar historial de versiones"
+          title="Actualizar historial"
+        >
+          <RefreshCw size={17} />
+        </button>
+      </header>
+
+      <p className="website-content-version-current"><CheckCircle2 size={15} aria-hidden="true" />Versión publicada actual</p>
+
+      {error && <p className="website-content-history-error" role="status">{error}</p>}
+
+      {loading ? (
+        <p className="backoffice-muted">Cargando versiones…</p>
+      ) : versions.length ? (
+        <ol className="website-content-version-list">
+          {versions.map((version) => {
+            const image = imageByVersion.get(version.id);
+            const isRestoring = restoringId === version.id;
+
+            return (
+              <li key={version.id}>
+                <article className={image ? "" : "is-text-only"}>
+                  {image && <img src={image} alt="" aria-hidden="true" />}
+                  <div>
+                    <time dateTime={version.createdAt}>{formatWebContentVersionDate(version.createdAt)}</time>
+                    <p>{getWebContentVersionSummary(version)}</p>
+                  </div>
+                  <button
+                    className="backoffice-command"
+                    type="button"
+                    onClick={() => onRestore(version)}
+                    disabled={Boolean(restoringId)}
+                  >
+                    {isRestoring ? <RefreshCw size={16} /> : <History size={16} />}
+                    {isRestoring ? "Restaurando…" : "Restaurar versión"}
+                  </button>
+                </article>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="backoffice-muted">Aún no hay versiones anteriores para este contenido.</p>
+      )}
+    </section>
   );
 }
 
@@ -4401,6 +4496,10 @@ function App() {
   const [shopHeroUploading, setShopHeroUploading] = useState(false);
   const [shopSettingsMessage, setShopSettingsMessage] = useState("");
   const [shopSettingsError, setShopSettingsError] = useState("");
+  const [contentVersions, setContentVersions] = useState({ community: [], lightbox: [], shop: [] });
+  const [contentVersionsLoading, setContentVersionsLoading] = useState("");
+  const [contentVersionsError, setContentVersionsError] = useState("");
+  const [contentVersionRestoringId, setContentVersionRestoringId] = useState("");
   const [adminMessage, setAdminMessage] = useState("");
   const [adminError, setAdminError] = useState("");
   const [backofficeFeedback, setBackofficeFeedback] = useState(null);
@@ -4485,7 +4584,6 @@ function App() {
   const [subscriptionPopupSaving, setSubscriptionPopupSaving] = useState(false);
   const [subscriptionPopupAdminMessage, setSubscriptionPopupAdminMessage] = useState("");
   const [subscriptionPopupAdminError, setSubscriptionPopupAdminError] = useState("");
-  const subscriptionPopupImageInputRef = useRef(null);
   const subscriptionPopupTimerRef = useRef(null);
   const subscriptionPopupOpenedRef = useRef(false);
   const [accessMode, setAccessMode] = useState(() => {
@@ -6527,6 +6625,123 @@ function App() {
     }));
   }
 
+  async function loadContentVersions(scope, { silent = false } = {}) {
+    if (!activeIsAdmin) return;
+
+    if (!silent) setContentVersionsError("");
+    setContentVersionsLoading(scope);
+
+    try {
+      const result = await listEcommerceContentVersions(scope);
+      if (result.error || !result.configured) {
+        throw result.error || new Error("No pudimos cargar el historial.");
+      }
+
+      setContentVersions((current) => ({
+        ...current,
+        [scope]: result.data || []
+      }));
+    } catch (error) {
+      setContentVersionsError(getSupabaseErrorMessage(error, "No pudimos cargar el historial."));
+    } finally {
+      setContentVersionsLoading((current) => current === scope ? "" : current);
+    }
+  }
+
+  function setContentVersionNotice(scope, message = "", error = "") {
+    if (scope === "shop") {
+      setShopSettingsMessage(message);
+      setShopSettingsError(error);
+      return;
+    }
+
+    if (scope === "lightbox") {
+      setSubscriptionPopupAdminMessage(message);
+      setSubscriptionPopupAdminError(error);
+      return;
+    }
+
+    setCommunityActivitiesMessage(message);
+    setCommunityActivitiesError(error);
+  }
+
+  async function restoreContentVersion(version) {
+    if (!version?.id || !activeIsAdmin) return;
+
+    const scopeLabels = {
+      shop: "Tienda",
+      lightbox: "Lightbox",
+      community: "Comunidad"
+    };
+    const scope = version.scope;
+    const confirmed = window.confirm(
+      `Restaurarás la versión de ${scopeLabels[scope] || "contenido"} guardada el ${formatWebContentVersionDate(version.createdAt)}. La versión actualmente publicada quedará resguardada en el historial. ¿Continuar?`
+    );
+    if (!confirmed) return;
+
+    setContentVersionRestoringId(version.id);
+    setContentVersionsError("");
+    setContentVersionNotice(scope);
+
+    try {
+      let result;
+      let merged;
+
+      if (scope === "shop") {
+        result = await saveShopSettings(mergeShopSettings({
+          ...shopSettings,
+          ...version.snapshot
+        }));
+      } else if (scope === "lightbox") {
+        const popupSettings = normalizeSubscriptionPopupSettings(version.snapshot);
+        result = await saveShopSettings(mergeSubscriptionPopupIntoShopSettings(shopSettings, popupSettings));
+      } else {
+        result = await saveShopSettings({
+          ...shopSettings,
+          communityActivities: version.snapshot.communityActivities,
+          communityActivitiesConfigured: version.snapshot.communityActivitiesConfigured === true
+        });
+      }
+
+      if (result.error || !result.configured || !result.data) {
+        throw result.error || new Error("No pudimos restaurar la versión.");
+      }
+
+      merged = mergeShopSettings(result.data);
+      setShopSettings(merged);
+      setShopSettingsForm(createShopSettingsForm(merged));
+
+      if (scope === "lightbox") {
+        const popupSettings = createSubscriptionPopupSettingsFromShopSettings(merged);
+        setSubscriptionPopupSettings(popupSettings);
+        setSubscriptionPopupForm(popupSettings);
+        try {
+          window.localStorage.setItem(subscriptionPopupStorageKey, JSON.stringify(popupSettings));
+        } catch {
+          // The restored server configuration remains the source of truth.
+        }
+      }
+
+      if (scope === "community") {
+        const activities = result.data.communityActivitiesConfigured
+          ? normalizeCommunityActivities(result.data.communityActivities)
+          : loadStoredCommunityActivities();
+        setCommunityActivities(activities);
+      }
+
+      await loadContentVersions(scope, { silent: true });
+      setContentVersionNotice(
+        scope,
+        `Se restauró la versión del ${formatWebContentVersionDate(version.createdAt)}. La versión que estaba publicada quedó guardada en el historial.`
+      );
+    } catch (error) {
+      const message = getSupabaseErrorMessage(error, "No pudimos restaurar la versión.");
+      setContentVersionNotice(scope, "", message);
+    } finally {
+      setContentVersionRestoringId("");
+    }
+  }
+
   async function persistCommunityActivities(nextActivities) {
     if (!activeIsAdmin) {
       setCommunityActivitiesError("Tu cuenta no tiene acceso de administración.");
@@ -6559,6 +6774,7 @@ function App() {
       setShopSettingsForm(createShopSettingsForm(merged));
       setCommunityActivities(persistedActivities);
       setShopSettingsReady(true);
+      await loadContentVersions("community", { silent: true });
       setCommunityActivitiesMessage("Agenda guardada y publicada.");
       return true;
     } catch (error) {
@@ -6652,6 +6868,11 @@ function App() {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!adminOpen || !activeIsAdmin || activeBackofficeModule !== "web-content") return;
+    void loadContentVersions(webContentTab);
+  }, [activeBackofficeModule, activeIsAdmin, adminOpen, webContentTab]);
 
   useEffect(() => {
     let subscription;
@@ -7731,6 +7952,7 @@ function App() {
         // The saved server state is already active even when the browser cache is unavailable.
       }
 
+      await loadContentVersions("lightbox", { silent: true });
       setSubscriptionPopupAdminMessage("Lightbox guardado y publicado.");
     } catch (error) {
       setSubscriptionPopupAdminError(getSupabaseErrorMessage(error, "No pudimos guardar el lightbox en el servidor."));
@@ -8020,6 +8242,7 @@ function App() {
       const merged = mergeShopSettings(result.data);
       setShopSettings(merged);
       setShopSettingsForm(createShopSettingsForm(merged));
+      await loadContentVersions("shop", { silent: true });
       setShopSettingsMessage("Tienda guardada.");
     }
 
@@ -10439,6 +10662,16 @@ function App() {
                           </div>
                         </section>
 
+                        <WebsiteContentVersionHistory
+                          error={contentVersionsError}
+                          loading={contentVersionsLoading === "shop"}
+                          onRefresh={() => loadContentVersions("shop")}
+                          onRestore={restoreContentVersion}
+                          restoringId={contentVersionRestoringId}
+                          scope="shop"
+                          versions={contentVersions.shop}
+                        />
+
                         <footer className="website-content-actions">
                           <p>Los cambios se aplican a la tienda cuando guardas.</p>
                           <button className="primary-button" type="submit" disabled={shopSettingsSaving || shopHeroUploading}>
@@ -10528,23 +10761,15 @@ function App() {
                                   <UploadCloud size={28} />
                                 )}
                               </div>
-                              <button
+                              <FilePickerButton
                                 className="upload-control"
-                                type="button"
-                                onClick={() => subscriptionPopupImageInputRef.current?.click()}
+                                ariaLabel="Elegir imagen de fondo del lightbox"
+                                onChange={handleSubscriptionPopupBackgroundChange}
                                 disabled={subscriptionPopupUploading || subscriptionPopupSaving}
                               >
                                 <UploadCloud size={18} />
                                 {subscriptionPopupUploading ? "Subiendo imagen…" : "Elegir imagen"}
-                              </button>
-                              <input
-                                ref={subscriptionPopupImageInputRef}
-                                className="lightbox-file-input"
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
-                                onChange={handleSubscriptionPopupBackgroundChange}
-                                disabled={subscriptionPopupUploading || subscriptionPopupSaving}
-                              />
+                              </FilePickerButton>
                               <p className="website-content-image-hint">JPG, PNG, WEBP, GIF o AVIF. Máximo 8 MB.</p>
                             </div>
                             <label className="website-content-url-field">
@@ -10554,11 +10779,21 @@ function App() {
                           </div>
                         </section>
 
+                        <WebsiteContentVersionHistory
+                          error={contentVersionsError}
+                          loading={contentVersionsLoading === "lightbox"}
+                          onRefresh={() => loadContentVersions("lightbox")}
+                          onRestore={restoreContentVersion}
+                          restoringId={contentVersionRestoringId}
+                          scope="lightbox"
+                          versions={contentVersions.lightbox}
+                        />
+
                         <footer className="website-content-actions is-split">
                           <p>La imagen queda publicada al guardar el lightbox.</p>
                           <div>
-                            <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings} disabled={subscriptionPopupUploading || subscriptionPopupSaving}>
-                              Restaurar
+                            <button className="google-button" type="button" onClick={resetSubscriptionPopupSettings} disabled={subscriptionPopupUploading || subscriptionPopupSaving} title="Descartar los cambios sin guardar">
+                              Descartar cambios
                             </button>
                             <button className="primary-button" type="submit" disabled={subscriptionPopupUploading || subscriptionPopupSaving}>
                               {subscriptionPopupSaving ? <RefreshCw size={18} /> : <Save size={18} />}
@@ -10641,6 +10876,15 @@ function App() {
                         </footer>
                       </section>
                     </form>
+                    <WebsiteContentVersionHistory
+                      error={contentVersionsError}
+                      loading={contentVersionsLoading === "community"}
+                      onRefresh={() => loadContentVersions("community")}
+                      onRestore={restoreContentVersion}
+                      restoringId={contentVersionRestoringId}
+                      scope="community"
+                      versions={contentVersions.community}
+                    />
                     </section>
                     )}
 
