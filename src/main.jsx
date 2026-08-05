@@ -50,6 +50,7 @@ import {
   UploadCloud,
   Users,
   Utensils,
+  Video,
   X
 } from "lucide-react";
 import {
@@ -766,7 +767,10 @@ const introMobileFrameSources = Object.entries(
   .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath))
   .map(([, source]) => source);
 const introMobileQuery = "(max-width: 860px)";
-const introTabletQuery = "(max-width: 1180px)";
+/* Los iPad, incluido el Pro apaisado, comparten el flujo ligero de tablet.
+   El desktop real comienza una vez que la cabecera puede conservar sus links
+   y acciones sin convertirlos en una segunda fila. */
+const introTabletQuery = "(max-width: 1366px)";
 const isMobileIntroViewport = () =>
   typeof window !== "undefined" && window.matchMedia(introMobileQuery).matches;
 const isTabletIntroViewport = () =>
@@ -3120,7 +3124,7 @@ function IntroScrollSequence() {
       let autoHandoffFrame = 0;
       let completionFrame = 0;
       let autoHandoffRunning = false;
-      let autoHandoffStarted = false;
+      let autoHandoffRunId = 0;
       let lastRequestedFrameIndex = 0;
       const frameCache = new Map();
       const root = document.documentElement;
@@ -3135,13 +3139,6 @@ function IntroScrollSequence() {
 
         root.classList.toggle("intro-scroll-handoff", active);
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active } }));
-      };
-      const setReplayReady = (ready) => {
-        const wasReady = root.classList.contains("intro-scroll-replay-ready");
-        if (wasReady === ready) return;
-
-        root.classList.toggle("intro-scroll-replay-ready", ready);
-        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready } }));
       };
       const getMetrics = () => {
         if (!sectionRef.current) return null;
@@ -3234,37 +3231,117 @@ function IntroScrollSequence() {
         preloadFrameRange(nextFrameIndex - frameBufferBehind, nextFrameIndex + frameBufferAhead);
         applyReadyFrame(nextFrameIndex, direction);
       };
+      const stopAutoVideo = ({ hide = true } = {}) => {
+        const video = videoRef.current;
+        if (video) {
+          video.pause();
+          video.playbackRate = 1;
+        }
+        if (hide) root.classList.remove("intro-scroll-video-playback");
+      };
       const cancelAutoHandoff = () => {
         if (!autoHandoffRunning) return;
 
+        autoHandoffRunId += 1;
         window.cancelAnimationFrame(autoHandoffFrame);
         autoHandoffFrame = 0;
         autoHandoffRunning = false;
+        stopAutoVideo();
         root.classList.remove("intro-scroll-auto-handoff");
+        scheduleRender();
       };
-      const completeSequence = () => {
+      const completeSequence = ({ keepHeroAtViewportTop = false } = {}) => {
+        autoHandoffRunId += 1;
         autoHandoffFrame = 0;
         autoHandoffRunning = false;
+        stopAutoVideo();
         root.classList.remove("intro-scroll-auto-handoff", "intro-scroll-active");
         root.classList.add("intro-scroll-consumed");
         frameCache.clear();
         setHandoffState(false);
-        setReplayReady(false);
         window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: true } }));
 
         completionFrame = window.requestAnimationFrame(() => {
           completionFrame = 0;
           const hero = document.querySelector(".plate-hero");
-          window.scrollTo({ top: hero?.offsetTop || 0, left: 0, behavior: "instant" });
+          const heroDocumentTop = hero
+            ? window.scrollY + hero.getBoundingClientRect().top
+            : 0;
+          /* El salto automático deja la portada en el inicio real del documento.
+             En el recorrido manual el usuario ya llevó el hero hasta Y=0, por lo
+             que conservamos exactamente esa posición al colapsar la secuencia. */
+          window.scrollTo({
+            top: keepHeroAtViewportTop ? heroDocumentTop : 0,
+            left: 0,
+            behavior: "instant"
+          });
         });
       };
-      const startAutoHandoff = ({ skip = false } = {}) => {
+      const waitForMediaEvent = (media, eventName, timeoutMs = 1400) =>
+        new Promise((resolve) => {
+          let settled = false;
+          let timeoutId = 0;
+          const finish = (ready) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            media.removeEventListener(eventName, handleReady);
+            media.removeEventListener("error", handleError);
+            resolve(ready);
+          };
+          const handleReady = () => finish(true);
+          const handleError = () => finish(false);
+
+          media.addEventListener(eventName, handleReady, { once: true });
+          media.addEventListener("error", handleError, { once: true });
+          timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+        });
+      const prepareAutoVideo = async (startProgress) => {
+        const video = videoRef.current;
+        if (!video) return null;
+
+        video.pause();
+        video.muted = true;
+        video.playsInline = true;
+        if (video.readyState < 1) {
+          video.load();
+          const metadataReady = await waitForMediaEvent(video, "loadedmetadata", 1800);
+          if (!metadataReady) return null;
+        }
+
+        const duration = Number.isFinite(video.duration) && video.duration > 0
+          ? video.duration
+          : introScrollVideoDuration;
+        const finalTime = Math.max(0, duration - 0.08);
+        const startTime = Math.min(finalTime, Math.max(0, startProgress * finalTime));
+        if (Math.abs(video.currentTime - startTime) > 0.035) {
+          video.currentTime = startTime;
+          await waitForMediaEvent(video, "seeked", 900);
+        }
+        if (video.readyState < 3) {
+          await waitForMediaEvent(video, "canplay", 1200);
+        }
+
+        return { video, startTime, finalTime };
+      };
+      const startAutoHandoff = async ({ skip = false } = {}) => {
         if (autoHandoffRunning || root.classList.contains("intro-scroll-consumed")) return;
 
         const metrics = getMetrics();
         if (!metrics) return;
 
-        const targetScrollTop = metrics.sectionEnd;
+        const headerSpaceProbe = document.createElement("span");
+        headerSpaceProbe.setAttribute("aria-hidden", "true");
+        headerSpaceProbe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;height:var(--site-header-space);";
+        document.body.appendChild(headerSpaceProbe);
+        const headerSpace = headerSpaceProbe.getBoundingClientRect().height;
+        headerSpaceProbe.remove();
+        /* El relevo termina donde el hero quedará después de colapsar la intro.
+           Así no salta hacia abajo al aparecer el espacio reservado al header. */
+        const targetScrollTop = Math.max(
+          metrics.sectionTop + metrics.scrollDistance,
+          metrics.sectionEnd - headerSpace
+        );
         const startScrollTop = window.scrollY;
         const handoffStart = metrics.sectionTop + metrics.scrollDistance;
         if (targetScrollTop <= startScrollTop + 1) {
@@ -3272,12 +3349,12 @@ function IntroScrollSequence() {
           return;
         }
 
-        autoHandoffStarted = true;
         autoHandoffRunning = true;
-        /* El salto recorre los cuadros durante varios segundos. Despachamos el
-           material pendiente completo antes de mover el viewport y el buffer
-           cercano conserva los cuadros ya decodificados en cada sentido. */
-        preloadFrameRange(0, introFrameSources.length - 1);
+        const runId = ++autoHandoffRunId;
+        /* El último cuadro queda preparado como respaldo para el relevo. La
+           reproducción automática usa el MP4 nativo: evita cambiar 160 `src`
+           y desplazar varios viewports simultáneamente. */
+        loadFrame(introFrameSources.length - 1);
         root.classList.add("intro-scroll-auto-handoff");
 
         if (reducedMotion) {
@@ -3286,21 +3363,27 @@ function IntroScrollSequence() {
           return;
         }
 
-        const animateScroll = (from, to, duration, onComplete) => {
+        const animateScroll = (from, to, duration, onComplete, { syncFrames = true } = {}) => {
           const startedAt = performance.now();
           const advance = (now) => {
+            if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
             const progress = Math.min(1, (now - startedAt) / duration);
             const eased = 0.5 - Math.cos(Math.PI * progress) / 2;
             const nextScrollTop = from + (to - from) * eased;
 
-            window.scrollTo(0, nextScrollTop);
-            setFrame((nextScrollTop - metrics.sectionTop) / metrics.scrollDistance);
+            /* Cada tick debe aplicarse de inmediato. Si hereda el `smooth`
+               global, el navegador interpola otra animación encima de esta
+               curva y termina reteniendo el hero hasta el último cuadro. */
+            window.scrollTo({ top: nextScrollTop, left: 0, behavior: "instant" });
+            if (syncFrames) {
+              setFrame((nextScrollTop - metrics.sectionTop) / metrics.scrollDistance);
+            }
             if (progress < 1) {
               autoHandoffFrame = window.requestAnimationFrame(advance);
               return;
             }
 
-            window.scrollTo(0, to);
+            window.scrollTo({ top: to, left: 0, behavior: "instant" });
             onComplete();
           };
 
@@ -3308,15 +3391,56 @@ function IntroScrollSequence() {
         };
 
         const revealHero = () => {
+          if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
+          stopAutoVideo({ hide: false });
           setFrame(1);
           setHandoffState(true);
-          setReplayReady(true);
-          animateScroll(handoffStart, targetScrollTop, 1000, completeSequence);
+          window.scrollTo({ top: handoffStart, left: 0, behavior: "instant" });
+          animateScroll(handoffStart, targetScrollTop, 2000, completeSequence, {
+            syncFrames: !root.classList.contains("intro-scroll-video-playback")
+          });
         };
 
         if (skip && startScrollTop < handoffStart - 1) {
           setHandoffState(false);
-          setReplayReady(false);
+          const startProgress = clampProgress((startScrollTop - metrics.sectionTop) / metrics.scrollDistance);
+          const preparedVideo = await prepareAutoVideo(startProgress);
+          if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
+
+          if (preparedVideo) {
+            const remainingMediaSeconds = Math.max(0.05, preparedVideo.finalTime - preparedVideo.startTime);
+            try {
+              preparedVideo.video.playbackRate = Math.min(8, Math.max(0.25, remainingMediaSeconds / 3));
+            } catch {
+              animateScroll(startScrollTop, handoffStart, 3000, revealHero);
+              return;
+            }
+            root.classList.add("intro-scroll-video-playback");
+            try {
+              await preparedVideo.video.play();
+            } catch {
+              root.classList.remove("intro-scroll-video-playback");
+              animateScroll(startScrollTop, handoffStart, 3000, revealHero);
+              return;
+            }
+
+            const playbackStartedAt = performance.now();
+            const monitorPlayback = (now) => {
+              if (!autoHandoffRunning || runId !== autoHandoffRunId) return;
+              const reachedFinalFrame = preparedVideo.video.currentTime >= preparedVideo.finalTime - 0.04;
+              const reachedTimeLimit = now - playbackStartedAt >= 3200;
+              if (reachedFinalFrame || reachedTimeLimit) {
+                preparedVideo.video.pause();
+                preparedVideo.video.currentTime = preparedVideo.finalTime;
+                revealHero();
+                return;
+              }
+              autoHandoffFrame = window.requestAnimationFrame(monitorPlayback);
+            };
+            autoHandoffFrame = window.requestAnimationFrame(monitorPlayback);
+            return;
+          }
+
           animateScroll(startScrollTop, handoffStart, 3000, revealHero);
           return;
         }
@@ -3325,6 +3449,7 @@ function IntroScrollSequence() {
       };
       const renderFromScroll = () => {
         animationFrame = 0;
+        if (autoHandoffRunning && root.classList.contains("intro-scroll-video-playback")) return;
         if (root.classList.contains("intro-scroll-consumed")) {
           root.classList.remove("intro-scroll-active");
           setHandoffState(false);
@@ -3337,25 +3462,17 @@ function IntroScrollSequence() {
         const progress = clampProgress((window.scrollY - metrics.sectionTop) / metrics.scrollDistance);
         setFrame(progress);
         const handoffStart = metrics.sectionTop + metrics.scrollDistance;
-        const isHandoff = window.scrollY >= handoffStart - 2 && window.scrollY < metrics.sectionEnd - 2;
+        const hero = document.querySelector(".plate-hero");
+        const heroTop = hero?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+        const isHandoff = window.scrollY >= handoffStart - 2 && window.scrollY <= metrics.sectionEnd + 2;
         setHandoffState(isHandoff);
-        if (isHandoff) {
-          setReplayReady(true);
-        } else if (window.scrollY < handoffStart - 2) {
-          setReplayReady(false);
-          if (!autoHandoffRunning) autoHandoffStarted = false;
-        }
         root.classList.toggle(
           "intro-scroll-active",
-          window.scrollY >= metrics.sectionTop - 2 && window.scrollY < metrics.sectionEnd - 2
+          window.scrollY >= metrics.sectionTop - 2 && window.scrollY <= metrics.sectionEnd + 2
         );
 
-        if (
-          progress >= 0.998 &&
-          window.scrollY < metrics.sectionEnd - 2 &&
-          !autoHandoffStarted
-        ) {
-          startAutoHandoff();
+        if (!autoHandoffRunning && isHandoff && heroTop <= 0) {
+          completeSequence({ keepHeroAtViewportTop: true });
         }
       };
       const scheduleRender = () => {
@@ -3365,18 +3482,16 @@ function IntroScrollSequence() {
         cancelAutoHandoff();
         window.cancelAnimationFrame(completionFrame);
         completionFrame = 0;
-        autoHandoffStarted = false;
         root.classList.remove(
           "intro-scroll-consumed",
           "intro-scroll-active",
           "intro-scroll-playing",
           "intro-scroll-handoff",
-          "intro-scroll-replay-ready",
-          "intro-scroll-auto-handoff"
+          "intro-scroll-auto-handoff",
+          "intro-scroll-video-playback"
         );
         window.dispatchEvent(new CustomEvent("fullness:intro-state-change", { detail: { consumed: false } }));
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
-        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
         frameIndexRef.current = -1;
         requestedFrameIndexRef.current = 0;
         window.scrollTo({ top: sectionRef.current?.offsetTop || 0, left: 0, behavior: "instant" });
@@ -3418,9 +3533,8 @@ function IntroScrollSequence() {
         window.cancelAnimationFrame(animationFrame);
         window.cancelAnimationFrame(completionFrame);
         cancelAutoHandoff();
-        root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-replay-ready", "intro-scroll-auto-handoff");
+        root.classList.remove("intro-scroll-active", "intro-scroll-handoff", "intro-scroll-auto-handoff", "intro-scroll-video-playback");
         window.dispatchEvent(new CustomEvent("fullness:intro-handoff-state-change", { detail: { active: false } }));
-        window.dispatchEvent(new CustomEvent("fullness:intro-replay-ready-change", { detail: { ready: false } }));
       };
     }
 
@@ -4087,7 +4201,7 @@ function IntroScrollSequence() {
           poster={introScrollPosterSrc}
           muted
           playsInline
-          preload="metadata"
+          preload="auto"
           aria-hidden="true"
         />
         <img
@@ -4429,9 +4543,6 @@ function App() {
   const [introConsumed, setIntroConsumed] = useState(() =>
     document.documentElement.classList.contains("intro-scroll-consumed")
   );
-  const [introReplayReady, setIntroReplayReady] = useState(() =>
-    document.documentElement.classList.contains("intro-scroll-replay-ready")
-  );
   const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
@@ -4658,20 +4769,6 @@ function App() {
 
     return () => {
       window.removeEventListener("fullness:intro-state-change", syncIntroState);
-    };
-  }, []);
-
-  useEffect(() => {
-    const syncReplayReady = (event) => {
-      const ready = event.detail?.ready ?? document.documentElement.classList.contains("intro-scroll-replay-ready");
-      setIntroReplayReady(Boolean(ready));
-    };
-
-    syncReplayReady({});
-    window.addEventListener("fullness:intro-replay-ready-change", syncReplayReady);
-
-    return () => {
-      window.removeEventListener("fullness:intro-replay-ready-change", syncReplayReady);
     };
   }, []);
 
@@ -4927,11 +5024,9 @@ function App() {
       "intro-scroll-consumed",
       "intro-scroll-active",
       "intro-scroll-playing",
-      "intro-scroll-handoff",
-      "intro-scroll-replay-ready"
+      "intro-scroll-handoff"
     );
     setIntroConsumed(false);
-    setIntroReplayReady(false);
     setHeaderHiddenForHero(true);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     window.dispatchEvent(new CustomEvent("fullness:intro-reset", { detail: { autoplay: true } }));
@@ -7584,7 +7679,7 @@ function App() {
   const showIntroReplay =
     currentPath === "/" &&
     !currentProductSlug &&
-    (introConsumed || introReplayReady) &&
+    introConsumed &&
     !isMobileIntroViewport();
 
   useEffect(() => {
@@ -8733,8 +8828,7 @@ function App() {
               aria-label="Volver a ver animación"
               title="Volver a ver animación"
             >
-              <RefreshCw size={15} aria-hidden="true" />
-              <span>Volver a ver animación</span>
+              <Video size={18} aria-hidden="true" />
             </button>
           )}
           <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
@@ -8948,7 +9042,7 @@ function App() {
         <section className="food-editorial" id="proposito">
           <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
             <p className="eyebrow">Nuestra filosofía</p>
-            <h2>Así como es por fuera, es por <span>dentro.</span></h2>
+            <h2>Así como es adentro, es <span>afuera.</span></h2>
             <span className="section-rule" aria-hidden="true" />
             <p>
               Creemos en una alimentación consciente que transforma tu energía, tu salud y tu entorno.

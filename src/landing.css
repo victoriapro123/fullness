@@ -56,7 +56,7 @@
 /* El iPad apaisado queda entre los breakpoints de teléfono y escritorio. Usa
    los cuadros optimizados desde JS y necesita la misma base estable para que
    el sticky no deje transparentar la secuencia cuando entra el hero. */
-@media (min-width: 861px) and (max-width: 1180px) {
+@media (min-width: 861px) and (max-width: 1366px) {
   html:not(.intro-scroll-consumed) .scroll-sequence {
     height: 360svh;
     min-height: 360svh;
@@ -133,7 +133,7 @@
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
-    transition: transform 620ms cubic-bezier(0.19, 0.74, 0.22, 1), opacity 520ms ease;
+    transition: transform 1400ms cubic-bezier(0.22, 1, 0.36, 1), opacity 1200ms ease;
   }
 
   .intro-scroll-handoff .scroll-sequence-stage {
@@ -149,7 +149,7 @@
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
-    transition: transform 520ms cubic-bezier(0.19, 0.74, 0.22, 1), opacity 420ms ease;
+    transition: transform 1200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 1000ms ease;
   }
 
   .intro-scroll-handoff .scroll-sequence-stage {
@@ -274,10 +274,31 @@
   opacity: 1;
   backface-visibility: hidden;
   transform: translateZ(0);
+  transition: opacity 100ms linear;
+}
+
+.scroll-sequence-video-frame {
+  z-index: 2;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  transition: opacity 100ms linear, visibility 0s linear 100ms;
+}
+
+.intro-scroll-video-playback .scroll-sequence-image-frame {
+  opacity: 0;
+}
+
+.intro-scroll-video-playback .scroll-sequence-video-frame {
+  display: block !important;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
 }
 
 @media (min-width: 861px) {
-  .scroll-sequence-video-frame,
   .scroll-sequence-poster-frame,
   .scroll-sequence-final-frame,
   .intro-start-logo,
@@ -491,7 +512,6 @@
     background: #020403;
   }
 
-  .scroll-sequence-video-frame,
   .scroll-sequence-poster-frame,
   .scroll-sequence-final-frame,
   .scroll-sequence-signal-layer {
@@ -1591,7 +1611,8 @@
 }
 
 .intro-scroll-consumed .plate-hero-blackout {
-  opacity: 1 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .plate-hero-copy {
@@ -1601,7 +1622,8 @@
 }
 
 .intro-scroll-consumed .plate-hero-copy > * {
-  animation: fullnessHeroTextIn 760ms cubic-bezier(0.19, 0.74, 0.22, 1) both !important;
+  animation: none !important;
+  opacity: 1 !important;
 }
 
 .plate-hero-visual {
@@ -1624,7 +1646,7 @@
 }
 
 .intro-scroll-consumed .plate-hero-visual {
-  animation: fullnessPlateIn 940ms cubic-bezier(0.17, 0.72, 0.18, 1) 1080ms both !important;
+  animation: none !important;
 }
 
 @media (max-width: 1040px) {
@@ -1648,7 +1670,7 @@
   }
 
   .intro-scroll-consumed .plate-hero-visual {
-    animation-name: fullnessPlateInMobile !important;
+    animation: none !important;
   }
 }
 
@@ -1671,27 +1693,7 @@
 }
 
 .intro-scroll-consumed .plate-hero-blackout {
-  animation: fullnessHeroBlackHold 560ms ease forwards !important;
-}
-
-.intro-scroll-consumed .plate-hero-copy .eyebrow {
-  animation-delay: 920ms !important;
-}
-
-.intro-scroll-consumed .plate-hero-copy h1 {
-  animation-delay: 1020ms !important;
-}
-
-.intro-scroll-consumed .plate-hero-copy p:not(.eyebrow) {
-  animation-delay: 1120ms !important;
-}
-
-.intro-scroll-consumed .plate-hero-copy .hero-manifesto {
-  animation-delay: 1220ms !important;
-}
-
-.intro-scroll-consumed .plate-hero-copy .plate-hero-primary {
-  animation-delay: 1320ms !important;
+  animation: none !important;
 }
 
 .plate-hero-visual-stage {
@@ -1724,7 +1726,8 @@
 }
 
 .intro-scroll-consumed .plate-hero-visual-stage {
-  animation: fullnessPlateStageIn 980ms cubic-bezier(0.16, 0.74, 0.18, 1) 520ms both !important;
+  animation: none !important;
+  opacity: 1 !important;
 }
 
 @media (max-width: 1040px) {
@@ -1743,7 +1746,7 @@
   }
 
   .intro-scroll-consumed .plate-hero-visual-stage {
-    animation-name: fullnessPlateStageInMobile !important;
+    animation: none !important;
   }
 }
 

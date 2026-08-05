@@ -21,9 +21,9 @@ Usar siempre este puerto para presentar y revisar la demo local.
 Puntos a destacar:
 
 - Antes del hero aparece una secuencia cinematográfica vinculada directamente al scroll. Al bajar, los 160 cuadros avanzan de forma continua; al subir, la animación retrocede de manera natural. Una flecha blanca de energía indica que hay que seguir bajando.
-- Al alcanzar el último cuadro, el sitio completa suavemente el último tramo hasta dejar el hero entero en pantalla, sin que aparezca un espacio negro. El botón `Ir a Fullness` recorre la secuencia en tres segundos y revela el hero durante un segundo adicional. Después, la animación queda cerrada y solo vuelve con `Volver a ver animación`.
+- Al alcanzar el último cuadro, el sitio completa suavemente el último tramo hasta dejar el hero entero en pantalla, sin que aparezca un espacio negro. El botón `Ir a Fullness` reproduce la secuencia de forma nativa y continua durante tres segundos, sin arrastrar la página completa, y revela el hero durante dos segundos adicionales. Al terminar, el hero queda como portada real en `scrollY = 0`, sin un salto al reservar el header; la animación queda cerrada y solo vuelve desde el ícono de video del header.
 - La misma secuencia de fotogramas funciona en computador y móvil; mantiene un buffer de cuadros preparado para que al deslizar o usar `Ir a Fullness` avance de manera continua. En el teléfono llena el encuadre para mantener el plato protagonista. El MP4 original sigue resguardado como fuente y respaldo de la animación, sin reproducirse en la interfaz.
-- El formulario emergente de suscripción no interrumpe la apertura. En móvil e iPad la secuencia usa cuadros optimizados y, al revelar el hero, el fondo conserva el negro editorial de Fullness.
+- El formulario emergente de suscripción no interrumpe la apertura. En móvil e iPad —incluido iPad Pro apaisado— la secuencia usa cuadros optimizados, navegación hamburguesa y, al revelar el hero, el fondo conserva el negro editorial de Fullness.
 - Identidad Fullness Lab con estetica oscura, botanica y editorial.
 - Frase madre: `Nutrirse desde la raiz`.
 - Mensaje clave: el bienestar comienza desde adentro; no se cuentan calorias, se aprende a nutrirse.
