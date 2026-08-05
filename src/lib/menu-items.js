@@ -73,11 +73,40 @@ function isDuplicateMenuSlugError(error) {
   return detail.includes("menu_items_slug_unique_idx") || detail.includes("(slug)=");
 }
 
+function isDuplicateMenuSkuError(error) {
+  if (error?.code !== "23505") return false;
+
+  const detail = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  return detail.includes("menu_items_sku_unique_idx") || detail.includes("(sku)=");
+}
+
 function createUniqueMenuSlugCandidate(baseSlug, attempt) {
   if (attempt <= 1) return baseSlug;
 
   const suffix = `-${attempt}`;
   return `${baseSlug.slice(0, Math.max(1, MAX_MENU_SLUG_LENGTH - suffix.length))}${suffix}`;
+}
+
+async function findMenuItemBySku(supabase, sku) {
+  const value = cleanText(sku);
+  if (!value) return { data: null, error: null };
+
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("id, slug")
+    .eq("sku", value)
+    .maybeSingle();
+
+  return { data, error };
+}
+
+async function updateMenuItemById(supabase, id, payload) {
+  return supabase
+    .from("menu_items")
+    .update(payload)
+    .eq("id", id)
+    .select(MENU_ITEM_COLUMNS)
+    .single();
 }
 
 function mapBenefitDefinition(row) {
@@ -1173,14 +1202,30 @@ export async function saveMenuItem(input) {
     let data;
     let error;
     let slugAdjusted = false;
+    let resumedFromDraft = false;
+    let existingId = input.id || "";
+    let existingSlug = "";
 
-    if (input.id) {
-      ({ data, error } = await supabase
-        .from("menu_items")
-        .update(payload)
-        .eq("id", input.id)
-        .select(MENU_ITEM_COLUMNS)
-        .single());
+    // A new form receives a stable SKU before its first server backup. If the
+    // same draft is later resumed on another device after being published,
+    // that SKU identifies the original record instead of creating a duplicate.
+    if (!existingId && payload.sku) {
+      const existing = await findMenuItemBySku(supabase, payload.sku);
+      if (existing.error) {
+        return { data: null, error: existing.error, configured: true };
+      }
+
+      existingId = existing.data?.id || "";
+      existingSlug = existing.data?.slug || "";
+      resumedFromDraft = Boolean(existingId);
+    }
+
+    if (existingId) {
+      slugAdjusted = Boolean(existingSlug && existingSlug !== payload.slug);
+      ({ data, error } = await updateMenuItemById(supabase, existingId, {
+        ...payload,
+        slug: existingSlug || payload.slug
+      }));
     } else {
       for (let attempt = 1; attempt <= MAX_MENU_SLUG_ATTEMPTS; attempt += 1) {
         const slug = createUniqueMenuSlugCandidate(payload.slug, attempt);
@@ -1192,6 +1237,24 @@ export async function saveMenuItem(input) {
 
         data = response.data;
         error = response.error;
+
+        if (isDuplicateMenuSkuError(error)) {
+          const existing = await findMenuItemBySku(supabase, payload.sku);
+          if (existing.error) {
+            error = existing.error;
+            break;
+          }
+
+          if (existing.data?.id) {
+            slugAdjusted = Boolean(existing.data.slug && existing.data.slug !== payload.slug);
+            ({ data, error } = await updateMenuItemById(supabase, existing.data.id, {
+              ...payload,
+              slug: existing.data.slug || payload.slug
+            }));
+            resumedFromDraft = !error;
+            break;
+          }
+        }
 
         if (!error || !isDuplicateMenuSlugError(error)) {
           slugAdjusted = slug !== payload.slug && !error;
@@ -1209,7 +1272,8 @@ export async function saveMenuItem(input) {
       data: mapMenuItem(data, parameterResult.context),
       error: null,
       configured: true,
-      slugAdjusted
+      slugAdjusted,
+      resumedFromDraft
     };
   } catch (error) {
     return { data: null, error, configured: true };

@@ -2292,6 +2292,10 @@ function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acci
     return "Ya existe otro producto con esa dirección interna. Tu borrador sigue protegido; cambia el nombre o el identificador e inténtalo nuevamente.";
   }
 
+  if (error?.code === "23505" && (detail.includes("menu_items_sku_unique_idx") || detail.includes("(sku)="))) {
+    return "Este borrador ya fue guardado desde otro equipo. Recarga el listado para abrir la versión actualizada.";
+  }
+
   return error?.message || fallback;
 }
 
@@ -8706,15 +8710,18 @@ function App() {
       const slugAdjustedMessage = result.slugAdjusted
         ? " Ajustamos su dirección interna para que no coincida con otro producto."
         : "";
-      setAdminMessage(`${savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado."}${slugAdjustedMessage}`);
+      const resumedDraftMessage = result.resumedFromDraft
+        ? " Retomamos la versión que este borrador ya había guardado desde otro equipo."
+        : "";
+      setAdminMessage(`${savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado."}${resumedDraftMessage}${slugAdjustedMessage}`);
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
       setBackofficeFeedback({
         status: "success",
         title: savingFamilyProduct ? "Mealprep familiar guardado" : "Plan guardado",
         message: result.data.isActive
-          ? `“${result.data.name}” ya está actualizado y visible en la tienda.${slugAdjustedMessage}`
-          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.${slugAdjustedMessage}`,
+          ? `“${result.data.name}” ya está actualizado y visible en la tienda.${resumedDraftMessage}${slugAdjustedMessage}`
+          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.${resumedDraftMessage}${slugAdjustedMessage}`,
         returnTo: savingFamilyProduct ? (isNewMenuItem ? "family-products" : undefined) : "meal-preps",
         confirmLabel: savingFamilyProduct ? (isNewMenuItem ? "Ver mealpreps familiares" : undefined) : "Ver planes"
       });
