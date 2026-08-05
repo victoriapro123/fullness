@@ -11,6 +11,8 @@ const CUSTOMER_SUBSCRIPTION_COLUMNS = "*, plan:menu_items(id,name,plan_frequency
 const CONTENT_VERSION_SCOPES = new Set(["shop", "lightbox", "community"]);
 const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_BENEFIT_ICON_BYTES = 3 * 1024 * 1024;
+const MAX_MENU_SLUG_LENGTH = 72;
+const MAX_MENU_SLUG_ATTEMPTS = 24;
 const IMAGE_CONTENT_TYPES = new Set([
   "image/avif",
   "image/gif",
@@ -61,7 +63,21 @@ function slugifyParameter(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
-    .slice(0, 72);
+    .slice(0, MAX_MENU_SLUG_LENGTH);
+}
+
+function isDuplicateMenuSlugError(error) {
+  if (error?.code !== "23505") return false;
+
+  const detail = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  return detail.includes("menu_items_slug_unique_idx") || detail.includes("(slug)=");
+}
+
+function createUniqueMenuSlugCandidate(baseSlug, attempt) {
+  if (attempt <= 1) return baseSlug;
+
+  const suffix = `-${attempt}`;
+  return `${baseSlug.slice(0, Math.max(1, MAX_MENU_SLUG_LENGTH - suffix.length))}${suffix}`;
 }
 
 function mapBenefitDefinition(row) {
@@ -1154,11 +1170,35 @@ export async function saveMenuItem(input) {
     if (!supabase) return unavailableResult();
 
     const payload = buildMenuItemPayload(input);
-    const query = input.id
-      ? supabase.from("menu_items").update(payload).eq("id", input.id)
-      : supabase.from("menu_items").insert(payload);
+    let data;
+    let error;
+    let slugAdjusted = false;
 
-    const { data, error } = await query.select(MENU_ITEM_COLUMNS).single();
+    if (input.id) {
+      ({ data, error } = await supabase
+        .from("menu_items")
+        .update(payload)
+        .eq("id", input.id)
+        .select(MENU_ITEM_COLUMNS)
+        .single());
+    } else {
+      for (let attempt = 1; attempt <= MAX_MENU_SLUG_ATTEMPTS; attempt += 1) {
+        const slug = createUniqueMenuSlugCandidate(payload.slug, attempt);
+        const response = await supabase
+          .from("menu_items")
+          .insert({ ...payload, slug })
+          .select(MENU_ITEM_COLUMNS)
+          .single();
+
+        data = response.data;
+        error = response.error;
+
+        if (!error || !isDuplicateMenuSlugError(error)) {
+          slugAdjusted = slug !== payload.slug && !error;
+          break;
+        }
+      }
+    }
 
     if (error) {
       return { data: null, error, configured: true };
@@ -1168,7 +1208,8 @@ export async function saveMenuItem(input) {
     return {
       data: mapMenuItem(data, parameterResult.context),
       error: null,
-      configured: true
+      configured: true,
+      slugAdjusted
     };
   } catch (error) {
     return { data: null, error, configured: true };

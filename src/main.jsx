@@ -2287,6 +2287,11 @@ function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acci
     return "No pudimos conectarnos con el servidor. Revisa tu conexión e inténtalo nuevamente.";
   }
 
+  const detail = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  if (error?.code === "23505" && (detail.includes("menu_items_slug_unique_idx") || detail.includes("(slug)="))) {
+    return "Ya existe otro producto con esa dirección interna. Tu borrador sigue protegido; cambia el nombre o el identificador e inténtalo nuevamente.";
+  }
+
   return error?.message || fallback;
 }
 
@@ -8698,15 +8703,18 @@ function App() {
     } else {
       clearMenuFormDraft();
       setMenuForm(menuItemToForm(result.data));
-      setAdminMessage(savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado.");
+      const slugAdjustedMessage = result.slugAdjusted
+        ? " Ajustamos su dirección interna para que no coincida con otro producto."
+        : "";
+      setAdminMessage(`${savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado."}${slugAdjustedMessage}`);
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
       setBackofficeFeedback({
         status: "success",
         title: savingFamilyProduct ? "Mealprep familiar guardado" : "Plan guardado",
         message: result.data.isActive
-          ? `“${result.data.name}” ya está actualizado y visible en la tienda.`
-          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.`,
+          ? `“${result.data.name}” ya está actualizado y visible en la tienda.${slugAdjustedMessage}`
+          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.${slugAdjustedMessage}`,
         returnTo: savingFamilyProduct ? (isNewMenuItem ? "family-products" : undefined) : "meal-preps",
         confirmLabel: savingFamilyProduct ? (isNewMenuItem ? "Ver mealpreps familiares" : undefined) : "Ver planes"
       });
