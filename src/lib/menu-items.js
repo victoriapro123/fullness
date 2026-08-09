@@ -313,6 +313,8 @@ function normalizeIncludedItems(value, context = createCatalogContext(), library
       const source = libraryMeal ? { ...item, ...libraryMeal } : item;
       const name = cleanText(source?.name);
       const description = cleanText(source?.description);
+      const sourcePlanId = cleanText(item?.sourcePlanId || item?.source_plan_id);
+      const sourcePlanName = cleanText(item?.sourcePlanName || item?.source_plan_name);
 
       if (!name && !description && !source?.photoUrl && !source?.photo_url) return null;
 
@@ -333,6 +335,8 @@ function normalizeIncludedItems(value, context = createCatalogContext(), library
         id: cleanText(item?.id) || `meal-${index + 1}`,
         sku: cleanText(item?.sku || source?.sku) || createStableDishSku(libraryMealId || item?.id),
         libraryMealId,
+        ...(sourcePlanId ? { sourcePlanId } : {}),
+        ...(sourcePlanName ? { sourcePlanName } : {}),
         name,
         tag: cleanText(source?.tag),
         description,
@@ -365,6 +369,8 @@ function serializeIncludedItems(value) {
     id: item.id,
     sku: item.sku,
     libraryMealId: item.libraryMealId,
+    ...(item.sourcePlanId ? { sourcePlanId: item.sourcePlanId } : {}),
+    ...(item.sourcePlanName ? { sourcePlanName: item.sourcePlanName } : {}),
     name: item.name,
     tag: item.tag,
     description: item.description,

@@ -68,6 +68,48 @@ assert.deepEqual(planPayload.included_items, [
   }
 ]);
 
+const monthlyPlanPayload = buildMenuItemPayload({
+  slug: "plan-mensual-qa",
+  name: "Plan mensual QA",
+  productType: "plan",
+  planFrequency: "monthly",
+  description: "Plan mensual de prueba.",
+  priceClp: 49000,
+  includedItems: [
+    {
+      id: "mealprep-importado",
+      name: "Mealprep importado",
+      description: "Viene de un menú semanal.",
+      sourcePlanId: "weekly-plan-qa",
+      sourcePlanName: "Menú semanal QA"
+    }
+  ]
+});
+
+assert.deepEqual(monthlyPlanPayload.included_items[0], {
+  id: "mealprep-importado",
+  sku: "PL-MEALPREPIM",
+  libraryMealId: "",
+  sourcePlanId: "weekly-plan-qa",
+  sourcePlanName: "Menú semanal QA",
+  name: "Mealprep importado",
+  tag: "",
+  description: "Viene de un menú semanal.",
+  photoUrl: "",
+  photoStoragePath: "",
+  secondaryPhotoUrl: "",
+  secondaryPhotoStoragePath: "",
+  benefitAssignments: [],
+  benefitTags: [],
+  tagIds: [],
+  ingredients: [],
+  nutritionDescription: "",
+  nutritionHighlights: [],
+  nutritionFacts: {},
+  rethermalizationInstructions: "",
+  allergens: []
+});
+
 const mealprepPayload = buildMealLibraryPayload({
   name: "Mealprep QA",
   description: "Ficha del mealprep.",

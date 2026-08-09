@@ -1415,6 +1415,8 @@ function createIncludedMealForm(index = 0) {
     sku: createAutomaticSku("PL"),
     editorMode: "express",
     libraryMealId: "",
+    sourcePlanId: "",
+    sourcePlanName: "",
     name: "",
     tag: "",
     description: "",
@@ -1440,6 +1442,8 @@ function includedMealToForm(item, index = 0) {
     sku: item.sku || createStableSku("PL", item.libraryMealId || item.id),
     editorMode: item.editorMode || "advanced",
     libraryMealId: item.libraryMealId || item.library_meal_id || "",
+    sourcePlanId: item.sourcePlanId || item.source_plan_id || "",
+    sourcePlanName: item.sourcePlanName || item.source_plan_name || "",
     name: item.name || "",
     tag: item.tag || "",
     description: item.description || "",
@@ -4808,6 +4812,7 @@ function App() {
   const [mealLibraryMessage, setMealLibraryMessage] = useState("");
   const [mealLibraryError, setMealLibraryError] = useState("");
   const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
+  const [selectedWeeklyPlanId, setSelectedWeeklyPlanId] = useState("");
   const [includedMealSavingIndex, setIncludedMealSavingIndex] = useState(null);
   const [benefitDefinitions, setBenefitDefinitions] = useState([]);
   const [tagDefinitions, setTagDefinitions] = useState([]);
@@ -5686,6 +5691,7 @@ function App() {
     const nextOrder =
       adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
     setMenuForm(createMenuForm(nextOrder));
+    setSelectedWeeklyPlanId("");
     setMenuFormDraftKey(createMenuFormDraftKey());
     setMenuFormHasUnsavedChanges(false);
     setMenuFormDraftStatus("idle");
@@ -6460,6 +6466,53 @@ function App() {
     });
     setSelectedLibraryMealId("");
     openIncludedMealEditor(nextIndex);
+  }
+
+  function addSelectedWeeklyPlanToMonthly() {
+    if (menuForm.planFrequency !== "monthly") return;
+
+    const weeklyPlan = adminItems.find((item) =>
+      item.id === selectedWeeklyPlanId &&
+      item.productType === "plan" &&
+      item.planFrequency === "weekly"
+    );
+    if (!weeklyPlan) return;
+
+    const importedMeals = (weeklyPlan.includedItems || [])
+      .filter((meal) => meal.name?.trim() || meal.description?.trim() || meal.photoUrl?.trim())
+      .map((meal, index) => {
+        const draft = createIncludedMealForm(index);
+        return {
+          ...draft,
+          ...includedMealToForm(meal, index),
+          id: draft.id,
+          editorMode: "advanced",
+          sourcePlanId: weeklyPlan.id,
+          sourcePlanName: weeklyPlan.name
+        };
+      });
+
+    if (importedMeals.length === 0) {
+      setAdminError("Este menú semanal todavía no tiene mealpreps que se puedan incorporar.");
+      return;
+    }
+
+    markMenuFormChanged();
+    setMenuForm((current) => {
+      const hasEmptyDraft =
+        current.includedItems.length === 1 &&
+        !current.includedItems[0].name &&
+        !current.includedItems[0].description &&
+        !current.includedItems[0].photoUrl;
+
+      return {
+        ...current,
+        includedItems: hasEmptyDraft ? importedMeals : [...current.includedItems, ...importedMeals]
+      };
+    });
+    setSelectedWeeklyPlanId("");
+    setAdminError("");
+    setAdminMessage(`${importedMeals.length} mealprep${importedMeals.length === 1 ? "" : "s"} incorporado${importedMeals.length === 1 ? "" : "s"} desde “${weeklyPlan.name}”. Puedes editarlos individualmente antes de guardar el plan mensual.`);
   }
 
   function loadSelectedLibraryMealIntoFamily() {
@@ -8389,6 +8442,7 @@ function App() {
   function updateMenuForm(event) {
     const { checked, name, type, value } = event.target;
 
+    if (name === "planFrequency" && value !== "monthly") setSelectedWeeklyPlanId("");
     markMenuFormChanged();
     setMenuForm((current) => {
       const next = {
@@ -8816,6 +8870,11 @@ function App() {
   ));
 
   const mealPrepItems = adminItems.filter((item) => item.productType === "plan");
+  const importableWeeklyPlans = mealPrepItems.filter((item) =>
+    item.planFrequency === "weekly" &&
+    item.id !== menuForm.id &&
+    item.includedItems?.some((meal) => meal.name?.trim() || meal.description?.trim() || meal.photoUrl?.trim())
+  );
   const familyProductItems = adminItems.filter((item) => item.productType === "family");
   const activeMealPrepCount = mealPrepItems.filter((item) => item.isActive).length;
   const activeFamilyProductCount = familyProductItems.filter((item) => item.isActive).length;
@@ -9827,7 +9886,11 @@ function App() {
                           <div>
                             <p className="eyebrow">Paso 2</p>
                             <h3>Mealpreps del plan</h3>
-                            <p className="backoffice-section-copy">Define aquí el menú autorizado de esta semana. El cliente solo verá estas preparaciones y no podrá incorporar mealpreps de otros planes.</p>
+                            <p className="backoffice-section-copy">
+                              {menuForm.planFrequency === "monthly"
+                                ? "Arma el mes agregando mealpreps uno a uno o importando un menú semanal completo. Todo queda editable dentro de este plan."
+                                : "Define aquí el menú autorizado de esta semana. El cliente solo verá estas preparaciones y no podrá incorporar mealpreps de otros planes."}
+                            </p>
                           </div>
                           <div className="included-editor-actions">
                             <select
@@ -9850,6 +9913,44 @@ function App() {
                             </button>
                           </div>
                         </div>
+
+                        {menuForm.planFrequency === "monthly" && (
+                          <section className="monthly-plan-import" aria-labelledby="monthly-plan-import-title">
+                            <div className="monthly-plan-import-copy">
+                              <span className="monthly-plan-import-icon"><CalendarDays size={19} aria-hidden="true" /></span>
+                              <div>
+                                <h4 id="monthly-plan-import-title">Importar menú semanal</h4>
+                                <p>Incorpora todos sus mealpreps a este plan mensual. Después podrás revisar o editar cada uno por separado.</p>
+                              </div>
+                            </div>
+                            <div className="monthly-plan-import-controls">
+                              <select
+                                aria-label="Menú semanal para importar"
+                                value={selectedWeeklyPlanId}
+                                onChange={(event) => setSelectedWeeklyPlanId(event.target.value)}
+                              >
+                                <option value="">Selecciona un menú semanal</option>
+                                {importableWeeklyPlans.map((plan) => (
+                                  <option key={plan.id} value={plan.id}>
+                                    {plan.name} · {plan.includedItems.length} mealpreps{plan.isActive ? "" : " · Inactivo"}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                className="backoffice-command"
+                                type="button"
+                                onClick={addSelectedWeeklyPlanToMonthly}
+                                disabled={!selectedWeeklyPlanId}
+                              >
+                                <CalendarDays size={17} />
+                                Agregar menú
+                              </button>
+                            </div>
+                            {importableWeeklyPlans.length === 0 && (
+                              <p className="monthly-plan-import-empty">Aún no hay menús semanales con mealpreps para importar.</p>
+                            )}
+                          </section>
+                        )}
 
                         {menuForm.includedItems.length === 0 ? (
                           <div className="backoffice-dish-empty">
@@ -9874,7 +9975,14 @@ function App() {
                                     )}
                                   </span>
                                   <span className="backoffice-dish-copy">
-                                    <small>Mealprep {mealIndex + 1}{meal.libraryMealId ? " · Guardado" : " · Dentro de este plan"}</small>
+                                    <small>
+                                      Mealprep {mealIndex + 1}
+                                      {meal.sourcePlanName
+                                        ? ` · Desde ${meal.sourcePlanName}`
+                                        : meal.libraryMealId
+                                          ? " · Guardado"
+                                          : " · Dentro de este plan"}
+                                    </small>
                                     <strong>{meal.name || "Mealprep sin nombre"}</strong>
                                     <span>
                                       {normalizeMealprepCopy(meal.tag) || "Sin etiqueta"}
