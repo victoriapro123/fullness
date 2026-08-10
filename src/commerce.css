@@ -4,6 +4,204 @@
   pointer-events: none;
 }
 
+/* Monthly / weekly / family catalog components. */
+.route-shop .shop-plan-grid.shop-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)) !important;
+  width: min(100%, 1440px);
+}
+
+.route-shop .shop-family-grid.shop-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  width: min(100%, 1440px);
+}
+
+.route-shop .shop-catalog-segments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: min(100%, 1440px);
+  margin: 24px auto 28px;
+}
+
+.route-shop .shop-catalog-segments button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid rgba(54, 43, 39, 0.24);
+  border-radius: 999px;
+  color: rgba(54, 43, 39, 0.78);
+  background: rgba(255, 252, 246, 0.7);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.route-shop .shop-catalog-segments button.is-active {
+  border-color: #31432d;
+  color: #fff;
+  background: #31432d;
+}
+
+.route-shop .shop-catalog-segments button span {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: inherit;
+  background: rgba(49, 67, 45, 0.1);
+  font-size: 0.66rem;
+}
+
+.route-shop .shop-catalog-segments button.is-active span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.route-shop .shop-plan-card,
+.route-shop .shop-family-card {
+  grid-template-rows: auto auto auto !important;
+}
+
+.route-shop .shop-plan-body,
+.route-shop .shop-family-copy {
+  min-height: 0;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  margin-top: 2px;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only button,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  min-width: 30px;
+  min-height: 30px !important;
+  height: 30px;
+  padding: 0 !important;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only img,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only img {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.route-shop .shop-plan-footer strong,
+.route-shop .shop-family-footer > strong {
+  color: #201814;
+}
+
+.route-shop .monthly-plan-menu {
+  display: grid;
+  gap: 10px;
+}
+
+.route-shop .monthly-plan-menu-week {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(91, 106, 87, 0.3);
+  background: rgba(246, 242, 232, 0.54);
+}
+
+.route-shop .monthly-plan-menu-week > div {
+  display: grid;
+  gap: 5px;
+}
+
+.route-shop .monthly-plan-menu-week .eyebrow {
+  margin: 0;
+  color: #6f222d;
+  font-size: 0.62rem;
+}
+
+.route-shop .monthly-plan-menu-week h4 {
+  margin: 0;
+  color: #201814;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.route-shop .monthly-plan-menu-week p,
+.route-shop .monthly-plan-menu-week small {
+  margin: 0;
+  color: rgba(33, 23, 17, 0.72);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.route-shop .monthly-plan-menu-week .shop-outline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.route-shop .product-lightbox-back {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(54, 43, 39, 0.2);
+  color: #362b27;
+  background: rgba(255, 252, 246, 0.92);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .route-shop .shop-catalog-segments {
+    justify-content: flex-start;
+    margin-block: 20px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .route-shop .shop-catalog-segments::-webkit-scrollbar {
+    display: none;
+  }
+
+  .route-shop .shop-plan-grid.shop-catalog-grid,
+  .route-shop .shop-family-grid.shop-catalog-grid {
+    width: 100%;
+  }
+
+  .route-shop .monthly-plan-menu-week {
+    grid-template-columns: 1fr;
+  }
+
+  .route-shop .monthly-plan-menu-week .shop-outline-button {
+    justify-self: start;
+  }
+}
+
 .cart-button {
   position: relative;
 }
@@ -3997,5 +4195,140 @@
     min-height: 42px;
     padding: 9px 12px;
     line-height: 1.3;
+  }
+}
+
+/* Final catalog layout overrides. */
+.route-shop .shop-plan-grid.shop-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)) !important;
+  width: min(100%, 1440px);
+}
+
+.route-shop .shop-family-grid.shop-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  width: min(100%, 1440px);
+}
+
+.route-shop .shop-plan-card,
+.route-shop .shop-family-card {
+  grid-template-rows: auto auto auto !important;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  margin-top: 2px;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only button,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  min-width: 30px;
+  min-height: 30px !important;
+  height: 30px;
+  padding: 0 !important;
+}
+
+.route-shop .shop-plan-body > .benefit-icon-list.is-icon-only img,
+.route-shop .shop-family-copy > .benefit-icon-list.is-icon-only img {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+@media (max-width: 760px) {
+  .route-shop .shop-plan-grid.shop-catalog-grid,
+  .route-shop .shop-family-grid.shop-catalog-grid {
+    width: 100%;
+  }
+}
+
+/* Product lightbox: the close control must remain visible over every palette. */
+.product-lightbox-panel > .icon-button.close {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  height: 48px;
+  color: #fff8f0 !important;
+  border: 1px solid rgba(255, 248, 240, 0.68) !important;
+  background: #6f2533 !important;
+  box-shadow: 0 8px 20px rgba(42, 10, 24, 0.3);
+  touch-action: manipulation;
+  z-index: 10;
+}
+
+.product-lightbox-panel > .icon-button.close:hover,
+.product-lightbox-panel > .icon-button.close:focus-visible {
+  color: #ffffff !important;
+  border-color: #fff8f0 !important;
+  background: #511425 !important;
+}
+
+.product-lightbox-panel > .icon-button.close svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor !important;
+  stroke-width: 2.6;
+}
+
+/* Imported nutrition may be nested or lengthy; keep every metric card balanced. */
+.nutrition-facts-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 112px;
+  overflow: hidden;
+}
+
+.nutrition-facts-grid span {
+  grid-template-rows: minmax(2.32em, auto) minmax(0, 1fr);
+  align-items: start;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.nutrition-facts-grid small,
+.nutrition-facts-grid strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.nutrition-facts-grid small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.nutrition-facts-grid strong {
+  display: -webkit-box;
+  align-self: end;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.22;
+  text-wrap: pretty;
+}
+
+@media (max-width: 620px) {
+  .product-lightbox-panel > .icon-button.close {
+    position: fixed;
+    top: max(18px, calc(env(safe-area-inset-top) + 12px));
+    right: max(18px, calc(env(safe-area-inset-right) + 12px));
+  }
+
+  .nutrition-facts-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: 98px;
   }
 }

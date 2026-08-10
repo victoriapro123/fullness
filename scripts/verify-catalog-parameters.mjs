@@ -96,4 +96,53 @@ assert.deepEqual(familyPayload.nutrition_facts, dish.nutritionFacts);
 assert.equal(familyPayload.benefit_assignments[0].benefitId, antiInflammatory.id);
 assert.deepEqual(familyPayload.tag_ids, [highProtein.id, highFiber.id]);
 
-console.log("Parámetros validados: mealpreps conservan ficha propia y planes heredan sin duplicar.");
+const monthlyPlanPayload = buildMenuItemPayload({
+  slug: "plan-mensual-qa",
+  name: "Plan mensual QA",
+  productType: "plan",
+  planFrequency: "monthly",
+  description: "Plan compuesto por cuatro semanas.",
+  priceClp: 232800,
+  includedItems: [dish]
+});
+
+assert.equal(monthlyPlanPayload.plan_frequency, "monthly");
+assert.deepEqual(monthlyPlanPayload.included_items, []);
+
+const mappedMonthlyPlan = mapMenuItem(
+  {
+    id: "monthly-plan-qa",
+    slug: monthlyPlanPayload.slug,
+    name: monthlyPlanPayload.name,
+    product_type: "plan",
+    plan_frequency: "monthly",
+    price_clp: monthlyPlanPayload.price_clp,
+    description: monthlyPlanPayload.description,
+    // A stale direct payload must be ignored; a monthly plan is derived only
+    // from the four ordered weekly plans below.
+    included_items: [{ id: "stale-direct-meal", name: "No debe aparecer" }],
+    is_active: true
+  },
+  undefined,
+  undefined,
+  {
+    weeklyPlanIds: ["week-1", "week-2", "week-3", "week-4"],
+    weeklyPlans: [1, 2, 3, 4].map((weekPosition) => ({
+      id: `week-${weekPosition}`,
+      name: `Semana ${weekPosition}`,
+      weekPosition,
+      includedItems: [{ ...dish, id: `dish-${weekPosition}` }]
+    })),
+    derivedTagIds: [highProtein.id, highFiber.id]
+  }
+);
+
+assert.deepEqual(mappedMonthlyPlan.weeklyPlanIds, ["week-1", "week-2", "week-3", "week-4"]);
+assert.equal(mappedMonthlyPlan.weeklyPlans.length, 4);
+assert.deepEqual(mappedMonthlyPlan.weeklyPlans.map((week) => week.weekPosition), [1, 2, 3, 4]);
+assert.equal(mappedMonthlyPlan.includedItems.length, 4);
+assert.equal(mappedMonthlyPlan.includedItems.some((meal) => meal.name === "No debe aparecer"), false);
+assert.equal(mappedMonthlyPlan.benefits.length, 1);
+assert.deepEqual(mappedMonthlyPlan.tagIds, [highProtein.id, highFiber.id]);
+
+console.log("Parámetros validados: mealpreps conservan ficha propia y los mensuales heredan cuatro semanas sin duplicar mealpreps.");

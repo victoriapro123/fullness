@@ -110,26 +110,7 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
     unit_price_clp: Number(product.price_clp),
     total_clp: itemTotal,
     product_name: product.name,
-    product_snapshot: {
-      slug: product.slug,
-      sku: product.sku,
-      productType: product.product_type,
-      planFrequency: product.plan_frequency,
-      tag: product.tag,
-      photoUrl: product.photo_url,
-      benefitTags: product.benefit_tags,
-      servingLabel: product.serving_label,
-      presetMenu: product.product_type === "plan"
-        ? (Array.isArray(product.included_items)
-          ? product.included_items.map((meal) => ({
-            id: meal?.id || null,
-            libraryMealId: meal?.libraryMealId || meal?.library_meal_id || null,
-            name: meal?.name || "",
-            sku: meal?.sku || null
-          }))
-          : [])
-        : []
-    },
+    product_snapshot: buildProductSnapshot(product),
     ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
     nutrition_description: product.nutrition_description || null
   }));
@@ -571,7 +552,156 @@ async function resolveCatalogItems(cart) {
     throw statusError(502, "No pudimos validar el catalogo.", error);
   }
 
-  return new Map((data || []).map((row) => [row.slug, applyLegacyCheckoutOverride(row)]));
+  const catalogItems = (data || []).map(applyLegacyCheckoutOverride);
+  const catalogWithMonthlyWeeks = await resolveMonthlyPlanWeeks(catalogItems);
+
+  return new Map(catalogWithMonthlyWeeks.map((row) => [row.slug, row]));
+}
+
+function isMonthlyPlan(product) {
+  return product?.product_type === "plan" && product?.plan_frequency === "monthly";
+}
+
+function mealIdentity(meal) {
+  return cleanText(meal?.libraryMealId || meal?.library_meal_id || meal?.id);
+}
+
+function weeklyPlanHasSixDistinctMealpreps(weeklyPlan) {
+  if (!Array.isArray(weeklyPlan?.included_items) || weeklyPlan.included_items.length !== 6) return false;
+
+  const ids = weeklyPlan.included_items.map(mealIdentity);
+  return ids.every(Boolean) && new Set(ids).size === 6;
+}
+
+async function resolveMonthlyPlanWeeks(catalogItems) {
+  const monthlyPlans = catalogItems.filter(isMonthlyPlan);
+  if (monthlyPlans.length === 0) return catalogItems;
+
+  const monthlyPlanIds = monthlyPlans.map((plan) => plan.id).filter(Boolean);
+  const supabase = getSupabaseAdmin();
+  const {data: links, error: linksError} = await supabase
+    .from("monthly_plan_weeks")
+    .select("monthly_plan_id,weekly_plan_id,week_position")
+    .in("monthly_plan_id", monthlyPlanIds)
+    .order("week_position", {ascending: true});
+
+  if (linksError) {
+    throw statusError(502, "No pudimos validar las semanas del plan mensual.", linksError);
+  }
+
+  const linksByMonthlyPlan = new Map();
+  for (const link of links || []) {
+    const monthlyPlanId = cleanText(link?.monthly_plan_id);
+    const weeklyPlanId = cleanText(link?.weekly_plan_id);
+    const weekPosition = Number(link?.week_position);
+    if (!monthlyPlanId || !weeklyPlanId || !Number.isInteger(weekPosition)) continue;
+
+    const monthlyLinks = linksByMonthlyPlan.get(monthlyPlanId) || [];
+    monthlyLinks.push({weeklyPlanId, weekPosition});
+    linksByMonthlyPlan.set(monthlyPlanId, monthlyLinks);
+  }
+
+  const weeklyPlanIds = [...new Set(
+    [...linksByMonthlyPlan.values()].flatMap((monthlyLinks) => monthlyLinks.map((link) => link.weeklyPlanId))
+  )];
+  const {data: weeklyPlans, error: weeklyPlansError} = weeklyPlanIds.length
+    ? await supabase
+      .from("menu_items")
+      .select("*")
+      .in("id", weeklyPlanIds)
+      .eq("is_active", true)
+    : {data: [], error: null};
+
+  if (weeklyPlansError) {
+    throw statusError(502, "No pudimos validar los planes semanales del mensual.", weeklyPlansError);
+  }
+
+  const weeklyPlanById = new Map((weeklyPlans || []).map((plan) => [plan.id, plan]));
+
+  return catalogItems.map((product) => {
+    if (!isMonthlyPlan(product)) return product;
+
+    const monthlyLinks = (linksByMonthlyPlan.get(product.id) || [])
+      .sort((left, right) => left.weekPosition - right.weekPosition);
+    const weeklyIds = monthlyLinks.map((link) => link.weeklyPlanId);
+    const weekPositions = monthlyLinks.map((link) => link.weekPosition);
+    const validPositions = weekPositions.length === 4
+      && new Set(weekPositions).size === 4
+      && weekPositions.every((position, index) => position === index + 1);
+
+    if (monthlyLinks.length !== 4 || new Set(weeklyIds).size !== 4 || !validPositions) {
+      throw statusError(422, `El plan mensual ${cleanText(product.name) || "seleccionado"} no tiene sus cuatro semanas configuradas.`);
+    }
+
+    const monthlyWeeks = monthlyLinks.map((link) => {
+      const weeklyPlan = weeklyPlanById.get(link.weeklyPlanId);
+      if (
+        !weeklyPlan
+        || weeklyPlan.product_type !== "plan"
+        || weeklyPlan.plan_frequency !== "weekly"
+        || !weeklyPlanHasSixDistinctMealpreps(weeklyPlan)
+      ) {
+        throw statusError(
+          422,
+          `El plan mensual ${cleanText(product.name) || "seleccionado"} contiene una semana no disponible o incompleta.`
+        );
+      }
+
+      return {...weeklyPlan, week_position: link.weekPosition};
+    });
+
+    return {...product, monthly_weeks: monthlyWeeks};
+  });
+}
+
+function snapshotMealprep(meal) {
+  return {
+    id: meal?.id || null,
+    libraryMealId: meal?.libraryMealId || meal?.library_meal_id || null,
+    name: meal?.name || "",
+    sku: meal?.sku || null
+  };
+}
+
+function snapshotWeeklyPresetMenu(weeklyPlan) {
+  return Array.isArray(weeklyPlan?.included_items)
+    ? weeklyPlan.included_items.map(snapshotMealprep)
+    : [];
+}
+
+function buildProductSnapshot(product) {
+  const monthlyWeeks = isMonthlyPlan(product) && Array.isArray(product.monthly_weeks)
+    ? product.monthly_weeks.map((weeklyPlan) => ({
+      weekPosition: Number(weeklyPlan.week_position),
+      weeklyPlanId: weeklyPlan.id || null,
+      weeklyPlanSlug: weeklyPlan.slug || "",
+      weeklyPlanSku: weeklyPlan.sku || null,
+      weeklyPlanName: weeklyPlan.name || "",
+      mealpreps: snapshotWeeklyPresetMenu(weeklyPlan)
+    }))
+    : [];
+
+  return {
+    slug: product.slug,
+    sku: product.sku,
+    productType: product.product_type,
+    planFrequency: product.plan_frequency,
+    tag: product.tag,
+    photoUrl: product.photo_url,
+    benefitTags: product.benefit_tags,
+    servingLabel: product.serving_label,
+    planStructure: isMonthlyPlan(product)
+      ? "monthly_weeks_v1"
+      : product.product_type === "plan"
+        ? "weekly_mealpreps_v1"
+        : null,
+    // Monthly plans deliberately leave this flat compatibility field empty.
+    // Their immutable order snapshot is grouped by the four weekly plans.
+    presetMenu: product.product_type === "plan" && !isMonthlyPlan(product)
+      ? snapshotWeeklyPresetMenu(product)
+      : [],
+    monthlyWeeks
+  };
 }
 
 function applyLegacyCheckoutOverride(row) {

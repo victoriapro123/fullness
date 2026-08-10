@@ -525,3 +525,131 @@
   line-height: 1.62;
   text-transform: none;
 }
+
+/* Hero de nuestra historia: composición editorial aprobada por Cecilia.
+   La fotografía, su encuadre y las capas de fondo se mantienen intactas. */
+.about-v2__hero {
+  --about-v2-hero-accent: #a7b79f;
+}
+
+.about-v2__hero-copy {
+  width: min(43.5rem, 46vw);
+  transform: translate(clamp(0rem, 3.6vw, 3.5rem), clamp(-4.5rem, -4vw, -2rem));
+}
+
+.about-v2__hero .about-v2__eyebrow {
+  margin: 0 0 clamp(1.65rem, 2.1vw, 2.35rem);
+  color: var(--about-v2-hero-accent);
+  font-size: clamp(0.8rem, 0.95vw, 1.1rem);
+  letter-spacing: 0.24em;
+}
+
+.about-v2__hero h1 {
+  margin: 0;
+  max-width: none;
+  color: rgba(244, 234, 219, 0.98);
+  font-size: clamp(3rem, 3.85vw, 4.8rem);
+  font-weight: 400;
+  letter-spacing: 0.105em;
+  line-height: 1.18;
+}
+
+.about-v2__hero h1 em {
+  color: var(--about-v2-hero-accent);
+}
+
+.about-v2__hero-rule {
+  width: min(100%, 35.5rem);
+  gap: 13px;
+  color: var(--about-v2-hero-accent);
+}
+
+.about-v2__hero-rule::before {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
+}
+
+.about-v2__hero-rule--intro {
+  margin: 0 0 clamp(2rem, 2.7vw, 3.1rem);
+}
+
+.about-v2__hero-rule--outro {
+  margin: clamp(2rem, 2.8vw, 3.3rem) 0 clamp(1.75rem, 2.3vw, 2.7rem);
+}
+
+.about-v2__hero-question {
+  max-width: 31rem;
+  color: rgba(244, 234, 219, 0.92);
+  font-size: clamp(1.05rem, 1.38vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.64;
+}
+
+.about-v2__hero-question span {
+  display: block;
+}
+
+@media (min-width: 1281px) {
+  .about-v2__hero h1 :is(span, em) {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 1120px) {
+  .about-v2__hero-copy {
+    width: min(51vw, 39rem);
+    transform: translateY(-2rem);
+  }
+
+  .about-v2__hero h1 {
+    font-size: clamp(2.65rem, 4.35vw, 3.85rem);
+  }
+}
+
+@media (max-width: 760px) {
+  .about-v2__hero-copy {
+    width: min(100%, 19.5rem);
+    transform: none;
+  }
+
+  .about-v2__hero .about-v2__eyebrow {
+    margin-bottom: 1.25rem;
+    font-size: 0.76rem;
+  }
+
+  .about-v2__hero h1 {
+    font-size: clamp(2rem, 8.9vw, 2.45rem);
+    letter-spacing: 0.065em;
+    line-height: 1.16;
+  }
+
+  .about-v2__hero-rule {
+    width: min(100%, 18rem);
+    gap: 9px;
+  }
+
+  .about-v2__hero-rule::before {
+    width: 9px;
+    height: 9px;
+    border-width: 1px;
+  }
+
+  .about-v2__hero-rule--intro {
+    margin-bottom: 1.65rem;
+  }
+
+  .about-v2__hero-rule--outro {
+    margin: 1.55rem 0 1.35rem;
+  }
+
+  .about-v2__hero-question {
+    max-width: 18.5rem;
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .about-v2__hero-question span {
+    display: inline;
+  }
+}

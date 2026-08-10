@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { buildMealLibraryPayload, buildMenuItemPayload } from "../src/lib/menu-items.js";
+import { buildMealLibraryPayload, buildMenuItemPayload, mapMenuItem } from "../src/lib/menu-items.js";
+import { tagPresets } from "../src/lib/catalog-parameter-presets.js";
+
+const highProtein = tagPresets.find((item) => item.slug === "alto-en-proteina");
 
 const planPayload = buildMenuItemPayload({
   slug: "plan-qa-nutricion",
@@ -75,6 +78,7 @@ const monthlyPlanPayload = buildMenuItemPayload({
   planFrequency: "monthly",
   description: "Plan mensual de prueba.",
   priceClp: 49000,
+  weeklyPlanIds: ["weekly-1", "weekly-2", "weekly-3", "weekly-4"],
   includedItems: [
     {
       id: "mealprep-importado",
@@ -86,29 +90,42 @@ const monthlyPlanPayload = buildMenuItemPayload({
   ]
 });
 
-assert.deepEqual(monthlyPlanPayload.included_items[0], {
-  id: "mealprep-importado",
-  sku: "PL-MEALPREPIM",
-  libraryMealId: "",
-  sourcePlanId: "weekly-plan-qa",
-  sourcePlanName: "Menú semanal QA",
-  name: "Mealprep importado",
-  tag: "",
-  description: "Viene de un menú semanal.",
-  photoUrl: "",
-  photoStoragePath: "",
-  secondaryPhotoUrl: "",
-  secondaryPhotoStoragePath: "",
-  benefitAssignments: [],
-  benefitTags: [],
-  tagIds: [],
-  ingredients: [],
-  nutritionDescription: "",
-  nutritionHighlights: [],
-  nutritionFacts: {},
-  rethermalizationInstructions: "",
-  allergens: []
-});
+assert.deepEqual(monthlyPlanPayload.included_items, []);
+
+const mappedMonthlyPlan = mapMenuItem(
+  {
+    id: "monthly-nutrition-qa",
+    slug: monthlyPlanPayload.slug,
+    name: monthlyPlanPayload.name,
+    product_type: "plan",
+    plan_frequency: "monthly",
+    description: monthlyPlanPayload.description,
+    included_items: [{ id: "legacy-monthly-copy", name: "No debe heredarse" }],
+    is_active: false
+  },
+  undefined,
+  undefined,
+  {
+    weeklyPlanIds: ["weekly-1", "weekly-2", "weekly-3", "weekly-4"],
+    weeklyPlans: [1, 2, 3, 4].map((weekPosition) => ({
+      id: `weekly-${weekPosition}`,
+      weekPosition,
+      includedItems: [{
+        id: `mealprep-${weekPosition}`,
+        name: `Mealprep ${weekPosition}`,
+        tags: [highProtein]
+      }]
+    })),
+    // This is the read-only result of monthly_plan_nutrition_tags, not a
+    // column copied into the monthly menu item.
+    derivedTagIds: [highProtein.id]
+  }
+);
+
+assert.deepEqual(mappedMonthlyPlan.tagIds, [highProtein.id]);
+assert.equal(mappedMonthlyPlan.tags.length, 1);
+assert.equal(mappedMonthlyPlan.includedItems.length, 4);
+assert.equal(mappedMonthlyPlan.includedItems.some((item) => item.name === "No debe heredarse"), false);
 
 const mealprepPayload = buildMealLibraryPayload({
   name: "Mealprep QA",

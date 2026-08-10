@@ -609,23 +609,23 @@ function cleanAuthRedirectUrl() {
   window.history.replaceState(null, "", window.location.pathname || "/");
 }
 
-const demoProducts = [
+const demoProductSeed = [
   {
     id: "plan-semanal-antinflamatorio",
     slug: "plan-semanal-antinflamatorio",
     name: "Plan semanal antinflamatorio",
     productType: "plan",
     planFrequency: "weekly",
-    tag: "5 mealpreps / 1 semana",
+    tag: "6 mealpreps / 1 semana",
     price: 44900,
-    description: "Cinco preparaciones listas para calentar, pensadas para sostener energía, saciedad y una rutina más liviana durante la semana.",
+    description: "Seis preparaciones listas para calentar, pensadas para sostener energía, saciedad y una rutina más liviana durante la semana.",
     image: shopPlanBoxCardSrc,
     secondaryImage: shopPlanBoxCardHoverSrc,
     benefitTags: ["Antioxidante", "Energético", "Digestivo"],
     ingredients: ["proteínas magras", "raíces", "legumbres", "hojas verdes", "aceite de oliva"],
     recipeSummary: "Batch cooking Fullness con proteínas, vegetales y granos listos para calentar.",
     recipeSteps: ["Recibir refrigerado.", "Mantener entre 0 y 5 °C.", "Calentar y terminar con toppings frescos."],
-    servingLabel: "5 porciones individuales",
+    servingLabel: "6 porciones individuales",
     purchaseLabel: "Agregar plan semanal",
     includedItems: [
       {
@@ -770,6 +770,78 @@ const demoProducts = [
     servingLabel: "3 a 4 personas",
     purchaseLabel: "Agregar familiar"
   }
+];
+
+const demoWeeklyPlanSeed = demoProductSeed.find(
+  (product) => product.productType === "plan" && product.planFrequency === "weekly"
+);
+const demoMonthlyPlanSeed = demoProductSeed.find(
+  (product) => product.productType === "plan" && product.planFrequency === "monthly"
+);
+const demoWeeklyMealVariants = [
+  { sourceIndex: 0 },
+  { sourceIndex: 1 },
+  { sourceIndex: 2 },
+  {
+    sourceIndex: 0,
+    name: "Pavo, quinoa y vegetales asados",
+    description: "Pavo especiado, quinoa tibia y vegetales de estación.",
+    tag: "Proteico"
+  },
+  {
+    sourceIndex: 1,
+    name: "Garbanzos, zapallo y tahini",
+    description: "Garbanzos cremosos, zapallo asado y tahini de sésamo.",
+    tag: "Digestivo"
+  },
+  {
+    sourceIndex: 2,
+    name: "Merluza, papas y hierbas frescas",
+    description: "Merluza suave, papas doradas y hierbas frescas.",
+    tag: "Omega-3"
+  }
+];
+const demoWeeklyPlans = demoWeeklyPlanSeed
+  ? Array.from({ length: 4 }, (_, weekIndex) => {
+      const weekNumber = weekIndex + 1;
+
+      return {
+        ...demoWeeklyPlanSeed,
+        id: `plan-semanal-antinflamatorio-${weekNumber}`,
+        slug: `plan-semanal-antinflamatorio-${weekNumber}`,
+        name: `Semana ${weekNumber} · Plan antinflamatorio`,
+        description: "Seis mealpreps funcionales y trazables para resolver una semana completa.",
+        includedItems: demoWeeklyMealVariants.map(({ sourceIndex, ...mealOverrides }, mealIndex) => {
+          const sourceMeal = demoWeeklyPlanSeed.includedItems[sourceIndex];
+
+          return {
+            ...sourceMeal,
+            ...mealOverrides,
+            id: `${sourceMeal.id}-semana-${weekNumber}-${mealIndex + 1}`,
+            name: mealOverrides.name || sourceMeal.name,
+            description: mealOverrides.description || sourceMeal.description,
+            tag: mealOverrides.tag || sourceMeal.tag
+          };
+        })
+      };
+    })
+  : [];
+const demoProducts = [
+  ...(demoMonthlyPlanSeed
+    ? [{
+        ...demoMonthlyPlanSeed,
+        tag: "24 mealpreps / 4 semanas",
+        servingLabel: "24 porciones individuales",
+        includedItems: [],
+        weeklyPlanIds: demoWeeklyPlans.map((weeklyPlan) => weeklyPlan.id),
+        weeklyPlans: demoWeeklyPlans.map((weeklyPlan, weekIndex) => ({
+          ...weeklyPlan,
+          weekPosition: weekIndex + 1
+        }))
+      }]
+    : []),
+  ...demoWeeklyPlans,
+  ...demoProductSeed.filter((product) => product.productType === "family")
 ];
 
 const localDevelopmentCatalog = import.meta.env.DEV && !isSupabaseConfigured ? demoProducts : [];
@@ -1221,7 +1293,7 @@ function mergeShopSettings(settings) {
 }
 
 function renderShopHeroTitle(title) {
-  const text = String(title || "");
+  const text = formatDisplayTitle(title);
   const match = text.match(/toda la semana\.?/i);
   if (!match) return text;
 
@@ -1245,6 +1317,21 @@ function normalizeMealprepCopy(value) {
     .replace(/Platos diseñados/g, "Mealpreps diseñados")
     .replace(/platos diseñados/g, "mealpreps diseñados")
     .replace(/rotación de platos/gi, "rotación de mealpreps");
+}
+
+function formatDisplayTitle(value) {
+  return normalizeMealprepCopy(value).toLocaleUpperCase("es-CL");
+}
+
+function formatDisplayEyebrow(value) {
+  return normalizeMealprepCopy(value).toLocaleUpperCase("es-CL");
+}
+
+function formatDisplayDescription(value) {
+  const text = normalizeMealprepCopy(value).trim();
+  if (!text) return "";
+
+  return `${text.charAt(0).toLocaleUpperCase("es-CL")}${text.slice(1)}`;
 }
 
 function formatAllergenCopy(allergens) {
@@ -1582,6 +1669,8 @@ function createMenuForm(displayOrder = 0) {
     recipeSteps: "",
     allergens: "",
     includedItems: [],
+    weeklyDraftItems: [],
+    weeklyPlanIds: [],
     servingLabel: "",
     purchaseLabel: "",
     displayOrder: String(displayOrder),
@@ -1615,7 +1704,11 @@ function normalizeMenuFormDraft(rawDraft) {
   const form = {
     ...defaults,
     ...rawDraft.form,
-    includedItems: Array.isArray(rawDraft.form.includedItems) ? rawDraft.form.includedItems : defaults.includedItems
+    includedItems: Array.isArray(rawDraft.form.includedItems) ? rawDraft.form.includedItems : defaults.includedItems,
+    weeklyDraftItems: Array.isArray(rawDraft.form.weeklyDraftItems) ? rawDraft.form.weeklyDraftItems : defaults.weeklyDraftItems,
+    weeklyPlanIds: Array.isArray(rawDraft.form.weeklyPlanIds)
+      ? [...new Set(rawDraft.form.weeklyPlanIds.filter(Boolean))].slice(0, 4)
+      : defaults.weeklyPlanIds
   };
   const updatedAt = rawDraft.updatedAt || rawDraft.updated_at || rawDraft.savedAt || Date.now();
 
@@ -1689,7 +1782,8 @@ function isMeaningfulMenuFormDraft(form) {
     form.priceClp?.trim() ||
     form.photoUrl?.trim() ||
     form.secondaryPhotoUrl?.trim() ||
-    form.includedItems?.some((item) => item.name?.trim() || item.description?.trim() || item.photoUrl?.trim())
+    form.includedItems?.some((item) => item.name?.trim() || item.description?.trim() || item.photoUrl?.trim()) ||
+    form.weeklyPlanIds?.length
   );
 }
 
@@ -1810,7 +1904,11 @@ function menuItemToForm(item) {
     recipeSummary: item.recipeSummary || "",
     recipeSteps: (item.recipeSteps || []).join("\n"),
     allergens: (item.allergens || []).join("\n"),
-    includedItems: (item.includedItems || []).map(includedMealToForm),
+    includedItems: item.planFrequency === "monthly" ? [] : (item.includedItems || []).map(includedMealToForm),
+    weeklyDraftItems: item.planFrequency === "monthly" ? [] : (item.includedItems || []).map(includedMealToForm),
+    weeklyPlanIds: Array.isArray(item.weeklyPlanIds)
+      ? item.weeklyPlanIds.filter(Boolean).slice(0, 4)
+      : (item.weeklyPlans || []).map((weeklyPlan) => weeklyPlan.id).filter(Boolean).slice(0, 4),
     servingLabel: item.servingLabel || "",
     purchaseLabel: item.purchaseLabel || "",
     displayOrder: String(item.displayOrder || 0),
@@ -2300,11 +2398,16 @@ function getMenuFormPublicationIssues(form) {
   if (!effectiveSlug) issues.push("slug válido");
   if (form.priceClp === "" || !Number.isFinite(price) || price < 0) issues.push("precio");
   if (!form.description.trim()) issues.push("descripción");
-  if (
-    form.productType === "plan" &&
-    !form.includedItems?.some((item) => item.name?.trim())
-  ) {
-    issues.push("al menos un mealprep");
+  if (form.productType === "plan" && form.planFrequency === "monthly") {
+    const weeklyPlanIds = [...new Set((form.weeklyPlanIds || []).filter(Boolean))];
+    if (weeklyPlanIds.length !== 4) {
+      issues.push("4 planes semanales distintos; el borrador ya está protegido mientras completas el mes");
+    }
+  } else if (form.productType === "plan") {
+    const mealprepCount = (form.includedItems || []).filter((item) => item.name?.trim()).length;
+    if (form.isActive && mealprepCount !== 6) {
+      issues.push("exactamente 6 mealpreps distintos para mostrar el plan semanal");
+    }
   }
 
   return issues;
@@ -2368,42 +2471,147 @@ function getMemberLabel(user) {
   );
 }
 
-function formatNutritionLabel(key) {
-  const labels = {
-    calories: "Calorías",
-    kcal: "Energía",
-    protein_g: "Proteína",
-    carbs_g: "Carbohidratos",
-    fat_g: "Grasas",
-    fiber_g: "Fibra",
-    sodium_mg: "Sodio"
-  };
+const NUTRITION_LABELS = {
+  calories: "Calorías",
+  calories_kcal: "Calorías",
+  energy: "Energía",
+  energy_kcal: "Energía",
+  kcal: "Energía",
+  protein: "Proteína",
+  proteins: "Proteína",
+  protein_g: "Proteína",
+  proteins_g: "Proteína",
+  carbs: "Carbohidratos",
+  carbohydrates: "Carbohidratos",
+  carbs_g: "Carbohidratos",
+  carbohydrates_g: "Carbohidratos",
+  fat: "Grasas",
+  fats: "Grasas",
+  fat_g: "Grasas",
+  fats_g: "Grasas",
+  fiber: "Fibra",
+  fibre: "Fibra",
+  fiber_g: "Fibra",
+  fibre_g: "Fibra",
+  sodium: "Sodio",
+  sodium_mg: "Sodio",
+  sugar: "Azúcares",
+  sugars: "Azúcares",
+  sugar_g: "Azúcares",
+  sugars_g: "Azúcares",
+  net_weight: "Peso neto",
+  net_weight_g: "Peso neto",
+  portion_size: "Tamaño de porción",
+  portion_size_g: "Tamaño de porción",
+  serving_size: "Tamaño de porción",
+  serving_size_g: "Tamaño de porción",
+  servings_per_container: "Porciones por envase",
+  servings: "Porciones por envase"
+};
 
-  return labels[key] || key.replace(/_/g, " ");
+const NUTRITION_IGNORED_KEYS = new Set([
+  "product",
+  "name",
+  "title",
+  "description",
+  "ingredients",
+  "ingredient",
+  "image",
+  "image_url",
+  "photo",
+  "unit",
+  "units"
+]);
+
+function normalizeNutritionKey(key) {
+  return String(key || "")
+    .trim()
+    .toLocaleLowerCase("es-CL")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
 }
 
-function formatNutritionValue(key, value) {
-  if (value === null || value === undefined || value === "") return "";
-  if (typeof value === "number") {
-    if (key.endsWith("_g")) return `${value} g`;
-    if (key.endsWith("_mg")) return `${value} mg`;
-    return String(value);
-  }
+function formatNutritionLabel(key) {
+  const normalizedKey = normalizeNutritionKey(key);
+  if (NUTRITION_LABELS[normalizedKey]) return NUTRITION_LABELS[normalizedKey];
+  return normalizedKey ? normalizedKey.replace(/_/g, " ") : "Información nutricional";
+}
 
-  return String(value);
+function formatNutritionNumber(value) {
+  return new Intl.NumberFormat("es-CL", { maximumFractionDigits: 2 }).format(value);
+}
+
+function formatNutritionValue(key, value, explicitUnit = "") {
+  if (value === null || value === undefined || value === "") return "";
+  if (Array.isArray(value) || typeof value === "object") return "";
+
+  const normalizedKey = normalizeNutritionKey(key);
+  const numericValue = typeof value === "number" ? value : Number(String(value).replace(",", "."));
+  const isNumeric = Number.isFinite(numericValue) && String(value).trim() !== "";
+  if (!isNumeric) return String(value).trim();
+
+  const unit = String(explicitUnit || "").trim();
+  if (unit) return `${formatNutritionNumber(numericValue)} ${unit}`;
+  if (normalizedKey.endsWith("_mg")) return `${formatNutritionNumber(numericValue)} mg`;
+  if (normalizedKey.endsWith("_g")) return `${formatNutritionNumber(numericValue)} g`;
+  if (normalizedKey.endsWith("_kcal") || normalizedKey === "kcal" || normalizedKey === "calories") {
+    return `${formatNutritionNumber(numericValue)} kcal`;
+  }
+  return formatNutritionNumber(numericValue);
+}
+
+function getNutritionMeasurement(value) {
+  if (!value || Array.isArray(value) || typeof value !== "object") return null;
+  const amount = value.value ?? value.amount ?? value.quantity;
+  if (amount === null || amount === undefined || amount === "" || typeof amount === "object") return null;
+  const unit = value.unit ?? value.units ?? "";
+  return { amount, unit };
 }
 
 function getNutritionEntries(product) {
   const facts = product?.nutritionFacts || {};
   if (!facts || Array.isArray(facts) || typeof facts !== "object") return [];
 
-  return Object.entries(facts)
-    .map(([key, value]) => ({
-      key,
-      label: formatNutritionLabel(key),
-      value: formatNutritionValue(key, value)
-    }))
-    .filter((entry) => entry.value);
+  const entries = [];
+  const visit = (source, parentKey = "") => {
+    if (!source || Array.isArray(source) || typeof source !== "object") return;
+
+    Object.entries(source).forEach(([rawKey, rawValue]) => {
+      const key = normalizeNutritionKey(rawKey);
+      if (!key || NUTRITION_IGNORED_KEYS.has(key)) return;
+
+      const measurement = getNutritionMeasurement(rawValue);
+      if (measurement) {
+        const value = formatNutritionValue(key, measurement.amount, measurement.unit);
+        if (value) {
+          entries.push({
+            key: `${parentKey}-${key}-${entries.length}`,
+            label: formatNutritionLabel(key),
+            value
+          });
+        }
+        return;
+      }
+
+      if (rawValue && !Array.isArray(rawValue) && typeof rawValue === "object") {
+        visit(rawValue, key);
+        return;
+      }
+
+      const value = formatNutritionValue(key, rawValue);
+      if (!value) return;
+      entries.push({
+        key: `${parentKey}-${key}-${entries.length}`,
+        label: formatNutritionLabel(key),
+        value
+      });
+    });
+  };
+
+  visit(facts);
+  return entries;
 }
 
 function getProductType(product) {
@@ -2509,7 +2717,7 @@ function ProductNutritionFacts({ product }) {
   return (
     <div className="nutrition-facts-grid" aria-label="Datos nutricionales">
       {entries.map((entry) => (
-        <span key={entry.key}>
+        <span key={entry.key} aria-label={`${entry.label}: ${entry.value}`}>
           <small>{entry.label}</small>
           <strong>{entry.value}</strong>
         </span>
@@ -2530,7 +2738,7 @@ function HoverImage({ alt, primary, secondary }) {
 const shopMetricIcons = [Leaf, CookingPot, Heart];
 const shopProcessSteps = [
   { icon: Leaf, title: "Elige tu objetivo", text: "Define energía, equilibrio o recuperación." },
-  { icon: CookingPot, title: "Elige tu formato", text: "Escoge un plan semanal o un mealprep familiar." },
+  { icon: CookingPot, title: "Elige tu formato", text: "Escoge un plan mensual, semanal o un mealprep familiar." },
   { icon: PackageCheck, title: "Recibe tu box", text: "Cada mealprep llega en su bolsa, listo y etiquetado." },
   { icon: Timer, title: "Calienta en minutos", text: "Lleva la bolsa a baño María siguiendo sus indicaciones." },
   { icon: Heart, title: "Disfruta tu semana", text: "Comida completa sin improvisar." }
@@ -2546,65 +2754,68 @@ function PresetPlanMenuNotice({ product }) {
   );
 }
 
-function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct }) {
-  const includedItems = product.includedItems || [];
-  const benefitTags = getBenefitTags(product);
+function MonthlyPlanWeekList({ product, onOpenWeek }) {
+  const weeklyPlans = [...(product.weeklyPlans || [])]
+    .filter(Boolean)
+    .sort((left, right) => Number(left.weekPosition || 0) - Number(right.weekPosition || 0));
+
+  if (weeklyPlans.length === 0) {
+    return <p className="monthly-plan-menu-empty">Este plan mensual aún no tiene semanas disponibles.</p>;
+  }
+
+  return (
+    <div className="monthly-plan-menu" aria-label={`Semanas incluidas en ${product.name}`}>
+      {weeklyPlans.map((weeklyPlan, weekIndex) => (
+        <article className="monthly-plan-menu-week" key={weeklyPlan.id || weeklyPlan.slug || weekIndex}>
+          <div>
+            <p className="eyebrow">{formatDisplayEyebrow(`Semana ${weekIndex + 1}`)}</p>
+            <h4>{formatDisplayTitle(weeklyPlan.name)}</h4>
+            <p>{formatDisplayDescription(weeklyPlan.description)}</p>
+            <small>{formatDisplayDescription(weeklyPlan.servingLabel || "6 mealpreps")}</small>
+          </div>
+          <button className="shop-outline-button" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
+            Ver semana
+            <ArrowUpRight size={16} />
+          </button>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenProduct }) {
+  const benefits = getProductBenefits(product);
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
   const isMonthly = product.planFrequency === "monthly";
-  const purchaseLabel = product.purchaseLabel || (isMonthly ? "Comprar mensual" : "Comprar esta semana");
+  const purchaseLabel = isMonthly ? "Agregar plan mensual" : "Agregar plan semanal";
 
   return (
     <article className="shop-plan-card">
       <button className="shop-plan-media-button" type="button" onClick={() => onOpenProduct(product)}>
         <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
-        <span>{isMonthly ? "Mensual" : "Semanal"}</span>
+        <span>{formatDisplayEyebrow(isMonthly ? "Mensual" : "Semanal")}</span>
       </button>
 
       <div className="shop-plan-body">
         <button className="shop-plan-title-button" type="button" onClick={() => onOpenProduct(product)}>
-          <span>{isMonthly ? "Plan mensual" : "Semana"}</span>
-          <h3>{product.name}</h3>
-          <p>{normalizeMealprepCopy(product.description)}</p>
+          <span>{formatDisplayEyebrow(isMonthly ? "Plan mensual" : "Plan semanal")}</span>
+          <h3>{formatDisplayTitle(product.name)}</h3>
+          <p>{formatDisplayDescription(product.description)}</p>
         </button>
 
-        {benefitTags.length > 0 && (
-          <ul className="shop-benefit-tags" aria-label="Beneficios">
-            {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
-          </ul>
-        )}
-
-        <PresetPlanMenuNotice product={product} />
-
+        <BenefitIconList
+          benefits={benefits}
+          contextTitle={product.name}
+          onOpenBenefit={onOpenBenefit}
+          limit={4}
+          compact
+          iconOnly
+        />
       </div>
 
-      {includedItems.length > 0 && (
-        <div className={`shop-plan-meals is-${Math.min(includedItems.length, 3)}`} aria-label={`Mealpreps incluidos en ${product.name}`}>
-          {includedItems.slice(0, 3).map((meal) => (
-            <article className="shop-plan-meal-card" key={meal.id || meal.name}>
-              <button
-                className="shop-plan-meal-main"
-                type="button"
-                onClick={(event) => onOpenMeal(product, meal, event)}
-              >
-                <span className="shop-plan-meal-kicker">{normalizeMealprepCopy(meal.tag) || "Mealprep Fullness"}</span>
-                <strong>{meal.name}</strong>
-                <p>{normalizeMealprepCopy(meal.description)}</p>
-              </button>
-              <BenefitIconList
-                benefits={getProductBenefits(meal)}
-                contextTitle={meal.name}
-                onOpenBenefit={onOpenBenefit}
-                limit={2}
-                compact
-              />
-            </article>
-          ))}
-        </div>
-      )}
-
       <div className="shop-plan-footer">
-        <small>{normalizeMealprepCopy(product.servingLabel || product.tag)}</small>
+        <small>{formatDisplayDescription(product.servingLabel || product.tag || (isMonthly ? "4 semanas · 24 mealpreps" : "6 mealpreps"))}</small>
         <strong>{formatPrice(product.price)}</strong>
         <div>
           <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
@@ -2622,7 +2833,6 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenMeal, onOpen
 function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct }) {
   const primaryImage = getProductImage(product, index);
   const secondaryImage = getProductSecondaryImage(product, index);
-  const benefitTags = getBenefitTags(product);
   const benefits = getProductBenefits(product);
 
   return (
@@ -2632,30 +2842,26 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
       </button>
       <div className="shop-family-copy">
         <button className="shop-family-detail-button" type="button" onClick={() => onOpenProduct(product)}>
-          <span>{normalizeMealprepCopy(product.servingLabel || product.tag) || "Para compartir"}</span>
-          <h3>{product.name}</h3>
-          <p>{normalizeMealprepCopy(product.description)}</p>
+          <span>{formatDisplayEyebrow(product.servingLabel || product.tag || "Para compartir")}</span>
+          <h3>{formatDisplayTitle(product.name)}</h3>
+          <p>{formatDisplayDescription(product.description)}</p>
         </button>
-        {benefitTags.length > 0 && (
-          <ul className="shop-benefit-tags" aria-label="Beneficios">
-            {benefitTags.slice(0, 3).map((tag) => <li key={tag}>{tag}</li>)}
-          </ul>
-        )}
         <BenefitIconList
           benefits={benefits}
           contextTitle={product.name}
           onOpenBenefit={onOpenBenefit}
-          limit={3}
+          limit={4}
           compact
+          iconOnly
         />
       </div>
       <div className="shop-family-footer">
         <strong>{formatPrice(product.price)}</strong>
         <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
-          Ver detalle
+          Ver menú
         </button>
         <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
-          Agregar al carrito
+          Agregar plato familiar
         </button>
       </div>
     </article>
@@ -2665,8 +2871,16 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
 function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
   const catalogPlans = plans;
-  const monthlyPlan = catalogPlans.find((product) => product.planFrequency === "monthly");
+  const [catalogSegment, setCatalogSegment] = useState("monthly");
+  const monthlyPlans = catalogPlans.filter((product) => product.planFrequency === "monthly");
+  const weeklyPlans = catalogPlans.filter((product) => product.planFrequency === "weekly");
+  const monthlyPlan = monthlyPlans[0];
   const subscriptionProduct = monthlyPlan || catalogPlans[0] || null;
+  const subscriptionCtaLabel = subscriptionProduct?.planFrequency === "monthly"
+    ? "Agregar plan mensual"
+    : subscriptionProduct?.planFrequency === "weekly"
+      ? "Agregar plan semanal"
+      : settings.subscriptionCtaLabel;
   const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || null;
   const configuredHeroImage = settings.heroImageUrl || "";
   const heroImage = configuredHeroImage.includes(opaqueMealPrepHeroAssetToken)
@@ -2674,9 +2888,16 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
     : configuredHeroImage || getProductImage(heroFallbackProduct);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
-  const planHeading = catalogPlans.some((product) => product.planFrequency === "monthly")
-    ? "Planes semanales y mensuales"
-    : "Planes semanales";
+  const activeSegmentProducts = catalogSegment === "monthly"
+    ? monthlyPlans
+    : catalogSegment === "weekly"
+      ? weeklyPlans
+      : familyProducts;
+  const segmentCopy = catalogSegment === "monthly"
+    ? "Cuatro semanas completas, con sus menús preestablecidos y trazables."
+    : catalogSegment === "weekly"
+      ? "Seis mealpreps por semana, listos para calentar."
+      : "Preparaciones generosas para compartir en casa.";
 
   const scrollToBlock = (event, selector) => {
     event.preventDefault();
@@ -2688,9 +2909,9 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
       <section className="shop-hero-showcase" aria-labelledby="shop-hero-title">
         <img className="shop-hero-botanical" src={shopPlansCauliflowerIllustrationSrc} alt="" aria-hidden="true" />
         <div className="shop-hero-copy">
-          <p className="eyebrow">{settings.heroEyebrow}</p>
+          <p className="eyebrow">{formatDisplayEyebrow(settings.heroEyebrow)}</p>
           <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
-          <p>{normalizeMealprepCopy(settings.heroBody)}</p>
+          <p>{formatDisplayDescription(settings.heroBody)}</p>
           <div className="shop-hero-actions">
             <a className="shop-solid-link" href="#shop-plans" onClick={(event) => scrollToBlock(event, "#shop-plans")}>
               {settings.heroPrimaryLabel}
@@ -2727,16 +2948,16 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
         <>
           <section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
             <div className="shop-subscription-copy">
-              <p className="eyebrow">{settings.subscriptionEyebrow}</p>
-              <h2 id="shop-subscription-title">{settings.subscriptionTitle}</h2>
-              <p>{settings.subscriptionBody}</p>
+              <p className="eyebrow">{formatDisplayEyebrow(settings.subscriptionEyebrow)}</p>
+              <h2 id="shop-subscription-title">{formatDisplayTitle(settings.subscriptionTitle)}</h2>
+              <p>{formatDisplayDescription(settings.subscriptionBody)}</p>
               <button
                 className="shop-solid-button"
                 type="button"
                 onClick={() => subscriptionProduct && onAdd(subscriptionProduct)}
                 disabled={!subscriptionProduct}
               >
-                {settings.subscriptionCtaLabel}
+                {subscriptionCtaLabel}
                 <ArrowUpRight size={17} />
               </button>
             </div>
@@ -2775,7 +2996,7 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
                 onClick={() => subscriptionProduct && onAdd(subscriptionProduct)}
                 disabled={!subscriptionProduct}
               >
-                Comprar plan semanal
+                {subscriptionCtaLabel}
                 <ArrowUpRight size={17} />
               </button>
             </div>
@@ -2783,31 +3004,66 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
 
           <section className="shop-plans-section" id="shop-plans" aria-labelledby="shop-plans-title">
             <div className="shop-section-heading">
-              <p className="eyebrow">Planes</p>
-              <h2 id="shop-plans-title">{planHeading}</h2>
-              <p>Cada semana tiene un menú preestablecido de mealpreps individuales, listo para calentar.</p>
+              <p className="eyebrow">{formatDisplayEyebrow("Elige tu formato")}</p>
+              <h2 id="shop-plans-title">{formatDisplayTitle("Planes y mealpreps para cada ritmo.")}</h2>
+              <p>{formatDisplayDescription(segmentCopy)}</p>
             </div>
-            {catalogPlans.length > 0 ? (
-              <div className="shop-plan-grid">
-                {catalogPlans.map((product, index) => (
-                  <ShopPlanCard
-                    key={product.id}
-                    product={product}
-                    index={index}
-                    onAdd={onAdd}
-                    onOpenBenefit={onOpenBenefit}
-                    onOpenMeal={onOpenMeal}
-                    onOpenProduct={onOpenProduct}
-                  />
+            <div className="shop-catalog-segments" role="tablist" aria-label="Formato de productos">
+              {[
+                ["monthly", "Mensual", monthlyPlans.length],
+                ["weekly", "Semanal", weeklyPlans.length],
+                ["family", "Familiar", familyProducts.length]
+              ].map(([segment, label, count]) => (
+                <button
+                  className={catalogSegment === segment ? "is-active" : ""}
+                  key={segment}
+                  type="button"
+                  role="tab"
+                  aria-selected={catalogSegment === segment}
+                  onClick={() => setCatalogSegment(segment)}
+                >
+                  {formatDisplayTitle(label)}
+                  <span>{count}</span>
+                </button>
+              ))}
+            </div>
+            {activeSegmentProducts.length > 0 ? (
+              <div className={catalogSegment === "family" ? "shop-family-grid shop-catalog-grid" : "shop-plan-grid shop-catalog-grid"}>
+                {activeSegmentProducts.map((product, index) => (
+                  catalogSegment === "family" ? (
+                    <ShopFamilyCard
+                      key={product.id}
+                      product={product}
+                      index={index + catalogPlans.length}
+                      onAdd={onAdd}
+                      onOpenBenefit={onOpenBenefit}
+                      onOpenProduct={onOpenProduct}
+                    />
+                  ) : (
+                    <ShopPlanCard
+                      key={product.id}
+                      product={product}
+                      index={index}
+                      onAdd={onAdd}
+                      onOpenBenefit={onOpenBenefit}
+                      onOpenProduct={onOpenProduct}
+                    />
+                  )
                 ))}
               </div>
             ) : (
-              <p className="products-empty">Aún no hay planes activos.</p>
+              <p className="products-empty">
+                {catalogSegment === "monthly"
+                  ? "Aún no hay planes mensuales visibles."
+                  : catalogSegment === "weekly"
+                    ? "Aún no hay planes semanales visibles."
+                    : "Aún no hay mealpreps familiares visibles."}
+              </p>
             )}
           </section>
 
           <section className="shop-process-band" aria-labelledby="shop-process-title">
-            <h2 id="shop-process-title">Cómo funciona</h2>
+            <h2 id="shop-process-title">{formatDisplayTitle("Cómo funciona")}</h2>
             <ol>
               {shopProcessSteps.map((step, index) => {
                 const StepIcon = step.icon;
@@ -2816,8 +3072,8 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
                   <li key={step.title}>
                     <span>{index + 1}</span>
                     <StepIcon size={28} aria-hidden="true" />
-                    <strong>{step.title}</strong>
-                    <small>{step.text}</small>
+                    <strong>{formatDisplayTitle(step.title)}</strong>
+                    <small>{formatDisplayDescription(step.text)}</small>
                   </li>
                 );
               })}
@@ -2832,39 +3088,15 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
             </div>
           </section>
 
-          <section className="shop-family-section" aria-labelledby="shop-family-title">
-            <div className="shop-section-heading is-left">
-              <p className="eyebrow">Mealpreps familiares</p>
-              <h2 id="shop-family-title">Formato familiar para compartir.</h2>
-              <p>Preparaciones en porciones generosas, listas para calentar y servir en casa.</p>
-            </div>
-            {familyProducts.length > 0 ? (
-              <div className="shop-family-grid">
-                {familyProducts.map((product, index) => (
-                  <ShopFamilyCard
-                    key={product.id}
-                    product={product}
-                    index={index + catalogPlans.length}
-                    onAdd={onAdd}
-                    onOpenBenefit={onOpenBenefit}
-                    onOpenProduct={onOpenProduct}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="products-empty">Aún no hay mealpreps familiares activos.</p>
-            )}
-          </section>
-
           <section
             className="shop-community-band"
             style={{ "--shop-community-bg": `url("${communitySceneSrc}")` }}
             aria-labelledby="shop-community-title"
           >
             <div>
-              <p className="eyebrow">Comunidad Fullness</p>
-              <h2 id="shop-community-title">Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.</h2>
-              <p>Encuentros, recetas y experiencias para acompañar tu rutina más allá de cada mealprep.</p>
+              <p className="eyebrow">{formatDisplayEyebrow("Comunidad Fullness")}</p>
+              <h2 id="shop-community-title">{formatDisplayTitle("Un espacio donde la alimentación, el bienestar y el crecimiento personal se encuentran.")}</h2>
+              <p>{formatDisplayDescription("Encuentros, recetas y experiencias para acompañar tu rutina más allá de cada mealprep.")}</p>
             </div>
             <a href="/comunidad">
               Conoce la comunidad
@@ -2877,11 +3109,12 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
   );
 }
 
-function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpenDetail, onOpenMeal }) {
+function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefit, onOpenDetail, onOpenMeal, onOpenProduct }) {
   const benefitTags = getBenefitTags(product);
   const benefits = getProductBenefits(product);
   const includedItems = product?.includedItems || [];
   const isFamilyDish = getProductType(product) === "family";
+  const isMonthlyPlan = getProductType(product) === "plan" && product.planFrequency === "monthly";
 
   return (
     <div className="overlay product-lightbox" role="dialog" aria-modal="true" aria-labelledby="product-lightbox-title">
@@ -2889,13 +3122,19 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
         <button className="icon-button close" type="button" onClick={onClose} aria-label="Cerrar detalle rápido">
           <X size={22} />
         </button>
+        {onBack && (
+          <button className="product-lightbox-back" type="button" onClick={onBack}>
+            <ArrowLeft size={17} />
+            Volver al plan mensual
+          </button>
+        )}
         <div className="product-lightbox-media">
           <img src={image} alt={product.name} />
         </div>
         <div className="product-lightbox-copy">
-          <p className="eyebrow">{getProductTypeLabel(product)}</p>
-          <h2 id="product-lightbox-title">{product.name}</h2>
-          <p>{normalizeMealprepCopy(product.description)}</p>
+          <p className="eyebrow">{formatDisplayEyebrow(getProductTypeLabel(product))}</p>
+          <h2 id="product-lightbox-title">{formatDisplayTitle(product.name)}</h2>
+          <p>{formatDisplayDescription(product.description)}</p>
           <strong className="product-lightbox-price">{formatPrice(product.price)}</strong>
 
           {benefitTags.length > 0 && (
@@ -2933,9 +3172,20 @@ function ProductQuickView({ product, image, onAdd, onClose, onOpenBenefit, onOpe
             </div>
           )}
 
-          {includedItems.length > 0 && (
+          {isMonthlyPlan && (
+            <div className="product-lightbox-block monthly-plan-lightbox-block">
+              <h3>{formatDisplayTitle("Las 4 semanas del plan")}</h3>
+              <p>Abre una semana para revisar sus 6 mealpreps y luego entra a cada preparación.</p>
+              <MonthlyPlanWeekList
+                product={product}
+                onOpenWeek={(weeklyPlan) => onOpenProduct?.(weeklyPlan, { parentMonthly: product })}
+              />
+            </div>
+          )}
+
+          {!isMonthlyPlan && includedItems.length > 0 && (
             <div className="product-lightbox-block">
-              <h3>Menú de esta semana</h3>
+              <h3>{formatDisplayTitle("Menú de esta semana")}</h3>
               <PresetPlanMenuNotice product={product} />
               <div className="included-meals-grid">
                 {includedItems.map((meal, mealIndex) => (
@@ -2987,9 +3237,9 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
           <img src={getMealImage(meal, 0)} alt={meal.name} />
         </div>
         <div className="product-lightbox-copy">
-          <p className="eyebrow">{normalizeMealprepCopy(meal.tag || parentProduct?.name)}</p>
-          <h2 id="meal-lightbox-title">{meal.name}</h2>
-          <p>{normalizeMealprepCopy(meal.description)}</p>
+          <p className="eyebrow">{formatDisplayEyebrow(meal.tag || parentProduct?.name)}</p>
+          <h2 id="meal-lightbox-title">{formatDisplayTitle(meal.name)}</h2>
+          <p>{formatDisplayDescription(meal.description)}</p>
 
           {benefitTags.length > 0 && (
             <ul className="product-pill-list">
@@ -3050,7 +3300,7 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
   );
 }
 
-function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpenBenefit, onOpenMeal }) {
+function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpenBenefit, onOpenMeal, onOpenProduct }) {
   if (loading && !product) {
     return (
       <section className="product-detail-page product-detail-state">
@@ -3079,6 +3329,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
   const benefits = getProductBenefits(product);
   const tags = getBenefitTags(product);
   const isFamilyDish = getProductType(product) === "family";
+  const isMonthlyPlan = getProductType(product) === "plan" && product.planFrequency === "monthly";
 
   return (
     <article className="product-detail-page">
@@ -3107,9 +3358,9 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
           <img src={image} alt={product.name} />
         </div>
         <div className="product-detail-copy">
-          <p className="eyebrow">{normalizeMealprepCopy(product.tag)}</p>
-          <h1>{product.name}</h1>
-          <p>{normalizeMealprepCopy(product.description)}</p>
+          <p className="eyebrow">{formatDisplayEyebrow(product.tag || getProductTypeLabel(product))}</p>
+          <h1>{formatDisplayTitle(product.name)}</h1>
+          <p>{formatDisplayDescription(product.description)}</p>
           {tags.length > 0 && (
             <ul className="product-pill-list">
               {tags.map((tag) => <li key={tag}>{tag}</li>)}
@@ -3130,15 +3381,17 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
       </section>
 
       <section className="product-detail-content" aria-label="Detalle del producto">
+        {!isMonthlyPlan && (
         <div className="product-detail-panel">
           <h2>{isFamilyDish ? "Cómo retermalizar / preparar" : "Receta"}</h2>
-          <p>{normalizeMealprepCopy(product.rethermalizationInstructions || product.recipeSummary || product.description)}</p>
+          <p>{formatDisplayDescription(product.rethermalizationInstructions || product.recipeSummary || product.description)}</p>
           {recipeSteps.length > 0 && (
             <ol className="recipe-step-list">
               {recipeSteps.map((step) => <li key={step}>{step}</li>)}
             </ol>
           )}
         </div>
+        )}
 
         {isFamilyDish && (
           <div className="product-detail-panel">
@@ -3148,6 +3401,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
           </div>
         )}
 
+        {!isMonthlyPlan && (
         <div className="product-detail-panel">
           <h2>Ingredientes</h2>
           {product.ingredients?.length ? (
@@ -3163,10 +3417,22 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
             </p>
           )}
         </div>
+        )}
 
-        {includedItems.length > 0 && (
+        {isMonthlyPlan && (
+          <div className="product-detail-panel product-detail-included monthly-plan-detail-panel">
+            <h2>{formatDisplayTitle("Las 4 semanas del plan")}</h2>
+            <p>Abre una semana para revisar su menú de 6 mealpreps.</p>
+            <MonthlyPlanWeekList
+              product={product}
+              onOpenWeek={(weeklyPlan) => onOpenProduct?.(weeklyPlan, { parentMonthly: product })}
+            />
+          </div>
+        )}
+
+        {!isMonthlyPlan && includedItems.length > 0 && (
           <div className="product-detail-panel product-detail-included">
-            <h2>Menú de esta semana</h2>
+            <h2>{formatDisplayTitle("Menú de esta semana")}</h2>
             <PresetPlanMenuNotice product={product} />
             <div className="included-meals-grid">
               {includedItems.map((meal, mealIndex) => (
@@ -4573,15 +4839,18 @@ function AboutPage() {
         <div className="about-v2__hero-scrim" aria-hidden="true" />
         <div className="about-v2__hero-copy">
           <p className="about-v2__eyebrow">Nuestra historia</p>
+          <span className="about-v2__rule about-v2__hero-rule about-v2__hero-rule--intro" aria-hidden="true"><i /></span>
           <h1>
             <span>Esto no comenzó</span>
             <span>con una marca.</span>
             <em>Comenzó con</em>
             <em>una pregunta.</em>
           </h1>
-          <span className="about-v2__rule" aria-hidden="true"><i /></span>
+          <span className="about-v2__rule about-v2__hero-rule about-v2__hero-rule--outro" aria-hidden="true"><i /></span>
           <p className="about-v2__hero-question">
-            ¿Puede la forma en que nos alimentamos transformar también la manera en que nos sentimos?
+            <span>¿Puede la forma en que nos alimentamos</span>{" "}
+            <span>transformar también la manera</span>{" "}
+            <span>en que nos sentimos?</span>
           </p>
         </div>
       </section>
@@ -4734,6 +5003,7 @@ function App() {
   const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
+  const [productPreviewStack, setProductPreviewStack] = useState([]);
   const [mealPreview, setMealPreview] = useState(null);
   const [benefitPreview, setBenefitPreview] = useState(null);
   const [currentProductSlug, setCurrentProductSlug] = useState(() => getProductSlugFromPath());
@@ -4809,6 +5079,7 @@ function App() {
   const [mealPrepSearch, setMealPrepSearch] = useState("");
   const [mealPrepEditorOpen, setMealPrepEditorOpen] = useState(false);
   const [mealPrepEditorTab, setMealPrepEditorTab] = useState("general");
+  const [monthlyPlanEditorStack, setMonthlyPlanEditorStack] = useState([]);
   const [includedMealEditorIndex, setIncludedMealEditorIndex] = useState(null);
   const activeIncludedMeal =
     includedMealEditorIndex === null ? null : menuForm.includedItems[includedMealEditorIndex] || null;
@@ -5251,6 +5522,7 @@ function App() {
     event?.preventDefault();
     setCurrentProductSlug("");
     setProductPreviewSlug("");
+    setProductPreviewStack([]);
     setMealPreview(null);
     setMenuOpen(false);
     setCartOpen(false);
@@ -5678,6 +5950,7 @@ function App() {
     setMenuFormDraftKey(createMenuFormDraftKey(item.id));
     setMenuFormHasUnsavedChanges(false);
     setMenuFormDraftStatus("idle");
+    setMonthlyPlanEditorStack([]);
     setAdminError("");
     setAdminMessage("");
   }
@@ -5696,9 +5969,88 @@ function App() {
     setMealPrepEditorOpen(true);
   }
 
+  function snapshotMenuForm(form) {
+    return {
+      ...form,
+      includedItems: (form.includedItems || []).map((item) => ({ ...item })),
+      weeklyDraftItems: (form.weeklyDraftItems || []).map((item) => ({ ...item })),
+      weeklyPlanIds: [...new Set((form.weeklyPlanIds || []).filter(Boolean))].slice(0, 4)
+    };
+  }
+
+  function openNestedWeeklyPlanEditor() {
+    if (menuForm.productType !== "plan" || menuForm.planFrequency !== "monthly") return;
+    if ((menuForm.weeklyPlanIds || []).filter(Boolean).length >= 4) {
+      setAdminError("Este plan mensual ya tiene sus cuatro semanas asignadas. Quita o reemplaza una antes de crear otra.");
+      return;
+    }
+
+    protectCurrentIncludedMealDraft();
+    const parent = {
+      form: snapshotMenuForm(menuForm),
+      draftKey: menuFormDraftKey,
+      draftStatus: menuFormDraftStatus,
+      hadUnsavedChanges: menuFormHasUnsavedChanges,
+      tab: mealPrepEditorTab
+    };
+    const parentDraft = persistMenuFormDraftLocally(parent.form, parent.draftKey);
+    if (parentDraft && authUser?.id && activeIsAdmin) {
+      const version = ++menuFormDraftSyncVersionRef.current;
+      void syncMenuFormDraft(parentDraft, version);
+    }
+
+    const nextOrder = adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
+    setMonthlyPlanEditorStack((current) => [...current, parent]);
+    setMenuForm({
+      ...createMenuForm(nextOrder),
+      productType: "plan",
+      planFrequency: "weekly",
+      isActive: false
+    });
+    setMenuFormDraftKey(createMenuFormDraftKey());
+    setMenuFormHasUnsavedChanges(false);
+    setMenuFormDraftStatus("idle");
+    setMealPrepEditorTab("general");
+    setIncludedMealEditorIndex(null);
+    setAdminError("");
+    setAdminMessage("Estás creando una semana dentro del plan mensual. Puedes volver sin perder el borrador.");
+  }
+
+  function returnToMonthlyPlanEditor(savedWeeklyPlan = null) {
+    const parent = monthlyPlanEditorStack[monthlyPlanEditorStack.length - 1];
+    if (!parent) return false;
+
+    const savedWeeklyId = savedWeeklyPlan?.id || "";
+    const weeklyPlanIds = savedWeeklyId
+      ? [...new Set([...(parent.form.weeklyPlanIds || []), savedWeeklyId])].slice(0, 4)
+      : [...(parent.form.weeklyPlanIds || [])];
+    const returnedForm = {
+      ...snapshotMenuForm(parent.form),
+      weeklyPlanIds
+    };
+
+    if (savedWeeklyId) {
+      persistMenuFormDraftLocally(returnedForm, parent.draftKey);
+    }
+
+    setMonthlyPlanEditorStack((current) => current.slice(0, -1));
+    setMenuForm(returnedForm);
+    setMenuFormDraftKey(parent.draftKey);
+    setMenuFormHasUnsavedChanges(Boolean(parent.hadUnsavedChanges || savedWeeklyId));
+    setMenuFormDraftStatus(savedWeeklyId ? "local" : parent.draftStatus || "idle");
+    setMealPrepEditorTab("dishes");
+    setIncludedMealEditorIndex(null);
+    setAdminError("");
+    if (savedWeeklyPlan) {
+      setAdminMessage(`“${savedWeeklyPlan.name}” quedó creada y asignada como semana ${weeklyPlanIds.length} del plan mensual.`);
+    }
+    return true;
+  }
+
   function closeMealPrepEditor() {
     protectCurrentIncludedMealDraft();
     protectCurrentMenuFormDraft();
+    if (returnToMonthlyPlanEditor()) return;
     setIncludedMealEditorIndex(null);
     setMealPrepEditorOpen(false);
   }
@@ -5724,6 +6076,7 @@ function App() {
       adminItems.reduce((max, item) => Math.max(max, Number(item.displayOrder || 0)), 0) + 10;
     setMenuForm(createMenuForm(nextOrder));
     setSelectedWeeklyPlanId("");
+    setMonthlyPlanEditorStack([]);
     setMenuFormDraftKey(createMenuFormDraftKey());
     setMenuFormHasUnsavedChanges(false);
     setMenuFormDraftStatus("idle");
@@ -6510,41 +6863,47 @@ function App() {
     );
     if (!weeklyPlan) return;
 
-    const importedMeals = (weeklyPlan.includedItems || [])
-      .filter((meal) => meal.name?.trim() || meal.description?.trim() || meal.photoUrl?.trim())
-      .map((meal, index) => {
-        const draft = createIncludedMealForm(index);
-        return {
-          ...draft,
-          ...includedMealToForm(meal, index),
-          id: draft.id,
-          editorMode: "advanced",
-          sourcePlanId: weeklyPlan.id,
-          sourcePlanName: weeklyPlan.name
-        };
-      });
-
-    if (importedMeals.length === 0) {
-      setAdminError("Este menú semanal todavía no tiene mealpreps que se puedan incorporar.");
+    const weeklyPlanIds = (menuForm.weeklyPlanIds || []).filter(Boolean);
+    if (weeklyPlanIds.includes(weeklyPlan.id)) {
+      setAdminError("Esta semana ya está asignada. Un plan mensual no puede repetir semanas.");
+      return;
+    }
+    if (weeklyPlanIds.length >= 4) {
+      setAdminError("Un plan mensual contiene exactamente cuatro semanas. Quita o reemplaza una para continuar.");
       return;
     }
 
     markMenuFormChanged();
     setMenuForm((current) => {
-      const hasEmptyDraft =
-        current.includedItems.length === 1 &&
-        !current.includedItems[0].name &&
-        !current.includedItems[0].description &&
-        !current.includedItems[0].photoUrl;
-
       return {
         ...current,
-        includedItems: hasEmptyDraft ? importedMeals : [...current.includedItems, ...importedMeals]
+        includedItems: [],
+        weeklyPlanIds: [...(current.weeklyPlanIds || []), weeklyPlan.id]
       };
     });
     setSelectedWeeklyPlanId("");
     setAdminError("");
-    setAdminMessage(`${importedMeals.length} mealprep${importedMeals.length === 1 ? "" : "s"} incorporado${importedMeals.length === 1 ? "" : "s"} desde “${weeklyPlan.name}”. Puedes editarlos individualmente antes de guardar el plan mensual.`);
+    setAdminMessage(`“${weeklyPlan.name}” fue asignada como semana ${weeklyPlanIds.length + 1}. Sus mealpreps se mantienen en la semana, sin copias.`);
+  }
+
+  function removeWeeklyPlanFromMonthly(weeklyPlanId) {
+    markMenuFormChanged();
+    setMenuForm((current) => ({
+      ...current,
+      weeklyPlanIds: (current.weeklyPlanIds || []).filter((id) => id !== weeklyPlanId)
+    }));
+  }
+
+  function moveMonthlyWeeklyPlan(index, direction) {
+    const weeklyPlanIds = menuForm.weeklyPlanIds || [];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= weeklyPlanIds.length) return;
+
+    markMenuFormChanged();
+    setMenuForm((current) => ({
+      ...current,
+      weeklyPlanIds: reorderItems(current.weeklyPlanIds || [], index, targetIndex)
+    }));
   }
 
   function loadSelectedLibraryMealIntoFamily() {
@@ -7889,6 +8248,7 @@ function App() {
       setAdminOpen(false);
       setMealPreview(null);
       setProductPreviewSlug("");
+      setProductPreviewStack([]);
     };
 
     window.addEventListener("keydown", closeOnEscape);
@@ -7991,7 +8351,18 @@ function App() {
     const cartProduct = getProductType(catalogProduct) === "plan"
       ? {
           ...catalogProduct,
-          includedItems: (catalogProduct.includedItems || []).map((meal) => ({ ...meal })),
+          includedItems: catalogProduct.planFrequency === "monthly"
+            ? []
+            : (catalogProduct.includedItems || []).map((meal) => ({ ...meal })),
+          weeklyPlans: catalogProduct.planFrequency === "monthly"
+            ? (catalogProduct.weeklyPlans || []).map((weeklyPlan, weekIndex) => ({
+                id: weeklyPlan.id,
+                slug: weeklyPlan.slug,
+                name: weeklyPlan.name,
+                weekPosition: Number(weeklyPlan.weekPosition || weekIndex + 1),
+                includedItems: (weeklyPlan.includedItems || []).map((meal) => ({ ...meal }))
+              }))
+            : [],
           menuConfiguration: "preset"
         }
       : catalogProduct;
@@ -8029,13 +8400,34 @@ function App() {
     setMenuOpen(false);
   }
 
-  function openProductQuickView(product) {
+  function openProductQuickView(product, { parentMonthly = null } = {}) {
     const slug = getProductSlug(product);
     if (!slug) return;
 
     setMealPreview(null);
+    if (parentMonthly && productPreviewSlug) {
+      const parentSlug = getProductSlug(parentMonthly);
+      setProductPreviewStack((current) => parentSlug ? [...current, parentSlug] : current);
+    } else {
+      setProductPreviewStack([]);
+    }
     setProductPreviewSlug(slug);
     setMenuOpen(false);
+  }
+
+  function closeProductQuickView() {
+    setProductPreviewSlug("");
+    setProductPreviewStack([]);
+    setMealPreview(null);
+  }
+
+  function backProductQuickView() {
+    setMealPreview(null);
+    setProductPreviewStack((current) => {
+      const parentSlug = current[current.length - 1];
+      setProductPreviewSlug(parentSlug || "");
+      return current.slice(0, -1);
+    });
   }
 
   function openProductDetail(product, event) {
@@ -8044,6 +8436,7 @@ function App() {
     if (!slug) return;
 
     setProductPreviewSlug("");
+    setProductPreviewStack([]);
     setMealPreview(null);
     setCurrentProductSlug(slug);
     setMenuOpen(false);
@@ -8474,7 +8867,11 @@ function App() {
   function updateMenuForm(event) {
     const { checked, name, type, value } = event.target;
 
-    if (name === "planFrequency" && value !== "monthly") setSelectedWeeklyPlanId("");
+    if (name === "planFrequency" && editingNestedWeeklyPlan && value !== "weekly") return;
+    if (name === "planFrequency") {
+      setSelectedWeeklyPlanId("");
+      if (value === "monthly") setIncludedMealEditorIndex(null);
+    }
     markMenuFormChanged();
     setMenuForm((current) => {
       const next = {
@@ -8488,9 +8885,18 @@ function App() {
 
       if (name === "productType") {
         next.planFrequency = value === "plan" ? current.planFrequency || "weekly" : "";
-        next.includedItems = value === "plan" && current.includedItems.length === 0
-          ? [createIncludedMealForm(0)]
-          : current.includedItems;
+        next.includedItems = value === "plan" ? current.includedItems : [];
+        next.weeklyPlanIds = value === "plan" ? current.weeklyPlanIds || [] : [];
+      }
+
+      if (name === "planFrequency") {
+        if (value === "monthly") {
+          next.weeklyDraftItems = current.includedItems || [];
+          next.includedItems = [];
+        } else {
+          next.includedItems = current.weeklyDraftItems?.length ? current.weeklyDraftItems : current.includedItems || [];
+        }
+        next.weeklyPlanIds = value === "monthly" ? current.weeklyPlanIds || [] : [];
       }
 
       return next;
@@ -8705,6 +9111,11 @@ function App() {
   async function submitMenuItem(event) {
     event.preventDefault();
     const savingFamilyProduct = menuForm.productType === "family";
+    const savingMonthlyPlan = menuForm.productType === "plan" && menuForm.planFrequency === "monthly";
+    const savingNestedWeeklyPlan =
+      menuForm.productType === "plan" &&
+      menuForm.planFrequency === "weekly" &&
+      monthlyPlanEditorStack.length > 0;
     const isNewMenuItem = !menuForm.id;
 
     if (!activeIsAdmin) {
@@ -8741,14 +9152,16 @@ function App() {
           : "Creando el plan",
       message: savingFamilyProduct
         ? "Estamos actualizando la ficha y el contenido que verá el cliente."
-        : "Estamos guardando el plan y las fichas reutilizables de sus mealpreps."
+        : savingMonthlyPlan
+          ? "Estamos guardando el plan y sus vínculos ordenados a cuatro semanas."
+          : "Estamos guardando el plan y las fichas reutilizables de sus mealpreps."
     });
 
     let includedItems = [];
     let nutritionFacts = {};
 
     try {
-      if (menuForm.productType === "plan") {
+      if (menuForm.productType === "plan" && !savingMonthlyPlan) {
         parseIncludedMealsFromForm(menuForm.includedItems, tagDefinitions);
         const savedMealItems = await saveAllIncludedMealsToLibrary({ silent: true });
         if (!savedMealItems) throw new Error("No pudimos guardar los mealpreps del plan. Revisa la ficha indicada e inténtalo nuevamente.");
@@ -8798,6 +9211,7 @@ function App() {
       recipeSteps: menuForm.recipeSteps,
       allergens: menuForm.allergens,
       includedItems,
+      weeklyPlanIds: savingMonthlyPlan ? [...new Set((menuForm.weeklyPlanIds || []).filter(Boolean))] : [],
       servingLabel: menuForm.servingLabel,
       purchaseLabel: menuForm.purchaseLabel,
       displayOrder: menuForm.displayOrder,
@@ -8824,17 +9238,20 @@ function App() {
       const resumedDraftMessage = result.resumedFromDraft
         ? " Retomamos la versión que este borrador ya había guardado desde otro equipo."
         : "";
-      setAdminMessage(`${savingFamilyProduct ? "Mealprep familiar guardado." : "Plan guardado."}${resumedDraftMessage}${slugAdjustedMessage}`);
+      setAdminMessage(`${savingFamilyProduct ? "Mealprep familiar guardado." : savingMonthlyPlan ? "Plan mensual guardado." : "Plan semanal guardado."}${resumedDraftMessage}${slugAdjustedMessage}`);
       await refreshAdminItems({ silent: true });
       await refreshPublicProducts();
+      if (savingNestedWeeklyPlan) {
+        returnToMonthlyPlanEditor(result.data);
+      }
       setBackofficeFeedback({
         status: "success",
-        title: savingFamilyProduct ? "Mealprep familiar guardado" : "Plan guardado",
+        title: savingFamilyProduct ? "Mealprep familiar guardado" : savingNestedWeeklyPlan ? "Semana creada" : savingMonthlyPlan ? "Plan mensual guardado" : "Plan semanal guardado",
         message: result.data.isActive
           ? `“${result.data.name}” ya está actualizado y visible en la tienda.${resumedDraftMessage}${slugAdjustedMessage}`
-          : `“${result.data.name}” quedó guardado como inactivo y no se mostrará en la tienda.${resumedDraftMessage}${slugAdjustedMessage}`,
-        returnTo: savingFamilyProduct ? (isNewMenuItem ? "family-products" : undefined) : "meal-preps",
-        confirmLabel: savingFamilyProduct ? (isNewMenuItem ? "Ver mealpreps familiares" : undefined) : "Ver planes"
+          : `“${result.data.name}” quedó guardado como oculto y no se mostrará en la tienda.${resumedDraftMessage}${slugAdjustedMessage}`,
+        returnTo: savingNestedWeeklyPlan ? undefined : savingFamilyProduct ? (isNewMenuItem ? "family-products" : undefined) : "meal-preps",
+        confirmLabel: savingNestedWeeklyPlan ? "Continuar plan mensual" : savingFamilyProduct ? (isNewMenuItem ? "Ver mealpreps familiares" : undefined) : "Ver planes"
       });
     }
 
@@ -8971,8 +9388,15 @@ function App() {
   const importableWeeklyPlans = mealPrepItems.filter((item) =>
     item.planFrequency === "weekly" &&
     item.id !== menuForm.id &&
-    item.includedItems?.some((meal) => meal.name?.trim() || meal.description?.trim() || meal.photoUrl?.trim())
+    item.includedItems?.length === 6
   );
+  const assignedMonthlyWeeklyPlans = (menuForm.weeklyPlanIds || []).map((weeklyPlanId) =>
+    importableWeeklyPlans.find((item) => item.id === weeklyPlanId) ||
+    mealPrepItems.find((item) => item.id === weeklyPlanId) ||
+    null
+  );
+  const editingMonthlyPlan = menuForm.productType === "plan" && menuForm.planFrequency === "monthly";
+  const editingNestedWeeklyPlan = monthlyPlanEditorStack.length > 0;
   const familyProductItems = sortByDisplayOrder(adminItems.filter((item) => item.productType === "family"));
   const activeMealPrepCount = mealPrepItems.filter((item) => item.isActive).length;
   const activeFamilyProductCount = familyProductItems.filter((item) => item.isActive).length;
@@ -9285,6 +9709,7 @@ function App() {
           onBackToShop={backToShop}
           onOpenBenefit={setBenefitPreview}
           onOpenMeal={openMealQuickView}
+          onOpenProduct={openProductQuickView}
         />
       ) : isCommunityPage ? (
         <>
@@ -9511,13 +9936,12 @@ function App() {
           product={productPreview}
           image={getProductImage(productPreview, productPreviewIndex)}
           onAdd={addToCart}
-          onClose={() => {
-            setProductPreviewSlug("");
-            setMealPreview(null);
-          }}
+          onBack={productPreviewStack.length ? backProductQuickView : undefined}
+          onClose={closeProductQuickView}
           onOpenBenefit={setBenefitPreview}
           onOpenDetail={openProductDetail}
           onOpenMeal={openMealQuickView}
+          onOpenProduct={openProductQuickView}
         />
       )}
 
@@ -9843,12 +10267,12 @@ function App() {
                   <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMenuItem}>
                     <div className="backoffice-form-head">
                       <div className="backoffice-workspace-title">
-                        <button className="backoffice-back-button" type="button" onClick={closeMealPrepEditor} aria-label="Volver al listado de planes">
+                        <button className="backoffice-back-button" type="button" onClick={closeMealPrepEditor} aria-label={editingNestedWeeklyPlan ? "Volver al plan mensual" : "Volver al listado de planes"}>
                           <ArrowLeft size={19} />
                         </button>
                         <div>
-                          <p className="backoffice-breadcrumb">Planes / {menuForm.id ? "Editar" : "Nuevo"}</p>
-                          <h3 id="meal-prep-editor-title">{menuForm.name || "Nuevo plan"}</h3>
+                          <p className="backoffice-breadcrumb">{editingNestedWeeklyPlan ? "Planes / Plan mensual / Nueva semana" : `Planes / ${menuForm.id ? "Editar" : "Nuevo"}`}</p>
+                          <h3 id="meal-prep-editor-title">{formatDisplayTitle(menuForm.name || (editingNestedWeeklyPlan ? "Nueva semana" : "Nuevo plan"))}</h3>
                         </div>
                       </div>
                       <div className="backoffice-form-head-actions">
@@ -9904,20 +10328,22 @@ function App() {
                           />
                           <span>
                             {menuForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
-                            {menuForm.isActive ? "Activo" : "Inactivo"}
+                            {menuForm.isActive ? "Visible" : "Oculto"}
                           </span>
                         </label>
                       </div>
                     </div>
 
                     <p className="backoffice-intro-note">
-                      Un plan semanal o mensual reúne una caja de mealpreps. Cada mealprep conserva su propia ficha nutricional, tags y beneficios.
+                      {editingMonthlyPlan
+                        ? "Un plan mensual reúne cuatro semanas ordenadas. Los mealpreps, beneficios y tags nutricionales siguen perteneciendo a cada semana."
+                        : "Un plan semanal reúne exactamente 6 mealpreps. Cada mealprep conserva su propia ficha nutricional, tags y beneficios."}
                     </p>
 
                     <div className="backoffice-editor-tabs" role="tablist" aria-label="Secciones del plan">
                       {[
                         ["general", "Información general"],
-                        ["dishes", `Mealpreps (${menuForm.includedItems.length})`],
+                        ["dishes", editingMonthlyPlan ? `Semanas (${(menuForm.weeklyPlanIds || []).length}/4)` : `Mealpreps (${menuForm.includedItems.length}/6)`],
                         ["publication", "Publicación"]
                       ].map(([id, label]) => (
                         <button
@@ -9945,7 +10371,7 @@ function App() {
                         Frecuencia
                         <select name="planFrequency" value={menuForm.planFrequency} onChange={updateMenuForm}>
                           <option value="weekly">Semanal</option>
-                          <option value="monthly">Mensual</option>
+                          <option value="monthly" disabled={editingNestedWeeklyPlan}>Mensual</option>
                         </select>
                       </label>
                       <label>
@@ -10022,15 +10448,123 @@ function App() {
                     )}
 
                     {mealPrepEditorTab === "dishes" && (
+                      editingMonthlyPlan ? (
+                        <section className="backoffice-included-editor monthly-plan-weeks-editor" aria-labelledby="monthly-plan-weeks-title">
+                          <div className="backoffice-list-top">
+                            <div>
+                              <p className="eyebrow">Paso 2</p>
+                              <h3 id="monthly-plan-weeks-title">Las 4 semanas del plan mensual</h3>
+                              <p className="backoffice-section-copy">
+                                Asigna semanas completas: cada una mantiene sus 6 mealpreps, sus beneficios y sus tags nutricionales. El plan mensual no duplica platos.
+                              </p>
+                            </div>
+                            <div className="included-editor-actions">
+                              <select
+                                aria-label="Plan semanal para asignar"
+                                value={selectedWeeklyPlanId}
+                                onChange={(event) => setSelectedWeeklyPlanId(event.target.value)}
+                                disabled={(menuForm.weeklyPlanIds || []).length >= 4}
+                              >
+                                <option value="">Selecciona una semana existente</option>
+                                {importableWeeklyPlans.map((plan) => (
+                                  <option key={plan.id} value={plan.id} disabled={(menuForm.weeklyPlanIds || []).includes(plan.id)}>
+                                    {plan.name} · 6 mealpreps{plan.isActive ? "" : " · Oculto"}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                className="backoffice-command"
+                                type="button"
+                                onClick={addSelectedWeeklyPlanToMonthly}
+                                disabled={!selectedWeeklyPlanId || (menuForm.weeklyPlanIds || []).length >= 4}
+                              >
+                                <CalendarDays size={17} />
+                                Asignar semana
+                              </button>
+                              <button
+                                className="backoffice-command"
+                                type="button"
+                                onClick={openNestedWeeklyPlanEditor}
+                                disabled={(menuForm.weeklyPlanIds || []).length >= 4}
+                              >
+                                <Plus size={17} />
+                                Crear plan semanal
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="monthly-plan-weeks-progress" aria-live="polite">
+                            <CalendarDays size={18} aria-hidden="true" />
+                            <strong>{(menuForm.weeklyPlanIds || []).length} de 4 semanas asignadas</strong>
+                            <span>{menuForm.isActive ? "El plan sólo se mostrará cuando las cuatro semanas sean visibles." : "Puedes guardar este borrador oculto y completar sus semanas después."}</span>
+                          </div>
+
+                          <div className="monthly-plan-week-slots" aria-label="Semanas asignadas en orden">
+                            {[0, 1, 2, 3].map((weekIndex) => {
+                              const weeklyPlanId = menuForm.weeklyPlanIds?.[weekIndex];
+                              const weeklyPlan = assignedMonthlyWeeklyPlans[weekIndex];
+
+                              return (
+                                <article className={`monthly-plan-week-slot ${weeklyPlan ? "is-filled" : "is-empty"}`} key={weeklyPlanId || `empty-week-${weekIndex}`}>
+                                  <span className="monthly-plan-week-slot-number">Semana {weekIndex + 1}</span>
+                                  {weeklyPlan ? (
+                                    <>
+                                      <div>
+                                        <strong>{formatDisplayTitle(weeklyPlan.name)}</strong>
+                                        <span>{weeklyPlan.includedItems?.length || 0} mealpreps{weeklyPlan.isActive ? "" : " · Oculto"}</span>
+                                      </div>
+                                      <div className="monthly-plan-week-slot-actions">
+                                        <button
+                                          className="backoffice-icon-command"
+                                          type="button"
+                                          onClick={() => moveMonthlyWeeklyPlan(weekIndex, -1)}
+                                          disabled={weekIndex === 0}
+                                          aria-label={`Subir semana ${weekIndex + 1}`}
+                                          title="Subir semana"
+                                        >
+                                          <ArrowUp size={16} />
+                                        </button>
+                                        <button
+                                          className="backoffice-icon-command"
+                                          type="button"
+                                          onClick={() => moveMonthlyWeeklyPlan(weekIndex, 1)}
+                                          disabled={weekIndex === (menuForm.weeklyPlanIds || []).length - 1}
+                                          aria-label={`Bajar semana ${weekIndex + 1}`}
+                                          title="Bajar semana"
+                                        >
+                                          <ArrowDown size={16} />
+                                        </button>
+                                        <button
+                                          className="backoffice-icon-command"
+                                          type="button"
+                                          onClick={() => removeWeeklyPlanFromMonthly(weeklyPlanId)}
+                                          aria-label={`Quitar semana ${weekIndex + 1}`}
+                                          title="Quitar semana"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <p>Sin asignar. Puedes elegir una semana existente o crearla sin salir de este plan.</p>
+                                  )}
+                                </article>
+                              );
+                            })}
+                          </div>
+
+                          {importableWeeklyPlans.length === 0 && (
+                            <p className="monthly-plan-import-empty">Aún no hay semanas completas disponibles. Crea la primera en esta misma capa.</p>
+                          )}
+                        </section>
+                      ) : (
                       <section className="backoffice-included-editor">
                         <div className="backoffice-list-top">
                           <div>
                             <p className="eyebrow">Paso 2</p>
                             <h3>Mealpreps del plan</h3>
                             <p className="backoffice-section-copy">
-                              {menuForm.planFrequency === "monthly"
-                                ? "Arma el mes agregando mealpreps uno a uno o importando un menú semanal completo. Todo queda editable dentro de este plan."
-                                : "Define aquí el menú autorizado de esta semana. El cliente solo verá estas preparaciones y no podrá incorporar mealpreps de otros planes."}
+                              Define aquí los 6 mealpreps autorizados de esta semana. El cliente sólo verá estas preparaciones y no podrá incorporar mealpreps de otros planes.
                             </p>
                           </div>
                           <div className="included-editor-actions">
@@ -10054,44 +10588,6 @@ function App() {
                             </button>
                           </div>
                         </div>
-
-                        {menuForm.planFrequency === "monthly" && (
-                          <section className="monthly-plan-import" aria-labelledby="monthly-plan-import-title">
-                            <div className="monthly-plan-import-copy">
-                              <span className="monthly-plan-import-icon"><CalendarDays size={19} aria-hidden="true" /></span>
-                              <div>
-                                <h4 id="monthly-plan-import-title">Importar menú semanal</h4>
-                                <p>Incorpora todos sus mealpreps a este plan mensual. Después podrás revisar o editar cada uno por separado.</p>
-                              </div>
-                            </div>
-                            <div className="monthly-plan-import-controls">
-                              <select
-                                aria-label="Menú semanal para importar"
-                                value={selectedWeeklyPlanId}
-                                onChange={(event) => setSelectedWeeklyPlanId(event.target.value)}
-                              >
-                                <option value="">Selecciona un menú semanal</option>
-                                {importableWeeklyPlans.map((plan) => (
-                                  <option key={plan.id} value={plan.id}>
-                                    {plan.name} · {plan.includedItems.length} mealpreps{plan.isActive ? "" : " · Inactivo"}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                className="backoffice-command"
-                                type="button"
-                                onClick={addSelectedWeeklyPlanToMonthly}
-                                disabled={!selectedWeeklyPlanId}
-                              >
-                                <CalendarDays size={17} />
-                                Agregar menú
-                              </button>
-                            </div>
-                            {importableWeeklyPlans.length === 0 && (
-                              <p className="monthly-plan-import-empty">Aún no hay menús semanales con mealpreps para importar.</p>
-                            )}
-                          </section>
-                        )}
 
                         {menuForm.includedItems.length === 0 ? (
                           <div className="backoffice-dish-empty">
@@ -10200,6 +10696,7 @@ function App() {
                           </div>
                         )}
                       </section>
+                      )
                     )}
 
                     {activeIncludedMeal && includedMealEditorIndex !== null && (
@@ -10502,16 +10999,20 @@ function App() {
                     <div className="backoffice-form-actions">
                       <div className="backoffice-action-copy">
                         <span>{menuFormHasUnsavedChanges ? "Tus cambios están protegidos como borrador." : "No hay cambios pendientes."}</span>
-                        <small>Al guardar, el plan se actualizará junto con todos sus mealpreps.</small>
+                        <small>
+                          {editingMonthlyPlan
+                            ? "Al guardar, se conservará el orden de sus cuatro semanas sin duplicar mealpreps."
+                            : "Al guardar, el plan semanal se actualizará junto con sus 6 mealpreps."}
+                        </small>
                       </div>
                       <div className="backoffice-action-buttons">
                         <button className="google-button" type="button" onClick={closeMealPrepEditor} disabled={adminSaving}>
                           <ArrowLeft size={18} />
-                          Volver al listado
+                          {editingNestedWeeklyPlan ? "Volver al plan mensual" : "Volver al listado"}
                         </button>
                         <button className="primary-button" type="submit" disabled={adminSaving || photoUploading}>
                           {adminSaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                          {adminSaving ? "Guardando…" : "Guardar plan"}
+                          {adminSaving ? "Guardando…" : editingMonthlyPlan ? "Guardar plan mensual" : editingNestedWeeklyPlan ? "Guardar semana y volver" : "Guardar plan semanal"}
                         </button>
                       </div>
                     </div>

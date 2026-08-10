@@ -274,7 +274,10 @@ function QuickParameterDialog({
       aria-modal="true"
       aria-labelledby={dialogTitleId}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving && !uploadingIcon) onClose();
+        // This dialog is commonly opened on top of an in-progress mealprep.
+        // A click on its backdrop is deliberately inert so neither this form nor
+        // the editor beneath it can be closed accidentally.
+        event.stopPropagation();
       }}
     >
       <section className="quick-parameter-dialog" onKeyDown={handleQuickDefinitionKeyDown}>
@@ -604,7 +607,8 @@ export function BenefitIconList({
   contextTitle,
   onOpenBenefit,
   limit = 4,
-  compact = false
+  compact = false,
+  iconOnly = false
 }) {
   const visibleBenefits = (Array.isArray(benefits) ? benefits : [])
     .filter((benefit) => benefit?.name && benefit?.iconUrl)
@@ -613,21 +617,32 @@ export function BenefitIconList({
   if (visibleBenefits.length === 0) return null;
 
   return (
-    <div className={`benefit-icon-list ${compact ? "is-compact" : ""}`} aria-label="Beneficios del mealprep">
-      {visibleBenefits.map((benefit) => (
-        <button
-          type="button"
-          key={benefit.benefitId || benefit.slug || benefit.name}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenBenefit({ benefit, contextTitle });
-          }}
-          aria-label={`Ver por qué ${contextTitle} es ${benefit.name.toLocaleLowerCase("es")}`}
-        >
-          <img src={benefit.iconUrl} alt="" width="76" height="76" loading="lazy" />
-          <span>{benefit.name}</span>
-        </button>
-      ))}
+    <div
+      className={`benefit-icon-list${compact ? " is-compact" : ""}${iconOnly ? " is-icon-only" : ""}`}
+      aria-label="Beneficios del mealprep"
+    >
+      {visibleBenefits.map((benefit) => {
+        const benefitName = cleanText(benefit.name);
+        const buttonLabel = contextTitle
+          ? `Ver por qué ${contextTitle} es ${benefitName.toLocaleLowerCase("es")}`
+          : `Ver beneficio ${benefitName}`;
+
+        return (
+          <button
+            type="button"
+            key={benefit.benefitId || benefit.slug || benefit.name}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenBenefit?.({ benefit, contextTitle });
+            }}
+            aria-label={buttonLabel}
+            title={benefitName}
+          >
+            <img src={benefit.iconUrl} alt="" width="76" height="76" loading="lazy" />
+            <span className={iconOnly ? "visually-hidden" : undefined}>{benefitName}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

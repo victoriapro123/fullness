@@ -38,6 +38,9 @@ public/images/hero/*
 *.env.local
 !.env.example
 
+# Local, encrypted-at-rest workstation snapshots created before production migrations.
+backups/
+
 # private client/source material
 WhatsApp Chat -*/
 informes/

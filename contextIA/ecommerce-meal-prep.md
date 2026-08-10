@@ -235,3 +235,8 @@
 
 - Las fichas rápidas de planes y platos no usan negrita como recurso de jerarquía. Encabezados auxiliares, tags, nombres de platos incluidos y acciones usan peso medio (`500`); el contraste editorial se construye con escala, color vino, mayúsculas y espaciado.
 - Los títulos principales pueden mantenerse en peso regular o medio para conservar presencia sin el tono pesado de una interfaz genérica.
+
+### Planes mensuales compuestos por semanas 2026-08-10
+
+- Esta regla reemplaza la importación histórica que copiaba mealpreps desde un plan semanal a un mensual. El mensual es una relación viva, ordenada y trazable de cuatro semanas; no contiene 24 mealpreps duplicados.
+- Consultar `planes-mensuales-semanales-2026-08-10.md` antes de cambiar el modelo, el editor, la tienda, la nutrición o el checkout de planes. Ahí están la migración aplicada, los límites de publicación, los borradores y la evidencia de validación vigentes.

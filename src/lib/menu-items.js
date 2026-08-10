@@ -2,6 +2,9 @@ import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 import { benefitPresets, tagPresets } from "./catalog-parameter-presets.js";
 
 const MENU_ITEM_COLUMNS = "*";
+const MONTHLY_PLAN_WEEK_COLUMNS = "monthly_plan_id,weekly_plan_id,week_position";
+const PLAN_NUTRITION_TAG_COLUMNS = "weekly_plan_id,tag_ids";
+const MONTHLY_NUTRITION_TAG_COLUMNS = "monthly_plan_id,tag_ids";
 const SHOP_SETTINGS_COLUMNS = "*";
 const SHOP_SETTINGS_ID = "main";
 const MEAL_LIBRARY_COLUMNS = "*";
@@ -289,6 +292,36 @@ function normalizePlanFrequency(value, productType) {
   return frequency === "monthly" ? "monthly" : "weekly";
 }
 
+function isMonthlyPlan(value) {
+  const productType = normalizeProductType(value?.productType || value?.product_type);
+  const planFrequency = normalizePlanFrequency(
+    value?.planFrequency || value?.plan_frequency,
+    productType
+  );
+
+  return productType === "plan" && planFrequency === "monthly";
+}
+
+function normalizeWeeklyPlanIds(value) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => cleanText(
+      typeof item === "object" && item !== null
+        ? item.weeklyPlanId || item.weekly_plan_id || item.id
+        : item
+    ))
+    .filter(Boolean);
+}
+
+function uniqueValues(value) {
+  return [...new Set(value)];
+}
+
+function hasOwn(value, key) {
+  return Boolean(value) && Object.prototype.hasOwnProperty.call(value, key);
+}
+
 function normalizeNutritionFacts(value) {
   if (!value) return {};
   if (typeof value === "string") {
@@ -420,9 +453,44 @@ function normalizeCommunityActivities(value) {
     .sort((left, right) => left.date.localeCompare(right.date));
 }
 
-export function mapMenuItem(row, context = createCatalogContext(), libraryById = new Map()) {
-  const productType = row.product_type || "family";
-  const includedItems = normalizeIncludedItems(row.included_items, context, libraryById);
+export function mapMenuItem(
+  row,
+  context = createCatalogContext(),
+  libraryById = new Map(),
+  composition = {}
+) {
+  const productType = normalizeProductType(row.product_type || row.productType);
+  const planFrequency = normalizePlanFrequency(row.plan_frequency || row.planFrequency, productType);
+  const monthlyPlan = productType === "plan" && planFrequency === "monthly";
+  const linkedWeeklyPlanIds = normalizeWeeklyPlanIds(
+    composition.weeklyPlanIds || composition.weekly_plan_ids || row.weeklyPlanIds || row.weekly_plan_ids
+  );
+  const weeklyPlans = monthlyPlan && Array.isArray(composition.weeklyPlans)
+    ? composition.weeklyPlans
+      .map((weeklyPlan, index) => {
+        const id = cleanText(weeklyPlan?.id || weeklyPlan?.weeklyPlanId || weeklyPlan?.weekly_plan_id);
+        if (!id) return null;
+
+        const requestedPosition = Number(weeklyPlan?.weekPosition ?? weeklyPlan?.week_position);
+        return {
+          ...weeklyPlan,
+          id,
+          weekPosition: Number.isInteger(requestedPosition) && requestedPosition >= 1 && requestedPosition <= 4
+            ? requestedPosition
+            : index + 1
+        };
+      })
+      .filter(Boolean)
+    : [];
+  const weeklyPlanIds = monthlyPlan
+    ? (linkedWeeklyPlanIds.length ? linkedWeeklyPlanIds : normalizeWeeklyPlanIds(weeklyPlans))
+    : [];
+  // Monthly plans never read direct mealprep JSON. Their compatibility list is
+  // derived in memory from the ordered weekly plans, so it cannot be written
+  // back as a duplicated 24-meal monthly payload.
+  const includedItems = monthlyPlan
+    ? weeklyPlans.flatMap((weeklyPlan) => Array.isArray(weeklyPlan.includedItems) ? weeklyPlan.includedItems : [])
+    : normalizeIncludedItems(row.included_items, context, libraryById);
   const directBenefits = normalizeBenefitAssignments(
     row.benefit_assignments,
     row.benefit_tags,
@@ -434,7 +502,11 @@ export function mapMenuItem(row, context = createCatalogContext(), libraryById =
     context
   );
   const benefits = productType === "plan" ? aggregateBenefits(includedItems) : directBenefits;
-  const tags = productType === "plan" ? aggregateTags(includedItems) : directTags;
+  const tags = productType === "plan"
+    ? (hasOwn(composition, "derivedTagIds")
+      ? normalizeTagAssignments(composition.derivedTagIds, [], context)
+      : aggregateTags(includedItems))
+    : directTags;
 
   return {
     id: row.id,
@@ -442,7 +514,7 @@ export function mapMenuItem(row, context = createCatalogContext(), libraryById =
     sku: row.sku || "",
     name: row.name,
     productType,
-    planFrequency: row.plan_frequency || "",
+    planFrequency: planFrequency || "",
     tag: row.tag || "",
     price: Number(row.price_clp || 0),
     description: row.description || "",
@@ -469,6 +541,9 @@ export function mapMenuItem(row, context = createCatalogContext(), libraryById =
       : [],
     nutritionFacts: productType === "family" ? row.nutrition_facts || {} : {},
     includedItems,
+    weeklyPlanIds,
+    weeklyPlans,
+    monthlyWeekCount: weeklyPlanIds.length,
     servingLabel: row.serving_label || "",
     purchaseLabel: row.purchase_label || "",
     displayOrder: Number(row.display_order || 0),
@@ -623,7 +698,9 @@ export function mapEcommerceContentVersion(row) {
 
 export function buildMenuItemPayload(input) {
   const productType = normalizeProductType(input.productType || input.product_type);
-  const includedItems = productType === "plan"
+  const planFrequency = normalizePlanFrequency(input.planFrequency || input.plan_frequency, productType);
+  const monthlyPlan = productType === "plan" && planFrequency === "monthly";
+  const includedItems = productType === "plan" && !monthlyPlan
     ? normalizeIncludedItems(input.includedItems || input.included_items)
     : [];
   const directBenefits = normalizeBenefitAssignments(
@@ -646,7 +723,7 @@ export function buildMenuItemPayload(input) {
     sku: nullableText(input.sku),
     name: cleanText(input.name),
     product_type: productType,
-    plan_frequency: normalizePlanFrequency(input.planFrequency || input.plan_frequency, productType),
+    plan_frequency: planFrequency,
     tag: nullableText(input.tag),
     description: cleanText(input.description),
     photo_url: nullableText(input.photoUrl || input.photo_url),
@@ -660,7 +737,9 @@ export function buildMenuItemPayload(input) {
     recipe_summary: productType === "family" ? rethermalizationInstructions || null : recipeSummary,
     recipe_steps: normalizeTextList(input.recipeSteps || input.recipe_steps),
     allergens: normalizeTextList(input.allergens),
-    included_items: productType === "plan" ? serializeIncludedItems(includedItems) : [],
+    // A monthly plan is only an ordered relation to four weekly plans. Never
+    // serialize its displayed mealpreps into menu_items.included_items.
+    included_items: productType === "plan" && !monthlyPlan ? serializeIncludedItems(includedItems) : [],
     serving_label: nullableText(input.servingLabel || input.serving_label),
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
@@ -883,6 +962,134 @@ async function fetchMealLibraryRows(supabase, { includeInactive = false } = {}) 
   return { data: data || [], error };
 }
 
+function mapTagIdsByPlan(rows, planIdColumn) {
+  const tagIdsByPlan = new Map();
+
+  (rows || []).forEach((row) => {
+    const planId = cleanText(row?.[planIdColumn]);
+    if (!planId) return;
+    tagIdsByPlan.set(planId, uniqueValues(normalizeWeeklyPlanIds(row?.tag_ids)));
+  });
+
+  return tagIdsByPlan;
+}
+
+function mapMonthlyPlanLinks(rows) {
+  const linksByMonthlyPlan = new Map();
+
+  (rows || []).forEach((row) => {
+    const monthlyPlanId = cleanText(row?.monthly_plan_id);
+    const weeklyPlanId = cleanText(row?.weekly_plan_id);
+    const weekPosition = Number(row?.week_position);
+    if (!monthlyPlanId || !weeklyPlanId || !Number.isInteger(weekPosition)) return;
+
+    const links = linksByMonthlyPlan.get(monthlyPlanId) || [];
+    links.push({ weeklyPlanId, weekPosition });
+    linksByMonthlyPlan.set(monthlyPlanId, links);
+  });
+
+  linksByMonthlyPlan.forEach((links) => {
+    links.sort((left, right) => left.weekPosition - right.weekPosition);
+  });
+
+  return linksByMonthlyPlan;
+}
+
+async function fetchMonthlyPlanComposition(supabase, monthlyPlanIds) {
+  const monthlyIds = uniqueValues(normalizeWeeklyPlanIds(monthlyPlanIds));
+  if (monthlyIds.length === 0) {
+    return {
+      linksByMonthlyPlan: new Map(),
+      weeklyTagIdsByPlan: new Map(),
+      monthlyTagIdsByPlan: new Map(),
+      error: null
+    };
+  }
+
+  const [linksResult, monthlyTagsResult] = await Promise.all([
+    supabase
+      .from("monthly_plan_weeks")
+      .select(MONTHLY_PLAN_WEEK_COLUMNS)
+      .in("monthly_plan_id", monthlyIds)
+      .order("monthly_plan_id", { ascending: true })
+      .order("week_position", { ascending: true }),
+    supabase
+      .from("monthly_plan_nutrition_tags")
+      .select(MONTHLY_NUTRITION_TAG_COLUMNS)
+      .in("monthly_plan_id", monthlyIds)
+  ]);
+
+  if (linksResult.error || monthlyTagsResult.error) {
+    return {
+      linksByMonthlyPlan: new Map(),
+      weeklyTagIdsByPlan: new Map(),
+      monthlyTagIdsByPlan: new Map(),
+      error: linksResult.error || monthlyTagsResult.error
+    };
+  }
+
+  const linksByMonthlyPlan = mapMonthlyPlanLinks(linksResult.data);
+  const weeklyPlanIds = uniqueValues(
+    [...linksByMonthlyPlan.values()].flatMap((links) => links.map((link) => link.weeklyPlanId))
+  );
+  const weeklyTagsResult = weeklyPlanIds.length
+    ? await supabase
+      .from("weekly_plan_nutrition_tags")
+      .select(PLAN_NUTRITION_TAG_COLUMNS)
+      .in("weekly_plan_id", weeklyPlanIds)
+    : { data: [], error: null };
+
+  return {
+    linksByMonthlyPlan,
+    weeklyTagIdsByPlan: weeklyTagsResult.error
+      ? new Map()
+      : mapTagIdsByPlan(weeklyTagsResult.data, "weekly_plan_id"),
+    monthlyTagIdsByPlan: mapTagIdsByPlan(monthlyTagsResult.data, "monthly_plan_id"),
+    error: weeklyTagsResult.error || null
+  };
+}
+
+function mapMenuItemsWithComposition(rows, context, libraryById, composition) {
+  const rawRows = Array.isArray(rows) ? rows : [];
+  const mappedById = new Map();
+
+  rawRows.forEach((row) => {
+    if (isMonthlyPlan(row)) return;
+
+    const rowId = cleanText(row?.id);
+    const derivedTagIds = composition.weeklyTagIdsByPlan.get(rowId);
+    mappedById.set(
+      rowId,
+      mapMenuItem(
+        row,
+        context,
+        libraryById,
+        derivedTagIds === undefined ? {} : { derivedTagIds }
+      )
+    );
+  });
+
+  return rawRows.map((row) => {
+    if (!isMonthlyPlan(row)) return mappedById.get(cleanText(row?.id));
+
+    const monthlyPlanId = cleanText(row?.id);
+    const links = composition.linksByMonthlyPlan.get(monthlyPlanId) || [];
+    const weeklyPlans = links
+      .map((link) => {
+        const weeklyPlan = mappedById.get(link.weeklyPlanId);
+        return weeklyPlan ? { ...weeklyPlan, weekPosition: link.weekPosition } : null;
+      })
+      .filter(Boolean);
+    const derivedTagIds = composition.monthlyTagIdsByPlan.get(monthlyPlanId);
+
+    return mapMenuItem(row, context, libraryById, {
+      weeklyPlanIds: links.map((link) => link.weeklyPlanId),
+      weeklyPlans,
+      ...(derivedTagIds === undefined ? {} : { derivedTagIds })
+    });
+  }).filter(Boolean);
+}
+
 export async function listActiveMenuItems() {
   const supabase = await getConfiguredSupabase();
   if (!supabase) {
@@ -909,10 +1116,14 @@ export async function listActiveMenuItems() {
     ? []
     : libraryResult.data.map((row) => mapMealLibraryItem(row, parameterResult.context));
   const libraryById = new Map(libraryItems.map((item) => [item.id, item]));
+  const composition = await fetchMonthlyPlanComposition(
+    supabase,
+    (data || []).filter(isMonthlyPlan).map((row) => row.id)
+  );
 
   return {
-    data: (data || []).map((row) => mapMenuItem(row, parameterResult.context, libraryById)),
-    error: null,
+    data: mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition),
+    error: composition.error,
     configured: true
   };
 }
@@ -942,10 +1153,14 @@ export async function listAdminMenuItems() {
     ? []
     : libraryResult.data.map((row) => mapMealLibraryItem(row, parameterResult.context));
   const libraryById = new Map(libraryItems.map((item) => [item.id, item]));
+  const composition = await fetchMonthlyPlanComposition(
+    supabase,
+    (data || []).filter(isMonthlyPlan).map((row) => row.id)
+  );
 
   return {
-    data: (data || []).map((row) => mapMenuItem(row, parameterResult.context, libraryById)),
-    error: null,
+    data: mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition),
+    error: composition.error,
     configured: true
   };
 }
@@ -1199,12 +1414,57 @@ export async function listEcommerceContentVersions(scope) {
   }
 }
 
+function monthlyPlanWeekIdsFromInput(input) {
+  return normalizeWeeklyPlanIds(
+    input?.weeklyPlanIds
+    ?? input?.weekly_plan_ids
+    ?? input?.weeklyPlans
+    ?? input?.weekly_plans
+  );
+}
+
+function validateMonthlyPlanWeekIds(weeklyPlanIds) {
+  if (weeklyPlanIds.length !== 4) {
+    return new Error("Un plan mensual necesita exactamente cuatro planes semanales antes de guardarse.");
+  }
+
+  if (uniqueValues(weeklyPlanIds).length !== 4) {
+    return new Error("No puedes repetir un plan semanal dentro del mismo plan mensual.");
+  }
+
+  return null;
+}
+
+async function replaceMonthlyPlanWeeks(supabase, monthlyPlanId, weeklyPlanIds) {
+  const { error } = await supabase.rpc("replace_monthly_plan_weeks", {
+    p_monthly_plan_id: monthlyPlanId,
+    p_weekly_plan_ids: weeklyPlanIds
+  });
+
+  return error;
+}
+
 export async function saveMenuItem(input) {
   try {
     const { supabase } = await getAuthenticatedSupabase();
     if (!supabase) return unavailableResult();
 
-    const payload = buildMenuItemPayload(input);
+    const basePayload = buildMenuItemPayload(input);
+    const monthlyPlan = isMonthlyPlan(basePayload);
+    const requestedWeeklyPlanIds = monthlyPlan ? monthlyPlanWeekIdsFromInput(input) : [];
+    const monthlyPlanValidationError = monthlyPlan
+      ? validateMonthlyPlanWeekIds(requestedWeeklyPlanIds)
+      : null;
+    if (monthlyPlanValidationError) {
+      return { data: null, error: monthlyPlanValidationError, configured: true };
+    }
+
+    // A monthly record must exist before its ordered weeks can be assigned,
+    // while an active record is valid only after those four assignments exist.
+    // Persist hidden first, replace the relation atomically through the RPC,
+    // and publish only after both steps have succeeded.
+    const desiredActive = Boolean(basePayload.is_active);
+    const payload = monthlyPlan ? { ...basePayload, is_active: false } : basePayload;
     let data;
     let error;
     let slugAdjusted = false;
@@ -1273,9 +1533,38 @@ export async function saveMenuItem(input) {
       return { data: null, error, configured: true };
     }
 
+    if (monthlyPlan) {
+      const relationError = await replaceMonthlyPlanWeeks(supabase, data.id, requestedWeeklyPlanIds);
+      if (relationError) {
+        return {
+          data: null,
+          error: relationError,
+          configured: true,
+          savedAsHidden: true
+        };
+      }
+
+      if (desiredActive) {
+        const activationResult = await updateMenuItemById(supabase, data.id, { is_active: true });
+        data = activationResult.data;
+        error = activationResult.error;
+
+        if (error) {
+          return {
+            data: null,
+            error,
+            configured: true,
+            savedAsHidden: true
+          };
+        }
+      }
+    }
+
     const parameterResult = await fetchCatalogContext(supabase, { includeInactive: true });
     return {
-      data: mapMenuItem(data, parameterResult.context),
+      data: mapMenuItem(data, parameterResult.context, new Map(), monthlyPlan
+        ? { weeklyPlanIds: requestedWeeklyPlanIds }
+        : {}),
       error: null,
       configured: true,
       slugAdjusted,
