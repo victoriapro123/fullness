@@ -113,10 +113,6 @@ import landingMealPrepCelerySrc from "./assets/landing-illustrations/apio-meal-p
 import landingMealPrepBeansSrc from "./assets/landing-illustrations/porotos-meal-prep.png";
 import shopPlansCauliflowerIllustrationSrc from "./assets/coliflor-hero-planes.png";
 import shopHeroBoxDarkCutoutSrc from "./assets/ecommerce/fullness-hero-box-dark-cutout-v2.png";
-import consciousFoodIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hojas_natural_v1.png";
-import functionalNutritionIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brazo_fuerte_nutrientes_v1.png";
-import fullnessExperienceIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/sello_hoja_v1.png";
-import fullnessCommunityIconSrc from "./assets/ilustraciones-fondo/linea-gris-transparente/iconos/brote_raices_v1.png";
 import ceciliaStoryHeroSrc from "./assets/cecilia-salas-fullness-hero-v2.png";
 import aboutHeroBotanicalSrc from "./assets/about/nosotros-hero-ilustracion-alpha.png";
 import aboutBeetSrc from "./assets/about/betarraga-nosotros-alpha.png";
@@ -919,13 +915,6 @@ const checkoutCartStorageKey = "fullness_checkout_cart";
 const viewportModeStorageKey = "fullness_viewport_mode";
 const preserveIntroConsumedStorageKey = "fullness_preserve_intro_consumed";
 const checkoutTestMode = import.meta.env.VITE_CHECKOUT_TEST_MODE === "true";
-const subscriptionLightboxHighlights = [
-  { label: "Alimentación consciente", image: consciousFoodIconSrc },
-  { label: "Nutrición funcional", image: functionalNutritionIconSrc },
-  { label: "Experiencias Fullness", image: fullnessExperienceIconSrc },
-  { label: "Comunidad", image: fullnessCommunityIconSrc }
-];
-
 function createDefaultSubscriptionPopupSettings() {
   return {
     enabled: true,
@@ -1041,14 +1030,6 @@ function SubscriptionLightbox({
                   <ArrowUpRight size={18} aria-hidden="true" />
                 </button>
               )}
-            </div>
-            <div className="subscription-lightbox-benefits" aria-label="Beneficios de la experiencia Fullness">
-              {subscriptionLightboxHighlights.map(({ label, image }) => (
-                <span key={label}>
-                  <img src={image} alt="" aria-hidden="true" width="27" height="27" loading="lazy" />
-                  {label}
-                </span>
-              ))}
             </div>
           </div>
         )}
@@ -2871,7 +2852,6 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
 function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
   const catalogPlans = plans;
-  const [catalogSegment, setCatalogSegment] = useState("monthly");
   const monthlyPlans = catalogPlans.filter((product) => product.planFrequency === "monthly");
   const weeklyPlans = catalogPlans.filter((product) => product.planFrequency === "weekly");
   const monthlyPlan = monthlyPlans[0];
@@ -2888,16 +2868,26 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
     : configuredHeroImage || getProductImage(heroFallbackProduct);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
-  const activeSegmentProducts = catalogSegment === "monthly"
-    ? monthlyPlans
-    : catalogSegment === "weekly"
-      ? weeklyPlans
-      : familyProducts;
-  const segmentCopy = catalogSegment === "monthly"
-    ? "Cuatro semanas completas, con sus menús preestablecidos y trazables."
-    : catalogSegment === "weekly"
-      ? "Seis mealpreps por semana, listos para calentar."
-      : "Preparaciones generosas para compartir en casa.";
+  const catalogSections = [
+    {
+      id: "monthly",
+      title: "Mensual",
+      products: monthlyPlans,
+      emptyMessage: "Aún no hay planes mensuales visibles."
+    },
+    {
+      id: "weekly",
+      title: "Semanal",
+      products: weeklyPlans,
+      emptyMessage: "Aún no hay planes semanales visibles."
+    },
+    {
+      id: "family",
+      title: "Único Familiar",
+      products: familyProducts,
+      emptyMessage: "Aún no hay mealpreps familiares visibles."
+    }
+  ];
 
   const scrollToBlock = (event, selector) => {
     event.preventDefault();
@@ -3006,60 +2996,45 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
             <div className="shop-section-heading">
               <p className="eyebrow">{formatDisplayEyebrow("Elige tu formato")}</p>
               <h2 id="shop-plans-title">{formatDisplayTitle("Planes y mealpreps para cada ritmo.")}</h2>
-              <p>{formatDisplayDescription(segmentCopy)}</p>
+              <p>{formatDisplayDescription("Elige el formato que mejor acompañe tu ritmo.")}</p>
             </div>
-            <div className="shop-catalog-segments" role="tablist" aria-label="Formato de productos">
-              {[
-                ["monthly", "Mensual", monthlyPlans.length],
-                ["weekly", "Semanal", weeklyPlans.length],
-                ["family", "Familiar", familyProducts.length]
-              ].map(([segment, label, count]) => (
-                <button
-                  className={catalogSegment === segment ? "is-active" : ""}
-                  key={segment}
-                  type="button"
-                  role="tab"
-                  aria-selected={catalogSegment === segment}
-                  onClick={() => setCatalogSegment(segment)}
-                >
-                  {formatDisplayTitle(label)}
-                  <span>{count}</span>
-                </button>
+            <div className="shop-catalog-stack">
+              {catalogSections.map(({ emptyMessage, id, products, title }) => (
+                <section className={`shop-catalog-section shop-catalog-section-${id}`} key={id} aria-labelledby={`shop-catalog-${id}-title`}>
+                  <header className="shop-catalog-section-heading">
+                    <h3 id={`shop-catalog-${id}-title`}>{formatDisplayTitle(title)}</h3>
+                    <div className="shop-catalog-section-rule" aria-hidden="true" />
+                  </header>
+                  {products.length > 0 ? (
+                    <div className={id === "family" ? "shop-family-grid shop-catalog-grid" : "shop-plan-grid shop-catalog-grid"}>
+                      {products.map((product, index) => (
+                        id === "family" ? (
+                          <ShopFamilyCard
+                            key={product.id}
+                            product={product}
+                            index={index + catalogPlans.length}
+                            onAdd={onAdd}
+                            onOpenBenefit={onOpenBenefit}
+                            onOpenProduct={onOpenProduct}
+                          />
+                        ) : (
+                          <ShopPlanCard
+                            key={product.id}
+                            product={product}
+                            index={index}
+                            onAdd={onAdd}
+                            onOpenBenefit={onOpenBenefit}
+                            onOpenProduct={onOpenProduct}
+                          />
+                        )
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="products-empty">{emptyMessage}</p>
+                  )}
+                </section>
               ))}
             </div>
-            {activeSegmentProducts.length > 0 ? (
-              <div className={catalogSegment === "family" ? "shop-family-grid shop-catalog-grid" : "shop-plan-grid shop-catalog-grid"}>
-                {activeSegmentProducts.map((product, index) => (
-                  catalogSegment === "family" ? (
-                    <ShopFamilyCard
-                      key={product.id}
-                      product={product}
-                      index={index + catalogPlans.length}
-                      onAdd={onAdd}
-                      onOpenBenefit={onOpenBenefit}
-                      onOpenProduct={onOpenProduct}
-                    />
-                  ) : (
-                    <ShopPlanCard
-                      key={product.id}
-                      product={product}
-                      index={index}
-                      onAdd={onAdd}
-                      onOpenBenefit={onOpenBenefit}
-                      onOpenProduct={onOpenProduct}
-                    />
-                  )
-                ))}
-              </div>
-            ) : (
-              <p className="products-empty">
-                {catalogSegment === "monthly"
-                  ? "Aún no hay planes mensuales visibles."
-                  : catalogSegment === "weekly"
-                    ? "Aún no hay planes semanales visibles."
-                    : "Aún no hay mealpreps familiares visibles."}
-              </p>
-            )}
           </section>
 
           <section className="shop-process-band" aria-labelledby="shop-process-title">
