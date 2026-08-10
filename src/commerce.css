@@ -3071,17 +3071,23 @@
 }
 
 .route-shop .shop-hero-botanical {
-  left: clamp(17%, 25vw, 32%) !important;
-  right: auto !important;
+  left: auto !important;
+  right: clamp(-18%, -7vw, -4%) !important;
   top: 52% !important;
   bottom: auto !important;
   width: clamp(350px, 39vw, 730px) !important;
   max-width: none !important;
   opacity: 1 !important;
   filter: grayscale(1) brightness(0.42) contrast(1.08) !important;
-  transform: translate(-8%, -50%) !important;
+  transform: translate(0, -50%) !important;
   rotate: 0deg !important;
   scale: 1 1 !important;
+}
+
+@media (min-width: 761px) {
+  .route-shop .shop-hero-media {
+    transform: translate(clamp(-50px, -2.4vw, -22px), -10px) !important;
+  }
 }
 
 @media (max-width: 760px) {
