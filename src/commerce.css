@@ -4343,6 +4343,39 @@
   }
 }
 
+/* Equal product scale: monthly, weekly and family use the same card footprint. */
+.route-shop .shop-plan-grid.shop-catalog-grid,
+.route-shop .shop-family-grid.shop-catalog-grid {
+  grid-template-columns: repeat(2, minmax(0, 600px)) !important;
+  justify-content: center;
+  width: min(100%, 1230px);
+}
+
+.route-shop .shop-family-grid.shop-catalog-grid .shop-plan-card {
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .route-shop .shop-plan-grid.shop-catalog-grid,
+  .route-shop .shop-family-grid.shop-catalog-grid {
+    grid-template-columns: minmax(0, 600px) !important;
+  }
+}
+
+/* The community CTA stays quiet over the editorial photograph instead of competing with it. */
+.route-shop .shop-community-band > a {
+  border-color: rgba(244, 234, 219, 0.68) !important;
+  color: #f4eadb !important;
+  background: rgba(9, 8, 6, 0.34) !important;
+}
+
+.route-shop .shop-community-band > a:hover,
+.route-shop .shop-community-band > a:focus-visible {
+  border-color: var(--editorial-copper) !important;
+  color: #f4eadb !important;
+  background: rgba(184, 120, 120, 0.28) !important;
+}
+
 /* Product lightbox: the close control must remain visible over every palette. */
 .product-lightbox-panel > .icon-button.close {
   display: grid;

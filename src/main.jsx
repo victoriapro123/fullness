@@ -2817,13 +2817,14 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
   const benefits = getProductBenefits(product);
 
   return (
-    <article className="shop-family-card">
-      <button className="shop-family-media-button" type="button" onClick={() => onOpenProduct(product)}>
+    <article className="shop-plan-card">
+      <button className="shop-plan-media-button" type="button" onClick={() => onOpenProduct(product)}>
         <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
+        <span>{formatDisplayEyebrow("Único Familiar")}</span>
       </button>
-      <div className="shop-family-copy">
-        <button className="shop-family-detail-button" type="button" onClick={() => onOpenProduct(product)}>
-          <span>{formatDisplayEyebrow(product.servingLabel || product.tag || "Para compartir")}</span>
+      <div className="shop-plan-body">
+        <button className="shop-plan-title-button" type="button" onClick={() => onOpenProduct(product)}>
+          <span>{formatDisplayEyebrow("Único Familiar")}</span>
           <h3>{formatDisplayTitle(product.name)}</h3>
           <p>{formatDisplayDescription(product.description)}</p>
         </button>
@@ -2836,14 +2837,17 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
           iconOnly
         />
       </div>
-      <div className="shop-family-footer">
+      <div className="shop-plan-footer">
+        <small>{formatDisplayDescription(product.servingLabel || product.tag || "Para compartir")}</small>
         <strong>{formatPrice(product.price)}</strong>
-        <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
-          Ver menú
-        </button>
-        <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
-          Agregar plato familiar
-        </button>
+        <div>
+          <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
+            Ver menú
+          </button>
+          <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
+            Agregar plato familiar
+          </button>
+        </div>
       </div>
     </article>
   );
