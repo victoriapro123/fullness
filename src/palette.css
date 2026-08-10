@@ -1,0 +1,252 @@
+/* Sistema cromático de Cecilia. Este archivo es la única capa que gobierna
+   colores transversales; evita repetir hexadecimales en cada módulo. */
+:root {
+  --fullness-dark: #151515;
+  --fullness-plum: #2a1422;
+  --fullness-rose: #a98880;
+  --fullness-eucalyptus: #a7bba6;
+  --fullness-eucalyptus-deep: #7e8f7a;
+  --fullness-cream: #f2ede6;
+  --fullness-muted: #b2b2b2;
+
+  --petrol: var(--fullness-dark);
+  --petrol-soft: var(--fullness-plum);
+  --cacao: var(--fullness-plum);
+  --olive: var(--fullness-eucalyptus-deep);
+  --beet: var(--fullness-eucalyptus);
+  --beet-deep: var(--fullness-eucalyptus-deep);
+  --beet-night: var(--fullness-plum);
+  --beet-shadow: var(--fullness-plum);
+  --beet-glow: var(--fullness-eucalyptus);
+  --menu-beet: var(--fullness-plum);
+  --copper: var(--fullness-rose);
+  --gold: var(--fullness-eucalyptus);
+  --sage: var(--fullness-eucalyptus);
+  --paper: var(--fullness-cream);
+  --stone: var(--fullness-muted);
+  --ink: var(--fullness-dark);
+  --section-green: var(--fullness-eucalyptus-deep);
+  --editorial-black: var(--fullness-dark);
+  --editorial-copper: var(--fullness-eucalyptus);
+  --editorial-line: rgba(169, 136, 128, 0.42);
+  --fullness-marfil: var(--fullness-cream);
+  --fullness-ink: var(--fullness-dark);
+  --fullness-highlight: var(--fullness-eucalyptus);
+  --fullness-highlight-soft: rgba(167, 187, 166, 0.8);
+  --fullness-highlight-faint: rgba(167, 187, 166, 0.14);
+  --vector-dark-ink: rgba(178, 178, 178, 0.54);
+  --vector-light-ink: rgba(169, 136, 128, 0.24);
+}
+
+html {
+  background: var(--fullness-dark);
+}
+
+body {
+  color: var(--fullness-cream);
+  background: var(--fullness-dark);
+}
+
+:focus-visible {
+  outline-color: var(--fullness-eucalyptus);
+}
+
+/* Navegación: ciruela de fondo y palo de rosa para la lectura del menú. */
+.site-header {
+  background: var(--fullness-plum);
+  border-bottom-color: rgba(169, 136, 128, 0.38);
+}
+
+.desktop-nav {
+  color: var(--fullness-rose);
+}
+
+.desktop-nav a:hover,
+.desktop-nav a:focus-visible {
+  color: var(--fullness-eucalyptus);
+}
+
+.member-link,
+.icon-button,
+.intro-replay-button {
+  color: var(--fullness-rose);
+  border-color: rgba(169, 136, 128, 0.66);
+  background: rgba(42, 20, 34, 0.48);
+}
+
+.member-link:hover,
+.member-link:focus-visible,
+.intro-replay-button:hover,
+.intro-replay-button:focus-visible {
+  color: var(--fullness-eucalyptus);
+  border-color: var(--fullness-eucalyptus);
+  background: rgba(167, 187, 166, 0.12);
+}
+
+.site-header .member-link::before {
+  background: rgba(169, 136, 128, 0.62);
+}
+
+.site-header .member-link:hover,
+.site-header .member-link:focus-visible {
+  background: rgba(167, 187, 166, 0.12) !important;
+}
+
+.cart-button span {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus);
+}
+
+/* El verde eucalipto queda reservado para acciones y destacados. */
+.eyebrow {
+  color: var(--fullness-eucalyptus);
+}
+
+.primary-button {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus);
+}
+
+.primary-button:hover {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus-deep);
+}
+
+.food-story-strip strong em {
+  color: var(--fullness-eucalyptus);
+}
+
+.about-v2 {
+  --about-v2-dark: var(--fullness-dark);
+  --about-v2-paper: var(--fullness-cream);
+  --about-v2-accent: var(--fullness-eucalyptus);
+}
+
+.whatsapp-float {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus);
+  border-color: var(--fullness-eucalyptus-deep);
+}
+
+.whatsapp-float:hover {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus-deep);
+  border-color: var(--fullness-eucalyptus);
+}
+
+/* Footer: mantiene la profundidad sin volver a negro puro ni a blanco. */
+footer {
+  color: rgba(242, 237, 230, 0.82);
+  background:
+    radial-gradient(circle at 78% -10%, rgba(167, 187, 166, 0.1), transparent 30%),
+    linear-gradient(180deg, var(--fullness-dark), #101010) !important;
+  border-top-color: rgba(169, 136, 128, 0.28) !important;
+}
+
+footer .footer-column h3,
+footer strong {
+  color: var(--fullness-eucalyptus);
+}
+
+footer .footer-column a,
+footer .footer-contact span,
+footer p,
+.footer-brand p {
+  color: rgba(242, 237, 230, 0.78) !important;
+}
+
+footer .footer-column a:hover,
+footer .footer-column a:focus-visible,
+.footer-socials a:hover {
+  color: var(--fullness-eucalyptus);
+}
+
+.footer-socials a {
+  color: var(--fullness-rose);
+  border-color: rgba(169, 136, 128, 0.5);
+}
+
+.footer-socials a:hover {
+  border-color: var(--fullness-eucalyptus);
+  background: rgba(167, 187, 166, 0.12);
+}
+
+/* Tienda: las superficies claras usan marfil neutro y los acentos, verde. */
+.shop-page-shell {
+  --shop-dark: var(--fullness-dark);
+  --shop-dark-soft: #1d171b;
+  --shop-cream: var(--fullness-cream);
+  --shop-paper: var(--fullness-cream);
+  --shop-ink: var(--fullness-dark);
+  --shop-muted: rgba(242, 237, 230, 0.72);
+  --shop-burgundy: var(--fullness-eucalyptus);
+  --shop-burgundy-deep: var(--fullness-plum);
+  --shop-copper: var(--fullness-rose);
+  --shop-line-dark: rgba(169, 136, 128, 0.32);
+  --shop-line-light: rgba(126, 143, 122, 0.36);
+}
+
+.shop-hero-copy .eyebrow,
+.shop-subscription-copy .eyebrow,
+.shop-community-band .eyebrow,
+.shop-section-heading .eyebrow,
+.shop-process-band h2 {
+  color: var(--fullness-eucalyptus) !important;
+}
+
+.shop-hero-copy h1 span {
+  color: var(--fullness-eucalyptus);
+}
+
+.shop-subscription-benefits svg {
+  color: var(--fullness-rose);
+}
+
+.shop-solid-link,
+.shop-solid-button,
+.shop-plan-media-button > span,
+.route-shop .shop-benefit-tags li {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus);
+  border-color: var(--fullness-eucalyptus);
+}
+
+.shop-solid-link:hover,
+.shop-solid-button:hover {
+  color: var(--fullness-dark);
+  border-color: var(--fullness-eucalyptus-deep);
+  background: var(--fullness-eucalyptus-deep);
+}
+
+.shop-outline-link,
+.shop-outline-button {
+  color: var(--fullness-cream);
+  border-color: var(--fullness-rose);
+  background: rgba(169, 136, 128, 0.12);
+}
+
+.shop-outline-link:hover,
+.shop-outline-button:hover,
+.shop-plans-section .shop-outline-button,
+.shop-family-section .shop-outline-button {
+  color: var(--fullness-dark);
+  border-color: var(--fullness-eucalyptus-deep);
+  background: rgba(167, 187, 166, 0.16);
+}
+
+.shop-comparison-table thead th {
+  color: var(--fullness-dark);
+  background: var(--fullness-eucalyptus);
+}
+
+.route-shop .shop-plan-title-button > span,
+.route-shop .shop-plan-meals .shop-plan-meal-kicker,
+.route-shop .shop-plan-meal-card .benefit-icon-list span,
+.route-shop .shop-family-copy > .benefit-icon-list span {
+  color: var(--fullness-plum) !important;
+}
+
+.route-shop .shop-plan-meal-card .benefit-icon-list img,
+.route-shop .shop-family-copy > .benefit-icon-list img {
+  border-color: var(--fullness-eucalyptus-deep);
+}

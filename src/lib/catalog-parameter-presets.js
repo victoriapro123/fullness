@@ -65,10 +65,10 @@ export const benefitPresets = [
   {
     id: "10000000-0000-4000-8000-000000000007",
     slug: "omega-3",
-    name: "Omega 3",
+    name: "Omega-3",
     iconUrl: benefitAssetUrl("omega-3"),
     iconStoragePath: "assets/benefits/omega-3.png",
-    defaultDescription: "Incluye fuentes naturales de ácidos grasos omega 3, asociados al cuidado cardiovascular y cerebral.",
+    defaultDescription: "Incluye fuentes naturales de ácidos grasos omega-3, asociados al cuidado cardiovascular y cerebral.",
     displayOrder: 70,
     isActive: true
   },

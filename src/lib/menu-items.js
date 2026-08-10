@@ -1321,6 +1321,38 @@ export async function deleteMenuItem(id) {
   }
 }
 
+export async function updateMenuItemDisplayOrders(items) {
+  const entries = Array.isArray(items)
+    ? items
+      .map((item) => ({
+        id: cleanText(item?.id),
+        displayOrder: normalizeDisplayOrder(item?.displayOrder ?? item?.display_order)
+      }))
+      .filter((item) => item.id)
+    : [];
+
+  if (entries.length === 0) {
+    return { data: [], error: null, configured: true };
+  }
+
+  try {
+    const { supabase } = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
+
+    const results = await Promise.all(entries.map((item) =>
+      supabase
+        .from("menu_items")
+        .update({ display_order: item.displayOrder })
+        .eq("id", item.id)
+    ));
+    const error = results.find((result) => result.error)?.error || null;
+
+    return { data: error ? null : entries, error, configured: true };
+  } catch (error) {
+    return { data: null, error, configured: true };
+  }
+}
+
 export async function uploadMenuPhoto(file, folder = "images/meal-preps") {
   try {
     const validationError = validateImageUpload(file, folder);

@@ -2383,13 +2383,13 @@
 
 .shop-plan-meals button:hover,
 .shop-plan-meals button:focus-visible {
-  border-color: rgba(132, 38, 50, 0.34);
-  background: rgba(255, 250, 242, 0.62);
+  border-color: rgba(126, 143, 122, 0.62);
+  background: transparent;
 }
 
 .shop-plan-meals button:hover .shop-plan-meal-icon,
 .shop-plan-meals button:focus-visible .shop-plan-meal-icon {
-  color: #f8ecdf;
+  color: var(--shop-ink);
   background: var(--shop-burgundy);
   border-color: var(--shop-burgundy);
 }
@@ -3521,9 +3521,9 @@
 
 .route-shop .shop-plan-meal-card:hover,
 .route-shop .shop-plan-meal-card:focus-within {
-  border-color: rgba(125, 36, 48, 0.42);
-  background: rgba(255, 252, 246, 0.98);
-  transform: translateY(-2px);
+  border-color: rgba(126, 143, 122, 0.62);
+  background: transparent;
+  transform: none;
 }
 
 .route-shop .shop-plan-meal-card > .shop-plan-meal-main {
@@ -3856,8 +3856,8 @@
 
 .route-shop .shop-plan-meal-card:hover,
 .route-shop .shop-plan-meal-card:focus-within {
-  box-shadow: inset 0 0 0 1px rgba(125, 36, 48, 0.24);
-  background: rgba(255, 250, 242, 0.26) !important;
+  box-shadow: inset 0 0 0 1px rgba(126, 143, 122, 0.54);
+  background: transparent !important;
   transform: none;
 }
 

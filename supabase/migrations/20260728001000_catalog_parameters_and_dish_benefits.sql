@@ -148,10 +148,10 @@ values
   (
     '10000000-0000-4000-8000-000000000007',
     'omega-3',
-    'Omega 3',
+    'Omega-3',
     '/api/media?key=assets%2Fbenefits%2Fomega-3.webp',
     'assets/benefits/omega-3.webp',
-    'Incluye fuentes naturales de ácidos grasos omega 3, asociados al cuidado cardiovascular y cerebral.',
+    'Incluye fuentes naturales de ácidos grasos omega-3, asociados al cuidado cardiovascular y cerebral.',
     70,
     true
   ),

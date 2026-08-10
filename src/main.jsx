@@ -5,6 +5,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowDown,
+  ArrowUp,
   ArrowUpRight,
   CalendarDays,
   CheckCircle2,
@@ -19,6 +21,7 @@ import {
   FileText,
   Filter,
   FolderOpen,
+  GripVertical,
   HardDrive,
   Heart,
   History,
@@ -72,6 +75,7 @@ import {
   saveMenuItem,
   saveShopSettings,
   saveTagDefinition,
+  updateMenuItemDisplayOrders,
   uploadMenuPhoto
 } from "./lib/menu-items.js";
 import {
@@ -127,6 +131,7 @@ import "./benefit-system.css";
 import "./overlays.css";
 import "./about-nosotros.css";
 import "./faq.css";
+import "./palette.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -654,14 +659,14 @@ const demoProducts = [
       {
         id: "salmon-arroz-verde",
         name: "Salmón y arroz verde",
-        tag: "Omega 3",
+        tag: "Omega-3",
         description: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
         photoUrl: sampleProductImages[2],
         secondaryPhotoUrl: sampleProductImages[1],
-        benefitTags: ["Antioxidante", "Omega 3"],
+        benefitTags: ["Antioxidante", "Omega-3"],
         ingredients: ["salmón", "arroz verde", "palta", "cilantro"],
         nutritionDescription: "Grasas saludables, proteína completa y carbohidrato de energía estable.",
-        nutritionHighlights: ["Omega 3 natural", "Proteína completa", "Grasas saludables"],
+        nutritionHighlights: ["Omega-3 natural", "Proteína completa", "Grasas saludables"],
         nutritionFacts: { protein_g: 34, carbs_g: 44, fat_g: 20, fiber_g: 8 },
         allergens: ["Pescado"]
       }
@@ -688,14 +693,14 @@ const demoProducts = [
       {
         id: "salmon-lentejas-verdes",
         name: "Salmón, lentejas y verdes",
-        tag: "Omega 3",
+        tag: "Omega-3",
         description: "Salmón dorado, lentejas especiadas y hojas frescas.",
         photoUrl: sampleProductImages[0],
         secondaryPhotoUrl: sampleProductImages[2],
-        benefitTags: ["Omega 3", "Fibra"],
+        benefitTags: ["Omega-3", "Fibra"],
         ingredients: ["salmón", "lentejas", "hojas verdes", "aceite de oliva"],
-        nutritionDescription: "Proteína de calidad, omega 3 y fibra vegetal.",
-        nutritionHighlights: ["Omega 3 natural", "Fibra vegetal", "Proteína de calidad"],
+        nutritionDescription: "Proteína de calidad, omega-3 y fibra vegetal.",
+        nutritionHighlights: ["Omega-3 natural", "Fibra vegetal", "Proteína de calidad"],
         nutritionFacts: { protein_g: 34, carbs_g: 38, fat_g: 18, fiber_g: 9 },
         allergens: ["Pescado"]
       },
@@ -739,7 +744,7 @@ const demoProducts = [
     description: "Fuente familiar de salmón glaseado, arroz verde, palta y hierbas frescas para compartir en casa.",
     image: sampleProductImages[2],
     secondaryImage: sampleProductImages[1],
-    benefitTags: ["Omega 3", "Antioxidante"],
+    benefitTags: ["Omega-3", "Antioxidante"],
     ingredients: ["salmón", "arroz verde", "palta", "hierbas frescas"],
     recipeSummary: "Salmón glaseado, arroz verde, palta y hierbas frescas.",
     recipeSteps: ["Calentar la base.", "Agregar palta y hierbas al servir.", "Compartir al centro de la mesa."],
@@ -1045,7 +1050,7 @@ const heroBenefitFeatures = [
     icon: CookingPot
   },
   {
-    title: "Sin ultraprocesados",
+    title: "Sin ultra procesados",
     text: "Comida real, sin ingredientes que no reconoces.",
     icon: Sprout
   },
@@ -1393,6 +1398,30 @@ function createAutomaticSku(prefix = "FUL") {
       : `${Date.now()}${Math.random().toString(36).slice(2, 8)}`.slice(-10);
 
   return `${prefix}-${token.toUpperCase()}`;
+}
+
+function reorderItems(items, fromIndex, toIndex) {
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length ||
+    fromIndex === toIndex
+  ) {
+    return items;
+  }
+
+  const nextItems = [...items];
+  const [movedItem] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, movedItem);
+  return nextItems;
+}
+
+function sortByDisplayOrder(items) {
+  return [...items].sort((left, right) =>
+    Number(left.displayOrder || 0) - Number(right.displayOrder || 0) ||
+    String(left.name || "").localeCompare(String(right.name || ""), "es")
+  );
 }
 
 function createStableSku(prefix, value) {
@@ -4757,6 +4786,9 @@ function App() {
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
+  const [catalogOrderSaving, setCatalogOrderSaving] = useState(false);
+  const [draggingCatalogItemId, setDraggingCatalogItemId] = useState("");
+  const [draggingIncludedMealId, setDraggingIncludedMealId] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoUploadError, setPhotoUploadError] = useState({ target: "", message: "" });
   const [shopSettings, setShopSettings] = useState(createDefaultShopSettings);
@@ -8507,6 +8539,31 @@ function App() {
     });
   }
 
+  function reorderIncludedMeals(sourceId, targetId) {
+    if (!sourceId || sourceId === targetId) return;
+
+    markMenuFormChanged();
+    setMenuForm((current) => {
+      const sourceIndex = current.includedItems.findIndex((item) => item.id === sourceId);
+      const targetIndex = current.includedItems.findIndex((item) => item.id === targetId);
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+
+      return {
+        ...current,
+        includedItems: reorderItems(current.includedItems, sourceIndex, targetIndex)
+      };
+    });
+  }
+
+  function moveIncludedMeal(index, direction) {
+    const targetIndex = index + direction;
+    const sourceMeal = menuForm.includedItems[index];
+    const targetMeal = menuForm.includedItems[targetIndex];
+    if (!sourceMeal || !targetMeal) return;
+
+    reorderIncludedMeals(sourceMeal.id, targetMeal.id);
+  }
+
   function updateShopSettingsForm(event) {
     const { name, value } = event.target;
 
@@ -8814,6 +8871,47 @@ function App() {
     setAdminSaving(false);
   }
 
+  async function reorderCatalogItems(items, sourceId, targetId, label) {
+    if (!activeIsAdmin || catalogOrderSaving || !sourceId || sourceId === targetId) return;
+
+    const sourceIndex = items.findIndex((item) => item.id === sourceId);
+    const targetIndex = items.findIndex((item) => item.id === targetId);
+    const reorderedItems = reorderItems(items, sourceIndex, targetIndex);
+    if (reorderedItems === items) return;
+
+    const entries = reorderedItems.map((item, index) => ({
+      id: item.id,
+      displayOrder: (index + 1) * 10
+    }));
+    const orderById = new Map(entries.map((entry) => [entry.id, entry.displayOrder]));
+
+    setAdminItems((current) => current.map((item) =>
+      orderById.has(item.id) ? { ...item, displayOrder: orderById.get(item.id) } : item
+    ));
+    setCatalogOrderSaving(true);
+    setAdminError("");
+
+    const result = await updateMenuItemDisplayOrders(entries);
+    if (result.error || !result.configured) {
+      setAdminError(getSupabaseErrorMessage(result.error, `No pudimos guardar el orden de ${label}.`));
+      await refreshAdminItems({ silent: true });
+      await refreshPublicProducts();
+    } else {
+      setAdminMessage(`Orden de ${label} actualizado.`);
+      await refreshPublicProducts();
+    }
+
+    setCatalogOrderSaving(false);
+  }
+
+  function moveCatalogItem(items, itemId, direction, label) {
+    const sourceIndex = items.findIndex((item) => item.id === itemId);
+    const targetItem = items[sourceIndex + direction];
+    if (!targetItem) return;
+
+    void reorderCatalogItems(items, itemId, targetItem.id, label);
+  }
+
   function reportMenuFormInvalid() {
     setAdminError("Completa los campos obligatorios antes de guardar. Tu borrador se mantiene protegido en este navegador.");
     const publicationIssues = getMenuFormPublicationIssues(menuForm);
@@ -8869,13 +8967,13 @@ function App() {
     </a>
   ));
 
-  const mealPrepItems = adminItems.filter((item) => item.productType === "plan");
+  const mealPrepItems = sortByDisplayOrder(adminItems.filter((item) => item.productType === "plan"));
   const importableWeeklyPlans = mealPrepItems.filter((item) =>
     item.planFrequency === "weekly" &&
     item.id !== menuForm.id &&
     item.includedItems?.some((meal) => meal.name?.trim() || meal.description?.trim() || meal.photoUrl?.trim())
   );
-  const familyProductItems = adminItems.filter((item) => item.productType === "family");
+  const familyProductItems = sortByDisplayOrder(adminItems.filter((item) => item.productType === "family"));
   const activeMealPrepCount = mealPrepItems.filter((item) => item.isActive).length;
   const activeFamilyProductCount = familyProductItems.filter((item) => item.isActive).length;
   const filteredMealPrepItems = useMemo(() => {
@@ -9658,32 +9756,79 @@ function App() {
                       <p className="backoffice-muted">Cargando planes…</p>
                     ) : filteredMealPrepItems.length > 0 ? (
                       <div className="backoffice-catalog-list">
-                        {filteredMealPrepItems.map((item) => (
-                          <article className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
-                            <button className="backoffice-menu-main" type="button" onClick={() => openMealPrepForEditing(item)}>
-                              <img src={item.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt="" aria-hidden="true" />
-                              <span>
-                                <strong>{item.name}</strong>
-                                <small>{item.planFrequency === "monthly" ? "Mensual" : "Semanal"} · {formatPrice(item.price)}</small>
-                              </span>
-                            </button>
-                            <div className="backoffice-card-meta">
-                              <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
-                                {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
-                                {item.isActive ? "Activo" : "Inactivo"}
-                              </span>
-                              <span>Orden {item.displayOrder}</span>
-                            </div>
-                            <div className="backoffice-card-actions">
-                              <button type="button" onClick={() => openMealPrepForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
-                                <Pencil size={16} />
+                        {filteredMealPrepItems.map((item) => {
+                          const planIndex = mealPrepItems.findIndex((candidate) => candidate.id === item.id);
+                          return (
+                            <article
+                              className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""} ${draggingCatalogItemId === item.id ? "is-dragging" : ""}`}
+                              key={item.id}
+                              onDragOver={(event) => event.preventDefault()}
+                              onDrop={(event) => {
+                                event.preventDefault();
+                                const sourceId = event.dataTransfer.getData("text/plain") || draggingCatalogItemId;
+                                void reorderCatalogItems(mealPrepItems, sourceId, item.id, "planes");
+                                setDraggingCatalogItemId("");
+                              }}
+                            >
+                              <button className="backoffice-menu-main" type="button" onClick={() => openMealPrepForEditing(item)}>
+                                <img src={item.image || mediaSrc("assets/fullness-food-crop.jpeg")} alt="" aria-hidden="true" />
+                                <span>
+                                  <strong>{item.name}</strong>
+                                  <small>{item.planFrequency === "monthly" ? "Mensual" : "Semanal"} · {formatPrice(item.price)}</small>
+                                </span>
                               </button>
-                              <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={adminSaving}>
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </article>
-                        ))}
+                              <div className="backoffice-card-meta">
+                                <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
+                                  {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                  {item.isActive ? "Activo" : "Inactivo"}
+                                </span>
+                                <span>Posición {planIndex + 1}</span>
+                              </div>
+                              <div className="backoffice-card-actions">
+                                <button
+                                  className="backoffice-drag-handle"
+                                  type="button"
+                                  draggable={!catalogOrderSaving}
+                                  onDragStart={(event) => {
+                                    event.dataTransfer.effectAllowed = "move";
+                                    event.dataTransfer.setData("text/plain", item.id);
+                                    setDraggingCatalogItemId(item.id);
+                                  }}
+                                  onDragEnd={() => setDraggingCatalogItemId("")}
+                                  aria-label={`Arrastrar ${item.name} para reordenar`}
+                                  title="Arrastrar para reordenar"
+                                  disabled={catalogOrderSaving}
+                                >
+                                  <GripVertical size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveCatalogItem(mealPrepItems, item.id, -1, "planes")}
+                                  aria-label={`Subir ${item.name}`}
+                                  title="Subir"
+                                  disabled={catalogOrderSaving || planIndex === 0}
+                                >
+                                  <ArrowUp size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveCatalogItem(mealPrepItems, item.id, 1, "planes")}
+                                  aria-label={`Bajar ${item.name}`}
+                                  title="Bajar"
+                                  disabled={catalogOrderSaving || planIndex === mealPrepItems.length - 1}
+                                >
+                                  <ArrowDown size={16} />
+                                </button>
+                                <button type="button" onClick={() => openMealPrepForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
+                                  <Pencil size={16} />
+                                </button>
+                                <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={adminSaving || catalogOrderSaving}>
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </article>
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="backoffice-catalog-empty">
@@ -9868,10 +10013,6 @@ function App() {
                           <input name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="plan-semanal-antinflamatorio…" />
                         </label>
                         <label>
-                          Posición en la tienda
-                          <input name="displayOrder" type="number" step="1" value={menuForm.displayOrder} onChange={updateMenuForm} />
-                        </label>
-                        <label>
                           Texto del botón
                           <input name="purchaseLabel" value={menuForm.purchaseLabel} onChange={updateMenuForm} placeholder="Agregar plan semanal…" />
                         </label>
@@ -9965,7 +10106,17 @@ function App() {
                         ) : (
                           <div className="backoffice-dish-list">
                             {menuForm.includedItems.map((meal, mealIndex) => (
-                              <article className="included-editor-card" key={meal.id || mealIndex}>
+                              <article
+                                className={`included-editor-card ${draggingIncludedMealId === meal.id ? "is-dragging" : ""}`}
+                                key={meal.id || mealIndex}
+                                onDragOver={(event) => event.preventDefault()}
+                                onDrop={(event) => {
+                                  event.preventDefault();
+                                  const sourceId = event.dataTransfer.getData("text/plain") || draggingIncludedMealId;
+                                  reorderIncludedMeals(sourceId, meal.id);
+                                  setDraggingIncludedMealId("");
+                                }}
+                              >
                                 <button className="backoffice-dish-main" type="button" onClick={() => openIncludedMealEditor(mealIndex)}>
                                   <span className="backoffice-dish-thumb">
                                     {meal.photoUrl ? (
@@ -9991,6 +10142,41 @@ function App() {
                                   </span>
                                 </button>
                                 <div className="backoffice-dish-actions">
+                                  <button
+                                    className="backoffice-icon-command backoffice-drag-handle"
+                                    type="button"
+                                    draggable
+                                    onDragStart={(event) => {
+                                      event.dataTransfer.effectAllowed = "move";
+                                      event.dataTransfer.setData("text/plain", meal.id);
+                                      setDraggingIncludedMealId(meal.id);
+                                    }}
+                                    onDragEnd={() => setDraggingIncludedMealId("")}
+                                    aria-label={`Arrastrar mealprep ${mealIndex + 1} para reordenar`}
+                                    title="Arrastrar para reordenar"
+                                  >
+                                    <GripVertical size={16} />
+                                  </button>
+                                  <button
+                                    className="backoffice-icon-command"
+                                    type="button"
+                                    onClick={() => moveIncludedMeal(mealIndex, -1)}
+                                    aria-label={`Subir mealprep ${mealIndex + 1}`}
+                                    title="Subir"
+                                    disabled={mealIndex === 0}
+                                  >
+                                    <ArrowUp size={16} />
+                                  </button>
+                                  <button
+                                    className="backoffice-icon-command"
+                                    type="button"
+                                    onClick={() => moveIncludedMeal(mealIndex, 1)}
+                                    aria-label={`Bajar mealprep ${mealIndex + 1}`}
+                                    title="Bajar"
+                                    disabled={mealIndex === menuForm.includedItems.length - 1}
+                                  >
+                                    <ArrowDown size={16} />
+                                  </button>
                                   <button
                                     className="backoffice-command"
                                     type="button"
@@ -10621,32 +10807,79 @@ function App() {
                             <p className="backoffice-muted">Cargando mealpreps familiares…</p>
                           ) : filteredFamilyProductItems.length ? (
                             <div className="backoffice-catalog-list">
-                              {filteredFamilyProductItems.map((item) => (
-                                <article className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""}`} key={item.id}>
-                                  <button className="backoffice-menu-main" type="button" onClick={() => openFamilyProductForEditing(item)}>
-                                    <img src={item.image || placeholderProductImage} alt="" aria-hidden="true" />
-                                    <span>
-                                      <strong>{item.name}</strong>
-                                      <small>Formato familiar · {formatPrice(item.price)}</small>
-                                    </span>
-                                  </button>
-                                  <div className="backoffice-card-meta">
-                                    <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
-                                      {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
-                                      {item.isActive ? "Activo" : "Inactivo"}
-                                    </span>
-                                    <span>Orden {item.displayOrder}</span>
-                                  </div>
-                                  <div className="backoffice-card-actions">
-                                    <button type="button" onClick={() => openFamilyProductForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
-                                      <Pencil size={16} />
+                              {filteredFamilyProductItems.map((item) => {
+                                const familyIndex = familyProductItems.findIndex((candidate) => candidate.id === item.id);
+                                return (
+                                  <article
+                                    className={`backoffice-menu-card ${menuForm.id === item.id ? "is-selected" : ""} ${draggingCatalogItemId === item.id ? "is-dragging" : ""}`}
+                                    key={item.id}
+                                    onDragOver={(event) => event.preventDefault()}
+                                    onDrop={(event) => {
+                                      event.preventDefault();
+                                      const sourceId = event.dataTransfer.getData("text/plain") || draggingCatalogItemId;
+                                      void reorderCatalogItems(familyProductItems, sourceId, item.id, "mealpreps familiares");
+                                      setDraggingCatalogItemId("");
+                                    }}
+                                  >
+                                    <button className="backoffice-menu-main" type="button" onClick={() => openFamilyProductForEditing(item)}>
+                                      <img src={item.image || placeholderProductImage} alt="" aria-hidden="true" />
+                                      <span>
+                                        <strong>{item.name}</strong>
+                                        <small>Formato familiar · {formatPrice(item.price)}</small>
+                                      </span>
                                     </button>
-                                    <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={adminSaving}>
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </div>
-                                </article>
-                              ))}
+                                    <div className="backoffice-card-meta">
+                                      <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
+                                        {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                        {item.isActive ? "Activo" : "Inactivo"}
+                                      </span>
+                                      <span>Posición {familyIndex + 1}</span>
+                                    </div>
+                                    <div className="backoffice-card-actions">
+                                      <button
+                                        className="backoffice-drag-handle"
+                                        type="button"
+                                        draggable={!catalogOrderSaving}
+                                        onDragStart={(event) => {
+                                          event.dataTransfer.effectAllowed = "move";
+                                          event.dataTransfer.setData("text/plain", item.id);
+                                          setDraggingCatalogItemId(item.id);
+                                        }}
+                                        onDragEnd={() => setDraggingCatalogItemId("")}
+                                        aria-label={`Arrastrar ${item.name} para reordenar`}
+                                        title="Arrastrar para reordenar"
+                                        disabled={catalogOrderSaving}
+                                      >
+                                        <GripVertical size={16} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => moveCatalogItem(familyProductItems, item.id, -1, "mealpreps familiares")}
+                                        aria-label={`Subir ${item.name}`}
+                                        title="Subir"
+                                        disabled={catalogOrderSaving || familyIndex === 0}
+                                      >
+                                        <ArrowUp size={16} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => moveCatalogItem(familyProductItems, item.id, 1, "mealpreps familiares")}
+                                        aria-label={`Bajar ${item.name}`}
+                                        title="Bajar"
+                                        disabled={catalogOrderSaving || familyIndex === familyProductItems.length - 1}
+                                      >
+                                        <ArrowDown size={16} />
+                                      </button>
+                                      <button type="button" onClick={() => openFamilyProductForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
+                                        <Pencil size={16} />
+                                      </button>
+                                      <button type="button" onClick={() => removeMenuItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={adminSaving || catalogOrderSaving}>
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  </article>
+                                );
+                              })}
                             </div>
                           ) : (
                             <div className="backoffice-catalog-empty">
@@ -10840,7 +11073,7 @@ function App() {
                                 <section className="backoffice-editor-section" aria-labelledby="family-publication-title">
                                   <header>
                                     <p className="eyebrow">Publicación</p>
-                                    <h4 id="family-publication-title">Visibilidad y orden</h4>
+                                  <h4 id="family-publication-title">Visibilidad</h4>
                                   </header>
                                   <details className="backoffice-advanced-fields" open>
                                     <summary>Ajustes del producto</summary>
@@ -10853,10 +11086,6 @@ function App() {
                                       <label>
                                         Dirección en la tienda
                                         <input name="slug" value={menuForm.slug} onChange={updateMenuForm} placeholder="apple-golden-chicken…" />
-                                      </label>
-                                      <label>
-                                        Posición en la tienda
-                                        <input name="displayOrder" type="number" step="1" value={menuForm.displayOrder} onChange={updateMenuForm} />
                                       </label>
                                       <label>
                                         Texto del botón

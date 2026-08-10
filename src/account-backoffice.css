@@ -2647,7 +2647,29 @@
 }
 
 .backoffice-catalog-list .backoffice-card-actions {
-  min-width: 80px;
+  min-width: 184px;
+  flex-wrap: nowrap;
+}
+
+.backoffice-catalog-list .backoffice-card-actions button:disabled,
+.backoffice-dish-actions .backoffice-icon-command:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.backoffice-drag-handle {
+  color: rgba(35, 30, 27, 0.5);
+  cursor: grab;
+}
+
+.backoffice-drag-handle:active {
+  cursor: grabbing;
+}
+
+.backoffice-menu-card.is-dragging,
+.included-editor-card.is-dragging {
+  border-color: rgba(142, 38, 60, 0.5);
+  opacity: 0.54;
 }
 
 .backoffice-catalog-empty {
@@ -3378,6 +3400,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .backoffice-icon-command {
@@ -3968,6 +3992,14 @@
 
   .backoffice-dish-actions {
     justify-content: flex-end;
+  }
+
+  .backoffice-catalog-list .backoffice-card-actions {
+    min-width: 76px;
+    max-width: 76px;
+    gap: 4px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .backoffice-editing-context {
