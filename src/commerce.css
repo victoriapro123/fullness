@@ -4362,6 +4362,26 @@
   }
 }
 
+/* Family products use the same single-column card flow as plans on mobile. */
+@media (max-width: 760px) {
+  .route-shop .shop-family-grid.shop-catalog-grid {
+    grid-template-columns: minmax(0, 600px) !important;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    justify-content: center;
+    overflow: clip;
+    padding: 0;
+    scroll-padding-inline: 0;
+    scroll-snap-type: none;
+  }
+
+  .route-shop .shop-family-grid.shop-catalog-grid .shop-family-card {
+    width: 100%;
+    max-width: 600px;
+    scroll-snap-align: none;
+  }
+}
+
 /* The community CTA stays quiet over the editorial photograph instead of competing with it. */
 .route-shop .shop-community-band > a {
   border-color: rgba(244, 234, 219, 0.68) !important;
