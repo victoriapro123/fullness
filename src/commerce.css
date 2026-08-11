@@ -3278,7 +3278,7 @@
   opacity: 1 !important;
   filter: grayscale(1) brightness(0.42) contrast(1.08) !important;
   transform: translate(0, -50%) !important;
-  rotate: 0deg !important;
+  rotate: 90deg !important;
   scale: 1 1 !important;
 }
 

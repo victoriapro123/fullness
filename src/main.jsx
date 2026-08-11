@@ -112,7 +112,7 @@ import landingCarrotSrc from "./assets/landing-illustrations/zanahoria.png";
 import landingMealPrepCelerySrc from "./assets/landing-illustrations/apio-meal-prep.png";
 import landingMealPrepBeansSrc from "./assets/landing-illustrations/porotos-meal-prep.png";
 import shopPlansCauliflowerIllustrationSrc from "./assets/coliflor-hero-planes.png";
-import shopHeroBoxDarkCutoutSrc from "./assets/ecommerce/fullness-hero-box-dark-cutout-v2.png";
+import shopHeroBoxCuratedCutoutSrc from "./assets/ecommerce/fullness-hero-box-curated-cutout-v1.png";
 import ceciliaStoryHeroSrc from "./assets/cecilia-salas-fullness-hero-v2.png";
 import aboutHeroBotanicalSrc from "./assets/about/nosotros-hero-ilustracion-alpha.png";
 import aboutBeetSrc from "./assets/about/betarraga-nosotros-alpha.png";
@@ -1208,7 +1208,7 @@ function createDefaultShopSettings() {
     heroEyebrow: "Nutrir desde la raíz",
     heroTitle: "Alimentación consciente, organizada para toda la semana.",
     heroBody: "Mealpreps diseñados por chef y nutricionista para que comer bien sea simple, práctico y delicioso.",
-    heroImageUrl: shopHeroBoxDarkCutoutSrc,
+    heroImageUrl: shopHeroBoxCuratedCutoutSrc,
     heroImageStoragePath: "",
     heroPrimaryLabel: "Ver planes semanales",
     heroSecondaryLabel: "Suscribirme",
@@ -2867,8 +2867,12 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
       : settings.subscriptionCtaLabel;
   const heroFallbackProduct = catalogPlans[0] || familyProducts[0] || null;
   const configuredHeroImage = settings.heroImageUrl || "";
-  const heroImage = configuredHeroImage.includes(opaqueMealPrepHeroAssetToken)
-    ? shopHeroBoxDarkCutoutSrc
+  const heroImageUsesPreviousDefault = [
+    opaqueMealPrepHeroAssetToken,
+    "fullness-hero-box-dark-cutout-v2"
+  ].some((assetToken) => configuredHeroImage.includes(assetToken));
+  const heroImage = heroImageUsesPreviousDefault
+    ? shopHeroBoxCuratedCutoutSrc
     : configuredHeroImage || getProductImage(heroFallbackProduct);
   const heroMetrics = settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
