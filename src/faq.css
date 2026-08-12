@@ -6,7 +6,7 @@
   color: #f4eadb;
   background:
     radial-gradient(circle at 88% 8%, rgba(184, 120, 120, 0.12), transparent 28%),
-    linear-gradient(180deg, #090806 0%, #0b0907 54%, #090806 100%);
+    linear-gradient(180deg, var(--fullness-dark) 0%, var(--fullness-dark) 54%, var(--fullness-dark) 100%);
 }
 
 .faq-hero {

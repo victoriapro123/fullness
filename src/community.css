@@ -276,7 +276,7 @@
 
 .community-page-features {
   padding: clamp(54px, 6vw, 92px) clamp(32px, 5vw, 86px);
-  background: #0b0a08;
+  background: var(--fullness-dark);
   border-bottom: 1px solid rgba(184, 120, 120, 0.18);
 }
 
@@ -352,7 +352,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   min-height: clamp(300px, 34vw, 520px);
-  background: #0b0a08;
+  background: var(--fullness-dark);
 }
 
 .community-gallery img {
@@ -370,7 +370,7 @@
   padding: clamp(56px, 6vw, 96px) clamp(32px, 5vw, 86px);
   background:
     radial-gradient(circle at 84% 28%, rgba(184, 120, 120, 0.12), transparent 34%),
-    #0b0a08;
+    var(--fullness-dark);
   border-top: 1px solid rgba(184, 120, 120, 0.18);
 }
 
@@ -666,7 +666,7 @@
 
 .community-page-hero {
   isolation: isolate;
-  background: #090806 !important;
+  background: var(--fullness-dark) !important;
 }
 
 .community-page {

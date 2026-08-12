@@ -1,6 +1,6 @@
 /* Pagina Nosotros: una unica composicion editorial aislada del CSS historico. */
 .about-v2 {
-  --about-v2-dark: #090806;
+  --about-v2-dark: var(--fullness-dark);
   --about-v2-ink: #18120f;
   --about-v2-paper: #f4eadb;
   --about-v2-accent: #b87878;

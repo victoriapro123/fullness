@@ -2,6 +2,7 @@
    colores transversales; evita repetir hexadecimales en cada módulo. */
 :root {
   --fullness-dark: #151515;
+  --fullness-dark-rgb: 21, 21, 21;
   --fullness-plum: #2a1422;
   --fullness-rose: #a98880;
   --fullness-eucalyptus: #a7bba6;
@@ -53,7 +54,8 @@ body {
 
 /* Navegación: ciruela de fondo y palo de rosa para la lectura del menú. */
 .site-header {
-  background: var(--fullness-plum);
+  background: var(--fullness-plum) !important;
+  opacity: 1;
   border-bottom-color: rgba(169, 136, 128, 0.38);
 }
 
@@ -139,7 +141,7 @@ footer {
   color: rgba(242, 237, 230, 0.82);
   background:
     radial-gradient(circle at 78% -10%, rgba(167, 187, 166, 0.1), transparent 30%),
-    linear-gradient(180deg, var(--fullness-dark), #101010) !important;
+    linear-gradient(180deg, var(--fullness-dark), var(--fullness-dark)) !important;
   border-top-color: rgba(169, 136, 128, 0.28) !important;
 }
 
@@ -174,7 +176,7 @@ footer .footer-column a:focus-visible,
 /* Tienda: las superficies claras usan marfil neutro y los acentos, verde. */
 .shop-page-shell {
   --shop-dark: var(--fullness-dark);
-  --shop-dark-soft: #1d171b;
+  --shop-dark-soft: var(--fullness-dark);
   --shop-cream: var(--fullness-cream);
   --shop-paper: var(--fullness-cream);
   --shop-ink: var(--fullness-dark);

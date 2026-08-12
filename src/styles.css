@@ -925,7 +925,7 @@ footer strong {
   }
 }
 :root {
-  --editorial-black: #090806;
+  --editorial-black: var(--fullness-dark);
   --editorial-copper: #b87878;
 }
 
@@ -1005,7 +1005,7 @@ html[data-viewport-mode="desktop"] .site-header .viewport-mode-toggle {
 
 .member-link,
 .icon-button {
-  background: rgba(9, 8, 6, 0.46);
+  background: rgba(var(--fullness-dark-rgb), 0.46);
   border-color: rgba(184, 120, 120, 0.46);
 }
 
@@ -1103,7 +1103,7 @@ footer {
   padding: clamp(44px, 5vw, 78px) clamp(32px, 5vw, 96px) 26px !important;
   background:
     radial-gradient(circle at 78% -10%, rgba(244, 234, 219, 0.08), transparent 30%),
-    linear-gradient(180deg, #090908 0%, #060605 100%) !important;
+    linear-gradient(180deg, var(--fullness-dark) 0%, var(--fullness-dark) 100%) !important;
   border-top: 1px solid rgba(244, 234, 219, 0.1) !important;
 }
 

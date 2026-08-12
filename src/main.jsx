@@ -2735,7 +2735,7 @@ function PresetPlanMenuNotice({ product }) {
   );
 }
 
-function MonthlyPlanWeekList({ product, onOpenWeek }) {
+function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
   const weeklyPlans = [...(product.weeklyPlans || [])]
     .filter(Boolean)
     .sort((left, right) => Number(left.weekPosition || 0) - Number(right.weekPosition || 0));
@@ -2753,6 +2753,24 @@ function MonthlyPlanWeekList({ product, onOpenWeek }) {
             <h4>{formatDisplayTitle(weeklyPlan.name)}</h4>
             <p>{formatDisplayDescription(weeklyPlan.description)}</p>
             <small>{formatDisplayDescription(weeklyPlan.servingLabel || "6 mealpreps")}</small>
+            <div className="monthly-plan-week-meals" aria-label={`6 mealpreps de ${weeklyPlan.name}`}>
+              {(weeklyPlan.includedItems || []).map((meal, mealIndex) => (
+                <button
+                  key={meal.id || meal.name || mealIndex}
+                  className="monthly-plan-week-meal"
+                  type="button"
+                  onClick={(event) => onOpenMeal?.(weeklyPlan, meal, event)}
+                >
+                  <HoverImage
+                    primary={getMealImage(meal, mealIndex)}
+                    secondary={getMealSecondaryImage(meal, mealIndex)}
+                    alt={meal.name}
+                  />
+                  <span>{normalizeMealprepCopy(meal.tag || "Mealprep")}</span>
+                  <strong>{formatDisplayTitle(meal.name)}</strong>
+                </button>
+              ))}
+            </div>
           </div>
           <button className="shop-outline-button" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
             Ver semana
@@ -3158,9 +3176,10 @@ function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefi
           {isMonthlyPlan && (
             <div className="product-lightbox-block monthly-plan-lightbox-block">
               <h3>{formatDisplayTitle("Las 4 semanas del plan")}</h3>
-              <p>Abre una semana para revisar sus 6 mealpreps y luego entra a cada preparación.</p>
+              <p>Revisa los 24 mealpreps organizados en cuatro semanas cerradas.</p>
               <MonthlyPlanWeekList
                 product={product}
+                onOpenMeal={(weeklyPlan, meal, event) => onOpenMeal(weeklyPlan, meal, event, { purchaseProduct: product })}
                 onOpenWeek={(weeklyPlan) => onOpenProduct?.(weeklyPlan, { parentMonthly: product })}
               />
             </div>
@@ -3206,7 +3225,7 @@ function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefi
   );
 }
 
-function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBenefit }) {
+function MealPrepQuickView({ meal, parentProduct, purchaseProduct = parentProduct, onAddParent, onClose, onOpenBenefit }) {
   const benefitTags = getBenefitTags(meal);
   const benefits = getProductBenefits(meal);
 
@@ -3269,11 +3288,11 @@ function MealPrepQuickView({ meal, parentProduct, onAddParent, onClose, onOpenBe
             <p className="product-allergens">{formatAllergenCopy(meal.allergens)}</p>
           </div>
 
-          {parentProduct && (
+          {purchaseProduct && (
             <div className="product-lightbox-actions single-action">
-              <button className="primary-button" type="button" onClick={() => onAddParent(parentProduct)}>
+              <button className="primary-button" type="button" onClick={() => onAddParent(purchaseProduct)}>
                 <Plus size={18} />
-                {parentProduct.purchaseLabel || "Agregar plan completo"}
+                {purchaseProduct.purchaseLabel || "Agregar plan completo"}
               </button>
             </div>
           )}
@@ -3405,9 +3424,10 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
         {isMonthlyPlan && (
           <div className="product-detail-panel product-detail-included monthly-plan-detail-panel">
             <h2>{formatDisplayTitle("Las 4 semanas del plan")}</h2>
-            <p>Abre una semana para revisar su menú de 6 mealpreps.</p>
+            <p>Las 24 preparaciones están organizadas en cuatro semanas cerradas de 6 mealpreps.</p>
             <MonthlyPlanWeekList
               product={product}
+              onOpenMeal={(weeklyPlan, meal, event) => onOpenMeal(weeklyPlan, meal, event, { purchaseProduct: product })}
               onOpenWeek={(weeklyPlan) => onOpenProduct?.(weeklyPlan, { parentMonthly: product })}
             />
           </div>
@@ -3548,7 +3568,7 @@ function IntroScrollSequence() {
         const renderedY = (canvasHeight - renderedHeight) / 2;
         context.imageSmoothingEnabled = true;
         context.imageSmoothingQuality = "high";
-        context.fillStyle = "#020403";
+        context.fillStyle = "#151515";
         context.fillRect(0, 0, canvasWidth, canvasHeight);
         context.drawImage(frame, renderedX, renderedY, renderedWidth, renderedHeight);
         canvas.dataset.frameIndex = String(frameIndex);
@@ -8268,6 +8288,9 @@ function App() {
     [products]
   );
   const mealPreviewParent = mealPreview?.parentSlug ? productsBySlug.get(mealPreview.parentSlug) : null;
+  const mealPreviewPurchaseProduct = mealPreview?.purchaseProductSlug
+    ? productsBySlug.get(mealPreview.purchaseProductSlug)
+    : mealPreviewParent;
   const mealPreviewItem = mealPreviewParent?.includedItems?.find((meal) =>
     (meal.id || meal.name) === mealPreview?.mealId
   );
@@ -8372,14 +8395,18 @@ function App() {
     }, 2200);
   }
 
-  function openMealQuickView(parentProduct, meal, event) {
+  function openMealQuickView(parentProduct, meal, event, { purchaseProduct = null } = {}) {
     event?.preventDefault();
     event?.stopPropagation();
     const parentSlug = getProductSlug(parentProduct);
     const mealId = meal?.id || meal?.name;
     if (!parentSlug || !mealId) return;
 
-    setMealPreview({ parentSlug, mealId });
+    setMealPreview({
+      parentSlug,
+      mealId,
+      purchaseProductSlug: purchaseProduct ? getProductSlug(purchaseProduct) : ""
+    });
     setMenuOpen(false);
   }
 
@@ -9932,6 +9959,7 @@ function App() {
         <MealPrepQuickView
           meal={mealPreviewItem}
           parentProduct={mealPreviewParent}
+          purchaseProduct={mealPreviewPurchaseProduct}
           onAddParent={addToCart}
           onClose={() => setMealPreview(null)}
           onOpenBenefit={setBenefitPreview}
