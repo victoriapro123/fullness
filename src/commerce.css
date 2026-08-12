@@ -155,17 +155,17 @@
   width: 100%;
   min-height: 46px;
   margin-top: 4px;
-  border-color: var(--shop-dark) !important;
+  border-color: var(--fullness-dark) !important;
   color: var(--fullness-cream) !important;
-  background: var(--shop-dark) !important;
+  background: var(--fullness-dark) !important;
   white-space: nowrap;
 }
 
 .product-lightbox .monthly-plan-week-action:hover,
 .product-lightbox .monthly-plan-week-action:focus-visible {
-  border-color: var(--shop-burgundy-deep) !important;
+  border-color: var(--fullness-plum) !important;
   color: var(--fullness-cream) !important;
-  background: var(--shop-burgundy-deep) !important;
+  background: var(--fullness-plum) !important;
 }
 
 .route-shop .monthly-plan-week-meals {
