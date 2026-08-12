@@ -147,7 +147,7 @@
   line-height: 1.45;
 }
 
-.route-shop .shop-plans-section .monthly-plan-week-action {
+.route-shop .product-lightbox .monthly-plan-week-action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,8 +161,8 @@
   white-space: nowrap;
 }
 
-.route-shop .shop-plans-section .monthly-plan-week-action:hover,
-.route-shop .shop-plans-section .monthly-plan-week-action:focus-visible {
+.route-shop .product-lightbox .monthly-plan-week-action:hover,
+.route-shop .product-lightbox .monthly-plan-week-action:focus-visible {
   border-color: var(--shop-burgundy-deep);
   color: var(--fullness-cream);
   background: var(--shop-burgundy-deep);
@@ -283,7 +283,7 @@
     aspect-ratio: 1.18 / 1;
   }
 
-  .route-shop .shop-plans-section .monthly-plan-week-action {
+  .route-shop .product-lightbox .monthly-plan-week-action {
     min-height: 48px;
     margin-top: 6px;
   }
