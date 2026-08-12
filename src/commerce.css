@@ -147,7 +147,7 @@
   line-height: 1.45;
 }
 
-.route-shop .monthly-plan-week-action {
+.route-shop .shop-plans-section .monthly-plan-week-action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +155,17 @@
   width: 100%;
   min-height: 46px;
   margin-top: 4px;
+  border-color: var(--shop-dark);
+  color: var(--fullness-cream);
+  background: var(--shop-dark);
   white-space: nowrap;
+}
+
+.route-shop .shop-plans-section .monthly-plan-week-action:hover,
+.route-shop .shop-plans-section .monthly-plan-week-action:focus-visible {
+  border-color: var(--shop-burgundy-deep);
+  color: var(--fullness-cream);
+  background: var(--shop-burgundy-deep);
 }
 
 .route-shop .monthly-plan-week-meals {
@@ -273,7 +283,7 @@
     aspect-ratio: 1.18 / 1;
   }
 
-  .route-shop .monthly-plan-week-action {
+  .route-shop .shop-plans-section .monthly-plan-week-action {
     min-height: 48px;
     margin-top: 6px;
   }
