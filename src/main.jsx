@@ -2759,23 +2759,23 @@ function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
                   key={meal.id || meal.name || mealIndex}
                   className="monthly-plan-week-meal"
                   type="button"
+                  aria-label={`Ver detalle de ${formatDisplayTitle(meal.name)}`}
                   onClick={(event) => onOpenMeal?.(weeklyPlan, meal, event)}
                 >
                   <HoverImage
                     primary={getMealImage(meal, mealIndex)}
                     secondary={getMealSecondaryImage(meal, mealIndex)}
-                    alt={meal.name}
+                    alt=""
                   />
-                  <span>{normalizeMealprepCopy(meal.tag || "Mealprep")}</span>
-                  <strong>{formatDisplayTitle(meal.name)}</strong>
+                  <span className="monthly-plan-week-meal-name">{formatDisplayTitle(meal.name)}</span>
                 </button>
               ))}
             </div>
+            <button className="shop-outline-button monthly-plan-week-action" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
+              Ir a la semana
+              <ArrowUpRight size={16} />
+            </button>
           </div>
-          <button className="shop-outline-button" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
-            Ver semana
-            <ArrowUpRight size={16} />
-          </button>
         </article>
       ))}
     </div>
