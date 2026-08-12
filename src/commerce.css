@@ -168,14 +168,14 @@
   background: var(--fullness-plum) !important;
 }
 
-.route-shop .monthly-plan-week-meals {
+.monthly-plan-week-meals {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 8px;
 }
 
-.route-shop .monthly-plan-week-meal {
+.monthly-plan-week-meal {
   position: relative;
   display: block;
   min-width: 0;
@@ -188,11 +188,11 @@
   overflow: hidden;
 }
 
-.route-shop .monthly-plan-week-meal .hover-image-frame {
+.monthly-plan-week-meal .hover-image-frame {
   aspect-ratio: 1.34 / 1;
 }
 
-.route-shop .monthly-plan-week-meal-name {
+.monthly-plan-week-meal-name {
   position: absolute;
   left: 0;
   top: 0;
@@ -213,22 +213,22 @@
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
-.route-shop .monthly-plan-week-meal:focus-visible {
+.monthly-plan-week-meal:focus-visible {
   outline: 2px solid var(--fullness-eucalyptus);
   outline-offset: 2px;
 }
 
-.route-shop .monthly-plan-week-meal:hover .hover-image-primary {
+.monthly-plan-week-meal:hover .hover-image-primary {
   opacity: 0;
 }
 
-.route-shop .monthly-plan-week-meal:hover .hover-image-secondary {
+.monthly-plan-week-meal:hover .hover-image-secondary {
   opacity: 1;
   transform: scale(1.03);
 }
 
-.route-shop .monthly-plan-week-meal:hover .monthly-plan-week-meal-name,
-.route-shop .monthly-plan-week-meal:focus-visible .monthly-plan-week-meal-name {
+.monthly-plan-week-meal:hover .monthly-plan-week-meal-name,
+.monthly-plan-week-meal:focus-visible .monthly-plan-week-meal-name {
   opacity: 1;
   transform: translateY(0);
 }
@@ -273,13 +273,13 @@
     padding: 16px;
   }
 
-  .route-shop .monthly-plan-week-meals {
+  .monthly-plan-week-meals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin-top: 10px;
   }
 
-  .route-shop .monthly-plan-week-meal .hover-image-frame {
+  .monthly-plan-week-meal .hover-image-frame {
     aspect-ratio: 1.18 / 1;
   }
 
