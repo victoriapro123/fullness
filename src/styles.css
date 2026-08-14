@@ -1499,12 +1499,12 @@ footer::before {
   }
 }
 main {
-  --hero-bg-current-rgb: 5 5 5;
-  --hero-bg-current-end-rgb: 9 8 6;
+  --hero-bg-current-rgb: var(--fullness-dark-rgb);
+  --hero-bg-current-end-rgb: var(--fullness-dark-rgb);
   --hero-bg-rgb: var(--hero-bg-current-rgb);
   --hero-bg-end-rgb: var(--hero-bg-current-end-rgb);
-  --section-dark-bg-current-rgb: 5 6 4;
-  --section-dark-bg-current-end-rgb: 7 6 5;
+  --section-dark-bg-current-rgb: var(--fullness-dark-rgb);
+  --section-dark-bg-current-end-rgb: var(--fullness-dark-rgb);
   --section-dark-bg-rgb: var(--section-dark-bg-current-rgb);
   --section-dark-bg-end-rgb: var(--section-dark-bg-current-end-rgb);
   --hero-glow-warm-rgb: 142 72 45;

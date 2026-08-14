@@ -150,7 +150,10 @@ footer strong {
   color: var(--fullness-eucalyptus);
 }
 
-footer .footer-column a,
+footer .footer-column a {
+  color: var(--fullness-rose) !important;
+}
+
 footer .footer-contact span,
 footer p,
 .footer-brand p {
