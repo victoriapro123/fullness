@@ -68,6 +68,33 @@ body {
   color: var(--fullness-eucalyptus);
 }
 
+/* El menú hamburguesa conserva la escala táctil, pero comparte la voz visual
+   de la navegación de escritorio: palo de rosa, Avenir y mayúsculas ligeras. */
+.mobile-menu {
+  color: var(--fullness-rose);
+}
+
+.mobile-menu > a,
+.mobile-menu > .member-link {
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: inherit;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+
+.mobile-menu > .member-link {
+  color: var(--fullness-rose) !important;
+}
+
+.mobile-menu > a:hover,
+.mobile-menu > a:focus-visible,
+.mobile-menu > .member-link:hover,
+.mobile-menu > .member-link:focus-visible {
+  color: var(--fullness-eucalyptus) !important;
+}
+
 .member-link,
 .icon-button,
 .intro-replay-button {

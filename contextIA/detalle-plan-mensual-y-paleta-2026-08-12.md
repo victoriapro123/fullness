@@ -14,3 +14,4 @@ Fecha: 2026-08-12
 - El header de escritorio y móvil usa el mismo fondo ciruela opaco de la paleta de Cecilia: `#2A1422`.
 - Ningún fondo usa negro absoluto: las superficies oscuras de tienda, landing, comunidad, FAQ, overlays y footer usan el negro operativo `#151515` o una transparencia de ese mismo color.
 - Los enlaces textuales del footer usan el mismo palo de rosa `#A98880` de la navegación; el hover conserva el eucalipto. En móvil, los fondos oscuros de `main` y sus secciones heredan explícitamente `#151515`, evitando los valores casi negros heredados.
+- El menú hamburguesa móvil conserva el fondo ciruela y el tamaño táctil, pero todos sus enlaces —incluido Acceso miembros— comparten con la navegación de escritorio la familia de tipografía, peso 500, mayúsculas, espaciado y palo de rosa `#A98880`; al hover o foco pasan a eucalipto.
