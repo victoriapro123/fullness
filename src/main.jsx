@@ -3476,8 +3476,12 @@ function IntroScrollSequence() {
   const playbackRef = useRef(null);
   const touchStartYRef = useRef(null);
   const useCanvasFrames = isTabletIntroViewport();
+  const useHighDensityMobileFrames =
+    useCanvasFrames && isMobileIntroViewport() && introScrollFrameSources.length;
   const introFrameSources =
-    useCanvasFrames && introMobileFrameSources.length
+    useHighDensityMobileFrames
+      ? introScrollFrameSources
+      : useCanvasFrames && introMobileFrameSources.length
       ? introMobileFrameSources
       : introScrollFrameSources;
 
@@ -3497,8 +3501,12 @@ function IntroScrollSequence() {
       const root = document.documentElement;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const isTabletIntro = isTabletIntroViewport();
-      const frameBufferBehind = isTabletIntro ? 44 : 32;
-      const frameBufferAhead = isTabletIntro ? 80 : 64;
+      const isHighDensityMobileIntro = isMobileIntroViewport();
+      /* Los cuadros de 1280 px mejoran la nitidez del teléfono. Se conserva un
+         buffer más contenido que la variante 720 px para no elevar la memoria
+         de decodificación ni sacrificar la fluidez del scrub táctil. */
+      const frameBufferBehind = isHighDensityMobileIntro ? 12 : isTabletIntro ? 44 : 32;
+      const frameBufferAhead = isHighDensityMobileIntro ? 20 : isTabletIntro ? 80 : 64;
       const clampProgress = (progress) => Math.min(1, Math.max(0, progress));
       const setHandoffState = (active) => {
         const wasActive = root.classList.contains("intro-scroll-handoff");
@@ -3547,29 +3555,37 @@ function IntroScrollSequence() {
         return cacheEntry;
       };
       const drawFrameToCanvas = (canvas, frame, frameIndex) => {
-        const canvasWidth = Math.max(1, Math.round(canvas.clientWidth || window.innerWidth));
-        const canvasHeight = Math.max(1, Math.round(canvas.clientHeight || window.innerHeight));
-        const dimensionsChanged = canvas.width !== canvasWidth || canvas.height !== canvasHeight;
+        const canvasCssWidth = Math.max(1, Math.round(canvas.clientWidth || window.innerWidth));
+        const canvasCssHeight = Math.max(1, Math.round(canvas.clientHeight || window.innerHeight));
+        const pixelRatio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+        const canvasWidth = Math.max(1, Math.round(canvasCssWidth * pixelRatio));
+        const canvasHeight = Math.max(1, Math.round(canvasCssHeight * pixelRatio));
+        const dimensionsChanged =
+          canvas.width !== canvasWidth ||
+          canvas.height !== canvasHeight ||
+          Number(canvas.dataset.pixelRatio ?? 1) !== pixelRatio;
         const renderedFrameIndex = Number(canvas.dataset.frameIndex ?? -1);
         if (!dimensionsChanged && renderedFrameIndex === frameIndex) return false;
 
         if (dimensionsChanged) {
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
+          canvas.dataset.pixelRatio = String(pixelRatio);
         }
 
         const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
         if (!context || !frame.naturalWidth || !frame.naturalHeight) return false;
 
-        const coverScale = Math.max(canvasWidth / frame.naturalWidth, canvasHeight / frame.naturalHeight);
+        const coverScale = Math.max(canvasCssWidth / frame.naturalWidth, canvasCssHeight / frame.naturalHeight);
         const renderedWidth = frame.naturalWidth * coverScale;
         const renderedHeight = frame.naturalHeight * coverScale;
-        const renderedX = (canvasWidth - renderedWidth) / 2;
-        const renderedY = (canvasHeight - renderedHeight) / 2;
+        const renderedX = (canvasCssWidth - renderedWidth) / 2;
+        const renderedY = (canvasCssHeight - renderedHeight) / 2;
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
         context.imageSmoothingEnabled = true;
         context.imageSmoothingQuality = "high";
         context.fillStyle = "#151515";
-        context.fillRect(0, 0, canvasWidth, canvasHeight);
+        context.fillRect(0, 0, canvasCssWidth, canvasCssHeight);
         context.drawImage(frame, renderedX, renderedY, renderedWidth, renderedHeight);
         canvas.dataset.frameIndex = String(frameIndex);
         return true;
