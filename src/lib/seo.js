@@ -212,7 +212,7 @@ function buildOrganizationSchema() {
     logo: `${SITE_URL}/assets/brand/fullness-lab-horizontal-contrast-2026.png`,
     image: DEFAULT_SOCIAL_IMAGE,
     telephone: "+56 9 9658 8199",
-    email: "hola@fullnesslab.com",
+    email: "cecilia@fullnesslab.com",
     address: {
       "@type": "PostalAddress",
       ...BUSINESS_ADDRESS

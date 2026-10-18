@@ -9573,7 +9573,7 @@ function App() {
       <address className="footer-column footer-contact">
         <h3>Contacto</h3>
         <a href={whatsappUrl} target="_blank" rel="noreferrer">+56 9 9658 8199</a>
-        <a href="mailto:hola@fullnesslab.com">hola@fullnesslab.com</a>
+        <a href="mailto:cecilia@fullnesslab.com">cecilia@fullnesslab.com</a>
         <span>Av. La Dehesa 1844, local 204</span>
         <span>Lo Barnechea, Santiago</span>
       </address>

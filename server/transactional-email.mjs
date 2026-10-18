@@ -266,7 +266,7 @@ async function sendEmailOnce({
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: cleanText(process.env.EMAIL_FROM) || "Fullness Lab <hola@fullnesslab.com>",
+        from: cleanText(process.env.EMAIL_FROM) || "Fullness Lab <cecilia@fullnesslab.com>",
         reply_to: cleanText(process.env.EMAIL_REPLY_TO) || undefined,
         to: [recipientEmail],
         subject,

@@ -14,8 +14,8 @@ const originalFetch = globalThis.fetch;
 
 try {
   Object.assign(process.env, {
-    EMAIL_FROM: "Fullness Lab <hola@fullnesslab.com>",
-    EMAIL_REPLY_TO: "hola@fullnesslab.com",
+    EMAIL_FROM: "Fullness Lab <cecilia@fullnesslab.com>",
+    EMAIL_REPLY_TO: "cecilia@fullnesslab.com",
     EMAIL_TEST_RECIPIENT: "qa@fullnesslab.com",
     MERCADOPAGO_TEST_MODE: "false",
     ORDER_NOTIFICATION_RECIPIENT: "cecilia@fullnesslab.com",
