@@ -31,6 +31,7 @@ const env = {
   CORE360_COMMERCE_SYNC_ENABLED: "true",
   CORE360_COMMERCE_SYNC_FROM: `${qa.issuedOn}T00:00:00.000Z`,
   CORE360_COMMERCE_TEST_MODE: "true",
+  CORE360_COMMERCE_REQUEST_TIMEOUT_MS: "30000",
   CORE360_COMMERCE_TOKEN: qa.bearerToken,
   CORE360_COMMERCE_CUSTOMER_MODE: "identified",
   CORE360_FISCAL_INTENT: "pending",
@@ -80,6 +81,18 @@ const mapping = {
 const event = buildCore360PaymentApprovedEvent({items: sourceItems, order: sourceOrder, payment: sourcePayment});
 const updates = [];
 const supabase = mockSupabase({mapping, updates});
+const coreTraffic = [];
+const tracedFetch = async (url, request) => {
+  const response = await fetch(url, request);
+  const payload = await response.clone().json().catch(() => null);
+  coreTraffic.push({
+    path: new URL(url).pathname,
+    request: safeOrderTrace(request),
+    responseCode: payload?.code || payload?.error?.code || null,
+    statusCode: response.status
+  });
+  return response;
+};
 
 const catalog = await readCore360Catalog({
   env,
@@ -147,11 +160,13 @@ assert.equal(integer(preview.result?.totalMinor, "totalMinor del preview"), qa.g
 const firstDelivery = await deliverCore360OutboxEvent({
   env,
   event: {attempt_count: 0, id: qa.outboxId, payload: event},
+  fetchImpl: tracedFetch,
   supabase
 });
 const replayDelivery = await deliverCore360OutboxEvent({
   env,
   event: {attempt_count: 1, id: qa.outboxId, payload: event},
+  fetchImpl: tracedFetch,
   supabase
 });
 assert.ok(firstDelivery.coreOrderId, "Core360 no devolvió coreOrderId al crear la orden QA.");
@@ -199,6 +214,8 @@ await assertDuplicatePaymentIsRejected({
   mapping,
   qa,
   supabase,
+  tracedFetch,
+  coreTraffic,
   sourceItems,
   sourceOrder,
   sourcePayment
@@ -236,18 +253,40 @@ console.log(JSON.stringify({
   receiptSha256: createHash("sha256").update(serializedReceipt).digest("hex")
 }, null, 2));
 
-async function assertDuplicatePaymentIsRejected({env: qaEnv, mapping: qaMapping, qa: sourceQa, sourceItems: items, sourceOrder: order, sourcePayment: payment}) {
+async function assertDuplicatePaymentIsRejected({coreTraffic: traffic, env: qaEnv, mapping: qaMapping, qa: sourceQa, sourceItems: items, sourceOrder: order, sourcePayment: payment, tracedFetch}) {
   const duplicateOrder = {...order, id: sourceQa.duplicatePaymentExternalOrderId};
   const duplicateItems = items.map((item) => ({...item, id: sourceQa.duplicateOrderItemId}));
   const duplicateEvent = buildCore360PaymentApprovedEvent({items: duplicateItems, order: duplicateOrder, payment});
-  await assert.rejects(
-    () => deliverCore360OutboxEvent({
+  try {
+    await deliverCore360OutboxEvent({
       env: qaEnv,
       event: {attempt_count: 0, id: sourceQa.duplicateOutboxId, payload: duplicateEvent},
-      supabase: mockSupabase({mapping: qaMapping, updates: []})
-    }),
-    (error) => Number(error?.statusCode) === 409
-  );
+      fetchImpl: tracedFetch,
+      supabase: mockSupabase({mapping: qaMapping, payload: duplicateEvent, updates: []})
+    });
+  } catch (error) {
+    if (Number(error?.statusCode) === 409) return;
+    throw error;
+  }
+  const orders = traffic.filter((entry) => entry.path.endsWith("/orders"));
+  throw new Error(`DUPLICATE_PAYMENT_NOT_REJECTED ${JSON.stringify({
+    clientExternalId: duplicateEvent.customer.externalCustomerId,
+    duplicate: orders.at(-1) || null,
+    first: orders[0] || null
+  })}`);
+}
+
+function safeOrderTrace(request) {
+  try {
+    const body = JSON.parse(String(request?.body || "{}"));
+    return {
+      externalOrderId: body.externalOrderId || null,
+      partnerId: body.partnerId || null,
+      paymentReference: body.payment?.reference || null
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function assertForeignCoreCustomerIsRejected({env: qaEnv, event: qaEvent, mapping: qaMapping, qa: sourceQa}) {
@@ -270,7 +309,7 @@ async function assertForeignCoreCustomerIsRejected({env: qaEnv, event: qaEvent, 
   assert.equal(payload?.code || payload?.error?.code, "API_CUSTOMER_SCOPE");
 }
 
-function mockSupabase({mapping: qaMapping, updates: outboxUpdates}) {
+function mockSupabase({mapping: qaMapping, payload = event, updates: outboxUpdates}) {
   const customerMappings = new Map();
   let persistedCoreRequest = null;
   let persistedCoreRequestHash = null;
@@ -297,7 +336,7 @@ function mockSupabase({mapping: qaMapping, updates: outboxUpdates}) {
                   core_request: persistedCoreRequest,
                   core_request_hash: persistedCoreRequestHash,
                   id: qa.outboxId,
-                  payload: event
+                  payload
                 },
                 error: null
               })
