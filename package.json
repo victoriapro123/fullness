@@ -10,6 +10,8 @@
     "qa:seo": "node scripts/verify-seo.mjs",
     "qa:catalog": "node scripts/verify-catalog-integrity.mjs",
     "qa:checkout-emails": "node scripts/verify-order-email-flow.mjs",
+    "core360:import-mappings": "node scripts/import-core360-product-mappings.mjs",
+    "core360:verify-read": "node scripts/verify-core360-read.mjs",
     "qa:nutrition-scope": "node scripts/verify-nutrition-scope.mjs",
     "qa:parameters": "node scripts/verify-catalog-parameters.mjs",
     "remotion:studio": "remotion studio src/remotion/index.jsx",

@@ -1,9 +1,13 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
+import {enqueueCore360PaymentApproved} from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 
-const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
+const localEnvReady = Promise.all([
+  loadEnvFile(new URL("../.env.local", import.meta.url)),
+  loadEnvFile(new URL("../.core360-commerce.local", import.meta.url))
+]);
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_CART_LINES = 20;
@@ -290,11 +294,24 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
   if (paymentStatus === "approved") {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
-      .select("product_name,quantity")
+      .select("id,product_id,product_name,quantity,unit_price_clp,total_clp,product_snapshot")
       .eq("order_id", order.id);
 
     if (emailItemsError) {
       throw statusError(502, "No pudimos cargar los productos para confirmar la orden.", emailItemsError);
+    }
+
+    // Disabled by default: while false this returns before querying Supabase or Core360.
+    // A failed optional outbox must never turn a reconciled Mercado Pago payment into an error.
+    try {
+      await enqueueCore360PaymentApproved({
+        items: emailItems || [],
+        order: {...order, ...orderUpdate},
+        payment: paymentRow,
+        supabase
+      });
+    } catch (error) {
+      console.error("Core360 commerce outbox was not queued:", cleanText(error?.message));
     }
 
     emailDelivery = await sendApprovedOrderEmails({order, items: emailItems || [], supabase});
