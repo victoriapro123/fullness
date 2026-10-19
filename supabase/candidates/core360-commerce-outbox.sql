@@ -16,6 +16,7 @@ create table public.core360_product_mappings (
   tax_bps integer not null check (tax_bps between 0 and 10000),
   availability_version text,
   image_reference text,
+  image_version text,
   fulfillment_strategy text not null default 'opaque_product'
     check (fulfillment_strategy in ('opaque_product', 'components')),
   is_active boolean not null default true,
@@ -44,17 +45,24 @@ comment on table public.core360_customer_mappings is
 create table public.core360_catalog_projection (
   source_menu_item_id uuid primary key references public.menu_items(id) on delete cascade,
   core_item_id text not null,
-  product_version text not null,
-  gross_minor numeric(12, 0) not null check (gross_minor > 0),
+  core_item_available boolean not null,
+  core_sku text,
+  product_version text,
+  gross_minor numeric(12, 0) check (gross_minor > 0),
   currency text not null check (currency = 'CLP'),
-  unit text not null,
+  tax_bps integer check (tax_bps between 0 and 10000),
+  unit text,
+  quantity_milli_per_unit integer not null check (quantity_milli_per_unit > 0),
+  uom_compatible boolean,
+  factor_compatible boolean,
+  reconciliation_reason text,
   price_available boolean not null,
   observed_at timestamptz not null,
   updated_at timestamptz not null default now()
 );
 
 comment on table public.core360_catalog_projection is
-  'Proyección UUID de precio/versión Core360. No sobrescribe los textos, fotos ni composición editorial de menu_items.';
+  'Proyección UUID de precio, SKU, impuesto, UOM y versión Core360. Cuando falta el artículo o cambia UOM/factor queda no disponible, sin conservar una proyección comercial vieja ni sobrescribir textos, fotos o composición editorial de menu_items.';
 
 create table public.core360_stock_projection (
   source_menu_item_id uuid primary key references public.menu_items(id) on delete cascade,
@@ -127,7 +135,7 @@ create table public.core360_fiscal_documents (
 );
 
 create table public.core360_commerce_sync_cursors (
-  stream text primary key check (stream in ('approved_orders', 'catalog', 'stock', 'order_status')),
+  stream text primary key check (stream in ('approved_orders', 'catalog', 'stock', 'image_metadata', 'order_status')),
   cursor text,
   source_version text,
   last_polled_at timestamptz,

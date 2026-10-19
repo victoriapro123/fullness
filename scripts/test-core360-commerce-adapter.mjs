@@ -1,19 +1,23 @@
 import assert from "node:assert/strict";
 import {
   buildCore360PaymentApprovedEvent,
+  createCore360CheckoutPreviewRequest,
   createCore360OrderEventRequest,
   createCore360OrderRequest,
   deliverCore360OrderEvent,
   deliverCore360OutboxEvent,
   enqueueCore360PaymentApproved,
   isCore360CommerceReadEnabled,
+  isCore360CommerceCheckoutPreflightEnabled,
   isCore360CommercePollingEnabled,
   isCore360CommercePreviewEnabled,
   isCore360CommerceMediaProxyEnabled,
   isCore360CommerceMediaWriteEnabled,
   isCore360CommerceDeliveryEnabled,
   previewCore360Order,
+  previewCore360Checkout,
   projectCore360CommerceRead,
+  projectCore360ProductImageMetadata,
   readCore360Catalog,
   readCore360OrderStates,
   readCore360ProductImageBytes,
@@ -86,6 +90,7 @@ assert.equal(isCore360CommerceSyncEnabled({}), false);
 assert.equal(isCore360CommerceReadEnabled({}), false);
 assert.equal(isCore360CommercePollingEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
 assert.equal(isCore360CommercePreviewEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
+assert.equal(isCore360CommerceCheckoutPreflightEnabled({CORE360_COMMERCE_READ_ENABLED: "true", CORE360_COMMERCE_PREVIEW_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceMediaProxyEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceMediaWriteEnabled({CORE360_COMMERCE_MEDIA_WRITE_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceDeliveryEnabled({CORE360_COMMERCE_SYNC_ENABLED: "true"}), false);
@@ -271,11 +276,15 @@ const projection = await projectCore360CommerceRead({
       return {
         ok: true,
         json: async () => ({rows: [{
+          commercialVersion: "commercial-v1",
           currency: "CLP",
           id: "core-plan-semanal",
           inventory_enabled: false,
+          lineGrossMinor: "44900",
           price_available: true,
-          price_minor: "44900",
+          quantityMilli: "1000",
+          sku: "PLAN-SEM-001",
+          tax_bps: 1900,
           unit: "un",
           version: "commercial-v1"
         }]}),
@@ -287,7 +296,14 @@ const projection = await projectCore360CommerceRead({
   supabase: {
     from(table) {
       if (table === "core360_product_mappings") {
-        return {select: () => ({eq: async () => ({data: [approvedCoreMapping], error: null})})};
+        const query = {
+          eq() { return query; },
+          then(resolve) { return Promise.resolve({error: null}).then(resolve); }
+        };
+        return {
+          select: () => ({eq: async () => ({data: [approvedCoreMapping], error: null})}),
+          update: () => query
+        };
       }
       if (table === "core360_catalog_projection") {
         return {upsert: async (rows) => { projectionWrites.catalog.push(...rows); return {error: null}; }};
@@ -299,10 +315,183 @@ const projection = await projectCore360CommerceRead({
     }
   }
 });
-assert.deepEqual(projection, {catalogRows: 1, enabled: true, stockDetailsRead: 0, stockRows: 1});
+assert.deepEqual(projection, {catalogRows: 1, enabled: true, mappingFacts: 1, stockDetailsRead: 0, stockRows: 1, unavailable: 0});
 assert.equal(projectionWrites.catalog[0]?.gross_minor, "44900");
 assert.equal(projectionWrites.stock[0]?.inventory_managed, false);
 assert.equal(projectionWrites.stock[0]?.available_milli, null);
+
+const checkoutPreviewItem = {
+  product: {
+    core360_commercial_version: "commercial-v1",
+    core360_item_id: "44444444-4444-4444-8444-444444444444",
+    core360_quantity_milli_per_unit: 1000,
+    core360_sku: "PLAN-SEM-001",
+    core360_tax_bps: 1900,
+    core360_uom_code: "un",
+    price_clp: 44900
+  },
+  quantity: 1
+};
+assert.deepEqual(
+  await previewCore360Checkout({
+    fetchImpl: () => { throw new Error("El preflight apagado no debe llamar Core360."); },
+    items: [checkoutPreviewItem]
+  }),
+  {enabled: false, skipped: true, reason: "checkout-preflight-disabled"}
+);
+const checkoutPreviewRequest = createCore360CheckoutPreviewRequest({
+  config: {priceListId: "retail"},
+  items: [checkoutPreviewItem],
+  previewId: "preview-11111111-1111-4111-8111-111111111111"
+});
+assert.equal(checkoutPreviewRequest.order.payment.status, "unpaid");
+assert.equal(checkoutPreviewRequest.order.payment.reference, "");
+assert.equal(checkoutPreviewRequest.order.lines[0].itemId, checkoutPreviewItem.product.core360_item_id);
+assert.equal(checkoutPreviewRequest.order.lines[0].lineGrossMinor, "44900");
+let checkoutPreviewHttpCalls = 0;
+const checkoutPreview = await previewCore360Checkout({
+  env: readEnv,
+  fetchImpl: async (url, request) => {
+    checkoutPreviewHttpCalls += 1;
+    const body = JSON.parse(request.body);
+    assert.equal(body.payment.status, "unpaid");
+    assert.equal(body.payment.reference, "");
+    assert.match(url, /\/api\/commerce\/v1\/orders\/preview$/);
+    return {ok: true, json: async () => ({
+      currency: "CLP",
+      lines: [{...body.lines[0], priceAvailable: true}],
+      totalMinor: "44900",
+      version: "preview-v1"
+    }), status: 200};
+  },
+  items: [checkoutPreviewItem],
+  previewId: "preview-22222222-2222-4222-8222-222222222222"
+});
+assert.equal(checkoutPreview.enabled, true);
+assert.equal(checkoutPreviewHttpCalls, 1);
+const pendingPreparationPreview = await previewCore360Checkout({
+  env: readEnv,
+  fetchImpl: async (url, request) => {
+    const body = JSON.parse(request.body);
+    assert.match(url, /\/api\/commerce\/v1\/orders\/preview$/);
+    assert.equal(body.expectedTotalMinor, "37600");
+    assert.equal(body.lines[0]?.lineGrossMinor, "37600");
+    assert.equal(body.lines[0]?.quantityMilli, "2000");
+    assert.equal(body.partnerId, undefined);
+    assert.deepEqual(body.payment, {method: "other", reference: "", status: "unpaid"});
+    return {ok: true, json: async () => ({
+      currency: "CLP",
+      fulfillmentStatus: "pending_preparation",
+      lines: [{...body.lines[0], availableMilli: "0", priceAvailable: true}],
+      totalMinor: "37600",
+      version: "preview-pending-preparation-v1"
+    }), status: 200};
+  },
+  items: [{
+    product: {
+      ...checkoutPreviewItem.product,
+      price_clp: 18800
+    },
+    quantity: 2
+  }],
+  previewId: "preview-33333333-3333-4333-8333-333333333333"
+});
+assert.equal(pendingPreparationPreview.enabled, true);
+assert.equal(pendingPreparationPreview.result.fulfillmentStatus, "pending_preparation");
+await assert.rejects(
+  previewCore360Checkout({
+    env: readEnv,
+    fetchImpl: async () => ({
+      ok: false,
+      json: async () => ({code: "CATALOG_VERSION_CONFLICT", message: "Precio o disponibilidad cambió."}),
+      status: 409
+    }),
+    items: [checkoutPreviewItem]
+  }),
+  (error) => error.code === "CATALOG_VERSION_CONFLICT"
+);
+
+const missingProjectionWrites = {catalog: [], stock: []};
+const missingProjection = await projectCore360CommerceRead({
+  env: readEnv,
+  fetchImpl: async () => ({ok: true, json: async () => ({rows: []}), status: 200}),
+  supabase: projectionSupabase({mapping: approvedCoreMapping, writes: missingProjectionWrites})
+});
+assert.equal(missingProjection.unavailable, 1);
+assert.equal(missingProjectionWrites.catalog[0]?.core_item_available, false);
+assert.equal(missingProjectionWrites.catalog[0]?.reconciliation_reason, "missing_core_item");
+assert.equal(missingProjectionWrites.catalog[0]?.price_available, false);
+
+const unavailableProjectionWrites = {catalog: [], stock: []};
+const unavailableProjection = await projectCore360CommerceRead({
+  env: readEnv,
+  fetchImpl: async (url) => ({ok: true, json: async () => ({rows: url.includes("/products") ? [{
+    commercialVersion: "commercial-v1",
+    currency: "CLP",
+    id: "core-plan-semanal",
+    lineGrossMinor: "44900",
+    quantityMilli: "1000",
+    sale_enabled: false,
+    sku: "PLAN-SEM-001",
+    tax_bps: 1900,
+    unit: "un"
+  }] : []}), status: 200}),
+  supabase: projectionSupabase({mapping: approvedCoreMapping, writes: unavailableProjectionWrites})
+});
+assert.equal(unavailableProjection.mappingFacts, 0);
+assert.equal(unavailableProjectionWrites.catalog[0]?.core_item_available, false);
+assert.equal(unavailableProjectionWrites.catalog[0]?.reconciliation_reason, "core_item_unavailable");
+assert.equal(unavailableProjectionWrites.catalog[0]?.price_available, false);
+
+const imageUpdates = [];
+const imageMetadataRefresh = await projectCore360ProductImageMetadata({
+  env: readEnv,
+  fetchImpl: async () => ({ok: true, json: async () => ({image: {id: "image-current"}, version: 7}), status: 200}),
+  supabase: imageProjectionSupabase({mapping: approvedCoreMapping, updates: imageUpdates})
+});
+assert.equal(imageMetadataRefresh.refreshed, 1);
+assert.deepEqual(imageUpdates[0], {image_reference: "image-current", image_version: "7"});
+const imageRefresh = await projectCore360ProductImageMetadata({
+  env: readEnv,
+  fetchImpl: async () => ({ok: false, json: async () => ({code: "NOT_FOUND"}), status: 404}),
+  supabase: imageProjectionSupabase({mapping: approvedCoreMapping, updates: imageUpdates})
+});
+assert.equal(imageRefresh.refreshed, 1);
+assert.deepEqual(imageUpdates[1], {image_reference: null, image_version: null});
+
+const wakeup = {catalog: [], images: [], stock: []};
+const wakeupResult = await recoverCore360CommerceDelivery({
+  env: readEnv,
+  fetchImpl: async (url) => {
+    if (url.includes("/products/core-plan-semanal/image")) {
+      wakeup.images.push(url);
+      return {ok: true, json: async () => ({image: {id: "image-wakeup"}, version: 8}), status: 200};
+    }
+    if (url.includes("/products")) {
+      wakeup.catalog.push(url);
+      return {ok: true, json: async () => ({rows: [{
+        commercialVersion: "commercial-v1",
+        currency: "CLP",
+        id: "core-plan-semanal",
+        inventory_enabled: false,
+        lineGrossMinor: "44900",
+        quantityMilli: "1000",
+        sku: "PLAN-SEM-001",
+        tax_bps: 1900,
+        unit: "un"
+      }]}), status: 200};
+    }
+    wakeup.stock.push(url);
+    return {ok: true, json: async () => ({rows: []}), status: 200};
+  },
+  supabase: wakeupSupabase({mapping: approvedCoreMapping})
+});
+assert.equal(wakeupResult.enabled, false);
+assert.equal(wakeupResult.catalog.enabled, true);
+assert.equal(wakeupResult.images.refreshed, 1);
+assert.equal(wakeup.catalog.length, 1);
+assert.equal(wakeup.images.length, 1);
+assert.equal(wakeup.stock.length, 1);
 assert.deepEqual(
   verifyCore360ProductMappings({
     fullnessProducts: [{id: approvedItems[0].product_id}, {id: "unmapped-fullness-product"}],
@@ -751,6 +940,85 @@ function staleRecoverySupabase({event, mappings, updates}) {
         };
       }
       throw new Error(`Unexpected stale recovery table ${table}`);
+    }
+  };
+}
+
+function projectionSupabase({mapping, writes}) {
+  return {
+    from(table) {
+      if (table === "core360_product_mappings") {
+        const updateQuery = {
+          eq() { return updateQuery; },
+          then(resolve) { return Promise.resolve({error: null}).then(resolve); }
+        };
+        return {
+          select: () => ({eq: async () => ({data: [mapping], error: null})}),
+          update: () => updateQuery
+        };
+      }
+      if (table === "core360_catalog_projection") {
+        return {upsert: async (rows) => { writes.catalog.push(...rows); return {error: null}; }};
+      }
+      if (table === "core360_stock_projection") {
+        return {upsert: async (rows) => { writes.stock.push(...rows); return {error: null}; }};
+      }
+      throw new Error(`Unexpected projection table ${table}`);
+    }
+  };
+}
+
+function imageProjectionSupabase({mapping, updates}) {
+  return {
+    from(table) {
+      if (table !== "core360_product_mappings") throw new Error(`Unexpected image table ${table}`);
+      return {
+        select: () => ({eq: async () => ({data: [mapping], error: null})}),
+        update(patch) {
+          updates.push(patch);
+          const query = {
+            eq() { return query; },
+            then(resolve) { return Promise.resolve({error: null}).then(resolve); }
+          };
+          return query;
+        }
+      };
+    }
+  };
+}
+
+function wakeupSupabase({mapping}) {
+  return {
+    from(table) {
+      if (table === "core360_product_mappings") {
+        const updateQuery = {
+          eq() { return updateQuery; },
+          then(resolve) { return Promise.resolve({error: null}).then(resolve); }
+        };
+        return {
+          select: () => ({eq: async () => ({data: [mapping], error: null})}),
+          update: () => updateQuery
+        };
+      }
+      if (table === "core360_catalog_projection" || table === "core360_stock_projection") {
+        return {upsert: async () => ({error: null})};
+      }
+      if (table === "core360_commerce_sync_cursors") {
+        return {
+          select: () => ({eq: () => ({maybeSingle: async () => ({data: null, error: null})})}),
+          upsert: async () => ({error: null})
+        };
+      }
+      if (table === "core360_commerce_outbox") {
+        const query = {
+          eq() { return query; },
+          not() { return query; },
+          order() { return query; },
+          limit: async () => ({data: [], error: null})
+        };
+        return {select: () => query};
+      }
+      throw new Error(`Unexpected wakeup table ${table}`);
     }
   };
 }

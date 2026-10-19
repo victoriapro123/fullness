@@ -24,7 +24,7 @@ export default async function handler(request, response) {
     });
     const {data: mapping, error} = await supabase
       .from("core360_product_mappings")
-      .select("core_item_id,image_reference")
+      .select("core_item_id,image_reference,image_version")
       .eq("source_menu_item_id", menuItemId)
       .eq("is_active", true)
       .maybeSingle();
@@ -46,6 +46,7 @@ export default async function handler(request, response) {
 
     response.status(200);
     response.setHeader("Cache-Control", "public, max-age=300");
+    if (text(mapping.image_version)) response.setHeader("ETag", `\"core360-${text(mapping.image_reference)}-${text(mapping.image_version)}\"`);
     response.setHeader("Content-Type", contentType);
     response.end(Buffer.from(image.bytes));
   } catch (error) {

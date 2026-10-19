@@ -1,6 +1,12 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
-import {deliverCore360OutboxEvent, enqueueCore360PaymentApproved, isCore360CommercePollingEnabled} from "./core360-commerce-adapter.mjs";
+import {
+  deliverCore360OutboxEvent,
+  enqueueCore360PaymentApproved,
+  isCore360CommerceCheckoutPreflightEnabled,
+  isCore360CommercePollingEnabled,
+  previewCore360Checkout
+} from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 
@@ -55,17 +61,22 @@ const LEGACY_CHECKOUT_OVERRIDES = new Map([
 
 let supabaseAdmin;
 
-export async function createCheckoutPreference({cart, fulfillment, request}) {
+export async function createCheckoutPreference({cart, fulfillment, request, dependencies = {}}) {
   await localEnvReady;
   validateFulfillment(fulfillment);
 
   const normalizedCart = normalizeCart(cart);
-  const supabase = getSupabaseAdmin();
+  const env = dependencies.env || process.env;
+  const supabase = dependencies.supabase || getSupabaseAdmin();
+  if (isCore360CommercePollingEnabled(env) && !isCore360CommerceCheckoutPreflightEnabled(env)) {
+    throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
+  }
   const catalogItems = await applyCore360ProjectedPrices({
-    catalogItems: await resolveCatalogItems(normalizedCart),
+    catalogItems: await resolveCatalogItems(normalizedCart, {supabase}),
+    env,
     supabase
   });
-  const orderItems = normalizedCart.map((cartItem) => {
+  let orderItems = normalizedCart.map((cartItem) => {
     const product = catalogItems.get(cartItem.slug);
 
     if (!product) {
@@ -82,6 +93,24 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
 
   if (!Number.isSafeInteger(total) || total <= 0) {
     throw statusError(422, "El total del pedido no es valido.");
+  }
+
+  const core360Preflight = await previewCore360Checkout({
+    env,
+    fetchImpl: dependencies.core360FetchImpl || fetch,
+    items: orderItems
+  });
+  if (core360Preflight.enabled) {
+    const previewVersion = cleanText(core360Preflight.result?.version || core360Preflight.result?.sourceVersion) || null;
+    const checkedAt = new Date().toISOString();
+    orderItems = orderItems.map((item) => ({
+      ...item,
+      product: {
+        ...item.product,
+        core360_preflight_checked_at: checkedAt,
+        core360_preview_version: previewVersion
+      }
+    }));
   }
 
   const customerSnapshot = buildCustomerSnapshot(fulfillment);
@@ -170,7 +199,7 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
   let mercadoPagoPreference;
 
   try {
-    mercadoPagoPreference = await mercadoPagoRequest("/checkout/preferences", {
+    mercadoPagoPreference = await (dependencies.mercadoPagoRequest || mercadoPagoRequest)("/checkout/preferences", {
       body: preference,
       method: "POST"
     });
@@ -576,48 +605,87 @@ function getSupabaseAdmin() {
   return supabaseAdmin;
 }
 
-async function applyCore360ProjectedPrices({catalogItems, supabase}) {
-  if (!isCore360CommercePollingEnabled()) return catalogItems;
+async function applyCore360ProjectedPrices({catalogItems, env = process.env, supabase}) {
+  if (!isCore360CommercePollingEnabled(env)) return catalogItems;
 
   const products = [...catalogItems.values()];
   const ids = products.map((product) => cleanText(product?.id)).filter(Boolean);
   if (ids.length === 0) return catalogItems;
   const {data, error} = await supabase
     .from("core360_catalog_projection")
-    .select("source_menu_item_id,gross_minor,currency,price_available,product_version")
+    .select("source_menu_item_id,core_item_id,core_sku,gross_minor,currency,price_available,product_version,tax_bps,unit,quantity_milli_per_unit,core_item_available,uom_compatible,factor_compatible,reconciliation_reason")
     .in("source_menu_item_id", ids);
   if (error) throw statusError(503, "No pudimos consultar los precios canónicos Core360.", error);
 
+  const {data: imageMappings, error: imageMappingsError} = await supabase
+    .from("core360_product_mappings")
+    .select("source_menu_item_id,core_item_id,image_reference,image_version")
+    .in("source_menu_item_id", ids)
+    .eq("is_active", true);
+  if (imageMappingsError) throw statusError(503, "No pudimos consultar los metadatos Core360 del producto.", imageMappingsError);
+
   const projectionBySourceId = new Map((data || [])
-    .filter((row) => row?.price_available === true && cleanText(row?.currency) === "CLP")
+    .filter((row) => row?.price_available === true
+      && row?.core_item_available === true
+      && row?.uom_compatible === true
+      && row?.factor_compatible === true
+      && cleanText(row?.currency) === "CLP")
     .map((row) => [cleanText(row.source_menu_item_id), row])
     .filter(([id]) => id));
   const result = new Map();
+  const mediaBySourceId = new Map((imageMappings || [])
+    .map((mapping) => [cleanText(mapping?.source_menu_item_id), mapping])
+    .filter(([sourceMenuItemId]) => sourceMenuItemId));
   for (const [slug, product] of catalogItems.entries()) {
     const projection = projectionBySourceId.get(cleanText(product?.id));
     if (!projection) {
-      throw statusError(503, "El precio canónico Core360 aún no está disponible para uno de los productos.");
+      throw statusError(503, "Core360 no confirmó disponibilidad comercial actual para uno de los productos.");
     }
     const grossMinor = Math.round(Number(projection.gross_minor));
     if (!Number.isSafeInteger(grossMinor) || grossMinor <= 0) {
       throw statusError(503, "Core360 devolvió un precio canónico inválido.");
     }
     const commercialVersion = cleanText(projection.product_version);
-    if (!commercialVersion) {
-      throw statusError(503, "Core360 devolvió una versión comercial inválida.");
+    const coreItemId = cleanText(projection.core_item_id);
+    const coreSku = cleanText(projection.core_sku);
+    const coreUnit = cleanText(projection.unit);
+    const coreTaxBps = Number(projection.tax_bps);
+    const quantityMilliPerUnit = Number(projection.quantity_milli_per_unit);
+    if (
+      !commercialVersion
+      || !coreItemId
+      || !coreSku
+      || !coreUnit
+      || !Number.isSafeInteger(coreTaxBps)
+      || coreTaxBps < 0
+      || !Number.isSafeInteger(quantityMilliPerUnit)
+      || quantityMilliPerUnit < 1
+    ) {
+      throw statusError(503, "Core360 devolvió una identidad comercial incompleta.");
+    }
+    const media = mediaBySourceId.get(cleanText(product?.id));
+    if (media && cleanText(media?.core_item_id) !== coreItemId) {
+      throw statusError(503, "La metadata Core360 no corresponde al artículo comercial cotizado.");
     }
     result.set(slug, {
       ...product,
       core360_commercial_version: commercialVersion,
+      core360_item_id: coreItemId,
+      core360_quantity_milli_per_unit: quantityMilliPerUnit,
+      core360_sku: coreSku,
+      core360_tax_bps: coreTaxBps,
+      core360_uom_code: coreUnit,
+      core360_image_reference: cleanText(media?.image_reference) || null,
+      core360_image_version: cleanText(media?.image_version) || null,
       price_clp: grossMinor
     });
   }
   return result;
 }
 
-async function resolveCatalogItems(cart) {
+async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin()} = {}) {
   const slugs = [...new Set(cart.map((item) => item.slug))];
-  const {data, error} = await getSupabaseAdmin()
+  const {data, error} = await supabase
     .from("menu_items")
     .select("*")
     .in("slug", slugs)
@@ -628,7 +696,7 @@ async function resolveCatalogItems(cart) {
   }
 
   const catalogItems = (data || []).map(applyLegacyCheckoutOverride);
-  const catalogWithMonthlyWeeks = await resolveMonthlyPlanWeeks(catalogItems);
+  const catalogWithMonthlyWeeks = await resolveMonthlyPlanWeeks(catalogItems, {supabase});
 
   return new Map(catalogWithMonthlyWeeks.map((row) => [row.slug, row]));
 }
@@ -648,12 +716,11 @@ function weeklyPlanHasSixDistinctMealpreps(weeklyPlan) {
   return ids.every(Boolean) && new Set(ids).size === 6;
 }
 
-async function resolveMonthlyPlanWeeks(catalogItems) {
+async function resolveMonthlyPlanWeeks(catalogItems, {supabase = getSupabaseAdmin()} = {}) {
   const monthlyPlans = catalogItems.filter(isMonthlyPlan);
   if (monthlyPlans.length === 0) return catalogItems;
 
   const monthlyPlanIds = monthlyPlans.map((plan) => plan.id).filter(Boolean);
-  const supabase = getSupabaseAdmin();
   const {data: links, error: linksError} = await supabase
     .from("monthly_plan_weeks")
     .select("monthly_plan_id,weekly_plan_id,week_position")
@@ -757,8 +824,17 @@ function buildProductSnapshot(product) {
     : [];
 
   return {
+    core360CatalogVersion: cleanText(product.core360_preview_version) || null,
+    core360ImageReference: cleanText(product.core360_image_reference) || null,
+    core360ImageVersion: cleanText(product.core360_image_version) || null,
+    core360ItemId: cleanText(product.core360_item_id) || null,
     core360PriceVersion: cleanText(product.core360_commercial_version) || null,
+    core360PreflightCheckedAt: cleanText(product.core360_preflight_checked_at) || null,
+    core360QuantityMilliPerUnit: Number(product.core360_quantity_milli_per_unit) || null,
+    core360Sku: cleanText(product.core360_sku) || null,
+    core360TaxBps: Number.isSafeInteger(Number(product.core360_tax_bps)) ? Number(product.core360_tax_bps) : null,
     core360UnitGrossMinor: Number(product.price_clp) || null,
+    core360UomCode: cleanText(product.core360_uom_code) || null,
     slug: product.slug,
     sku: product.sku,
     productType: product.product_type,

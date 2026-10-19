@@ -72,6 +72,17 @@ export function isCore360CommercePreviewEnabled(env = process.env) {
     && cleanText(env.CORE360_COMMERCE_PREVIEW_ENABLED).toLowerCase() === "true";
 }
 
+/**
+ * A checkout preflight is only meaningful against a persisted, current
+ * catalogue projection. It deliberately does not imply delivery: the request
+ * is POST /orders/preview with an unpaid payment and Core360 never creates a
+ * partner or an order from it.
+ */
+export function isCore360CommerceCheckoutPreflightEnabled(env = process.env) {
+  return isCore360CommercePollingEnabled(env)
+    && isCore360CommercePreviewEnabled(env);
+}
+
 export function isCore360CommerceMediaProxyEnabled(env = process.env) {
   return isCore360CommerceReadEnabled(env)
     && cleanText(env.CORE360_COMMERCE_MEDIA_PROXY_ENABLED).toLowerCase() === "true";
@@ -131,68 +142,122 @@ export async function projectCore360CommerceRead({env = process.env, fetchImpl =
   if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para proyectar la lectura Core360.");
 
   const mappings = await loadActiveProductMappings(supabase);
+  const quantities = core360MappingQuantities(mappings);
   const [products, stockRows] = await Promise.all([
-    collectCore360ReadPages({env, fetchImpl, read: readCore360Catalog}),
+    collectCore360ReadPages({env, fetchImpl, query: {quantities}, read: readCore360Catalog}),
     collectCore360ReadPages({env, fetchImpl, read: readCore360Stock})
   ]);
   const productsById = new Map(products.map((row) => [cleanText(row?.id || row?.itemId), row]).filter(([id]) => id));
   const observedAt = new Date().toISOString();
   const catalogRows = [];
+  const mappingFacts = [];
   const stockProjectionRows = [];
 
   for (const mapping of mappings) {
     const sourceMenuItemId = cleanText(mapping.source_menu_item_id);
     const coreItemId = cleanText(mapping.core_item_id);
     const product = productsById.get(coreItemId);
-    if (!product) continue;
-    const version = cleanText(product.commercialVersion ?? product.version);
-    const grossMinor = product.unitGrossMinor ?? product.grossUnitPriceMinor ?? product.price_minor;
-    if (!sourceMenuItemId || !coreItemId || !version || !Number.isSafeInteger(Math.round(Number(grossMinor)))) {
-      throw core360Error("INVALID_CORE_CATALOG_PROJECTION", "Core360 devolvió un artículo sin UUID, versión o importe canónico.");
+    if (!sourceMenuItemId || !coreItemId) {
+      throw core360Error("INVALID_CORE_CATALOG_PROJECTION", "El mapeo Core360 no tiene UUID de origen o artículo canónico.");
     }
 
-    const inventoryManaged = product.inventory_enabled !== false;
-    // GET /products is the Core360 commercial authority for one consolidated
-    // availability per article. GET /stock can contain several warehouse/lot
-    // rows; never pick its last row or invent an aggregate in Fullness.
-    const availableMilli = normalizeAvailableMilli({
-      inventoryManaged,
-      value: product.available_milli ?? product.availableMilli
-    });
+    const commercial = normalizeCore360CommercialProjection({mapping, product});
     catalogRows.push({
+      core_item_available: commercial.coreItemAvailable,
       core_item_id: coreItemId,
-      currency: cleanText(product.currency || "CLP"),
-      gross_minor: String(Math.round(Number(grossMinor))),
+      core_sku: commercial.coreSku,
+      currency: commercial.currency,
+      factor_compatible: commercial.factorCompatible,
+      gross_minor: commercial.grossMinor,
       observed_at: observedAt,
-      price_available: product.price_available !== false,
-      product_version: version,
+      price_available: commercial.priceAvailable,
+      product_version: commercial.productVersion,
+      quantity_milli_per_unit: commercial.quantityMilliPerUnit,
+      reconciliation_reason: commercial.reconciliationReason,
       source_menu_item_id: sourceMenuItemId,
-      unit: cleanText(product.unit)
+      tax_bps: commercial.taxBps,
+      unit: commercial.unit,
+      uom_compatible: commercial.uomCompatible
     });
-    stockProjectionRows.push({
-      availability_version: cleanText(product.availabilityVersion ?? product.availability_version) || null,
-      available_milli: availableMilli,
-      core_item_id: coreItemId,
-      inventory_managed: inventoryManaged,
-      observed_at: observedAt,
-      source_menu_item_id: sourceMenuItemId,
-      stock_known: inventoryManaged && availableMilli !== null
-    });
+    stockProjectionRows.push(normalizeCore360StockProjection({
+      coreItemId,
+      mapping,
+      observedAt,
+      product,
+      sourceMenuItemId
+    }));
+    if (commercial.mappingFacts) {
+      mappingFacts.push({
+        core_item_id: coreItemId,
+        core_sku: commercial.coreSku,
+        gross_unit_price_minor: commercial.grossMinor,
+        source_menu_item_id: sourceMenuItemId,
+        tax_bps: commercial.taxBps,
+        commercial_version: commercial.productVersion,
+        availability_version: commercial.availabilityVersion
+      });
+    }
   }
 
-  const [{error: catalogError}, {error: stockError}] = await Promise.all([
+  const [{error: catalogError}, {error: stockError}, mappingError] = await Promise.all([
     supabase.from(CATALOG_PROJECTION_TABLE).upsert(catalogRows, {onConflict: "source_menu_item_id"}),
-    supabase.from(STOCK_PROJECTION_TABLE).upsert(stockProjectionRows, {onConflict: "source_menu_item_id"})
+    supabase.from(STOCK_PROJECTION_TABLE).upsert(stockProjectionRows, {onConflict: "source_menu_item_id"}),
+    updateCore360MappingFacts({rows: mappingFacts, supabase})
   ]);
-  if (catalogError || stockError) {
-    throw core360Error("CORE360_PROJECTION_WRITE_FAILED", "No pudimos guardar la proyección comercial Core360.", catalogError || stockError);
+  if (catalogError || stockError || mappingError) {
+    throw core360Error("CORE360_PROJECTION_WRITE_FAILED", "No pudimos guardar la proyección comercial Core360.", catalogError || stockError || mappingError);
   }
   return {
     catalogRows: catalogRows.length,
     enabled: true,
+    mappingFacts: mappingFacts.length,
     stockDetailsRead: stockRows.length,
-    stockRows: stockProjectionRows.length
+    stockRows: stockProjectionRows.length,
+    unavailable: catalogRows.filter((row) => row.price_available !== true).length
   };
+}
+
+/**
+ * Refreshes only Core image metadata. The Fullness editorial asset is never
+ * selected or written here; a 404/no image clears the Core reference instead
+ * of retaining a broken cached pointer.
+ */
+export async function projectCore360ProductImageMetadata({env = process.env, fetchImpl = fetch, supabase} = {}) {
+  if (!isCore360CommercePollingEnabled(env)) {
+    return {enabled: false, skipped: true, reason: "polling-disabled"};
+  }
+  if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para proyectar metadatos de imágenes Core360.");
+
+  const mappings = await loadActiveProductMappings(supabase);
+  const updates = [];
+  const failed = [];
+  for (const mapping of mappings) {
+    const sourceMenuItemId = cleanText(mapping?.source_menu_item_id);
+    const coreItemId = cleanText(mapping?.core_item_id);
+    if (!sourceMenuItemId || !coreItemId) {
+      failed.push({code: "INVALID_PRODUCT_MAPPING", sourceMenuItemId: sourceMenuItemId || null});
+      continue;
+    }
+    try {
+      const result = await readCore360ProductImageMetadata({env, fetchImpl, productId: coreItemId});
+      const image = asRecord(result?.image);
+      updates.push({
+        core_item_id: coreItemId,
+        image_reference: cleanText(image.id) || null,
+        image_version: optionalCoreToken(result.version) || null,
+        source_menu_item_id: sourceMenuItemId
+      });
+    } catch (error) {
+      if (error?.statusCode === 404) {
+        updates.push({core_item_id: coreItemId, image_reference: null, image_version: null, source_menu_item_id: sourceMenuItemId});
+      } else {
+        failed.push({code: cleanText(error?.code) || "CORE360_IMAGE_METADATA_FAILED", sourceMenuItemId});
+      }
+    }
+  }
+  const error = await updateCore360MappingFacts({rows: updates, supabase});
+  if (error) throw core360Error("CORE360_IMAGE_METADATA_WRITE_FAILED", "No pudimos guardar los metadatos de imágenes Core360.", error);
+  return {enabled: true, failed, refreshed: updates.length, scanned: mappings.length};
 }
 
 /**
@@ -783,11 +848,9 @@ export async function recoverCore360CommerceDelivery({
   now = new Date(),
   supabase
 } = {}) {
+  const wakeup = await refreshCore360CommerceWakeup({env, fetchImpl, limit, supabase});
   if (!isCore360CommerceDeliveryEnabled(env)) {
-    const orderStates = isCore360CommercePollingEnabled(env)
-      ? await projectCore360OrderStates({env, fetchImpl, limit, supabase})
-      : {enabled: false, skipped: true, reason: "polling-disabled"};
-    return {enabled: false, orderStates, skipped: true, reason: "delivery-disabled"};
+    return {enabled: false, ...wakeup, skipped: true, reason: "delivery-disabled"};
   }
   if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para recuperar el outbox Core360.");
 
@@ -803,8 +866,34 @@ export async function recoverCore360CommerceDelivery({
       failed.push({code: cleanText(error?.code) || "CORE360_DELIVERY_FAILED", eventId: cleanText(event.id)});
     }
   }
-  const orderStates = await projectCore360OrderStates({env, fetchImpl, limit, supabase});
-  return {enabled: true, delivered, failed, orderStates, reconciled, scanned: candidates.length};
+  return {enabled: true, delivered, failed, ...wakeup, reconciled, scanned: candidates.length};
+}
+
+/**
+ * Scheduler-safe read refresh. It remains completely independent from order
+ * delivery; a failure is reported but never retries or mutates an already
+ * frozen outbox request.
+ */
+async function refreshCore360CommerceWakeup({env, fetchImpl, limit, supabase}) {
+  if (!isCore360CommercePollingEnabled(env)) {
+    const skipped = {enabled: false, skipped: true, reason: "polling-disabled"};
+    return {catalog: skipped, images: skipped, orderStates: skipped, wakeupFailures: []};
+  }
+  const catalog = await captureWakeupProjection(() => projectCore360CommerceRead({env, fetchImpl, supabase}), "catalog");
+  const images = await captureWakeupProjection(() => projectCore360ProductImageMetadata({env, fetchImpl, supabase}), "images");
+  const orderStates = await captureWakeupProjection(() => projectCore360OrderStates({env, fetchImpl, limit, supabase}), "order_states");
+  const wakeupFailures = [catalog, images, orderStates]
+    .filter((entry) => entry?.failed)
+    .map((entry) => ({code: entry.code, stream: entry.stream}));
+  return {catalog, images, orderStates, wakeupFailures};
+}
+
+async function captureWakeupProjection(project, stream) {
+  try {
+    return await project();
+  } catch (error) {
+    return {code: cleanText(error?.code) || "CORE360_WAKEUP_FAILED", failed: true, stream};
+  }
 }
 
 /**
@@ -825,26 +914,28 @@ export function createCore360OrderRequest({config, event, mappings}) {
       throw core360Error("MISSING_PRODUCT_MAPPING", `Falta mapeo Core360 para el producto ${menuItemId || "sin identificador"}.`);
     }
 
+    assertFrozenCommercialMapping(mapping, line);
+    const frozen = asRecord(line?.commercial);
     const quantityMilli = asPositiveInteger(line?.quantity, "La cantidad Fullness no es válida.")
-      * asPositiveInteger(mapping.quantity_milli_per_unit || 1000, "La equivalencia Core360 no es válida.");
+      * asPositiveInteger(frozen.quantityMilliPerUnit ?? mapping.quantity_milli_per_unit ?? 1000, "La equivalencia Core360 no es válida.");
     if (!Number.isSafeInteger(quantityMilli)) {
       throw core360Error("INVALID_CORE_QUANTITY", "La cantidad Core360 supera el rango seguro.");
     }
     assertCommercialVersion(mapping, line);
     assertGrossPriceMatches(mapping, line);
 
-    const unit = cleanText(mapping.uom_code);
+    const unit = cleanText(frozen.uomCode || mapping.uom_code);
     if (!unit) {
       throw core360Error("MISSING_PRODUCT_MAPPING", "El mapeo Core360 no tiene la UOM canónica del artículo.");
     }
 
     return compactUndefined({
-      commercialVersion: mappingCommercialVersion(mapping),
-      itemId: cleanText(mapping.core_item_id),
+      commercialVersion: cleanText(frozen.priceVersion) || mappingCommercialVersion(mapping),
+      itemId: cleanText(frozen.coreItemId || mapping.core_item_id),
       lineGrossMinor: String(asPositiveInteger(line?.totalClp, "La línea no tiene total bruto válido.")),
       quantityMilli: String(quantityMilli),
-      sku: cleanText(mapping.core_sku || mapping.sku) || undefined,
-      taxBps: asNonNegativeInteger(mapping.tax_bps ?? 1900, "El impuesto Core360 no es válido."),
+      sku: cleanText(frozen.coreSku || mapping.core_sku || mapping.sku) || undefined,
+      taxBps: asNonNegativeInteger(frozen.taxBps ?? mapping.tax_bps ?? 1900, "El impuesto Core360 no es válido."),
       unitGrossMinor: String(asPositiveInteger(line?.unitPriceClp, "La línea no tiene precio bruto válido.")),
       unit
     });
@@ -874,6 +965,74 @@ export function createCore360OrderRequest({config, event, mappings}) {
       title: `Pedido web Fullness ${event.order.id.slice(0, 8).toUpperCase()}`
     })
   };
+}
+
+/**
+ * Builds the pre-payment quote contract. It is intentionally separate from
+ * the payment-approved event: it has no Fullness order id, no Core customer,
+ * and represents the payment as unpaid. Core360's preview route is read-only
+ * with respect to orders, inventory movement and fiscal documents.
+ */
+export function createCore360CheckoutPreviewRequest({config, items, previewId = `preview-${randomUUID()}`} = {}) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) throw core360Error("MISSING_ORDER_ITEMS", "El checkout no tiene líneas para validar en Core360.");
+  const lines = rows.map(({product, quantity}) => {
+    const itemId = cleanText(product?.core360_item_id || product?.core360ItemId);
+    const unit = cleanText(product?.core360_uom_code || product?.core360UomCode);
+    const sku = cleanText(product?.core360_sku || product?.core360Sku);
+    const commercialVersion = cleanText(product?.core360_commercial_version || product?.core360CommercialVersion);
+    const factor = asPositiveInteger(product?.core360_quantity_milli_per_unit ?? product?.core360QuantityMilliPerUnit, "La equivalencia Core360 no es válida.");
+    const unitGrossMinor = asPositiveInteger(product?.price_clp, "El precio Core360 no es válido.");
+    const taxBps = asNonNegativeInteger(product?.core360_tax_bps ?? product?.core360TaxBps, "El impuesto Core360 no es válido.");
+    const units = asPositiveInteger(quantity, "La cantidad Fullness no es válida.");
+    const quantityMilli = units * factor;
+    if (!isUuid(itemId) || !unit || !sku || !commercialVersion || !Number.isSafeInteger(quantityMilli)) {
+      throw core360Error("CORE360_CHECKOUT_RECONCILIATION_REQUIRED", "La proyección Core360 no tiene identidad, unidad o versión comercial válida.");
+    }
+    return {
+      commercialVersion,
+      itemId,
+      lineGrossMinor: String(unitGrossMinor * units),
+      quantityMilli: String(quantityMilli),
+      sku,
+      taxBps,
+      unit,
+      unitGrossMinor: String(unitGrossMinor)
+    };
+  });
+  const totalMinor = lines.reduce((total, line) => total + asPositiveInteger(line.lineGrossMinor, "La línea Core360 no tiene total válido."), 0);
+  const externalOrderId = cleanText(previewId);
+  if (!externalOrderId) throw core360Error("INVALID_CORE_PREVIEW", "La revisión Core360 no tiene identificador temporal.");
+  return {
+    order: compactUndefined({
+      currency: "CLP",
+      expectedTotalMinor: String(totalMinor),
+      externalOrderId,
+      fiscalIntent: "pending",
+      issuedOn: chileBusinessDate(new Date()),
+      lines,
+      payment: {method: "other", reference: "", status: "unpaid"},
+      priceListId: cleanText(config?.priceListId) || undefined,
+      title: "Revisión checkout web Fullness"
+    })
+  };
+}
+
+/**
+ * Validates the live Core360 commercial quote before Mercado Pago can receive
+ * a preference. This is deliberately not a stock-reservation guard: products
+ * in preparation can quote with zero balance, and Core360 enforces physical
+ * availability at the later fulfillment/delivery operation when applicable.
+ */
+export async function previewCore360Checkout({env = process.env, fetchImpl = fetch, items, previewId} = {}) {
+  if (!isCore360CommerceCheckoutPreflightEnabled(env)) {
+    return {enabled: false, skipped: true, reason: "checkout-preflight-disabled"};
+  }
+  const config = getCore360CheckoutPreviewConfig(env);
+  const request = createCore360CheckoutPreviewRequest({config, items, previewId});
+  const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders/preview"});
+  assertCore360CheckoutPreview({request: request.order, result});
+  return {enabled: true, request: request.order, result};
 }
 
 /** A disabled-by-default Core price/stock assertion before payment. */
@@ -1000,6 +1159,17 @@ export function getCore360Config(env = process.env) {
   };
 }
 
+function getCore360CheckoutPreviewConfig(env = process.env) {
+  const {baseUrl, bearerToken, requestTimeoutMs} = getCore360ReadConfig(env);
+  return {
+    baseUrl,
+    bearerToken,
+    fiscalIntent: "pending",
+    priceListId: cleanText(env.CORE360_PRICE_LIST_ID),
+    requestTimeoutMs
+  };
+}
+
 function getCore360ReadConfig(env = process.env) {
   const baseUrl = cleanText(env.CORE360_BASE_URL).replace(/\/+$/, "");
   const bearerToken = cleanText(env.CORE360_COMMERCE_TOKEN);
@@ -1042,17 +1212,51 @@ async function loadProductMappings({supabase, menuItemIds}) {
 async function loadActiveProductMappings(supabase) {
   const {data, error} = await supabase
     .from(PRODUCT_MAPPING_TABLE)
-    .select("source_menu_item_id,core_item_id,is_active")
+    .select("source_menu_item_id,core_item_id,core_sku,quantity_milli_per_unit,uom_code,commercial_version,gross_unit_price_minor,tax_bps,availability_version,image_reference,image_version,is_active")
     .eq("is_active", true);
   if (error) throw core360Error("MAPPING_LOOKUP_FAILED", "No pudimos cargar los mapeos Core360.", error);
   return data || [];
 }
 
-async function collectCore360ReadPages({env, fetchImpl, read}) {
+async function updateCore360MappingFacts({rows, supabase}) {
+  for (const row of rows || []) {
+    const sourceMenuItemId = cleanText(row?.source_menu_item_id);
+    const coreItemId = cleanText(row?.core_item_id);
+    if (!sourceMenuItemId || !coreItemId) {
+      return core360Error("INVALID_PRODUCT_MAPPING", "El refresco Core360 no tiene un mapeo explícito válido.");
+    }
+    const changes = {...row};
+    delete changes.source_menu_item_id;
+    delete changes.core_item_id;
+    const {error} = await supabase
+      .from(PRODUCT_MAPPING_TABLE)
+      .update(changes)
+      .eq("source_menu_item_id", sourceMenuItemId)
+      .eq("core_item_id", coreItemId);
+    if (error) return error;
+  }
+  return null;
+}
+
+function core360MappingQuantities(mappings) {
+  const quantities = {};
+  for (const mapping of mappings || []) {
+    const coreItemId = cleanText(mapping?.core_item_id);
+    if (!coreItemId) continue;
+    const factor = String(asPositiveInteger(mapping?.quantity_milli_per_unit || 1000, "La equivalencia Core360 no es válida."));
+    if (quantities[coreItemId] && quantities[coreItemId] !== factor) {
+      throw core360Error("CORE360_MAPPING_RECONCILIATION_REQUIRED", "Un mismo artículo Core360 tiene equivalencias distintas y requiere conciliación explícita.");
+    }
+    quantities[coreItemId] = factor;
+  }
+  return quantities;
+}
+
+async function collectCore360ReadPages({env, fetchImpl, query = {}, read}) {
   const rows = [];
   let cursor = "";
   do {
-    const result = await read({env, fetchImpl, query: {cursor, limit: MAX_RECONCILE_PAGE_SIZE}});
+    const result = await read({env, fetchImpl, query: {...query, cursor, limit: MAX_RECONCILE_PAGE_SIZE}});
     rows.push(...(Array.isArray(result.rows) ? result.rows : []));
     cursor = cleanText(result?.page?.nextCursor);
   } while (cursor);
@@ -1486,8 +1690,14 @@ function buildSourceLine(item) {
   return {
     commercial: {
       catalogVersion: cleanText(snapshot.core360CatalogVersion || snapshot.core360_catalog_version) || null,
+      coreItemId: cleanText(snapshot.core360ItemId || snapshot.core360_item_id) || null,
+      coreSku: cleanText(snapshot.core360Sku || snapshot.core360_sku) || null,
       imageReference: cleanText(snapshot.core360ImageReference || snapshot.core360_image_reference) || null,
-      priceVersion: cleanText(snapshot.core360PriceVersion || snapshot.core360_price_version) || null
+      imageVersion: cleanText(snapshot.core360ImageVersion || snapshot.core360_image_version) || null,
+      priceVersion: cleanText(snapshot.core360PriceVersion || snapshot.core360_price_version) || null,
+      quantityMilliPerUnit: positiveIntegerOrNull(snapshot.core360QuantityMilliPerUnit ?? snapshot.core360_quantity_milli_per_unit),
+      taxBps: nonNegativeIntegerOrNull(snapshot.core360TaxBps ?? snapshot.core360_tax_bps),
+      uomCode: cleanText(snapshot.core360UomCode || snapshot.core360_uom_code) || null
     },
     lineId: cleanText(item?.id),
     quantity,
@@ -1534,6 +1744,30 @@ function assertGrossPriceMatches(mapping, line) {
   }
 }
 
+function assertFrozenCommercialMapping(mapping, line) {
+  const frozen = asRecord(line?.commercial);
+  const expected = [
+    ["coreItemId", cleanText(mapping?.core_item_id)],
+    ["coreSku", cleanText(mapping?.core_sku || mapping?.sku)],
+    ["uomCode", cleanText(mapping?.uom_code)],
+    ["priceVersion", mappingCommercialVersion(mapping)]
+  ];
+  for (const [field, current] of expected) {
+    const persisted = cleanText(frozen[field]);
+    if (persisted && persisted !== current) {
+      throw core360Error("PRICE_RECONCILIATION_REQUIRED", "La identidad comercial Core360 cambió después del cobro Fullness.");
+    }
+  }
+  const persistedFactor = positiveIntegerOrNull(frozen.quantityMilliPerUnit);
+  if (persistedFactor !== null && persistedFactor !== asPositiveInteger(mapping?.quantity_milli_per_unit || 1000, "La equivalencia Core360 no es válida.")) {
+    throw core360Error("PRICE_RECONCILIATION_REQUIRED", "La equivalencia de unidades Core360 cambió después del cobro Fullness.");
+  }
+  const persistedTax = nonNegativeIntegerOrNull(frozen.taxBps);
+  if (persistedTax !== null && persistedTax !== asNonNegativeInteger(mapping?.tax_bps ?? 1900, "El impuesto Core360 no es válido.")) {
+    throw core360Error("PRICE_RECONCILIATION_REQUIRED", "El impuesto Core360 cambió después del cobro Fullness.");
+  }
+}
+
 function mappingCommercialVersion(mapping) {
   return cleanText(mapping?.commercial_version ?? mapping?.record_version) || null;
 }
@@ -1552,6 +1786,127 @@ function normalizeAvailableMilli({inventoryManaged, value}) {
     throw core360Error("INVALID_CORE_STOCK_PROJECTION", "Core360 devolvió una disponibilidad milli inválida.");
   }
   return BigInt(raw).toString();
+}
+
+function normalizeCore360CommercialProjection({mapping, product}) {
+  const sourceUnit = cleanText(mapping?.uom_code);
+  const sourceFactor = asPositiveInteger(mapping?.quantity_milli_per_unit || 1000, "La equivalencia Core360 no es válida.");
+  if (!product) {
+    return {
+      availabilityVersion: null,
+      coreItemAvailable: false,
+      coreSku: null,
+      currency: "CLP",
+      factorCompatible: null,
+      grossMinor: null,
+      mappingFacts: null,
+      priceAvailable: false,
+      productVersion: null,
+      quantityMilliPerUnit: sourceFactor,
+      reconciliationReason: "missing_core_item",
+      taxBps: null,
+      unit: sourceUnit || null,
+      uomCompatible: null
+    };
+  }
+
+  const productVersion = cleanText(product.commercialVersion ?? product.version) || null;
+  const gross = product.lineGrossMinor;
+  const grossMinor = positiveIntegerOrNull(gross);
+  const currency = cleanText(product.currency || "CLP");
+  const unit = cleanText(product.unit) || null;
+  const coreSku = cleanText(product.sku) || null;
+  const taxBps = nonNegativeIntegerOrNull(product.taxBps ?? product.tax_bps);
+  const reportedFactor = positiveIntegerOrNull(product.quantityMilli ?? product.quantity_milli);
+  const coreItemAvailable = isCoreItemAvailable(product);
+  const uomCompatible = sourceUnit && unit ? sourceUnit === unit : false;
+  const factorCompatible = reportedFactor === null ? null : reportedFactor === sourceFactor;
+  const priceAvailable = coreItemAvailable
+    && product.priceAvailable !== false
+    && product.price_available !== false
+    && currency === "CLP"
+    && Boolean(productVersion)
+    && Boolean(coreSku)
+    && grossMinor !== null
+    && taxBps !== null
+    && uomCompatible
+    && factorCompatible === true;
+  const reconciliationReason = !coreItemAvailable
+    ? "core_item_unavailable"
+    : !uomCompatible
+      ? "uom_reconciliation_required"
+      : factorCompatible !== true
+        ? "quantity_factor_reconciliation_required"
+        : currency !== "CLP"
+          ? "currency_reconciliation_required"
+          : !productVersion || grossMinor === null || taxBps === null
+            ? "commercial_fact_incomplete"
+            : priceAvailable
+              ? null
+              : "price_unavailable";
+
+  return {
+    availabilityVersion: cleanText(product.availabilityVersion ?? product.availability_version) || null,
+    coreItemAvailable,
+    coreSku,
+    currency: currency || "CLP",
+    factorCompatible,
+    grossMinor: grossMinor === null ? null : String(grossMinor),
+    mappingFacts: priceAvailable ? true : null,
+    priceAvailable,
+    productVersion,
+    quantityMilliPerUnit: sourceFactor,
+    reconciliationReason,
+    taxBps,
+    unit,
+    uomCompatible
+  };
+}
+
+function normalizeCore360StockProjection({coreItemId, mapping, observedAt, product, sourceMenuItemId}) {
+  const commercial = normalizeCore360CommercialProjection({mapping, product});
+  const inventoryManaged = Boolean(product) && product.inventory_enabled !== false && product.inventoryManaged !== false;
+  const availableMilli = normalizeAvailableMilli({
+    inventoryManaged,
+    value: product?.available_milli ?? product?.availableMilli
+  });
+  return {
+    availability_version: commercial.availabilityVersion,
+    available_milli: availableMilli,
+    core_item_id: coreItemId,
+    inventory_managed: inventoryManaged,
+    observed_at: observedAt,
+    source_menu_item_id: sourceMenuItemId,
+    stock_known: inventoryManaged && availableMilli !== null
+  };
+}
+
+function isCoreItemAvailable(product) {
+  const status = cleanText(product?.status).toLowerCase();
+  return product?.is_active !== false
+    && product?.isActive !== false
+    && product?.active !== false
+    && product?.sale_enabled !== false
+    && product?.saleEnabled !== false
+    && !["archived", "disabled", "inactive", "retired"].includes(status);
+}
+
+function positiveIntegerOrNull(value) {
+  if (value === undefined || value === null || value === "") return null;
+  try {
+    return asPositiveInteger(value, "El importe o factor Core360 no es válido.");
+  } catch {
+    return null;
+  }
+}
+
+function nonNegativeIntegerOrNull(value) {
+  if (value === undefined || value === null || value === "") return null;
+  try {
+    return asNonNegativeInteger(value, "El impuesto Core360 no es válido.");
+  } catch {
+    return null;
+  }
 }
 
 function normalizeCore360OrderState({expectedCoreOrderId, orderId, polledAt, state}) {
@@ -1675,6 +2030,32 @@ function assertCore360OrderTotals(event) {
   }
   if (subtotalClp - discountClp + deliveryFeeClp !== totalClp) {
     throw core360Error("ORDER_TOTAL_RECONCILIATION_REQUIRED", "Subtotal, descuento, despacho y total Fullness no concilian.");
+  }
+}
+
+function assertCore360CheckoutPreview({request, result}) {
+  // `availableMilli` is intentionally not part of this commercial assertion.
+  // A pending preparation order may legitimately have zero current balance;
+  // do not create a fake reservation or infer stock from the storefront.
+  if (cleanText(result?.currency) !== "CLP" || cleanText(result?.totalMinor) !== cleanText(request?.expectedTotalMinor)) {
+    throw core360Error("PRICE_RECONCILIATION_REQUIRED", "Core360 no confirmó el mismo total antes de crear el cobro.");
+  }
+  const expectedLines = Array.isArray(request?.lines) ? request.lines : [];
+  const projectedLines = Array.isArray(result?.lines) ? result.lines : [];
+  if (!expectedLines.length || expectedLines.length !== projectedLines.length) {
+    throw core360Error("CATALOG_VERSION_CONFLICT", "Core360 no confirmó todas las líneas del checkout.");
+  }
+  for (let index = 0; index < expectedLines.length; index += 1) {
+    const expected = expectedLines[index];
+    const projected = projectedLines[index] || {};
+    for (const field of ["itemId", "unit", "sku", "commercialVersion", "unitGrossMinor", "lineGrossMinor", "taxBps"]) {
+      if (String(projected[field] ?? "") !== String(expected[field] ?? "")) {
+        throw core360Error("CATALOG_VERSION_CONFLICT", "Core360 informó una versión, unidad, impuesto o precio distinta antes del cobro.");
+      }
+    }
+    if (projected.priceAvailable !== true) {
+      throw core360Error("CATALOG_VERSION_CONFLICT", "Core360 no dejó disponible una línea del checkout.");
+    }
   }
 }
 

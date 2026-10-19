@@ -24,8 +24,11 @@ export default async function handler(request, response) {
     const [projectionResult, mappingResult, menuResult] = await Promise.all([
       supabase
         .from("core360_catalog_projection")
-        .select("source_menu_item_id,gross_minor,currency,product_version,price_available,updated_at")
+        .select("source_menu_item_id,gross_minor,currency,product_version,price_available,core_item_available,uom_compatible,factor_compatible,updated_at")
         .eq("price_available", true)
+        .eq("core_item_available", true)
+        .eq("uom_compatible", true)
+        .eq("factor_compatible", true)
         .eq("currency", "CLP"),
       supabase
         .from("core360_product_mappings")

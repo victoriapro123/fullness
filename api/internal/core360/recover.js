@@ -33,6 +33,11 @@ export default async function handler(request, response) {
       supabase
     });
     return response.status(200).json({
+      catalog: {
+        failed: result.catalog?.failed === true,
+        refreshed: result.catalog?.catalogRows || 0,
+        unavailable: result.catalog?.unavailable || 0
+      },
       delivered: result.delivered?.length || 0,
       enabled: result.enabled,
       failed: result.failed?.length || 0,
@@ -43,9 +48,15 @@ export default async function handler(request, response) {
         scanned: result.orderStates?.scanned || 0,
         skipped: result.orderStates?.skipped || false
       },
+      images: {
+        failed: result.images?.failed === true,
+        refreshed: result.images?.refreshed || 0,
+        scanned: result.images?.scanned || 0
+      },
       queued: result.reconciled?.queued?.length || 0,
       scanned: result.scanned || 0,
-      skipped: result.skipped || false
+      skipped: result.skipped || false,
+      wakeupFailures: result.wakeupFailures?.length || 0
     });
   } catch (error) {
     console.error("Core360 private recovery failed:", text(error?.code || error?.message));
