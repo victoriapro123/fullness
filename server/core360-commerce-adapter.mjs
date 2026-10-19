@@ -882,9 +882,11 @@ async function refreshCore360CommerceWakeup({env, fetchImpl, limit, supabase}) {
   const catalog = await captureWakeupProjection(() => projectCore360CommerceRead({env, fetchImpl, supabase}), "catalog");
   const images = await captureWakeupProjection(() => projectCore360ProductImageMetadata({env, fetchImpl, supabase}), "images");
   const orderStates = await captureWakeupProjection(() => projectCore360OrderStates({env, fetchImpl, limit, supabase}), "order_states");
-  const wakeupFailures = [catalog, images, orderStates]
-    .filter((entry) => entry?.failed)
-    .map((entry) => ({code: entry.code, stream: entry.stream}));
+  const wakeupFailures = [
+    ...summarizeWakeupFailures(catalog, "catalog"),
+    ...summarizeWakeupFailures(images, "images"),
+    ...summarizeWakeupFailures(orderStates, "order_states")
+  ];
   return {catalog, images, orderStates, wakeupFailures};
 }
 
@@ -894,6 +896,17 @@ async function captureWakeupProjection(project, stream) {
   } catch (error) {
     return {code: cleanText(error?.code) || "CORE360_WAKEUP_FAILED", failed: true, stream};
   }
+}
+
+function summarizeWakeupFailures(result, stream) {
+  if (result?.failed === true) {
+    return [{code: cleanText(result.code) || "CORE360_WAKEUP_FAILED", stream}];
+  }
+  if (!Array.isArray(result?.failed) || result.failed.length === 0) return [];
+  return result.failed.map((failure) => ({
+    code: cleanText(failure?.code) || "CORE360_WAKEUP_PARTIAL_FAILURE",
+    stream
+  }));
 }
 
 /**

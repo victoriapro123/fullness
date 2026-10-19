@@ -508,6 +508,47 @@ assert.equal(wakeupResult.images.refreshed, 1);
 assert.equal(wakeup.catalog.length, 1);
 assert.equal(wakeup.images.length, 1);
 assert.equal(wakeup.stock.length, 1);
+assert.deepEqual(wakeupResult.wakeupFailures, []);
+
+const partialWakeup = await recoverCore360CommerceDelivery({
+  env: readEnv,
+  fetchImpl: async (url) => {
+    if (url.includes("/products/core-plan-semanal/image")) {
+      return {ok: false, json: async () => ({code: "CORE360_IMAGE_SOURCE_TIMEOUT"}), status: 503};
+    }
+    if (url.includes("/products")) {
+      return {ok: true, json: async () => ({rows: [{
+        commercialVersion: "commercial-v1",
+        currency: "CLP",
+        id: "core-plan-semanal",
+        inventory_enabled: false,
+        lineGrossMinor: "44900",
+        quantityMilli: "1000",
+        sku: "PLAN-SEM-001",
+        tax_bps: 1900,
+        unit: "un"
+      }]}), status: 200};
+    }
+    return {ok: true, json: async () => ({rows: []}), status: 200};
+  },
+  supabase: wakeupSupabase({mapping: approvedCoreMapping})
+});
+assert.deepEqual(partialWakeup.wakeupFailures, [{code: "CORE360_IMAGE_SOURCE_TIMEOUT", stream: "images"}]);
+
+const failedCatalogWakeup = await recoverCore360CommerceDelivery({
+  env: readEnv,
+  fetchImpl: async (url) => {
+    if (url.includes("/products?")) {
+      return {ok: false, json: async () => ({code: "CORE360_CATALOG_SOURCE_TIMEOUT"}), status: 503};
+    }
+    if (url.includes("/products/core-plan-semanal/image")) {
+      return {ok: true, json: async () => ({image: {id: "image-wakeup"}, version: 8}), status: 200};
+    }
+    return {ok: true, json: async () => ({rows: []}), status: 200};
+  },
+  supabase: wakeupSupabase({mapping: approvedCoreMapping})
+});
+assert.deepEqual(failedCatalogWakeup.wakeupFailures, [{code: "CORE360_CATALOG_SOURCE_TIMEOUT", stream: "catalog"}]);
 assert.deepEqual(
   verifyCore360ProductMappings({
     fullnessProducts: [{id: approvedItems[0].product_id}, {id: "unmapped-fullness-product"}],
@@ -1005,6 +1046,7 @@ function imageProjectionSupabase({mapping, updates}) {
 
 function wakeupSupabase({mapping}) {
   return {
+    rpc: async () => ({data: true, error: null}),
     from(table) {
       if (table === "core360_product_mappings") {
         const updateQuery = {
