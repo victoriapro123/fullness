@@ -36,7 +36,7 @@ const mappings = sourceMappings.map((mapping) => {
     is_active: true,
     provenance: "core360-canonical-import-receipt",
     record_version: requiredText(mapping?.recordVersion, "recordVersion"),
-    commercial_version: requiredText(mapping?.commercialVersion || mapping?.recordVersion, "commercialVersion"),
+    commercial_version: requiredText(mapping?.commercialVersion ?? mapping?.recordVersion, "commercialVersion"),
     commercial_kind: requiredText(mapping?.commercialKind, "commercialKind"),
     sku: requiredText(mapping?.sku, "sku"),
     currency,
@@ -44,7 +44,7 @@ const mappings = sourceMappings.map((mapping) => {
     gross_unit_price_minor: asPositiveInteger(mapping?.grossUnitPriceMinor, "grossUnitPriceMinor"),
     net_unit_price_minor: asInteger(mapping?.netUnitPriceMinor, "netUnitPriceMinor"),
     quantity_rounding: mapping?.quantityRounding || null,
-    uom_code: requiredText(mapping?.uomCode || "unit", "uomCode"),
+    uom_code: requiredText(mapping?.uomCode, "uomCode"),
     availability_version: optionalText(mapping?.availabilityVersion),
     image_reference: optionalText(mapping?.imageReference)
   };

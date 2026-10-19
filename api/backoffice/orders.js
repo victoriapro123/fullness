@@ -2,6 +2,8 @@ import {assertBackofficeRequest, cleanText, statusError} from "../../server/back
 import {readJsonBody, refundMercadoPagoPayment} from "../../server/mercadopago-checkout.mjs";
 import {sendOrderStatusUpdateEmail} from "../../server/transactional-email.mjs";
 
+const CORE360_STATE_SELECT = "core360_commerce_order_states(core_order_id,core_order_version,source_version,commercial_status,fulfillment_status,fiscal_status,fiscal_document_type,fiscal_folio,received_at,updated_at)";
+
 const ORDER_SELECT = [
   "id",
   "status",
@@ -21,6 +23,16 @@ const ORDER_SELECT = [
   "order_items(id,product_name,quantity,unit_price_clp,total_clp,created_at)",
   "payments(id,provider,provider_payment_id,provider_preference_id,provider_merchant_order_id,status,status_detail,payment_method_id,payment_type_id,installments,transaction_amount_clp,currency,payer_email,paid_at,created_at)"
 ].join(",");
+
+function orderSelect() {
+  // The Core tables are a candidate migration. While polling is off, this
+  // endpoint must remain compatible with the production schema that predates
+  // them. Once polling is explicitly enabled, activation requires that
+  // candidate migration to be applied first.
+  return cleanText(process.env.CORE360_COMMERCE_POLL_ENABLED).toLowerCase() === "true"
+    ? `${ORDER_SELECT},${CORE360_STATE_SELECT}`
+    : ORDER_SELECT;
+}
 
 const NEXT_STATUSES = {
   paid: new Set(["preparing", "cancelled"]),
@@ -51,7 +63,7 @@ async function listOrders(req, res) {
     const {supabase} = await assertBackofficeRequest(req);
     const {data, error} = await supabase
       .from("orders")
-      .select(ORDER_SELECT)
+      .select(orderSelect())
       .order("ordered_at", {ascending: false})
       .limit(250);
 
@@ -106,7 +118,7 @@ async function updateOrder(req, res) {
 async function updateOperationalStatus({nextStatus, orderId, supabase, userId}) {
   const {data: current, error: currentError} = await supabase
     .from("orders")
-    .select(ORDER_SELECT)
+    .select(orderSelect())
     .eq("id", orderId)
     .maybeSingle();
 
@@ -125,7 +137,7 @@ async function updateOperationalStatus({nextStatus, orderId, supabase, userId}) 
     .from("orders")
     .update(update)
     .eq("id", current.id)
-    .select(ORDER_SELECT)
+    .select(orderSelect())
     .single();
 
   if (updateError || !order) throw statusError(502, "No pudimos actualizar el estado del pedido.", updateError);
@@ -160,7 +172,7 @@ async function updateOperationalStatus({nextStatus, orderId, supabase, userId}) 
 async function refundOrder({orderId, supabase, userId}) {
   const {data: current, error: currentError} = await supabase
     .from("orders")
-    .select(ORDER_SELECT)
+    .select(orderSelect())
     .eq("id", orderId)
     .maybeSingle();
 
@@ -234,6 +246,9 @@ function presentOrder(order) {
   const payments = Array.isArray(order.payments) ? [...order.payments] : [];
   payments.sort((left, right) => String(right.paid_at || right.created_at || "").localeCompare(String(left.paid_at || left.created_at || "")));
   const primaryPayment = payments[0] || null;
+  const coreState = Array.isArray(order.core360_commerce_order_states)
+    ? order.core360_commerce_order_states[0]
+    : order.core360_commerce_order_states || null;
 
   return {
     canRefund: Boolean(
@@ -243,6 +258,20 @@ function presentOrder(order) {
       && !["cancelled", "refunded"].includes(order.status)
     ),
     createdAt: order.created_at || null,
+    core360: coreState ? {
+      commercialStatus: cleanText(coreState.commercial_status) || "unknown",
+      coreOrderId: cleanText(coreState.core_order_id),
+      coreOrderVersion: Number(coreState.core_order_version),
+      fiscal: {
+        documentType: cleanText(coreState.fiscal_document_type),
+        folio: cleanText(coreState.fiscal_folio),
+        status: cleanText(coreState.fiscal_status) || "unknown"
+      },
+      fulfillmentStatus: cleanText(coreState.fulfillment_status),
+      receivedAt: coreState.received_at || null,
+      sourceVersion: cleanText(coreState.source_version),
+      updatedAt: coreState.updated_at || null
+    } : null,
     currency: cleanText(order.currency) || "CLP",
     customer: {
       address: cleanText(customer.address),

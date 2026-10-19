@@ -1121,11 +1121,56 @@ export async function listActiveMenuItems() {
     (data || []).filter(isMonthlyPlan).map((row) => row.id)
   );
 
+  const mappedItems = mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition);
+  const projected = await applyPublicCore360Prices(mappedItems);
   return {
-    data: mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition),
-    error: composition.error,
+    data: projected.data,
+    error: composition.error || projected.error,
     configured: true
   };
+}
+
+async function applyPublicCore360Prices(items) {
+  try {
+    const response = await fetch("/api/commerce/catalog-projection", {cache: "no-store"});
+    if (response.status === 404) return {data: items, error: null};
+    if (!response.ok) {
+      return {data: items, error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+    }
+    const payload = await response.json();
+    if (payload?.data?.enabled !== true) return {data: items, error: null};
+
+    const byMenuItemId = new Map((payload?.data?.products || [])
+      .filter((product) => (
+        cleanText(product?.id)
+        && cleanText(product?.commercialVersion)
+        && Number.isSafeInteger(Number(product?.priceClp))
+        && Number(product.priceClp) > 0
+      ))
+      .map((product) => [cleanText(product.id), product]));
+    const missing = items.find((item) => !byMenuItemId.has(cleanText(item?.id)));
+    if (missing) {
+      return {data: items, error: new Error("Aún falta la proyección comercial canónica para un producto visible.")};
+    }
+
+    return {
+      data: items.map((item) => {
+        const projection = byMenuItemId.get(cleanText(item.id));
+        return {
+          ...item,
+          core360CommercialVersion: cleanText(projection.commercialVersion),
+          price: Number(projection.priceClp)
+        };
+      }),
+      error: null
+    };
+  } catch {
+    // Local Vite sessions may not serve server routes. Production must fail
+    // closed so the cart never advertises a price that checkout rejects.
+    return import.meta.env.DEV
+      ? {data: items, error: null}
+      : {data: items, error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+  }
 }
 
 export async function listAdminMenuItems() {

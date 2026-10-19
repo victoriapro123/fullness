@@ -1,6 +1,6 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
-import {enqueueCore360PaymentApproved} from "./core360-commerce-adapter.mjs";
+import {deliverCore360OutboxEvent, enqueueCore360PaymentApproved, isCore360CommercePollingEnabled} from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 
@@ -60,7 +60,11 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
   validateFulfillment(fulfillment);
 
   const normalizedCart = normalizeCart(cart);
-  const catalogItems = await resolveCatalogItems(normalizedCart);
+  const supabase = getSupabaseAdmin();
+  const catalogItems = await applyCore360ProjectedPrices({
+    catalogItems: await resolveCatalogItems(normalizedCart),
+    supabase
+  });
   const orderItems = normalizedCart.map((cartItem) => {
     const product = catalogItems.get(cartItem.slug);
 
@@ -80,7 +84,6 @@ export async function createCheckoutPreference({cart, fulfillment, request}) {
     throw statusError(422, "El total del pedido no es valido.");
   }
 
-  const supabase = getSupabaseAdmin();
   const customerSnapshot = buildCustomerSnapshot(fulfillment);
   const legacyTestSchema = isLegacyTestSchema();
   const {data: order, error: orderError} = await supabase
@@ -303,8 +306,9 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
 
     // Disabled by default: while false this returns before querying Supabase or Core360.
     // A failed optional outbox must never turn a reconciled Mercado Pago payment into an error.
+    let coreOutbox = null;
     try {
-      await enqueueCore360PaymentApproved({
+      coreOutbox = await enqueueCore360PaymentApproved({
         items: emailItems || [],
         order: {...order, ...orderUpdate},
         payment: paymentRow,
@@ -315,6 +319,21 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     }
 
     emailDelivery = await sendApprovedOrderEmails({order, items: emailItems || [], supabase});
+
+    // The daily Vercel Cron is recovery only. A newly persisted event gets one
+    // bounded, idempotent delivery attempt after transactional mail is safely
+    // handled. Any Core failure remains in the outbox and never reverses the
+    // Mercado Pago result or turns mail confirmation into a failed checkout.
+    if (coreOutbox?.eventId) {
+      try {
+        await deliverCore360OutboxEvent({
+          event: {id: coreOutbox.eventId, status: coreOutbox.status},
+          supabase
+        });
+      } catch (error) {
+        console.error("Core360 commerce immediate delivery failed:", cleanText(error?.message));
+      }
+    }
   } else if (order.status !== orderUpdate.status) {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
@@ -557,6 +576,45 @@ function getSupabaseAdmin() {
   return supabaseAdmin;
 }
 
+async function applyCore360ProjectedPrices({catalogItems, supabase}) {
+  if (!isCore360CommercePollingEnabled()) return catalogItems;
+
+  const products = [...catalogItems.values()];
+  const ids = products.map((product) => cleanText(product?.id)).filter(Boolean);
+  if (ids.length === 0) return catalogItems;
+  const {data, error} = await supabase
+    .from("core360_catalog_projection")
+    .select("source_menu_item_id,gross_minor,currency,price_available,product_version")
+    .in("source_menu_item_id", ids);
+  if (error) throw statusError(503, "No pudimos consultar los precios canónicos Core360.", error);
+
+  const projectionBySourceId = new Map((data || [])
+    .filter((row) => row?.price_available === true && cleanText(row?.currency) === "CLP")
+    .map((row) => [cleanText(row.source_menu_item_id), row])
+    .filter(([id]) => id));
+  const result = new Map();
+  for (const [slug, product] of catalogItems.entries()) {
+    const projection = projectionBySourceId.get(cleanText(product?.id));
+    if (!projection) {
+      throw statusError(503, "El precio canónico Core360 aún no está disponible para uno de los productos.");
+    }
+    const grossMinor = Math.round(Number(projection.gross_minor));
+    if (!Number.isSafeInteger(grossMinor) || grossMinor <= 0) {
+      throw statusError(503, "Core360 devolvió un precio canónico inválido.");
+    }
+    const commercialVersion = cleanText(projection.product_version);
+    if (!commercialVersion) {
+      throw statusError(503, "Core360 devolvió una versión comercial inválida.");
+    }
+    result.set(slug, {
+      ...product,
+      core360_commercial_version: commercialVersion,
+      price_clp: grossMinor
+    });
+  }
+  return result;
+}
+
 async function resolveCatalogItems(cart) {
   const slugs = [...new Set(cart.map((item) => item.slug))];
   const {data, error} = await getSupabaseAdmin()
@@ -699,6 +757,8 @@ function buildProductSnapshot(product) {
     : [];
 
   return {
+    core360PriceVersion: cleanText(product.core360_commercial_version) || null,
+    core360UnitGrossMinor: Number(product.price_clp) || null,
     slug: product.slug,
     sku: product.sku,
     productType: product.product_type,

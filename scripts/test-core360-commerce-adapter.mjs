@@ -1,18 +1,30 @@
 import assert from "node:assert/strict";
 import {
   buildCore360PaymentApprovedEvent,
+  createCore360OrderEventRequest,
   createCore360OrderRequest,
+  deliverCore360OrderEvent,
   deliverCore360OutboxEvent,
   enqueueCore360PaymentApproved,
   isCore360CommerceReadEnabled,
   isCore360CommercePollingEnabled,
+  isCore360CommercePreviewEnabled,
+  isCore360CommerceMediaProxyEnabled,
+  isCore360CommerceMediaWriteEnabled,
   isCore360CommerceDeliveryEnabled,
+  previewCore360Order,
+  projectCore360CommerceRead,
   readCore360Catalog,
   readCore360OrderStates,
+  readCore360ProductImageBytes,
+  readCore360ProductImageMetadata,
   readCore360Stock,
+  recoverCore360CommerceDelivery,
+  removeCore360ProductImage,
   isCore360CommerceSyncEnabled,
   reconcileMissingCore360ApprovedOrders,
   selectReconciledMercadoPagoPayment,
+  uploadCore360ProductImage,
   verifyCore360ProductMappings
 } from "../server/core360-commerce-adapter.mjs";
 
@@ -60,19 +72,22 @@ const approvedItems = [{
 }];
 
 const approvedCoreMapping = {
-  commercial_version: "price-v1",
+  commercial_version: "commercial-v1",
   core_item_id: "core-plan-semanal",
   gross_unit_price_minor: 44900,
   is_active: true,
   quantity_milli_per_unit: 1000,
   source_menu_item_id: approvedItems[0].product_id,
   tax_bps: 1900,
-  uom_code: "unit"
+  uom_code: "un"
 };
 
 assert.equal(isCore360CommerceSyncEnabled({}), false);
 assert.equal(isCore360CommerceReadEnabled({}), false);
 assert.equal(isCore360CommercePollingEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
+assert.equal(isCore360CommercePreviewEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
+assert.equal(isCore360CommerceMediaProxyEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
+assert.equal(isCore360CommerceMediaWriteEnabled({CORE360_COMMERCE_MEDIA_WRITE_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceDeliveryEnabled({CORE360_COMMERCE_SYNC_ENABLED: "true"}), false);
 
 assert.deepEqual(
@@ -87,11 +102,21 @@ assert.deepEqual(
   await readCore360OrderStates({fetchImpl: () => { throw new Error("The disabled poller must not call Core360."); }}),
   {enabled: false, skipped: true, reason: "polling-disabled"}
 );
+assert.deepEqual(
+  await readCore360ProductImageBytes({fetchImpl: () => { throw new Error("The disabled media proxy must not call Core360."); }}),
+  {enabled: false, skipped: true, reason: "media-proxy-disabled"}
+);
+assert.deepEqual(
+  await uploadCore360ProductImage({fetchImpl: () => { throw new Error("The disabled media writer must not call Core360."); }}),
+  {enabled: false, skipped: true, reason: "media-write-disabled"}
+);
 
 const coreReads = [];
 const readEnv = {
   CORE360_BASE_URL: "https://core360.example.test/",
+  CORE360_COMMERCE_MEDIA_PROXY_ENABLED: "true",
   CORE360_COMMERCE_POLL_ENABLED: "true",
+  CORE360_COMMERCE_PREVIEW_ENABLED: "true",
   CORE360_COMMERCE_READ_ENABLED: "true",
   CORE360_COMMERCE_TOKEN: "test-only"
 };
@@ -102,11 +127,24 @@ assert.deepEqual(
       coreReads.push({request, url});
       return {ok: true, json: async () => ({rows: [{id: "core-plan-semanal"}]}), status: 200};
     },
-    query: {limit: 10, priceListId: "retail", ignored: "must-not-pass"}
+    query: {
+      issuedOn: "2026-10-19",
+      limit: 10,
+      priceListId: "retail",
+      quantities: {"core-plan-semanal": "1000"},
+      quantityMilli: 1000,
+      ignored: "must-not-pass"
+    }
   }),
   {enabled: true, rows: [{id: "core-plan-semanal"}]}
 );
-assert.match(coreReads[0].url, /\/api\/commerce\/v1\/products\?limit=10&priceListId=retail$/);
+const catalogReadUrl = new URL(coreReads[0].url);
+assert.equal(catalogReadUrl.pathname, "/api/commerce/v1/products");
+assert.equal(catalogReadUrl.searchParams.get("issuedOn"), "2026-10-19");
+assert.equal(catalogReadUrl.searchParams.get("limit"), "10");
+assert.equal(catalogReadUrl.searchParams.get("priceListId"), "retail");
+assert.equal(catalogReadUrl.searchParams.get("quantityMilli"), "1000");
+assert.equal(catalogReadUrl.searchParams.get("quantities"), '{"core-plan-semanal":"1000"}');
 assert.equal(coreReads[0].request.method, "GET");
 assert.equal(coreReads[0].request.headers.Authorization, "Bearer test-only");
 assert.deepEqual(
@@ -116,23 +154,155 @@ assert.deepEqual(
       coreReads.push({url});
       return {ok: true, json: async () => ({rows: [{available_milli: "5000", itemId: "core-plan-semanal"}]}), status: 200};
     },
-    query: {itemId: "core-plan-semanal", limit: 1}
+    query: {issuedOn: "2026-10-19", itemId: "core-plan-semanal", limit: 1}
   }),
   {enabled: true, rows: [{available_milli: "5000", itemId: "core-plan-semanal"}]}
 );
-assert.match(coreReads[1].url, /\/api\/commerce\/v1\/stock\?itemId=core-plan-semanal&limit=1$/);
+assert.match(coreReads[1].url, /\/api\/commerce\/v1\/stock\?itemId=core-plan-semanal&issuedOn=2026-10-19&limit=1$/);
 assert.deepEqual(
   await readCore360OrderStates({
     env: readEnv,
     fetchImpl: async (url, request) => {
       coreReads.push({request, url});
-      return {ok: true, json: async () => ({page: {nextCursor: "orders-next", sourceVersion: "orders-v2"}, rows: []}), status: 200};
+      return {
+        ok: true,
+        json: async () => ({
+          coreOrderId: "core-order-1",
+          externalOrderId: approvedOrder.id,
+          fiscal: {status: "pending"},
+          fulfillment: {status: "preparing"},
+          sourceVersion: "source-v2",
+          version: 3
+        }),
+        status: 200
+      };
     },
-    query: {externalOrderId: approvedOrder.id, sinceVersion: "orders-v1"}
+    query: {externalOrderId: approvedOrder.id}
   }),
-  {enabled: true, page: {nextCursor: "orders-next", sourceVersion: "orders-v2"}, rows: []}
+  {
+    coreOrderId: "core-order-1",
+    enabled: true,
+    externalOrderId: approvedOrder.id,
+    fiscal: {status: "pending"},
+    fulfillment: {status: "preparing"},
+    sourceVersion: "source-v2",
+    version: 3
+  }
 );
-assert.match(coreReads[2].url, /\/api\/commerce\/v1\/orders\?externalOrderId=11111111-1111-4111-8111-111111111111&sinceVersion=orders-v1$/);
+assert.match(coreReads[2].url, /\/api\/commerce\/v1\/orders\/11111111-1111-4111-8111-111111111111$/);
+assert.deepEqual(
+  await readCore360ProductImageMetadata({
+    env: readEnv,
+    fetchImpl: async (url) => {
+      coreReads.push({url});
+      return {ok: true, json: async () => ({image: {id: "image-v1", visibility: "private"}}), status: 200};
+    },
+    productId: "core-plan-semanal"
+  }),
+  {enabled: true, image: {id: "image-v1", visibility: "private"}}
+);
+assert.match(coreReads[3].url, /\/api\/commerce\/v1\/products\/core-plan-semanal\/image$/);
+const imageBytes = await readCore360ProductImageBytes({
+  env: readEnv,
+  fetchImpl: async (url) => {
+    coreReads.push({url});
+    return {
+      arrayBuffer: async () => new TextEncoder().encode("image").buffer,
+      headers: new Headers({"content-type": "image/webp"}),
+      ok: true
+    };
+  },
+  imageVersionId: "image-v1",
+  productId: "core-plan-semanal",
+  variant: "thumbnail"
+});
+assert.equal(imageBytes.contentType, "image/webp");
+assert.equal(new TextDecoder().decode(imageBytes.bytes), "image");
+assert.match(coreReads[4].url, /\/api\/commerce\/v1\/products\/core-plan-semanal\/image\?imageVersionId=image-v1&variant=thumbnail$/);
+const mediaWriteEnv = {
+  ...readEnv,
+  CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+  CORE360_COMMERCE_MEDIA_WRITE_ENABLED: "true",
+  CORE360_COMMERCE_SYNC_ENABLED: "true"
+};
+const mediaWrites = [];
+const upload = await uploadCore360ProductImage({
+  bytes: new TextEncoder().encode("jpeg-bytes"),
+  contentType: "image/jpeg",
+  env: mediaWriteEnv,
+  expectedVersion: 1,
+  fetchImpl: async (url, request) => {
+    mediaWrites.push({request, url});
+    return {ok: true, json: async () => ({image: {id: "image-v2", version: 2}}), status: 200};
+  },
+  filename: "producto qa.jpg",
+  idempotencyKey: "a0000001-0000-4000-8000-000000000001",
+  productId: "core-plan-semanal"
+});
+assert.deepEqual(upload, {enabled: true, result: {image: {id: "image-v2", version: 2}}});
+assert.equal(mediaWrites[0].request.method, "POST");
+assert.equal(mediaWrites[0].request.headers.Authorization, "Bearer test-only");
+assert.equal(mediaWrites[0].request.headers["x-core360-expected-version"], "1");
+assert.equal(mediaWrites[0].request.headers["x-core360-request-id"], "a0000001-0000-4000-8000-000000000001");
+assert.equal(mediaWrites[0].request.headers["Content-Type"], "image/jpeg");
+assert.equal(mediaWrites[0].request.headers["Content-Length"], "10");
+assert.equal(mediaWrites[0].request.headers["x-core360-filename"], "producto%20qa.jpg");
+assert.equal(new TextDecoder().decode(mediaWrites[0].request.body), "jpeg-bytes");
+assert.match(mediaWrites[0].url, /\/api\/commerce\/v1\/products\/core-plan-semanal\/image$/);
+const removal = await removeCore360ProductImage({
+  env: mediaWriteEnv,
+  expectedVersion: 2,
+  fetchImpl: async (url, request) => {
+    mediaWrites.push({request, url});
+    return {ok: true, json: async () => ({removed: true, version: 3}), status: 200};
+  },
+  idempotencyKey: "a0000002-0000-4000-8000-000000000002",
+  productId: "core-plan-semanal"
+});
+assert.deepEqual(removal, {enabled: true, result: {removed: true, version: 3}});
+assert.equal(mediaWrites[1].request.method, "DELETE");
+assert.equal(mediaWrites[1].request.headers["Content-Type"], "application/json");
+assert.equal(mediaWrites[1].request.body, '{"expectedVersion":2,"idempotencyKey":"a0000002-0000-4000-8000-000000000002"}');
+const projectionWrites = {catalog: [], stock: []};
+const projection = await projectCore360CommerceRead({
+  env: readEnv,
+  fetchImpl: async (url) => {
+    if (url.includes("/products")) {
+      return {
+        ok: true,
+        json: async () => ({rows: [{
+          currency: "CLP",
+          id: "core-plan-semanal",
+          inventory_enabled: false,
+          price_available: true,
+          price_minor: "44900",
+          unit: "un",
+          version: "commercial-v1"
+        }]}),
+        status: 200
+      };
+    }
+    return {ok: true, json: async () => ({rows: []}), status: 200};
+  },
+  supabase: {
+    from(table) {
+      if (table === "core360_product_mappings") {
+        return {select: () => ({eq: async () => ({data: [approvedCoreMapping], error: null})})};
+      }
+      if (table === "core360_catalog_projection") {
+        return {upsert: async (rows) => { projectionWrites.catalog.push(...rows); return {error: null}; }};
+      }
+      if (table === "core360_stock_projection") {
+        return {upsert: async (rows) => { projectionWrites.stock.push(...rows); return {error: null}; }};
+      }
+      throw new Error(`Unexpected projection table ${table}`);
+    }
+  }
+});
+assert.deepEqual(projection, {catalogRows: 1, enabled: true, stockDetailsRead: 0, stockRows: 1});
+assert.equal(projectionWrites.catalog[0]?.gross_minor, "44900");
+assert.equal(projectionWrites.stock[0]?.inventory_managed, false);
+assert.equal(projectionWrites.stock[0]?.available_milli, null);
 assert.deepEqual(
   verifyCore360ProductMappings({
     fullnessProducts: [{id: approvedItems[0].product_id}, {id: "unmapped-fullness-product"}],
@@ -168,42 +338,36 @@ assert.equal(event.order.subtotalClp, 44900);
 assert.equal(event.order.deliveryFeeClp, 0);
 assert.equal(event.payment.reference, "mercado_pago:123456789");
 assert.equal(event.lines[0].source.menuItemId, approvedItems[0].product_id);
-assert.match(event.customer.externalCustomerId, /^fullness-web:email:/);
+assert.equal(event.customer.externalCustomerId, approvedOrder.id);
 assert.equal(event.channel, "fullness-web");
 assert.equal(event.schemaVersion, 2);
 assert.equal(event.idempotencyKey, `web_order.payment_approved:${approvedOrder.id}:v2`);
 assert.match(event.eventId, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 
 const request = createCore360OrderRequest({
-  config: {fiscalIntent: "pending", partnerIdCore: "partner-fullness", priceListId: ""},
+  config: {fiscalIntent: "pending", priceListId: ""},
   event,
   mappings: [approvedCoreMapping]
 });
 assert.equal(request.order.externalOrderId, approvedOrder.id);
 assert.equal(request.order.expectedTotalMinor, "44900");
-assert.equal(request.order.schemaVersion, 2);
-assert.deepEqual(request.order.expectedTotals, {
-  currency: "CLP",
-  deliveryGrossMinor: "0",
-  discountGrossMinor: "0",
-  subtotalGrossMinor: "44900",
-  totalGrossMinor: "44900"
-});
 assert.deepEqual(request.order.lines, [{
-  commercialVersion: "price-v1",
-  itemIdCore: "core-plan-semanal",
+  commercialVersion: "commercial-v1",
+  itemId: "core-plan-semanal",
   lineGrossMinor: "44900",
   quantityMilli: "1000",
-  sku: undefined,
   taxBps: 1900,
   unitGrossMinor: "44900",
-  uomCode: "unit"
+  unit: "un"
 }]);
 assert.equal(request.order.payment.status, "observed");
+assert.deepEqual(Object.keys(request.order).sort(), [
+  "currency", "expectedTotalMinor", "externalOrderId", "fiscalIntent", "issuedOn", "lines", "payment", "title"
+]);
 
 assert.throws(
   () => createCore360OrderRequest({
-    config: {fiscalIntent: "pending", partnerIdCore: "partner-fullness", priceListId: ""},
+    config: {fiscalIntent: "pending", priceListId: ""},
     event: buildCore360PaymentApprovedEvent({
       items: approvedItems,
       order: {...approvedOrder, delivery_fee_clp: 2500, subtotal_clp: 44900, total_clp: 47400},
@@ -211,7 +375,83 @@ assert.throws(
     }),
     mappings: [approvedCoreMapping]
   }),
-  (error) => error.code === "ADJUSTMENT_MAPPING_REQUIRED"
+  (error) => error.code === "ORDER_ADJUSTMENT_RECONCILIATION_REQUIRED"
+);
+assert.deepEqual(
+  await previewCore360Order({
+    event,
+    fetchImpl: () => { throw new Error("The disabled preview must not call Core360."); },
+    mappings: [approvedCoreMapping]
+  }),
+  {enabled: false, skipped: true, reason: "preview-disabled"}
+);
+let previewRequest;
+const preview = await previewCore360Order({
+  env: readEnv,
+  event,
+  fetchImpl: async (url, request) => {
+    previewRequest = {request, url};
+    return {ok: true, json: async () => ({currency: "CLP", totalMinor: "44900", version: "preview-v1"}), status: 200};
+  },
+  mappings: [approvedCoreMapping]
+});
+assert.equal(preview.enabled, true);
+assert.match(previewRequest.url, /\/api\/commerce\/v1\/orders\/preview$/);
+assert.equal(previewRequest.request.method, "POST");
+assert.equal(JSON.parse(previewRequest.request.body).externalOrderId, approvedOrder.id);
+const orderEvent = createCore360OrderEventRequest({
+  amountMinor: 44900,
+  confirmed: true,
+  eventKind: "refund_observed",
+  externalOrderId: approvedOrder.id,
+  expectedVersion: 1,
+  externalEventId: "fullness-refund-1",
+  externalReference: "mercado_pago:123456789",
+  issuedOn: "2026-10-19",
+  observedAt: "2026-10-19T16:00:00.000Z"
+});
+assert.deepEqual(orderEvent, {
+  externalOrderId: approvedOrder.id,
+  request: {
+    amountMinor: "44900",
+    confirmed: true,
+    currency: "CLP",
+    eventKind: "refund_observed",
+    expectedVersion: 1,
+    externalEventId: "fullness-refund-1",
+    externalReference: "mercado_pago:123456789",
+    issuedOn: "2026-10-19",
+    observedAt: "2026-10-19T16:00:00.000Z"
+  }
+});
+assert.throws(
+  () => createCore360OrderEventRequest({
+    amountMinor: 44900,
+    eventKind: "payment_observed",
+    externalOrderId: approvedOrder.id,
+    externalEventId: "fullness-payment-1",
+    observedAt: "2026-10-19T16:00:00.000Z"
+  }),
+  (error) => error.code === "INVALID_CORE_ORDER_EVENT"
+);
+assert.throws(
+  () => createCore360OrderEventRequest({
+    eventKind: "cancellation_requested",
+    externalOrderId: approvedOrder.id,
+    externalEventId: "fullness-cancel-1",
+    observedAt: "2026-10-19T16:00:00.000Z"
+  }),
+  (error) => error.code === "INVALID_CORE_ORDER_EVENT"
+);
+assert.deepEqual(
+  await deliverCore360OrderEvent({
+    externalOrderId: approvedOrder.id,
+    eventKind: "refund_observed",
+    externalEventId: "fullness-refund-1",
+    fetchImpl: () => { throw new Error("The disabled event delivery must not call Core360."); },
+    observedAt: "2026-10-19T16:00:00.000Z"
+  }),
+  {enabled: false, skipped: true, reason: "delivery-disabled"}
 );
 assert.equal(selectReconciledMercadoPagoPayment({
   currency: "CLP",
@@ -244,6 +484,7 @@ assert.deepEqual(
 const recoveryOutboxRows = [];
 const recoveryOrdersQuery = {
   eq() { return this; },
+  gte() { return this; },
   order() { return this; },
   async limit() {
     return {
@@ -264,6 +505,12 @@ const recoveryExistingOutboxQuery = {
 };
 const recoverySupabase = {
   from(table) {
+    if (table === "core360_commerce_sync_cursors") {
+      return {
+        select: () => ({eq: () => ({maybeSingle: async () => ({data: null, error: null})})}),
+        upsert: async () => ({error: null})
+      };
+    }
     if (table === "orders") return {select: () => recoveryOrdersQuery};
     if (table === "core360_commerce_outbox") {
       return {
@@ -278,7 +525,7 @@ const recoverySupabase = {
   }
 };
 const recovered = await reconcileMissingCore360ApprovedOrders({
-  env: {CORE360_COMMERCE_SYNC_ENABLED: "true"},
+  env: {CORE360_COMMERCE_SYNC_ENABLED: "true", CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z"},
   supabase: recoverySupabase
 });
 assert.equal(recovered.scanned, 1);
@@ -316,13 +563,9 @@ const deliverySupabase = {
     }
     if (table === "core360_commerce_outbox") {
       return {
+        select() { return mockOutboxSelect(event); },
         update(patch) {
-          return {
-            eq: async () => {
-              outboxUpdates.push(patch);
-              return {error: null};
-            }
-          };
+          return mockOutboxUpdate(patch, outboxUpdates);
         }
       };
     }
@@ -336,21 +579,178 @@ await assert.rejects(
       CORE360_BASE_URL: "https://core360.example.test",
       CORE360_COMMERCE_DELIVERY_ENABLED: "true",
       CORE360_COMMERCE_SYNC_ENABLED: "true",
-      CORE360_COMMERCE_TOKEN: "test-only",
-      CORE360_PARTNER_ID: "partner-fullness"
+      CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+      CORE360_COMMERCE_TOKEN: "test-only"
     },
     event: {attempt_count: 0, id: "event-2", payload: event},
     fetchImpl: async () => {
       callCount += 1;
-      return callCount === 1
-        ? {ok: true, json: async () => ({externalCustomerId: event.customer.externalCustomerId}), status: 200}
-        : {ok: false, json: async () => ({code: "PRICE_RECONCILIATION_REQUIRED", message: "Catalog price differs."}), status: 409};
+      return {ok: false, json: async () => ({code: "PRICE_RECONCILIATION_REQUIRED", message: "Catalog price differs."}), status: 409};
     },
     supabase: deliverySupabase
   }),
   (error) => error.code === "PRICE_RECONCILIATION_REQUIRED"
 );
-assert.equal(callCount, 2);
+assert.equal(callCount, 1);
 assert.equal(outboxUpdates.at(-1)?.status, "price_reconciliation_required");
 
+const acceptedOutboxUpdates = [];
+const acceptedDeliverySupabase = {
+  from(table) {
+    if (table === "core360_product_mappings") {
+      return {
+        select() {
+          return {
+            in() {
+              return {eq: async () => ({data: [approvedCoreMapping], error: null})};
+            }
+          };
+        }
+      };
+    }
+    if (table === "core360_commerce_outbox") {
+      return {
+        select() { return mockOutboxSelect(event); },
+        update(patch) {
+          return mockOutboxUpdate(patch, acceptedOutboxUpdates);
+        }
+      };
+    }
+    throw new Error(`Unexpected accepted-delivery table ${table}`);
+  }
+};
+let acceptedDeliveryRequest;
+const acceptedDelivery = await deliverCore360OutboxEvent({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  event: {attempt_count: 0, id: "event-3", payload: event},
+  fetchImpl: async (url, request) => {
+    acceptedDeliveryRequest = {request, url};
+    return {ok: true, json: async () => ({id: "core-order-1", version: 1}), status: 200};
+  },
+  supabase: acceptedDeliverySupabase
+});
+assert.equal(acceptedDelivery.accepted, true);
+assert.match(acceptedDeliveryRequest.url, /\/api\/commerce\/v1\/orders$/);
+assert.deepEqual(JSON.parse(acceptedDeliveryRequest.request.body), request.order);
+assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_id, "core-order-1");
+assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_version, 1);
+assert.equal(acceptedOutboxUpdates.at(-1)?.status, "accepted");
+
+let staleDeliveryCalls = 0;
+const staleOutboxUpdates = [];
+const staleRecovery = await recoverCore360CommerceDelivery({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  fetchImpl: async () => {
+    staleDeliveryCalls += 1;
+    return {ok: true, json: async () => ({coreOrderId: "core-order-recovered", version: 2}), status: 200};
+  },
+  now: new Date("2026-10-19T17:00:00.000Z"),
+  supabase: staleRecoverySupabase({event, mappings: [approvedCoreMapping], updates: staleOutboxUpdates})
+});
+assert.equal(staleRecovery.enabled, true);
+assert.equal(staleRecovery.delivered.length, 1);
+assert.equal(staleDeliveryCalls, 1);
+assert.equal(staleOutboxUpdates.some((patch) => patch.status === "sending"), true);
+assert.equal(staleOutboxUpdates.at(-1)?.status, "accepted");
+
 console.log("Core360 commerce adapter: disabled-by-default and payload contract verified.");
+
+function mockOutboxUpdate(patch, updates) {
+  let recorded = false;
+  const record = () => {
+    if (!recorded) updates.push(patch);
+    recorded = true;
+  };
+  const query = {
+    eq() { record(); return query; },
+    in() { return query; },
+    lt() { return query; },
+    select() { return {maybeSingle: async () => ({data: {id: "claimed-outbox"}, error: null})}; }
+  };
+  return query;
+}
+
+function mockOutboxSelect(payload) {
+  const query = {
+    eq() { return query; },
+    maybeSingle: async () => ({
+      data: {core_request: null, core_request_hash: null, id: "claimed-outbox", payload},
+      error: null
+    })
+  };
+  return query;
+}
+
+function staleRecoverySupabase({event, mappings, updates}) {
+  const staleEvent = {
+    attempt_count: 1,
+    id: "stale-outbox-1",
+    lease_expires_at: "2026-10-19T16:50:00.000Z",
+    payload: event,
+    status: "sending"
+  };
+  return {
+    from(table) {
+      if (table === "core360_commerce_sync_cursors") {
+        return {
+          select: () => ({eq: () => ({maybeSingle: async () => ({data: null, error: null})})}),
+          upsert: async () => ({error: null})
+        };
+      }
+      if (table === "orders") {
+        return {select: () => ({eq() { return this; }, gte() { return this; }, order() { return this; }, limit: async () => ({data: [], error: null})})};
+      }
+      if (table === "core360_product_mappings") {
+        return {
+          select() {
+            return {
+              in() { return {eq: async () => ({data: mappings, error: null})}; }
+            };
+          }
+        };
+      }
+      if (table === "core360_commerce_outbox") {
+        return {
+          select(columns = "") {
+            const waiting = {
+              in() { return waiting; },
+              or() { return waiting; },
+              order() { return waiting; },
+              limit: async () => ({data: [], error: null})
+            };
+            const stale = {
+              eq() { return stale; },
+              lt() { return stale; },
+              order() { return stale; },
+              limit: async () => ({data: [staleEvent], error: null})
+            };
+            if (String(columns).includes("core_request")) {
+              const dispatch = mockOutboxSelect(staleEvent.payload);
+              dispatch.in = () => waiting;
+              dispatch.eq = (field) => field === "status" ? stale : dispatch;
+              return dispatch;
+            }
+            return {
+              eq() { return stale; },
+              in() { return waiting; }
+            };
+          },
+          update(patch) { return mockOutboxUpdate(patch, updates); }
+        };
+      }
+      throw new Error(`Unexpected stale recovery table ${table}`);
+    }
+  };
+}
