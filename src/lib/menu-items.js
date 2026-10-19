@@ -1130,12 +1130,20 @@ export async function listActiveMenuItems() {
   };
 }
 
-async function applyPublicCore360Prices(items) {
+/**
+ * Core360's public projection is authoritative only when explicitly enabled.
+ * A valid response can deliberately omit an individual item after it is
+ * withdrawn or made non-sellable; retain the other quoted products and never
+ * fall back to that item's editorial/legacy price. A transport or projection
+ * failure is different: it returns an empty catalog with an error so callers
+ * cannot accidentally display stale prices.
+ */
+export async function applyPublicCore360Prices(items, {fetchImpl = fetch} = {}) {
   try {
-    const response = await fetch("/api/commerce/catalog-projection", {cache: "no-store"});
+    const response = await fetchImpl("/api/commerce/catalog-projection", {cache: "no-store"});
     if (response.status === 404) return {data: items, error: null};
     if (!response.ok) {
-      return {data: items, error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+      return {data: [], error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
     }
     const payload = await response.json();
     if (payload?.data?.enabled !== true) return {data: items, error: null};
@@ -1148,13 +1156,9 @@ async function applyPublicCore360Prices(items) {
         && Number(product.priceClp) > 0
       ))
       .map((product) => [cleanText(product.id), product]));
-    const missing = items.find((item) => !byMenuItemId.has(cleanText(item?.id)));
-    if (missing) {
-      return {data: items, error: new Error("Aún falta la proyección comercial canónica para un producto visible.")};
-    }
 
     return {
-      data: items.map((item) => {
+      data: items.filter((item) => byMenuItemId.has(cleanText(item?.id))).map((item) => {
         const projection = byMenuItemId.get(cleanText(item.id));
         return {
           ...item,
@@ -1169,7 +1173,7 @@ async function applyPublicCore360Prices(items) {
     // closed so the cart never advertises a price that checkout rejects.
     return import.meta.env.DEV
       ? {data: items, error: null}
-      : {data: items, error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+      : {data: [], error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
   }
 }
 

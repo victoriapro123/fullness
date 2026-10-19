@@ -2871,7 +2871,7 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
   );
 }
 
-function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
+function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
   const settings = mergeShopSettings(shopSettings);
   const catalogPlans = plans;
   const monthlyPlans = catalogPlans.filter((product) => product.planFrequency === "monthly");
@@ -2960,6 +2960,8 @@ function MealPrepCatalog({ familyProducts, loading, onAdd, onOpenBenefit, onOpen
 
       {loading ? (
         <p className="products-empty">Cargando planes y mealpreps…</p>
+      ) : catalogError ? (
+        <p className="products-empty" role="alert">{catalogError}</p>
       ) : (
         <>
           <section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
@@ -5021,6 +5023,7 @@ function App() {
   );
   const [products, setProducts] = useState(localDevelopmentCatalog);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
+  const [productsError, setProductsError] = useState("");
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
   const [productPreviewStack, setProductPreviewStack] = useState([]);
   const [mealPreview, setMealPreview] = useState(null);
@@ -7551,11 +7554,16 @@ function App() {
       if (ignore) return;
 
       if (result.error || !result.configured) {
+        setProducts(result.configured ? result.data : localDevelopmentCatalog);
+        setProductsError(result.error
+          ? "Estamos actualizando la disponibilidad del catálogo. Vuelve a intentarlo en unos minutos."
+          : "");
         setProductsLoading(false);
         return;
       }
 
       setProducts(result.configured ? result.data : localDevelopmentCatalog);
+      setProductsError("");
       setProductsLoading(false);
     }
 
@@ -9769,6 +9777,7 @@ function App() {
               familyProducts={familyProducts}
               shopSettings={shopSettings}
               loading={productsLoading}
+              catalogError={productsError}
               onAdd={addToCart}
               onOpenBenefit={setBenefitPreview}
               onOpenMeal={openMealQuickView}

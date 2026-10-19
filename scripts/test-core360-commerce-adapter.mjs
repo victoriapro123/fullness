@@ -115,6 +115,22 @@ assert.deepEqual(
   await uploadCore360ProductImage({fetchImpl: () => { throw new Error("The disabled media writer must not call Core360."); }}),
   {enabled: false, skipped: true, reason: "media-write-disabled"}
 );
+assert.deepEqual(
+  await recoverCore360CommerceDelivery({
+    env: {},
+    fetchImpl: () => { throw new Error("El cron apagado no debe llamar Core360."); },
+    supabase: {from: () => { throw new Error("El cron apagado no debe consultar Supabase."); }}
+  }),
+  {
+    catalog: {enabled: false, skipped: true, reason: "polling-disabled"},
+    enabled: false,
+    images: {enabled: false, skipped: true, reason: "polling-disabled"},
+    orderStates: {enabled: false, skipped: true, reason: "polling-disabled"},
+    reason: "delivery-disabled",
+    skipped: true,
+    wakeupFailures: []
+  }
+);
 
 const coreReads = [];
 const readEnv = {
