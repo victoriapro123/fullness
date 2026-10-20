@@ -1,14 +1,31 @@
 # Integracion Core360 - Comercio web FullnessLab
 
-Fecha: 2026-10-16
-Estado: adaptador de pedidos apagado por defecto. La lectura de catálogo/stock Core360 fue verificada el 2026-10-16 con una credencial revocable exclusiva de lectura; no se ejecutaron mutaciones de datos, pedidos, entregas, DTE, cobros ni correos.
+Fecha de actualización: 2026-10-19
+Estado: migración y nueve mapeos aplicados en Supabase Fullness. Proyecciones de catálogo/stock e imágenes verificadas con SDK y API reales. La activación persistente y la publicación de la aplicación siguen separadas de este cambio de base de datos.
+
+## Migración productiva aplicada el 2026-10-19
+
+- Carlos pidió consultar “Sitio Fullness”, “BOM” y “Comercio” y realizar la migración requerida en Fullness. Se revisaron sus registros locales y las evidencias compartidas: Sitio `019fecf2-a888-7640-ada6-44dc3b4d9a85`, BOM `01a1469a-f724-78b2-ba39-2a96c7cd893d` y Comercio `01a145c8-0079-71c1-a606-c86915ef4f41`. El conector de mensajería entre hilos estaba indisponible; no se atribuyen respuestas nuevas a esos hilos.
+- Se auditó mediante la sesión autenticada del SQL Editor el proyecto exacto `allyjctrrtvibwchjouu` de la organización Fullness. Antes había 30 tablas y cuatro vistas public, sin objetos `core360_`; `is_admin()` y `set_updated_at()` existen. Las FK históricas `orders_client_id_fkey` y `order_items_product_id_fkey` siguen `NOT VALID`, sin alteraciones de datos o constraints anteriores.
+- El respaldo cifrado nuevo de las 20 tablas comerciales contiene 122 filas y coincide con el snapshot restaurado previamente: SHA-256 canónico `c78f9be0be16eb536138241993561abd1eb3379a823de894ff38617aa94bd5ef`. Se exportaron además columnas, constraints, índices, funciones, vistas, políticas, ACL y triggers vivos. Los snapshots public no son un respaldo de Auth, Storage/R2, Vault, proveedores o base completa.
+- Se aplicó `supabase/migrations/20261019001000_core360_commerce_integration.sql`, SHA-256 `d11e13b7491409285d85287cffcd88c140be2f23e917fd22924134ba6ef41408`. Conserva el DDL del candidato `359bfe0a3231c71f58ead71afb4335ad283b30f090a8f9389a2a32249337c447` y agrega preflight, timeouts, advisory lock, registro de versión y ACL explícitas. El candidato histórico se conserva para trazabilidad y no se debe ejecutar además de esta migración.
+- La auditoría detectó que el ACL por defecto de Supabase concede EXECUTE de nuevas funciones explícitamente a anon/authenticated. La versión aplicada revoca esos permisos sobre la RPC nueva, además de PUBLIC, y permite ejecutarla únicamente a service_role. Las ocho tablas nuevas tienen RLS, sin privilegios anon, SELECT autenticado sujeto a is_admin y CRUD de mapeos sólo para administradores; service_role conserva la persistencia backend. No se modificaron permisos de objetos previos.
+- La versión `20261019001000` quedó registrada en `supabase_migrations.schema_migrations`. La prueba PGlite de esos bytes aprobó siete controles, incluidos permisos heredados, RLS, estados de stock, historial y rechazo de reaplicación; sin llamadas remotas.
+- Se revalidó en la API Core360 productiva que los nueve UUID/SKU/UOM/precios/IVA/versiones coinciden con la semilla revisada. Se ejecutó la semilla privada `fullness-mapping-seed.review.sql`, SHA-256 `c8fc6eb09ef999f39e765e5f4a45b0e2ff041a557ec07cd1e9f5362371d28cf4`: nueve vínculos exactos UUID a UUID, UOM `un`, factor `1000`, IVA `1900`, estrategia `opaque_product`, sin editar `menu_items`.
+- Se ejecutó una comprobación manual del adaptador con SDK Supabase real y GET Core360: nueve proyecciones de catálogo disponibles, nueve proyecciones de stock basadas en los hechos del producto canónico y nueve metadatos de imagen refrescados. La lectura /stock devolvió cero detalles; no se generaron balances ni movimientos en Core360. READ/POLL se habilitaron sólo dentro del proceso de comprobación, con SYNC/DELIVERY en false, sin persistir flags.
+- Después de la comprobación siguen 12 pedidos y cero pagos; outbox, mapeos de clientes, estados de órdenes y documentos fiscales Core360 continúan vacíos. No se crearon pedidos de prueba, preferencias Mercado Pago, correos, DTE ni entregas. No se publicaron cambios ni se activó el worker.
+- Evidencias locales privadas: `backups/core360-20261019/`. Copia comprobada en `R:/Entregables-Codex/Fullness/Core360-Migracion-20261019/`. La aplicación de SQL se realizó por el SQL Editor autenticado; el token Management consultado por Vault respondió 403 y no se reutilizó para mutaciones.
+- La base de Fullness ya está preparada. La activación del runtime, su corte temporal para excluir históricos, permisos/secretos operativos y la publicación coordinada corresponden al siguiente corte de Sitio Fullness; esta migración no los ejecuta implícitamente.
+- Revisión de corte del 2026-10-20 (sólo lectura): el recibo de migración confirma los nueve mapeos, las 122 filas comerciales intactas y el SQL aplicado SHA-256 `d11e13b7491409285d85287cffcd88c140be2f23e917fd22924134ba6ef41408`. Este SQL ya aplicado debe entrar al commit candidato: en este checkout aún es un archivo no rastreado. El informe de gates previo declara `remoteMigrationApplied=false`, por lo que debe regenerarse antes de la publicación y no puede usarse como estado final. No se activaron flags, no se ejecutó SQL ni se efectuó publicación en esta revisión.
+
+## Antecedentes de revisión inicial (2026-10-16)
 
 ## Alcance y evidencia
 
 - Este documento cubre la tienda web `https://www.fullnesslab.com/tienda`, que cobra con Mercado Pago Checkout Pro.
 - No cubre el terminal presencial Transbank ni la emision presencial de boleta. La existencia de ese flujo fue informada por Carlos; no hay integracion Transbank ni Core360 en este repositorio.
 - Se revisaron las migraciones, los endpoints y el backend de checkout del checkout actual `2f54e4b` (rama `codex/unify-mobile-menu-typography`).
-- La forma administrativa de la base no se verificó en vivo: el `.env.local` disponible en este checkout contiene solo `VERCEL_OIDC_TOKEN`, sin una credencial de servicio Supabase. El catálogo público activo sí se verificó en vivo mediante la tienda publicada y sus permisos públicos; las escrituras, filas inactivas y el esquema remoto administrativo siguen requiriendo revalidación antes de activar una integración.
+- En esa revisión inicial no se verificó la forma administrativa de la base: el `.env.local` sólo contenía `VERCEL_OIDC_TOKEN`. La auditoría administrativa y aplicación posteriores están documentadas en el estado vigente anterior.
 
 ## Hechos canonicos actuales
 
