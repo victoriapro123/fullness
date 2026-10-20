@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import recoverHandler, {runtimeConfiguration} from "../api/internal/core360/recover.js";
+import recoverHandler, {probeMercadoPagoCredential, runtimeConfiguration} from "../api/internal/core360/recover.js";
 
 const saved = {
   CORE360_RECOVERY_TOKEN: process.env.CORE360_RECOVERY_TOKEN,
@@ -21,14 +21,14 @@ try {
 
   process.env.CRON_SECRET = "qa-cron-only";
   const unauthorized = responseCapture();
-  await recoverHandler({headers: {}, method: "GET"}, unauthorized.response);
+  await recoverHandler({headers: {}, method: "GET", query: {providerProbe: "mercadopago"}}, unauthorized.response);
   assert.equal(unauthorized.statusCode, 401);
   assert.deepEqual(unauthorized.body, {error: "unauthorized"});
 
   const privateToken = "qa-access-token-never-returned";
   const privateWebhook = "qa-webhook-secret-never-returned";
   const config = runtimeConfiguration({
-    CHECKOUT_SITE_URL: "https://www.fullnesslab.com/tienda",
+    CHECKOUT_SITE_URL: "https://www.fullnesslab.com",
     CORE360_COMMERCE_CUSTOMER_MODE: "identified",
     CORE360_COMMERCE_DELIVERY_ENABLED: "true",
     CORE360_COMMERCE_MEDIA_WRITE_ENABLED: "false",
@@ -46,6 +46,7 @@ try {
   assert.deepEqual(config.mercadoPago, {
     accessTokenConfigured: true,
     accessTokenKind: "unknown",
+    clientTestMode: false,
     notificationUrl: "https://www.fullnesslab.com/api/mercadopago/webhook",
     testMode: false,
     webhookSecretConfigured: true
@@ -55,6 +56,25 @@ try {
   const empty = runtimeConfiguration({CORE360_COMMERCE_SYNC_FROM: "invalid", CHECKOUT_SITE_URL: "https://user:password@example.invalid/"});
   assert.equal(empty.syncFrom, null);
   assert.equal(empty.mercadoPago.notificationUrl, null);
+  let providerCalls = 0;
+  const provider = await probeMercadoPagoCredential({
+    env: {MERCADOPAGO_ACCESS_TOKEN: privateToken},
+    fetchImpl: async (url, options) => {
+      providerCalls += 1;
+      assert.equal(url, "https://api.mercadopago.com/users/me");
+      assert.equal(options.headers.Authorization, `Bearer ${privateToken}`);
+      assert.equal(options.redirect, "error");
+      return {ok: true, status: 200, json: async () => ({id: "synthetic-merchant", email: "private@example.invalid"})};
+    }
+  });
+  assert.equal(providerCalls, 1);
+  assert.equal(provider.verified, true);
+  assert.equal(provider.status, 200);
+  assert.equal(provider.merchantIdSha256.length, 64);
+  assert.ok(!JSON.stringify(provider).includes(privateToken));
+  assert.ok(!JSON.stringify(provider).includes("private@example.invalid"));
+  const missingProvider = await probeMercadoPagoCredential({env: {}, fetchImpl: () => { throw new Error("Missing provider credential must not use HTTP"); }});
+  assert.deepEqual(missingProvider, {configured: false, status: null, verified: false});
 } finally {
   restoreEnvironment("CORE360_RECOVERY_TOKEN", saved.CORE360_RECOVERY_TOKEN);
   restoreEnvironment("CRON_SECRET", saved.CRON_SECRET);

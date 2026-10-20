@@ -20,6 +20,7 @@ import {
   readCore360ProductImageMetadata,
   reconcileMissingCore360ApprovedOrders,
   recoverCore360CommerceDelivery,
+  selectReconciledMercadoPagoPayment,
   removeCore360ProductImage,
   uploadCore360ProductImage
 } from "../server/core360-commerce-adapter.mjs";
@@ -30,6 +31,8 @@ const runId = randomUUID();
 const baseDir = path.resolve(root, "runtime", "fullness-core360-native-qa.local");
 const runDir = path.resolve(baseDir, runId);
 const dataDir = path.resolve(runDir, "postgres-data");
+const relativeDataDir = path.relative(baseDir, dataDir);
+assert.ok(relativeDataDir && !relativeDataDir.startsWith("..") && !path.isAbsolute(relativeDataDir), "QA cleanup must remain inside its private runtime directory.");
 const postgresBin = path.resolve(options.postgresBin);
 const postgrestBin = path.resolve(options.postgrestBin);
 const qaConfigPath = path.resolve(options.coreQaConfig);
@@ -108,9 +111,9 @@ try {
     assert.equal(integer(preview.result?.totalMinor), qa.grossUnitPriceMinor);
   });
 
-  const delivered = await deliverCore360OutboxEvent({env, event: queuedRow, supabase});
+  const delivered = await deliverCore360OutboxEvent({env, event: {id: queued.eventId, status: queued.status}, supabase});
   const acceptedRow = await outboxRow({id: queued.eventId, supabase});
-  await check("worker real crea pedido una vez y persiste solicitud Core inmutable antes del POST", async () => {
+  await check("hook id-only rehidrata el outbox bajo lease y persiste solicitud Core inmutable antes del POST", async () => {
     assert.equal(delivered.accepted, true);
     assert.ok(delivered.coreOrderId);
     assert.equal(acceptedRow.status, "accepted");
@@ -140,6 +143,8 @@ try {
   await testRecoveryFromApprovedOrder({env, qa, supabase});
   await testCursorPaginationBeyondFifty({env, qa, supabase});
   await testReadProjection({env, qa, supabase});
+  await testPublicLivePaymentReload({env, qa, supabase});
+  await testPublicLivePaymentBoundary({env, qa, supabase});
   await testPrivateMediaRoundTrip({env, qa});
 } catch (error) {
   result.error = {
@@ -486,6 +491,73 @@ async function testPrivateMediaRoundTrip({env, qa}) {
   }
 }
 
+async function testPublicLivePaymentReload({env, qa, supabase}) {
+  const source = await createPaidOrder({qa, suffix: "live-public-reload", supabase, liveMode: true});
+  const publicOrigin = "https://core360-native-qa.example.invalid";
+  const publicEnv = {...env, CORE360_BASE_URL: publicOrigin, CORE360_COMMERCE_TEST_MODE: "false", MERCADOPAGO_TEST_MODE: "false"};
+  const {data: reloaded, error} = await supabase.from("orders")
+    .select("id,currency,total_clp,mercadopago_external_reference,payments(provider,provider_payment_id,status,transaction_amount_clp,currency,paid_at,live_mode:raw_payload->live_mode)")
+    .eq("id", source.order.id).maybeSingle();
+  assert.ifError(error);
+  const payment = selectReconciledMercadoPagoPayment({currency: reloaded.currency, externalReference: reloaded.mercadopago_external_reference, orderId: reloaded.id, payments: reloaded.payments, totalClp: reloaded.total_clp});
+  assert.equal(payment?.live_mode, true);
+  const queued = await enqueueCore360PaymentApproved({...source, payment, env: publicEnv, supabase});
+  const trace = [];
+  const rewriteOnlyToQa = async (url, options) => {
+    const input = new URL(url);
+    assert.equal(input.origin, publicOrigin);
+    assert.ok(input.pathname.startsWith("/api/commerce/v1/"));
+    const target = new URL(input.pathname + input.search, env.CORE360_BASE_URL);
+    assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
+    assert.equal(target.port, "3083");
+    const response = await fetch(target, options);
+    trace.push({method: options?.method || "GET", path: target.pathname, status: response.status});
+    return response;
+  };
+  const delivered = await deliverCore360OutboxEvent({env: publicEnv, event: {id: queued.eventId, status: "pending"}, fetchImpl: rewriteOnlyToQa, supabase});
+  const accepted = await outboxRow({id: queued.eventId, supabase});
+  const replay = await deliverCore360OutboxEvent({env: publicEnv, event: {id: queued.eventId, status: "pending"}, fetchImpl: rewriteOnlyToQa, supabase});
+  await check("live_mode simulado sobrevive SQL/reload y configura HTTPS sin bypass para id-only/replay contra Core QA", async () => {
+    assert.equal(accepted.payload.payment.liveMode, true);
+    assert.equal(delivered.accepted, true);
+    assert.equal(accepted.status, "accepted");
+    assert.equal(accepted.core_order_id, delivered.coreOrderId);
+    assert.equal(replay.reason, "outbox-claimed");
+    assert.equal(trace.filter(t => t.method === "POST" && t.path.endsWith("/orders")).length, 1);
+  });
+}
+
+async function testPublicLivePaymentBoundary({env, qa, supabase}) {
+  const source = await createPaidOrder({qa, suffix: "non-live-guard", supabase});
+  const publicEnv = {...env, CORE360_BASE_URL: "https://core.prof3sional.com"};
+  let outboundCalls = 0;
+  await check("pagos TEST/unknown no crean outbox ni cliente o pedido en Core público", async () => {
+    for (const liveMode of [false, undefined]) {
+      await assert.rejects(enqueueCore360PaymentApproved({
+        ...source,
+        payment: {...source.payment, raw_payload: {live_mode: liveMode}},
+        env: publicEnv,
+        supabase
+      }), (error) => error?.code === "CORE360_NON_LIVE_PAYMENT");
+    }
+    const {data: absent, error} = await supabase.from("core360_commerce_outbox").select("id").eq("order_id", source.order.id);
+    assert.ifError(error);
+    assert.equal(absent.length, 0);
+    const queued = await enqueueCore360PaymentApproved({...source, env, supabase});
+    await assert.rejects(deliverCore360OutboxEvent({
+      env: publicEnv,
+      event: {id: queued.eventId, status: "pending"},
+      fetchImpl: async () => { outboundCalls += 1; throw new Error("Public HTTP is forbidden in native QA"); },
+      supabase
+    }), (error) => error?.code === "CORE360_NON_LIVE_PAYMENT");
+    const blocked = await outboxRow({id: queued.eventId, supabase});
+    assert.equal(blocked.status, "failed");
+    assert.equal(blocked.core_order_id, null);
+    assert.equal(blocked.core_request, null);
+    assert.equal(outboundCalls, 0);
+  });
+}
+
 async function seedEditorialAndMapping({commercialVersion, qa, supabase}) {
   const {error: menuError} = await supabase.from("menu_items").insert({
     id: qa.sourceMenuItemId,
@@ -516,7 +588,7 @@ function mappingFor({commercialVersion, qa}) {
   };
 }
 
-async function createPaidOrder({qa, suffix, supabase}) {
+async function createPaidOrder({qa, suffix, supabase, liveMode = false}) {
   const orderId = randomUUID();
   const clientId = randomUUID();
   const paymentId = `native-payment-${suffix}-${runId}`;
@@ -551,6 +623,7 @@ async function createPaidOrder({qa, suffix, supabase}) {
     paid_at: paidAt,
     provider: "mercado_pago",
     provider_payment_id: paymentId,
+    raw_payload: {live_mode: liveMode},
     status: "approved",
     transaction_amount_clp: qa.grossUnitPriceMinor
   };
@@ -605,7 +678,7 @@ create table public.order_items (
 create table public.payments (
   id uuid primary key default gen_random_uuid(), order_id uuid not null references public.orders(id) on delete cascade,
   provider text not null, provider_payment_id text not null, status text not null, transaction_amount_clp numeric(12,0) not null,
-  currency text not null, paid_at timestamptz, unique(provider, provider_payment_id)
+  currency text not null, paid_at timestamptz, raw_payload jsonb not null default '{}'::jsonb, unique(provider, provider_payment_id)
 );
 grant usage on schema public, auth to anon, authenticated, service_role;
 grant all privileges on all tables in schema public to service_role;

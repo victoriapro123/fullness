@@ -54,6 +54,7 @@ const approvedOrder = {
 const approvedPayment = {
   provider: "mercado_pago",
   provider_payment_id: "123456789",
+  raw_payload: {live_mode: true},
   status: "approved",
   transaction_amount_clp: 44900,
   paid_at: "2026-10-16T15:00:00.000Z"
@@ -874,7 +875,8 @@ const acceptedDelivery = await deliverCore360OutboxEvent({
     CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
     CORE360_COMMERCE_TOKEN: "test-only"
   },
-  event: {attempt_count: 0, id: "event-3", payload: event},
+  // The real Mercado Pago hook passes only the persisted id and status.
+  event: {attempt_count: 0, id: "event-3", status: "pending"},
   fetchImpl: async (url, request) => {
     acceptedDeliveryRequest = {request, url};
     return {ok: true, json: async () => ({id: "core-order-1", version: 1}), status: 200};
@@ -887,6 +889,50 @@ assert.deepEqual(JSON.parse(acceptedDeliveryRequest.request.body), request.order
 assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_id, "core-order-1");
 assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_version, 1);
 assert.equal(acceptedOutboxUpdates.at(-1)?.status, "accepted");
+
+const publicDeliveryEnv = {
+  CORE360_BASE_URL: "https://core.prof3sional.com",
+  CORE360_COMMERCE_SYNC_ENABLED: "true",
+  CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+  CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+  CORE360_COMMERCE_TOKEN: "synthetic-core-token"
+};
+let nonLiveDatabaseCalls = 0;
+for (const liveMode of [false, undefined, "true"]) {
+  await assert.rejects(enqueueCore360PaymentApproved({
+    env: {...publicDeliveryEnv, CORE360_COMMERCE_TEST_MODE: "true"},
+    order: approvedOrder,
+    items: approvedItems,
+    payment: {...approvedPayment, raw_payload: {live_mode: liveMode}},
+    supabase: {from() { nonLiveDatabaseCalls += 1; throw new Error("Non-live payment must not reach the outbox"); }}
+  }), (error) => error.code === "CORE360_NON_LIVE_PAYMENT");
+}
+for (const providerEnv of [{MERCADOPAGO_TEST_MODE: "true"}, {MERCADOPAGO_ACCESS_TOKEN: "TEST-synthetic"}]) {
+  await assert.rejects(enqueueCore360PaymentApproved({
+    env: {...publicDeliveryEnv, ...providerEnv},
+    order: approvedOrder,
+    items: approvedItems,
+    payment: approvedPayment,
+    supabase: {from() { nonLiveDatabaseCalls += 1; throw new Error("Test configuration must not reach the outbox"); }}
+  }), (error) => error.code === "CORE360_NON_LIVE_PAYMENT");
+}
+assert.equal(nonLiveDatabaseCalls, 0);
+assert.equal(event.payment.liveMode, true);
+
+let nonLiveHttpCalls = 0;
+const blockedUpdates = [];
+const blockedEvent = {...event, payment: {...event.payment, liveMode: false}};
+await assert.rejects(deliverCore360OutboxEvent({
+  env: publicDeliveryEnv,
+  event: {id: "non-live-outbox", status: "pending"},
+  fetchImpl: async () => { nonLiveHttpCalls += 1; throw new Error("Non-live event must not create a Core customer or order"); },
+  supabase: {from(table) {
+    assert.equal(table, "core360_commerce_outbox");
+    return {select() { return mockOutboxSelect(blockedEvent); }, update(patch) { return mockOutboxUpdate(patch, blockedUpdates); }};
+  }}
+}), (error) => error.code === "CORE360_NON_LIVE_PAYMENT");
+assert.equal(nonLiveHttpCalls, 0);
+assert.equal(blockedUpdates.at(-1).status, "failed");
 
 let staleDeliveryCalls = 0;
 const staleOutboxUpdates = [];

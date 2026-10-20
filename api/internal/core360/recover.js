@@ -1,4 +1,5 @@
 import {createClient} from "@supabase/supabase-js";
+import {createHash} from "node:crypto";
 import {recoverCore360CommerceDelivery} from "../../../server/core360-commerce-adapter.mjs";
 
 export default async function handler(request, response) {
@@ -13,6 +14,12 @@ export default async function handler(request, response) {
   }
   if (!secret || request.headers.authorization !== `Bearer ${secret}`) {
     return response.status(401).json({error: "unauthorized"});
+  }
+  if (isCron && request.query?.providerProbe === "mercadopago") {
+    return response.status(200).json({
+      configuration: runtimeConfiguration(),
+      provider: await probeMercadoPagoCredential()
+    });
   }
 
   const supabaseUrl = text(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL);
@@ -75,7 +82,8 @@ export function runtimeConfiguration(env = process.env) {
   let notificationUrl = null;
   try {
     const site = new URL(text(env.CHECKOUT_SITE_URL));
-    if (site.protocol === "https:" && !site.username && !site.password) {
+    if (site.protocol === "https:" && !site.username && !site.password
+      && site.pathname === "/" && !site.search && !site.hash) {
       notificationUrl = new URL("/api/mercadopago/webhook", site.origin).href;
     }
   } catch {}
@@ -84,6 +92,7 @@ export function runtimeConfiguration(env = process.env) {
     commitSha: /^[0-9a-f]{40}$/i.test(commitSha) ? commitSha : null,
     customerMode: text(env.CORE360_COMMERCE_CUSTOMER_MODE) || "anonymous",
     fiscalIntent: text(env.CORE360_FISCAL_INTENT) || "pending",
+    paymentExportPolicy: "live_only",
     flags: Object.fromEntries([
       "CORE360_COMMERCE_READ_ENABLED",
       "CORE360_COMMERCE_POLL_ENABLED",
@@ -98,12 +107,35 @@ export function runtimeConfiguration(env = process.env) {
       accessTokenKind: text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("TEST-")
         ? "test"
         : text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("APP_USR-") ? "production" : "unknown",
+      clientTestMode: enabled("VITE_CHECKOUT_TEST_MODE"),
       notificationUrl,
       testMode: enabled("MERCADOPAGO_TEST_MODE"),
       webhookSecretConfigured: Boolean(text(env.MERCADOPAGO_WEBHOOK_SECRET))
     },
     syncFrom: cutover && !Number.isNaN(cutover.getTime()) ? cutover.toISOString() : null
   };
+}
+
+export async function probeMercadoPagoCredential({env = process.env, fetchImpl = fetch} = {}) {
+  const token = text(env.MERCADOPAGO_ACCESS_TOKEN);
+  if (!token) return {configured: false, status: null, verified: false};
+  try {
+    const result = await fetchImpl("https://api.mercadopago.com/users/me", {
+      headers: {Authorization: `Bearer ${token}`, Accept: "application/json"},
+      redirect: "error",
+      signal: AbortSignal.timeout(8000)
+    });
+    const merchant = await result.json().catch(() => ({}));
+    return {
+      configured: true,
+      merchantIdSha256: result.ok && merchant?.id
+        ? createHash("sha256").update(String(merchant.id)).digest("hex") : null,
+      status: result.status,
+      verified: result.ok && Boolean(merchant?.id)
+    };
+  } catch {
+    return {configured: true, status: null, verified: false};
+  }
 }
 
 function validCursor(value) {

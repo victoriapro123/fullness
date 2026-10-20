@@ -37,7 +37,7 @@ const RECONCILE_ORDER_SELECT = [
   "customer_snapshot",
   "paid_at",
   "order_items(id,product_id,quantity,unit_price_clp,total_clp,product_snapshot)",
-  "payments(provider,provider_payment_id,status,transaction_amount_clp,currency,paid_at)"
+  "payments(provider,provider_payment_id,status,transaction_amount_clp,currency,paid_at,live_mode:raw_payload->live_mode)"
 ].join(",");
 
 export function isCore360CommerceSyncEnabled(env = process.env) {
@@ -579,6 +579,7 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
     payment: {
       amountClp: asPositiveInteger(payment?.transaction_amount_clp || totalClp, "El pago no tiene monto válido."),
       amountGrossMinor: String(asPositiveInteger(payment?.transaction_amount_clp || totalClp, "El pago no tiene monto válido.")),
+      liveMode: observedPaymentLiveMode(payment),
       method: "other",
       provider: "mercado_pago",
       reference: `mercado_pago:${cleanText(payment?.provider_payment_id)}`,
@@ -599,6 +600,7 @@ export async function enqueueCore360PaymentApproved({env = process.env, items, o
 
   if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para registrar el outbox Core360.");
   assertCore360SyncCutover({env, occurredAt: payment?.paid_at || order?.paid_at});
+  assertCore360LivePayment({env, liveMode: observedPaymentLiveMode(payment)});
 
   const payload = buildCore360PaymentApprovedEvent({items, order, payment});
   const idempotencyKey = payload.idempotencyKey;
@@ -763,8 +765,7 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
   if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para entregar a Core360.");
 
   const outboxId = cleanText(event?.id);
-  const payload = asRecord(event?.payload);
-  if (!outboxId || payload.event !== CORE360_EVENT_TYPE) {
+  if (!outboxId) {
     throw core360Error("INVALID_OUTBOX_EVENT", "El evento de outbox Core360 no es válido.");
   }
 
@@ -774,6 +775,9 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
   try {
     const persisted = await loadCore360OutboxDispatch({outboxId, leaseToken: claim.token, supabase});
     const persistedPayload = asRecord(persisted?.payload);
+    if (persistedPayload.event !== CORE360_EVENT_TYPE) {
+      throw core360Error("INVALID_OUTBOX_EVENT", "El evento persistido Core360 no es válido.");
+    }
     if (!isCore360SyncEventEligible({env, occurredAt: persistedPayload?.occurredAt})) {
       await updateOutbox(supabase, outboxId, {
         last_error: "El pago ocurrió antes del corte operativo Core360.",
@@ -784,6 +788,7 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
       }, claim.token);
       return {accepted: false, skipped: true, reason: "before-sync-cutover"};
     }
+    assertCore360LivePayment({env, liveMode: persistedPayload.payment?.liveMode});
     const config = getCore360Config(env);
     const request = await resolveCore360OutboxRequest({
       config,
@@ -811,7 +816,7 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
 
     return {accepted: true, coreOrderId: cleanText(result?.coreOrderId || result?.id) || null, result};
   } catch (error) {
-    const state = error.code === "OUTBOX_REQUEST_INTEGRITY_FAILED"
+    const state = error.code === "OUTBOX_REQUEST_INTEGRITY_FAILED" || error.code === "CORE360_NON_LIVE_PAYMENT"
       ? "failed"
       : error.code === "PRICE_RECONCILIATION_REQUIRED"
       ? "price_reconciliation_required"
@@ -1948,6 +1953,30 @@ function normalizeCore360OrderState({expectedCoreOrderId, orderId, polledAt, sta
     p_received_at: cleanText(polledAt) || nextCore360PollTimestamp(),
     p_source_version: sourceVersion
   };
+}
+
+function observedPaymentLiveMode(payment) {
+  const rawMode = asRecord(payment?.raw_payload).live_mode;
+  if (typeof rawMode === "boolean") return rawMode;
+  return typeof payment?.live_mode === "boolean" ? payment.live_mode : null;
+}
+
+function assertCore360LivePayment({env, liveMode}) {
+  // Synthetic provider facts are allowed only in the already constrained
+  // loopback QA environment. A public Core target always requires evidence
+  // from Mercado Pago itself; missing or string-coerced live_mode is rejected.
+  let loopbackQa = false;
+  try {
+    const target = new URL(cleanText(env.CORE360_BASE_URL));
+    loopbackQa = ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)
+      && cleanText(env.CORE360_COMMERCE_TEST_MODE).toLowerCase() === "true";
+  } catch {}
+  if (loopbackQa) return;
+  if (liveMode !== true
+    || cleanText(env.MERCADOPAGO_TEST_MODE).toLowerCase() === "true"
+    || cleanText(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("TEST-")) {
+    throw core360Error("CORE360_NON_LIVE_PAYMENT", "Core360 productivo requiere un pago Mercado Pago live_mode=true y configuración de cobro real.");
+  }
 }
 
 function requiredCore360SyncCutover(env) {
