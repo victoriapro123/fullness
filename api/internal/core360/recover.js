@@ -33,6 +33,7 @@ export default async function handler(request, response) {
       supabase
     });
     return response.status(200).json({
+      configuration: runtimeConfiguration(),
       catalog: {
         failed: result.catalog?.failed === true,
         refreshed: result.catalog?.catalogRows || 0,
@@ -62,6 +63,47 @@ export default async function handler(request, response) {
     console.error("Core360 private recovery failed:", text(error?.code || error?.message));
     return response.status(502).json({error: "core360_recovery_failed"});
   }
+}
+
+// Returned only after the private recovery request has authenticated. These
+// allowlisted facts prove the deployment configuration without exposing keys.
+export function runtimeConfiguration(env = process.env) {
+  const enabled = (key) => text(env[key]).toLowerCase() === "true";
+  const rawCutover = text(env.CORE360_COMMERCE_SYNC_FROM);
+  const cutover = rawCutover ? new Date(rawCutover) : null;
+  const commitSha = text(env.VERCEL_GIT_COMMIT_SHA);
+  let notificationUrl = null;
+  try {
+    const site = new URL(text(env.CHECKOUT_SITE_URL));
+    if (site.protocol === "https:" && !site.username && !site.password) {
+      notificationUrl = new URL("/api/mercadopago/webhook", site.origin).href;
+    }
+  } catch {}
+
+  return {
+    commitSha: /^[0-9a-f]{40}$/i.test(commitSha) ? commitSha : null,
+    customerMode: text(env.CORE360_COMMERCE_CUSTOMER_MODE) || "anonymous",
+    fiscalIntent: text(env.CORE360_FISCAL_INTENT) || "pending",
+    flags: Object.fromEntries([
+      "CORE360_COMMERCE_READ_ENABLED",
+      "CORE360_COMMERCE_POLL_ENABLED",
+      "CORE360_COMMERCE_PREVIEW_ENABLED",
+      "CORE360_COMMERCE_MEDIA_PROXY_ENABLED",
+      "CORE360_COMMERCE_MEDIA_WRITE_ENABLED",
+      "CORE360_COMMERCE_SYNC_ENABLED",
+      "CORE360_COMMERCE_DELIVERY_ENABLED"
+    ].map((key) => [key, enabled(key)])),
+    mercadoPago: {
+      accessTokenConfigured: Boolean(text(env.MERCADOPAGO_ACCESS_TOKEN)),
+      accessTokenKind: text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("TEST-")
+        ? "test"
+        : text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("APP_USR-") ? "production" : "unknown",
+      notificationUrl,
+      testMode: enabled("MERCADOPAGO_TEST_MODE"),
+      webhookSecretConfigured: Boolean(text(env.MERCADOPAGO_WEBHOOK_SECRET))
+    },
+    syncFrom: cutover && !Number.isNaN(cutover.getTime()) ? cutover.toISOString() : null
+  };
 }
 
 function validCursor(value) {
