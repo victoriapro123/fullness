@@ -16,6 +16,7 @@ const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_BENEFIT_ICON_BYTES = 3 * 1024 * 1024;
 const MAX_MENU_SLUG_LENGTH = 72;
 const MAX_MENU_SLUG_ATTEMPTS = 24;
+const MENU_ITEM_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const IMAGE_CONTENT_TYPES = new Set([
   "image/avif",
   "image/gif",
@@ -1160,9 +1161,28 @@ export async function applyPublicCore360Prices(items, {fetchImpl = fetch} = {}) 
     return {
       data: items.filter((item) => byMenuItemId.has(cleanText(item?.id))).map((item) => {
         const projection = byMenuItemId.get(cleanText(item.id));
+        const editorialImage = cleanText(item.editorialImage || item.image || item.photoUrl);
+        const editorialPhotoUrl = cleanText(item.editorialPhotoUrl || item.photoUrl || item.image);
+        const coreImageUrl = validatedCore360MenuImageUrl({
+          imageUrl: projection.imageUrl,
+          imageVersion: projection.imageVersion,
+          menuItemId: item.id
+        });
+        const {core360ImageUrl, core360ImageVersion, ...itemWithoutStaleCoreImage} = item;
         return {
-          ...item,
+          ...itemWithoutStaleCoreImage,
           core360CommercialVersion: cleanText(projection.commercialVersion),
+          ...(coreImageUrl ? {
+            core360ImageUrl: coreImageUrl,
+            core360ImageVersion: cleanText(projection.imageVersion),
+            editorialImage,
+            editorialPhotoUrl,
+            image: coreImageUrl,
+            photoUrl: coreImageUrl
+          } : {
+            image: editorialImage,
+            photoUrl: editorialPhotoUrl
+          }),
           price: Number(projection.priceClp)
         };
       }),
@@ -1175,6 +1195,15 @@ export async function applyPublicCore360Prices(items, {fetchImpl = fetch} = {}) 
       ? {data: items, error: null}
       : {data: [], error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
   }
+}
+
+function validatedCore360MenuImageUrl({imageUrl, imageVersion, menuItemId}) {
+  const id = cleanText(menuItemId);
+  const version = cleanText(imageVersion);
+  if (!MENU_ITEM_UUID.test(id) || !version) return "";
+
+  const expected = `/api/commerce/menu-image?id=${encodeURIComponent(id)}&v=${encodeURIComponent(version)}`;
+  return cleanText(imageUrl) === expected ? expected : "";
 }
 
 export async function listAdminMenuItems() {

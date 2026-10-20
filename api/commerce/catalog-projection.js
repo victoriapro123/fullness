@@ -1,5 +1,7 @@
 import {createClient} from "@supabase/supabase-js";
-import {isCore360CommercePollingEnabled} from "../../server/core360-commerce-adapter.mjs";
+import {isCore360CommerceMediaProxyEnabled, isCore360CommercePollingEnabled} from "../../server/core360-commerce-adapter.mjs";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function handler(request, response) {
   if (request.method !== "GET") {
@@ -32,7 +34,7 @@ export default async function handler(request, response) {
         .eq("currency", "CLP"),
       supabase
         .from("core360_product_mappings")
-        .select("source_menu_item_id")
+        .select("source_menu_item_id,image_reference,image_version")
         .eq("is_active", true),
       supabase
         .from("menu_items")
@@ -43,15 +45,28 @@ export default async function handler(request, response) {
       throw projectionResult.error || mappingResult.error || menuResult.error;
     }
 
-    const activeMappingIds = new Set((mappingResult.data || []).map((row) => text(row.source_menu_item_id)).filter(Boolean));
+    const mappingsByMenuItemId = new Map((mappingResult.data || [])
+      .map((row) => [text(row.source_menu_item_id), row])
+      .filter(([menuItemId]) => menuItemId));
     const activeMenuItemIds = new Set((menuResult.data || []).map((row) => text(row.id)).filter(Boolean));
+    const mediaProxyEnabled = isCore360CommerceMediaProxyEnabled();
 
     const products = (projectionResult.data || []).map((row) => ({
       commercialVersion: text(row.product_version),
       id: text(row.source_menu_item_id),
+      imageUrl: createPublicCore360MenuImageUrl({
+        enabled: mediaProxyEnabled,
+        menuItemId: text(row.source_menu_item_id),
+        mapping: mappingsByMenuItemId.get(text(row.source_menu_item_id))
+      }),
+      imageVersion: publicMenuImageVersion({
+        enabled: mediaProxyEnabled,
+        menuItemId: text(row.source_menu_item_id),
+        mapping: mappingsByMenuItemId.get(text(row.source_menu_item_id))
+      }),
       priceClp: safePrice(row.gross_minor),
       updatedAt: row.updated_at || null
-    })).filter((row) => row.id && activeMappingIds.has(row.id) && activeMenuItemIds.has(row.id) && row.commercialVersion && row.priceClp);
+    })).filter((row) => row.id && mappingsByMenuItemId.has(row.id) && activeMenuItemIds.has(row.id) && row.commercialVersion && row.priceClp);
     return sendJson(response, 200, {data: {enabled: true, products}});
   } catch (error) {
     console.error("Core360 public catalogue projection failed:", text(error?.code || error?.message));
@@ -62,6 +77,19 @@ export default async function handler(request, response) {
 function safePrice(value) {
   const price = Math.round(Number(value));
   return Number.isSafeInteger(price) && price > 0 ? price : null;
+}
+
+export function createPublicCore360MenuImageUrl({enabled, menuItemId, mapping}) {
+  const imageVersion = publicMenuImageVersion({enabled, menuItemId, mapping});
+  if (!imageVersion) return null;
+  return `/api/commerce/menu-image?id=${encodeURIComponent(menuItemId)}&v=${encodeURIComponent(imageVersion)}`;
+}
+
+function publicMenuImageVersion({enabled, menuItemId, mapping}) {
+  const imageReference = text(mapping?.image_reference);
+  const imageVersion = text(mapping?.image_version);
+  if (!enabled || !UUID.test(menuItemId) || !imageReference || !imageVersion) return null;
+  return imageVersion;
 }
 
 function sendJson(response, status, payload) {
