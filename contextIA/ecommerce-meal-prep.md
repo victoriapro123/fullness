@@ -197,6 +197,14 @@
 - La vista rápida de un plan o plato debe mostrar siempre la foto completa con `object-fit: contain`, sobre fondo oscuro que continúe la fotografía; no usar `cover` si corta la caja o el plato.
 - En escritorio el lightbox usa una altura acotada y sólo su columna de contenido desplaza. En móvil el overlay completo inicia desde arriba y tiene scroll natural; el botón de cierre queda fijo y visible mientras se revisa una ficha larga. No centrar verticalmente un panel más alto que la pantalla, porque oculta el inicio y aparenta que no existe scroll.
 
+### Color y separación de lightboxes 2026-10-24
+
+- La referencia visual enviada por Carlos el 24/10 reemplaza su pedido inicial de usar ciruela del header: los botones destacados dentro de diálogos usan fondo verde eucalipto (`#a7bba6`), texto oscuro y esquinas rectas; los secundarios de suscripción/detalle usan fondo oscuro de paleta, borde palo de rosa y texto marfil. La regla vive en `palette.css` y cubre acciones primarias, suscripción e `Ir a la semana`; no cambia los CTA de la página fuera de diálogos.
+- Las fichas conservan 18 px entre bloques y 12 px entre título, descripción y contenido de una sección. Los botones admiten texto multilínea con relleno vertical; las acciones pasan automáticamente a una columna cuando no caben. Los títulos usan interlineado 1.14/1.15, y etiquetas/nombres largos se ajustan al ancho sin invadir otra tarjeta. Las tarjetas semanales alinean su contenido arriba.
+- El detalle móvil de mealprep comparte el scroll natural del plan, sin panel fijo que recorte el final. No cambia navegación por capas, persistencia, formularios ni datos.
+- Verificación local: navegación mensual → semana → plato y mediciones a 320, 390, 768, 1024 y 1440 px. Semana/plato sin overflow horizontal en contenido/acciones; separación entre bloques del plato de 18 px. Catálogo local de desarrollo; imágenes remotas `/api/media` no disponibles en este entorno. No acredita revisión de datos productivos, acceso autenticado al backoffice ni publicación. Sin push/deploy ni cambios remotos; consulta/importación Cerebro central pendiente según contrato transitorio.
+- Validación final tras cambiar la referencia: build Vite con Node 24 aprobado. Colores calculados del primario `rgb(167, 187, 166)`/`rgb(21, 21, 21)`, radio `0px`; secundario `rgb(21, 21, 21)`/`rgb(242, 237, 230)`, borde `rgb(169, 136, 128)`. Captura del detalle móvil revisada con el nuevo estilo.
+
 ### Lightbox De Suscripción 2026-08-03
 
 - La configuración del lightbox es contenido remoto de `ecommerce_shop_settings`, no un ajuste exclusivo de `localStorage`. Incluye visibilidad, textos, CTAs, URL de fondo y clave R2 para que el resultado se conserve entre equipos, sesiones y recargas.

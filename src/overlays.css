@@ -874,7 +874,8 @@
 .subscription-lightbox h2 {
   max-width: 15ch !important;
   font-size: clamp(2.05rem, min(3.8vw, 6.2svh), 3.75rem) !important;
-  line-height: 1 !important;
+  line-height: 1.15 !important;
+  overflow-wrap: anywhere;
   text-wrap: balance !important;
 }
 
@@ -1038,13 +1039,15 @@
 
 .subscription-lightbox-mode-intro .subscription-lightbox-content > .eyebrow {
   grid-row: 2 !important;
-  margin: 0 0 4px !important;
+  margin: 0 0 12px !important;
 }
 
 .subscription-lightbox-mode-intro .subscription-lightbox-content > h2 {
   grid-row: 3 !important;
   max-width: 14ch !important;
   margin: 0 0 clamp(14px, 2svh, 22px) !important;
+  line-height: 1.15 !important;
+  overflow-wrap: anywhere;
 }
 
 .subscription-lightbox-mode-intro .subscription-lightbox-content > p:not(.eyebrow) {
@@ -1060,6 +1063,7 @@
   align-self: end !important;
   width: min(430px, 100%) !important;
   margin: 0 !important;
+  gap: 12px !important;
 }
 
 .subscription-lightbox-mode-intro .subscription-lightbox-benefits {
@@ -1163,7 +1167,7 @@
   }
 
   .subscription-lightbox-mode-intro .subscription-lightbox-content > .eyebrow {
-    margin-bottom: 5px !important;
+    margin-bottom: 12px !important;
   }
 
   .subscription-lightbox-mode-intro .subscription-lightbox-content > h2 {

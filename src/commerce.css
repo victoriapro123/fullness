@@ -122,7 +122,7 @@
 
 .route-shop .monthly-plan-menu-week > div {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .route-shop .monthly-plan-menu-week .eyebrow {
@@ -457,6 +457,7 @@
   display: grid;
   align-content: start;
   gap: 18px;
+  min-width: 0;
   min-height: 0;
   padding: clamp(32px, 4vw, 58px);
   overflow-y: auto;
@@ -484,9 +485,15 @@
 }
 
 .product-lightbox-copy h2 {
-  margin-bottom: 0;
+  margin: 0;
   font-size: clamp(2.2rem, 4vw, 4.1rem);
-  line-height: 0.98;
+  line-height: 1.14;
+  overflow-wrap: anywhere;
+}
+
+.product-lightbox-copy > p,
+.product-lightbox-block > p {
+  margin: 0;
 }
 
 .product-lightbox-copy > p:not(.eyebrow),
@@ -500,6 +507,7 @@
 .product-lightbox-block {
   display: grid;
   gap: 12px;
+  min-width: 0;
   padding-top: 6px;
 }
 
@@ -510,6 +518,8 @@
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .product-lightbox-copy .eyebrow {
@@ -530,13 +540,15 @@
   display: inline-flex;
   align-items: center;
   min-height: 34px;
-  padding: 0 12px;
+  max-width: 100%;
+  padding: 7px 12px;
   border: 1px solid rgba(81, 20, 37, 0.13);
   border-radius: 999px;
   color: rgba(23, 17, 12, 0.78);
   background: rgba(255, 250, 242, 0.76);
   font-size: 0.9rem;
-  line-height: 1.25;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .nutrition-facts-grid {
@@ -577,7 +589,7 @@
 
 .product-lightbox-actions {
   display: grid;
-  grid-template-columns: minmax(190px, auto) minmax(150px, auto);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   align-items: center;
   gap: 12px;
   margin-top: 4px;
@@ -878,7 +890,8 @@
 
 @media (max-width: 860px) {
 
-  .overlay.product-lightbox {
+  .overlay.product-lightbox,
+  .overlay.meal-lightbox {
     display: block;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -891,7 +904,8 @@
     grid-template-columns: 1fr;
   }
 
-  .overlay.product-lightbox .product-lightbox-panel {
+  .overlay.product-lightbox .product-lightbox-panel,
+  .overlay.meal-lightbox .product-lightbox-panel {
     height: auto;
     max-height: none;
     min-height: calc(100svh - 36px);
@@ -1145,6 +1159,7 @@
 
 .included-meals-grid button {
   display: grid;
+  align-content: start;
   gap: 8px;
   min-width: 0;
   padding: 0;
@@ -1177,14 +1192,15 @@
 .included-meals-grid button > span:not(.hover-image-frame),
 .included-meals-grid button > strong {
   margin-inline: 12px;
+  overflow-wrap: anywhere;
 }
 
-.included-meals-grid button > span {
+.included-meals-grid button > span:not(.hover-image-frame) {
   color: #7d2e3d;
   font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.1em;
-  line-height: 1.2;
+  line-height: 1.4;
   text-transform: uppercase;
 }
 
@@ -1193,7 +1209,7 @@
   color: var(--ink);
   font-size: 0.98rem;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.4;
 }
 
 .product-lightbox-actions.single-action {
