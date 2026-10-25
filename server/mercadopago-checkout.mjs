@@ -832,7 +832,9 @@ function normalizeCart(cart) {
     const slug = cleanText(item?.slug);
     const quantity = Math.round(Number(item?.quantity ?? item?.qty));
 
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    // Existing published identifiers contain dots or single spaces. Resolve
+    // the literal identifier; never rename products or accept path syntax.
+    if (slug.length > 160 || !/^[a-z0-9]+(?:[ .-][a-z0-9]+)*$/.test(slug)) {
       throw statusError(422, "Uno de los productos no tiene un identificador valido.");
     }
 
