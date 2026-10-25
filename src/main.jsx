@@ -1688,6 +1688,9 @@ function normalizeMenuFormDraft(rawDraft) {
   const form = {
     ...defaults,
     ...rawDraft.form,
+    // Missing in legacy drafts means inherit the persisted schedule on restore,
+    // not the new-form default of permanent availability.
+    availability: rawDraft.form.availability || null,
     includedItems: Array.isArray(rawDraft.form.includedItems) ? rawDraft.form.includedItems : defaults.includedItems,
     weeklyDraftItems: Array.isArray(rawDraft.form.weeklyDraftItems) ? rawDraft.form.weeklyDraftItems : defaults.weeklyDraftItems,
     weeklyPlanIds: Array.isArray(rawDraft.form.weeklyPlanIds)
