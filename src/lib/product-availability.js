@@ -98,17 +98,25 @@ export function getProductAvailability(product, now = new Date()) {
   let status = "active";
   if (hidden) status = "hidden";
   else if (invalid || schedule.mode === "paused") status = "inactive";
+  else if (product?.dispatchCalendarInvalid) status = "inactive";
   // Existing starts_on is now the dispatch date. Legacy ends_on remains in
   // the snapshot for traceability, but neither date limits a valid purchase.
   const available = status === "active";
-  const dispatch = isPlanProduct(product) && schedule.mode === "scheduled" ? getDispatchSchedule(schedule.startsOn, now) : null;
-  const label = status === "hidden" ? "Oculto" : available ? "Disponible" : "Inactivo";
+  const calendar = product?.dispatchCalendar;
+  let dispatch = isPlanProduct(product) && schedule.mode === "scheduled" ? getDispatchSchedule(schedule.startsOn, now) : null;
+  if (isPlanProduct(product) && calendar?.configured) {
+    dispatch = calendar.published && calendar.weekOf ? getDispatchSchedule(calendar.weekOf, now) : null;
+    if (!dispatch || dispatch.weekOf !== calendar.weekOf) {dispatch = null; if (status === "active") status = "unavailable_menu";}
+  }
+  const canPurchase = status === "active";
+  const label = status === "hidden" ? "Oculto" : canPurchase ? "Disponible" : status === "unavailable_menu" ? "Fuera de programación" : "Inactivo";
   const message = status === "hidden" ? "No visible en la tienda"
-    : available && !isPlanProduct(product) ? "Preparación a pedido. Despacho a coordinar con Fullnesslab"
-    : available && dispatch
+    : status === "unavailable_menu" ? "Este menú no tiene un despacho vigente. Elige una semana programada"
+    : canPurchase && !isPlanProduct(product) ? "Preparación a pedido. Despacho a coordinar con Fullnesslab"
+    : canPurchase && dispatch
       ? `Despacho el ${formatAvailabilityDate(dispatch.dispatchOn)}`
-      : available ? "Disponible para comprar" : "No disponible para comprar";
-  return {available, status, label, message, schedule, dispatch};
+      : canPurchase ? "Disponible para comprar" : "No disponible para comprar";
+  return {available: canPurchase, status, label, message, schedule, dispatch};
 }
 
 export function serializeAvailability(value) {

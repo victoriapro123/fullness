@@ -1,6 +1,7 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 import { benefitPresets, tagPresets } from "./catalog-parameter-presets.js";
 import {normalizeAvailability, serializeAvailability} from "./product-availability.js";
+import {applyDispatchCalendar, CALENDAR_COLUMNS} from "./dispatch-calendar.js";
 
 const MENU_ITEM_COLUMNS = "*";
 const MONTHLY_PLAN_WEEK_COLUMNS = "monthly_plan_id,weekly_plan_id,week_position";
@@ -106,10 +107,10 @@ async function findMenuItemBySku(supabase, sku) {
 }
 
 async function updateMenuItemById(supabase, id, payload) {
-  if (payload.metadata?.availability) {
+  if (payload.metadata) {
     const current = await supabase.from("menu_items").select("metadata").eq("id", id).maybeSingle();
     if (current.error) return {data: null, error: current.error};
-    payload = {...payload, metadata: {...normalizeJsonObject(current.data?.metadata), availability: payload.metadata.availability}};
+    payload = {...payload, metadata: {...normalizeJsonObject(current.data?.metadata), ...payload.metadata}};
   }
   return supabase
     .from("menu_items")
@@ -746,14 +747,15 @@ export function buildMenuItemPayload(input) {
     recipe_summary: productType === "family" ? rethermalizationInstructions || null : recipeSummary,
     recipe_steps: normalizeTextList(input.recipeSteps || input.recipe_steps),
     allergens: normalizeTextList(input.allergens),
-    // A monthly plan is only an ordered relation to four weekly plans. Never
-    // serialize its displayed mealpreps into menu_items.included_items.
+    // Monthly recipes come from the dated dispatch calendar. Keep the
+    // commercial product separate; never duplicate its displayed mealpreps.
     included_items: productType === "plan" && !monthlyPlan ? serializeIncludedItems(includedItems) : [],
     serving_label: nullableText(input.servingLabel || input.serving_label),
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
+    ...(monthlyPlan ? {metadata: {...normalizeJsonObject(input.metadata), dispatch_policy: "calendar_v1"}} : {}),
     ...(input.availability !== undefined ? {
-      metadata: {...normalizeJsonObject(input.metadata), availability: serializeAvailability(input.availability)}
+      metadata: {...normalizeJsonObject(input.metadata), ...(monthlyPlan ? {dispatch_policy: "calendar_v1"} : {}), availability: serializeAvailability(input.availability)}
     } : {}),
     display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
     ...(productType === "family"
@@ -1133,7 +1135,9 @@ export async function listActiveMenuItems() {
     (data || []).filter(isMonthlyPlan).map((row) => row.id)
   );
 
-  const mappedItems = mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition);
+  const calendar = await supabase.from("weekly_dispatch_menus").select(CALENDAR_COLUMNS).eq("published", true).order("week_of", {ascending: true});
+  if (calendar.error) return {data: [], error: calendar.error, configured: true};
+  const mappedItems = applyDispatchCalendar(mapMenuItemsWithComposition(data, parameterResult.context, libraryById, composition), calendar.data || []);
   const projected = await applyPublicCore360Prices(mappedItems);
   return {
     data: projected.data,
@@ -1539,7 +1543,7 @@ export async function saveMenuItem(input) {
     if (!supabase) return unavailableResult();
 
     const basePayload = buildMenuItemPayload(input);
-    const monthlyPlan = isMonthlyPlan(basePayload);
+    const monthlyPlan = isMonthlyPlan(basePayload) && basePayload.metadata?.dispatch_policy !== "calendar_v1";
     const requestedWeeklyPlanIds = monthlyPlan ? monthlyPlanWeekIdsFromInput(input) : [];
     const monthlyPlanValidationError = monthlyPlan
       ? validateMonthlyPlanWeekIds(requestedWeeklyPlanIds)
@@ -1548,7 +1552,7 @@ export async function saveMenuItem(input) {
       return { data: null, error: monthlyPlanValidationError, configured: true };
     }
 
-    // A monthly record must exist before its ordered weeks can be assigned,
+    // Legacy compatibility only: a monthly record must exist before its ordered weeks can be assigned,
     // while an active record is valid only after those four assignments exist.
     // Persist hidden first, replace the relation atomically through the RPC,
     // and publish only after both steps have succeeded.

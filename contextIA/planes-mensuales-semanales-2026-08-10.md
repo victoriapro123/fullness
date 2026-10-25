@@ -1,5 +1,11 @@
 # Planes mensuales compuestos por semanas — 2026-08-10
 
+## Regla que reemplaza la composición fija (2026-10-25)
+
+Carlos confirmó programación de menús nuevos por fecha, sin ciclo automático, y preventa semanal. El mensual ya no se arma eligiendo cuatro semanas fijas: compra cuatro entregas cuyo menú corresponde al calendario de Fullnesslab. Ver `disponibilidad-semanal.md` para tablas, protección de cambios, estado productivo y evidencias. Las relaciones históricas quedan intactas, sin reescribir compras anteriores. El editor mensual dirige a **Calendario de menús**; las fechas sin menú quedan pendientes de programación y no duplican recetas. Tags y beneficios se obtienen de los menús publicados de esas cuatro fechas.
+
+## Antecedente de composición estática
+
 ## Decisión vigente
 
 Esta decisión reemplaza cualquier instrucción anterior que permitía armar un plan mensual copiando mealpreps desde un plan semanal.

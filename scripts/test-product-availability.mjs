@@ -80,6 +80,7 @@ for (const availability of [
     cart: [{slug: product.slug, quantity: 1}],
     fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
     dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       now: new Date("2026-10-25T15:00:00Z"), env: {},
       supabase: {from(name) {if (name !== "menu_items") {mutations++; throw Error("No side effects allowed");} return table;}},
       mercadoPagoRequest: async () => {providerCalls++; throw Error("No provider allowed");},
@@ -100,6 +101,7 @@ for (const [index, product] of plans.entries()) {
     fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
     request: {headers: {host: "fullness.example.test", "x-forwarded-proto": "https"}},
     dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       now: checkoutNow, env: {},
       supabase: {from(name) {
         if (name === "menu_items") return {select: () => ({in: () => ({eq: async () => ({data: [selectedProduct], error: null})})})};
@@ -132,6 +134,7 @@ for (const type of ["mealprep", "family"]) {
     fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
     request: {headers: {host: "fullness.example.test", "x-forwarded-proto": "https"}},
     dependencies: {now: new Date("2026-10-29T20:00:01Z"), env: {},
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       supabase: {from(table) {
         if (table === "menu_items") return {select: () => ({in: () => ({eq: async () => ({data: [product], error: null})})})};
         if (table === "orders") return {insert(row) {persisted.orders.push(row); return {select: () => ({single: async () => ({data: {id: "55555555-5555-4555-8555-555555555555"}, error: null})})};}, update: () => ({eq: async () => ({error: null})})};

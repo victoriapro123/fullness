@@ -57,6 +57,7 @@ await assert.rejects(
   createCheckoutPreference({
     ...checkout,
     dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       core360FetchImpl: () => { throw new Error("No puede cotizar sin el flag PREVIEW."); },
       env: {...env, CORE360_COMMERCE_PREVIEW_ENABLED: "false"},
       mercadoPagoRequest: async () => {
@@ -77,6 +78,7 @@ for (const code of ["CATALOG_VERSION_CONFLICT", "ITEM_NOT_SELLABLE"]) {
     createCheckoutPreference({
       ...checkout,
       dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
         core360FetchImpl: async () => ({
           ok: false,
           json: async () => ({code, message: "Core360 cambió la condición comercial."}),
@@ -100,6 +102,7 @@ const success = {mercadoPagoCalls: 0, orderInserts: 0, orderItems: []};
 const result = await createCheckoutPreference({
   ...checkout,
   dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
     core360FetchImpl: async (url, request) => {
       assert.match(url, /\/api\/commerce\/v1\/orders\/preview$/);
       const body = JSON.parse(request.body);

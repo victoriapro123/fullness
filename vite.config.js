@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import {defineConfig} from "vite";
 import backofficeDataExportHandler from "./api/backoffice/data-export.js";
 import backofficeDnsHandler from "./api/backoffice/dns.js";
+import dispatchCalendarHandler from "./api/backoffice/dispatch-calendar.js";
 import backofficeExportsHandler from "./api/backoffice/exports.js";
 import backofficePasswordRecoveryHandler from "./api/backoffice/password-recovery.js";
 import backofficeR2AssetsHandler from "./api/backoffice/r2-assets.js";
@@ -28,6 +29,7 @@ function apiDevServer() {
     configureServer(server) {
       mountApiHandler(server, "/api/backoffice/data-export", backofficeDataExportHandler);
       mountApiHandler(server, "/api/backoffice/dns", backofficeDnsHandler);
+      mountApiHandler(server, "/api/backoffice/dispatch-calendar", dispatchCalendarHandler);
       mountApiHandler(server, "/api/backoffice/exports", backofficeExportsHandler);
       mountApiHandler(server, "/api/backoffice/password-recovery", backofficePasswordRecoveryHandler);
       mountApiHandler(server, "/api/backoffice/r2-assets", backofficeR2AssetsHandler);

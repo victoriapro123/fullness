@@ -12,6 +12,7 @@ import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 import {getProductAvailability, getProductDispatchRule, isPlanProduct, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
 import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rates.js";
+import {resolveDispatchProducts} from "./dispatch-calendar.mjs";
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
@@ -81,7 +82,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
   }
   const catalogItems = await applyCore360ProjectedPrices({
-    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: checkoutNow}),
+    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: checkoutNow, resolveDispatch: dependencies.resolveDispatchProducts || resolveDispatchProducts}),
     env,
     supabase
   });
@@ -718,7 +719,7 @@ async function applyCore360ProjectedPrices({catalogItems, env = process.env, sup
   return result;
 }
 
-async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin(), now = new Date()} = {}) {
+async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin(), now = new Date(), resolveDispatch = resolveDispatchProducts} = {}) {
   const slugs = [...new Set(cart.map((item) => item.slug))];
   const {data, error} = await supabase
     .from("menu_items")
@@ -737,7 +738,7 @@ async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin(), now = n
       throw statusError(409, `${product.name}: ${availability.message}.`);
     }
   }
-  const catalogWithMonthlyWeeks = await resolveMonthlyPlanWeeks(catalogItems, {supabase});
+  const catalogWithMonthlyWeeks = await resolveDispatch(catalogItems, {supabase, now});
 
   return new Map(catalogWithMonthlyWeeks.map((row) => [row.slug, row]));
 }
@@ -746,96 +747,6 @@ function isMonthlyPlan(product) {
   return product?.product_type === "plan" && product?.plan_frequency === "monthly";
 }
 
-function mealIdentity(meal) {
-  return cleanText(meal?.libraryMealId || meal?.library_meal_id || meal?.id);
-}
-
-function weeklyPlanHasSixDistinctMealpreps(weeklyPlan) {
-  if (!Array.isArray(weeklyPlan?.included_items) || weeklyPlan.included_items.length !== 6) return false;
-
-  const ids = weeklyPlan.included_items.map(mealIdentity);
-  return ids.every(Boolean) && new Set(ids).size === 6;
-}
-
-async function resolveMonthlyPlanWeeks(catalogItems, {supabase = getSupabaseAdmin()} = {}) {
-  const monthlyPlans = catalogItems.filter(isMonthlyPlan);
-  if (monthlyPlans.length === 0) return catalogItems;
-
-  const monthlyPlanIds = monthlyPlans.map((plan) => plan.id).filter(Boolean);
-  const {data: links, error: linksError} = await supabase
-    .from("monthly_plan_weeks")
-    .select("monthly_plan_id,weekly_plan_id,week_position")
-    .in("monthly_plan_id", monthlyPlanIds)
-    .order("week_position", {ascending: true});
-
-  if (linksError) {
-    throw statusError(502, "No pudimos validar las semanas del plan mensual.", linksError);
-  }
-
-  const linksByMonthlyPlan = new Map();
-  for (const link of links || []) {
-    const monthlyPlanId = cleanText(link?.monthly_plan_id);
-    const weeklyPlanId = cleanText(link?.weekly_plan_id);
-    const weekPosition = Number(link?.week_position);
-    if (!monthlyPlanId || !weeklyPlanId || !Number.isInteger(weekPosition)) continue;
-
-    const monthlyLinks = linksByMonthlyPlan.get(monthlyPlanId) || [];
-    monthlyLinks.push({weeklyPlanId, weekPosition});
-    linksByMonthlyPlan.set(monthlyPlanId, monthlyLinks);
-  }
-
-  const weeklyPlanIds = [...new Set(
-    [...linksByMonthlyPlan.values()].flatMap((monthlyLinks) => monthlyLinks.map((link) => link.weeklyPlanId))
-  )];
-  const {data: weeklyPlans, error: weeklyPlansError} = weeklyPlanIds.length
-    ? await supabase
-      .from("menu_items")
-      .select("*")
-      .in("id", weeklyPlanIds)
-      .eq("is_active", true)
-    : {data: [], error: null};
-
-  if (weeklyPlansError) {
-    throw statusError(502, "No pudimos validar los planes semanales del mensual.", weeklyPlansError);
-  }
-
-  const weeklyPlanById = new Map((weeklyPlans || []).map((plan) => [plan.id, plan]));
-
-  return catalogItems.map((product) => {
-    if (!isMonthlyPlan(product)) return product;
-
-    const monthlyLinks = (linksByMonthlyPlan.get(product.id) || [])
-      .sort((left, right) => left.weekPosition - right.weekPosition);
-    const weeklyIds = monthlyLinks.map((link) => link.weeklyPlanId);
-    const weekPositions = monthlyLinks.map((link) => link.weekPosition);
-    const validPositions = weekPositions.length === 4
-      && new Set(weekPositions).size === 4
-      && weekPositions.every((position, index) => position === index + 1);
-
-    if (monthlyLinks.length !== 4 || new Set(weeklyIds).size !== 4 || !validPositions) {
-      throw statusError(422, `El plan mensual ${cleanText(product.name) || "seleccionado"} no tiene sus cuatro semanas configuradas.`);
-    }
-
-    const monthlyWeeks = monthlyLinks.map((link) => {
-      const weeklyPlan = weeklyPlanById.get(link.weeklyPlanId);
-      if (
-        !weeklyPlan
-        || weeklyPlan.product_type !== "plan"
-        || weeklyPlan.plan_frequency !== "weekly"
-        || !weeklyPlanHasSixDistinctMealpreps(weeklyPlan)
-      ) {
-        throw statusError(
-          422,
-          `El plan mensual ${cleanText(product.name) || "seleccionado"} contiene una semana no disponible o incompleta.`
-        );
-      }
-
-      return {...weeklyPlan, week_position: link.weekPosition};
-    });
-
-    return {...product, monthly_weeks: monthlyWeeks};
-  });
-}
 
 function snapshotMealprep(meal) {
   return {
@@ -853,16 +764,15 @@ function snapshotWeeklyPresetMenu(weeklyPlan) {
 }
 
 function buildProductSnapshot(product, now = new Date()) {
-  const monthlyWeeks = isMonthlyPlan(product) && Array.isArray(product.monthly_weeks)
-    ? product.monthly_weeks.map((weeklyPlan) => ({
-      weekPosition: Number(weeklyPlan.week_position),
-      weeklyPlanId: weeklyPlan.id || null,
-      weeklyPlanSlug: weeklyPlan.slug || "",
-      weeklyPlanSku: weeklyPlan.sku || null,
-      weeklyPlanName: weeklyPlan.name || "",
-      dispatch: getProductAvailability(weeklyPlan, now).dispatch,
-      mealpreps: snapshotWeeklyPresetMenu(weeklyPlan)
-    }))
+  const monthlyWeeks = isMonthlyPlan(product) && Array.isArray(product.dispatch_plan)
+    ? product.dispatch_plan.map((delivery) => {
+      const weeklyPlan = (product.monthly_weeks || []).find((week) => week.id === delivery.weeklyPlanId);
+      return {weekPosition: delivery.deliveryNumber, weeklyPlanId: delivery.weeklyPlanId,
+        weeklyPlanSlug: weeklyPlan?.slug || "", weeklyPlanSku: weeklyPlan?.sku || null,
+        weeklyPlanName: weeklyPlan?.name || "Menú por programar", assignmentStatus: delivery.assignmentStatus,
+        dispatch: {dispatchOn: delivery.dispatchOn, weekOf: delivery.weekOf, timeZone: "America/Santiago"},
+        mealpreps: snapshotWeeklyPresetMenu(weeklyPlan)};
+    })
     : [];
 
   return {
@@ -890,7 +800,8 @@ function buildProductSnapshot(product, now = new Date()) {
     photoUrl: product.photo_url,
     benefitTags: product.benefit_tags,
     servingLabel: product.serving_label,
-    planStructure: isMonthlyPlan(product)
+    dispatchPlan: product.dispatch_plan || null,
+    planStructure: Array.isArray(product.dispatch_plan) ? "dispatch_calendar_v1" : isMonthlyPlan(product)
       ? "monthly_weeks_v1"
       : product.product_type === "plan"
         ? "weekly_mealpreps_v1"

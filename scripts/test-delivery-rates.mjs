@@ -49,6 +49,7 @@ for (const [mode, comuna, fee] of [["delivery", "Lo Barnechea", 3990], ["deliver
     // Forged client quotes/totals must never be trusted.
     fulfillment: {...checkout.fulfillment, mode, comuna, deliveryFee: 1, delivery_fee_clp: 1, total: 1, deliveryQuote: {feeClp: 1}},
     dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       env: {}, supabase: mockDatabase(state),
       resolveDeliveryService: async ({feeClp}) => mockService(feeClp),
       mercadoPagoRequest: async (path, {body}) => {state.preferences.push(body); return {id: "mock-preference", init_point: "https://mp.example.invalid/qa"};},
@@ -74,6 +75,7 @@ for (const [mode, comuna, fee] of [["delivery", "Lo Barnechea", 3990], ["deliver
 
   let quoteWrites = 0;
   const quote = await quoteCheckout({cart: checkout.cart, fulfillment: {mode, comuna}, dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
     env: {}, resolveDeliveryService: async ({feeClp}) => mockService(feeClp),
     supabase: {from(table) {if (table !== "menu_items") {quoteWrites++; throw Error("Una cotización no debe crear filas");} return mockDatabase(state).from(table);}},
     mercadoPagoRequest: async () => {quoteWrites++; throw Error("Una cotización no debe crear un pago");}
@@ -82,6 +84,7 @@ for (const [mode, comuna, fee] of [["delivery", "Lo Barnechea", 3990], ["deliver
   assert.equal(quote.deliveryVerified, true);
   assert.equal(quoteWrites, 0);
   await assert.rejects(createCheckoutPreference({...checkout, expectedAmount: 1, fulfillment: {...checkout.fulfillment, mode, comuna}, dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
     env: {}, supabase: mockDatabase(state), resolveDeliveryService: async ({feeClp}) => mockService(feeClp),
     mercadoPagoRequest: async () => {throw Error("Un total distinto no debe crear preferencia");}
   }}), error => error.statusCode === 409);
@@ -93,6 +96,7 @@ for (const [comuna, env, status] of [["Santiago", {}, 422], ["Lo Barnechea", {CO
   await assert.rejects(createCheckoutPreference({
     ...checkout, fulfillment: {...checkout.fulfillment, comuna},
     dependencies: {
+      resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
       env,
       supabase: {from() {effects++; throw Error("No se debe consultar ni mutar la base");}},
       mercadoPagoRequest: async () => {effects++; throw Error("No se debe cobrar");},

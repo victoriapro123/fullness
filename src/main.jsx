@@ -84,7 +84,7 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
-import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, getProductAvailability, isPlanProduct, normalizeAvailability} from "./lib/product-availability.js";
+import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, formatAvailabilityDate, getProductAvailability, isPlanProduct, normalizeAvailability} from "./lib/product-availability.js";
 import {DELIVERY_COMMUNES, getDeliveryQuote} from "./lib/delivery-rates.js";
 import {
   buildAnalyticsItem,
@@ -103,6 +103,8 @@ import {
 } from "./components/benefit-system.jsx";
 import { FilePickerButton } from "./components/file-picker-button.jsx";
 import {OrderOperationsAdmin} from "./components/order-operations.jsx";
+import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
+import {applyDispatchCalendar, buildMonthlyDeliveries, MONTHLY_MENU_RULE_TEXT} from "./lib/dispatch-calendar.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
 import storyPlateCutoutSrc from "./assets/fullness-story-plate-vegetable-cutout.png";
@@ -2392,10 +2394,8 @@ function getMenuFormPublicationIssues(form) {
   if (form.priceClp === "" || !Number.isFinite(price) || price < 0) issues.push("precio");
   if (!form.description.trim()) issues.push("descripción");
   if (form.productType === "plan" && form.planFrequency === "monthly") {
-    const weeklyPlanIds = [...new Set((form.weeklyPlanIds || []).filter(Boolean))];
-    if (weeklyPlanIds.length !== 4) {
-      issues.push("4 planes semanales distintos; el borrador ya está protegido mientras completas el mes");
-    }
+    // Four delivery entitlements are assigned from the dated calendar, not
+    // from a customer-selectable static set of recipes.
   } else if (form.productType === "plan") {
     const mealprepCount = (form.includedItems || []).filter((item) => item.name?.trim()).length;
     if (form.isActive && mealprepCount !== 6) {
@@ -2753,28 +2753,29 @@ function ProductPurchaseButton({product, onAdd, className = "primary-button", ch
   );
 }
 
-function ProductAvailabilityEditor({form, onChange}) {
+function ProductAvailabilityEditor({form, onChange, onOpenCalendar}) {
   const value = normalizeAvailability(form.availability);
   const error = availabilityValidationError(value);
   const plan = isPlanProduct(form);
   return (
     <fieldset className="product-availability-editor">
       <legend>Venta y despacho</legend>
-      <p>{plan ? "La fecha indica la semana de despacho del menú único. Ocultar o pausar un producto sigue siendo una decisión manual." : MEALPREP_DISPATCH_RULE_TEXT}</p>
+      <p>{plan ? "La semana del menú se configura en Calendario de menús. Aquí sólo se pausa o habilita su venta; no se repiten semanas automáticamente." : MEALPREP_DISPATCH_RULE_TEXT}</p>
       <label>Estado de venta
         <select name="availabilityMode" value={value.mode} onChange={(event) => onChange({...value, mode: event.target.value, endsOn: ""})}>
           <option value="always">Activo sin fecha de despacho</option>
           <option value="paused">Inactivo hasta nuevo aviso</option>
-          <option value="scheduled">Activo con fecha de despacho</option>
+          <option value="scheduled">{plan ? "Activo (fecha anterior; usar calendario)" : "Activo con fecha referencial"}</option>
         </select>
       </label>
-      {value.mode === "scheduled" && <div className="backoffice-grid">
+      {!plan && value.mode === "scheduled" && <div className="backoffice-grid">
         <label>{plan ? "Semana de despacho del menú" : "Fecha referencial coordinada por Fullnesslab"}
           <input name="availabilityStartsOn" type="date" required value={value.startsOn} onChange={(event) => onChange({...value, startsOn: event.target.value, endsOn: ""})} />
         </label>
       </div>}
       {error && <p className="form-error" role="status">{error}</p>}
-      <ProductAvailability product={{...form, availability: value}} />
+      {!plan && <ProductAvailability product={{...form, availability: value}} />}
+      {plan && onOpenCalendar && <button className="backoffice-command" type="button" onClick={onOpenCalendar}>Configurar menú por fecha</button>}
       {form.productType === "plan" && form.planFrequency === "weekly" && <p>{DISPATCH_RULE_TEXT} El menú se puede comprar antes de la semana indicada.</p>}
     </fieldset>
   );
@@ -2798,7 +2799,8 @@ function PresetPlanMenuNotice({ product }) {
 }
 
 function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
-  const weeklyPlans = [...(product.weeklyPlans || [])]
+  const datedProduct = product.calendarRows ? applyDispatchCalendar([product,...(product.calendarWeekMenus||[])],product.calendarRows).find((item)=>item.id===product.id) : product;
+  const weeklyPlans = [...(datedProduct.weeklyPlans || [])]
     .filter(Boolean)
     .sort((left, right) => Number(left.weekPosition || 0) - Number(right.weekPosition || 0));
 
@@ -2815,7 +2817,8 @@ function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
             <h4>{formatDisplayTitle(weeklyPlan.name)}</h4>
             <p>{formatDisplayDescription(weeklyPlan.description)}</p>
             <small>{formatDisplayDescription(weeklyPlan.servingLabel || "6 mealpreps")}</small>
-            <ProductAvailability product={weeklyPlan} compact />
+            {weeklyPlan.dispatchOn ? <p>{formatAvailabilityDate(weeklyPlan.dispatchOn)}</p> : <ProductAvailability product={weeklyPlan} compact />}
+            {weeklyPlan.pendingMenu && <p>Fullnesslab programará el menú de esta fecha. No se reutiliza una semana anterior.</p>}
             <div className="monthly-plan-week-meals" aria-label={`6 mealpreps de ${weeklyPlan.name}`}>
               {(weeklyPlan.includedItems || []).map((meal, mealIndex) => (
                 <button
@@ -2834,10 +2837,10 @@ function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
                 </button>
               ))}
             </div>
-            <button className="shop-outline-button monthly-plan-week-action" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
+            {!weeklyPlan.pendingMenu && <button className="shop-outline-button monthly-plan-week-action" type="button" onClick={() => onOpenWeek?.(weeklyPlan)}>
               Ir a la semana
               <ArrowUpRight size={16} />
-            </button>
+            </button>}
           </div>
         </article>
       ))}
@@ -3098,7 +3101,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
                     <h3 id={`shop-catalog-${id}-title`}>{formatDisplayTitle(title)}</h3>
                     <div className="shop-catalog-section-rule" aria-hidden="true" />
                   </header>
-                  {id !== "monthly" && <p className="checkout-message">{id === "weekly" ? DISPATCH_RULE_TEXT : MEALPREP_DISPATCH_RULE_TEXT}</p>}
+                  <p className="checkout-message">{id === "monthly" ? MONTHLY_MENU_RULE_TEXT : id === "weekly" ? DISPATCH_RULE_TEXT : MEALPREP_DISPATCH_RULE_TEXT}</p>
                   {products.length > 0 ? (
                     <div className={id === "family" ? "shop-family-grid shop-catalog-grid" : "shop-plan-grid shop-catalog-grid"}>
                       {products.map((product, index) => (
@@ -3245,7 +3248,7 @@ function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefi
           {isMonthlyPlan && (
             <div className="product-lightbox-block monthly-plan-lightbox-block">
               <h3>{formatDisplayTitle("Las 4 semanas del plan")}</h3>
-              <p>Revisa los 24 mealpreps organizados en cuatro semanas cerradas.</p>
+              <p>{MONTHLY_MENU_RULE_TEXT} Revisa las fechas y los mealpreps de cada menú ya programado.</p>
               <MonthlyPlanWeekList
                 product={product}
                 onOpenMeal={(weeklyPlan, meal, event) => onOpenMeal(weeklyPlan, meal, event, { purchaseProduct: product })}
@@ -3497,7 +3500,7 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
         {isMonthlyPlan && (
           <div className="product-detail-panel product-detail-included monthly-plan-detail-panel">
             <h2>{formatDisplayTitle("Las 4 semanas del plan")}</h2>
-            <p>Las 24 preparaciones están organizadas en cuatro semanas cerradas de 6 mealpreps.</p>
+            <p>{MONTHLY_MENU_RULE_TEXT} Cada menú programado contiene 6 mealpreps.</p>
             <MonthlyPlanWeekList
               product={product}
               onOpenMeal={(weeklyPlan, meal, event) => onOpenMeal(weeklyPlan, meal, event, { purchaseProduct: product })}
@@ -9304,7 +9307,7 @@ function App() {
       message: savingFamilyProduct
         ? "Estamos actualizando la ficha y el contenido que verá el cliente."
         : savingMonthlyPlan
-          ? "Estamos guardando el plan y sus vínculos ordenados a cuatro semanas."
+          ? "Estamos guardando el mensual con cuatro entregas asignadas por el calendario."
           : "Estamos guardando el plan y las fichas reutilizables de sus mealpreps."
     });
 
@@ -9617,6 +9620,7 @@ function App() {
             description: `${mealLibrary.length} disponibles`,
             Icon: CookingPot
           },
+          {id:"dispatch-calendar",label:"Calendario de menús",description:"Menú único por fecha y entregas mensuales",Icon:CalendarDays},
           {
             id: "parameters",
             label: "Parámetros",
@@ -10298,6 +10302,7 @@ function App() {
                   </aside>
 
                   <div className="backoffice-module-content">
+                    {activeBackofficeModule === "dispatch-calendar" && <DispatchCalendarAdmin plans={adminItems} draftKey={`fullness_dispatch_calendar_${authUser?.id||""}`} onChanged={async()=>{await refreshAdminItems({silent:true});await refreshPublicProducts();}} />}
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
                   <section className="backoffice-catalog-panel" aria-label="Planes configurados">
@@ -10582,7 +10587,7 @@ function App() {
                           <h4 id="meal-prep-publication-title">Publicación</h4>
                           <p>Revisa el estado del plan y deja los ajustes técnicos sólo para casos especiales.</p>
                         </header>
-                    <ProductAvailabilityEditor form={menuForm} onChange={(availability) => {
+                    <ProductAvailabilityEditor form={menuForm} onOpenCalendar={()=>openBackofficeModule("dispatch-calendar")} onChange={(availability) => {
                       markMenuFormChanged();
                       setMenuForm((current) => ({...current, availability}));
                     }} />
@@ -10609,114 +10614,12 @@ function App() {
 
                     {mealPrepEditorTab === "dishes" && (
                       editingMonthlyPlan ? (
-                        <section className="backoffice-included-editor monthly-plan-weeks-editor" aria-labelledby="monthly-plan-weeks-title">
-                          <div className="backoffice-list-top">
-                            <div>
-                              <p className="eyebrow">Paso 2</p>
-                              <h3 id="monthly-plan-weeks-title">Las 4 semanas del plan mensual</h3>
-                              <p className="backoffice-section-copy">
-                                Asigna semanas completas: cada una mantiene sus 6 mealpreps, sus beneficios y sus tags nutricionales. El plan mensual no duplica platos.
-                              </p>
-                            </div>
-                            <div className="included-editor-actions">
-                              <select
-                                aria-label="Plan semanal para asignar"
-                                value={selectedWeeklyPlanId}
-                                onChange={(event) => setSelectedWeeklyPlanId(event.target.value)}
-                                disabled={(menuForm.weeklyPlanIds || []).length >= 4}
-                              >
-                                <option value="">Selecciona una semana existente</option>
-                                {importableWeeklyPlans.map((plan) => (
-                                  <option key={plan.id} value={plan.id} disabled={(menuForm.weeklyPlanIds || []).includes(plan.id)}>
-                                    {plan.name} · {getProductAvailability(plan).label} · {getProductAvailability(plan).message}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                className="backoffice-command"
-                                type="button"
-                                onClick={addSelectedWeeklyPlanToMonthly}
-                                disabled={!selectedWeeklyPlanId || (menuForm.weeklyPlanIds || []).length >= 4}
-                              >
-                                <CalendarDays size={17} />
-                                Asignar semana
-                              </button>
-                              <button
-                                className="backoffice-command"
-                                type="button"
-                                onClick={openNestedWeeklyPlanEditor}
-                                disabled={(menuForm.weeklyPlanIds || []).length >= 4}
-                              >
-                                <Plus size={17} />
-                                Crear plan semanal
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="monthly-plan-weeks-progress" aria-live="polite">
-                            <CalendarDays size={18} aria-hidden="true" />
-                            <strong>{(menuForm.weeklyPlanIds || []).length} de 4 semanas asignadas</strong>
-                            <span>{menuForm.isActive ? "El plan sólo se mostrará cuando las cuatro semanas sean visibles." : "Puedes guardar este borrador oculto y completar sus semanas después."}</span>
-                          </div>
-
-                          <div className="monthly-plan-week-slots" aria-label="Semanas asignadas en orden">
-                            {[0, 1, 2, 3].map((weekIndex) => {
-                              const weeklyPlanId = menuForm.weeklyPlanIds?.[weekIndex];
-                              const weeklyPlan = assignedMonthlyWeeklyPlans[weekIndex];
-
-                              return (
-                                <article className={`monthly-plan-week-slot ${weeklyPlan ? "is-filled" : "is-empty"}`} key={weeklyPlanId || `empty-week-${weekIndex}`}>
-                                  <span className="monthly-plan-week-slot-number">Semana {weekIndex + 1}</span>
-                                  {weeklyPlan ? (
-                                    <>
-                                      <div>
-                                        <strong>{formatDisplayTitle(weeklyPlan.name)}</strong>
-                                        <span>{weeklyPlan.includedItems?.length || 0} mealpreps{weeklyPlan.isActive ? "" : " · Oculto"}</span>
-                                        <ProductAvailability product={weeklyPlan} compact />
-                                      </div>
-                                      <div className="monthly-plan-week-slot-actions">
-                                        <button
-                                          className="backoffice-icon-command"
-                                          type="button"
-                                          onClick={() => moveMonthlyWeeklyPlan(weekIndex, -1)}
-                                          disabled={weekIndex === 0}
-                                          aria-label={`Subir semana ${weekIndex + 1}`}
-                                          title="Subir semana"
-                                        >
-                                          <ArrowUp size={16} />
-                                        </button>
-                                        <button
-                                          className="backoffice-icon-command"
-                                          type="button"
-                                          onClick={() => moveMonthlyWeeklyPlan(weekIndex, 1)}
-                                          disabled={weekIndex === (menuForm.weeklyPlanIds || []).length - 1}
-                                          aria-label={`Bajar semana ${weekIndex + 1}`}
-                                          title="Bajar semana"
-                                        >
-                                          <ArrowDown size={16} />
-                                        </button>
-                                        <button
-                                          className="backoffice-icon-command"
-                                          type="button"
-                                          onClick={() => removeWeeklyPlanFromMonthly(weeklyPlanId)}
-                                          aria-label={`Quitar semana ${weekIndex + 1}`}
-                                          title="Quitar semana"
-                                        >
-                                          <Trash2 size={16} />
-                                        </button>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <p>Sin asignar. Puedes elegir una semana existente o crearla sin salir de este plan.</p>
-                                  )}
-                                </article>
-                              );
-                            })}
-                          </div>
-
-                          {importableWeeklyPlans.length === 0 && (
-                            <p className="monthly-plan-import-empty">Aún no hay semanas completas disponibles. Crea la primera en esta misma capa.</p>
-                          )}
+                        <section className="backoffice-included-editor" aria-label="Calendario del mensual">
+                          <h3>CUATRO ENTREGAS SEGÚN CALENDARIO</h3>
+                          <p>{MONTHLY_MENU_RULE_TEXT}</p>
+                          <p>Este producto define el precio y la presentación del mensual. Los menús se programan en Calendario de menús y se asignan según la fecha de compra y los cortes de despacho.</p>
+                          <p>Si una fecha aún no tiene menú, la entrega queda por programar. No es necesario elegir cuatro semanas fijas ni duplicar mealpreps.</p>
+                          <button className="backoffice-command" type="button" onClick={()=>openBackofficeModule("dispatch-calendar")}>Ir al calendario de menús</button>
                         </section>
                       ) : (
                       <section className="backoffice-included-editor">
@@ -11162,7 +11065,7 @@ function App() {
                         <span>{menuFormHasUnsavedChanges ? "Tus cambios están protegidos como borrador." : "No hay cambios pendientes."}</span>
                         <small>
                           {editingMonthlyPlan
-                            ? "Al guardar, se conservará el orden de sus cuatro semanas sin duplicar mealpreps."
+    ? "Al guardar, el mensual conservará cuatro entregas con menús asignados por el calendario, sin duplicar mealpreps."
                             : "Al guardar, el plan semanal se actualizará junto con sus 6 mealpreps."}
                         </small>
                       </div>
@@ -11737,7 +11640,7 @@ function App() {
                                     <p className="eyebrow">Publicación</p>
                                   <h4 id="family-publication-title">Visibilidad</h4>
                                   </header>
-                                  <ProductAvailabilityEditor form={menuForm} onChange={(availability) => {
+                                  <ProductAvailabilityEditor form={menuForm} onOpenCalendar={()=>openBackofficeModule("dispatch-calendar")} onChange={(availability) => {
                                     markMenuFormChanged();
                                     setMenuForm((current) => ({...current, availability}));
                                   }} />
@@ -12579,6 +12482,8 @@ function App() {
                   <div className="cart-total"><span>{checkoutTotal === null ? "Total con envío" : "Total a pagar"}</span><strong>{checkoutTotal === null ? "Por confirmar" : formatPrice(checkoutTotal)}</strong></div>
                 </div>
                 {cart.some(isPlanProduct) && <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>}
+                {cart.some((item)=>isPlanProduct(item)&&item.planFrequency==="monthly") && <p className="checkout-message">{MONTHLY_MENU_RULE_TEXT}</p>}
+                {cart.filter((item)=>isPlanProduct(item)&&item.planFrequency==="monthly").map(item=><p className="checkout-message" key={`dispatch-${item.id}`}>Entregas de {item.name}: {buildMonthlyDeliveries(products.find(p=>p.id===item.id)?.calendarRows||[]).map(d=>formatAvailabilityDate(d.dispatchOn)).join(" · ")}. Los menús aún no publicados quedarán por programar.</p>)}
                 {cart.some((item) => !isPlanProduct(item)) && <p className="checkout-message">{MEALPREP_DISPATCH_RULE_TEXT}</p>}
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
 
