@@ -10,7 +10,7 @@ import {
 } from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
-import {DISPATCH_RULE_TEXT, getProductAvailability, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
+import {getProductAvailability, getProductDispatchRule, isPlanProduct, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
 import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rates.js";
 
 const localEnvReady = Promise.all([
@@ -135,8 +135,9 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   const customerSnapshot = buildCustomerSnapshot(fulfillment);
   customerSnapshot.comuna = deliveryQuote.commune;
   customerSnapshot.deliveryQuote = serializeDeliveryQuote(deliveryQuote);
-  customerSnapshot.weeklyDispatchWeekdays = orderItems.some(({product}) => product.plan_frequency === "weekly" || product.plan_frequency === "monthly") ? [2, 5] : null;
   if (deliveryService) customerSnapshot.deliveryService = deliveryService;
+  customerSnapshot.weeklyDispatchWeekdays = orderItems.some(({product}) => isPlanProduct(product)) ? [2, 5] : null;
+  customerSnapshot.dispatchPolicies = [...new Set(orderItems.map(({product}) => isPlanProduct(product) ? "weekly_fixed_menu" : "fullness_coordination"))];
   const legacyTestSchema = isLegacyTestSchema();
   const {data: order, error: orderError} = await supabase
     .from("orders")
@@ -882,8 +883,9 @@ function buildProductSnapshot(product, now = new Date()) {
     planFrequency: product.plan_frequency,
     availability: serializeAvailability(product.metadata?.availability),
     dispatch: getProductAvailability(product, now).dispatch,
-    dispatchRule: DISPATCH_RULE_TEXT,
-    weeklyDispatchWeekdays: product.product_type === "plan" && product.plan_frequency === "weekly" ? [2, 5] : null,
+    dispatchRule: getProductDispatchRule(product),
+    dispatchPolicy: isPlanProduct(product) ? "weekly_fixed_menu" : "fullness_coordination",
+    weeklyDispatchWeekdays: isPlanProduct(product) ? [2, 5] : null,
     tag: product.tag,
     photoUrl: product.photo_url,
     benefitTags: product.benefit_tags,

@@ -1,5 +1,7 @@
 # Tarifas de despacho por comuna
 
+Nota vigente posterior al cierre tarifario: Carlos corrigió el corte de planes del jueves a17:00 y separó despacho coordinado de sueltos/familiares. Ver `disponibilidad-semanal.md`; ese incremento es local y no cambia aún la publicación tarifaria acreditada abajo. No reinterpretar las referencias históricas a jueves23:59 como la instrucción nueva.
+
 ## Decisión de Carlos (2026-10-25)
 
 - Lo Barnechea: $3.990 CLP. Las Condes y Vitacura: $5.990 CLP.

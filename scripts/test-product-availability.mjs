@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {DISPATCH_RULE_TEXT, getDispatchOptions, getDispatchSchedule, getProductAvailability, serializeAvailability, availabilityValidationError, santiagoDate} from "../src/lib/product-availability.js";
+import {DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, getDispatchOptions, getDispatchSchedule, getProductAvailability, getProductDispatchRule, serializeAvailability, availabilityValidationError, santiagoDate} from "../src/lib/product-availability.js";
 import {buildMenuItemPayload, mapMenuItem} from "../src/lib/menu-items.js";
 import {createCheckoutPreference} from "../server/mercadopago-checkout.mjs";
 
@@ -30,13 +30,29 @@ for (const [now, expected] of [
   ["2026-10-26T20:00:00Z", "2026-10-27"],
   ["2026-10-26T20:00:01Z", "2026-10-30"],
   ["2026-10-27T15:00:00Z", "2026-10-30"],
-  ["2026-10-30T02:59:59Z", "2026-10-30"],
+  ["2026-10-29T19:59:59Z", "2026-10-30"],
+  ["2026-10-29T20:00:00Z", "2026-10-30"],
+  ["2026-10-29T20:00:00.001Z", "2026-11-03"],
+  ["2026-10-29T20:00:01Z", "2026-11-03"],
+  ["2026-10-30T02:59:59Z", "2026-11-03"],
   ["2026-10-30T03:00:00Z", "2026-11-03"],
   ["2026-10-31T15:00:00Z", "2026-11-03"]
 ]) assert.equal(getDispatchSchedule("2026-10-26", new Date(now)).dispatchOn, expected, now);
 assert.equal(getDispatchSchedule("2026-11-16", new Date("2026-10-25T15:00:00Z")).dispatchOn, "2026-11-17", "Una preventa respeta su semana futura");
 assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-01T21:00:00Z")).dispatchOn, "2026-06-02", "Corte de invierno en UTC-4");
 assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-01T21:00:01Z")).dispatchOn, "2026-06-05");
+assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-04T21:00:00Z")).dispatchOn, "2026-06-05", "Jueves de invierno 17:00 incluido");
+assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-04T21:00:01Z")).dispatchOn, "2026-06-09", "Jueves de invierno después de 17:00 pasa al martes");
+for (const type of ["mealprep", "family"]) {
+  const product = {...plans[0], product_type: type, plan_frequency: null};
+  for (const now of ["2026-10-26T20:00:01Z", "2026-10-29T20:00:01Z", "2026-10-30T15:00:00Z"]) {
+    const state = getProductAvailability(product, new Date(now));
+    assert.equal(state.available, true);
+    assert.equal(state.dispatch, null, "Los sueltos no heredan fechas automáticas de martes/viernes");
+    assert.match(state.message, /a pedido.*coordinar/);
+    assert.equal(getProductDispatchRule(product), MEALPREP_DISPATCH_RULE_TEXT);
+  }
+}
 assert.equal(getProductAvailability({metadata: {}}, new Date()).available, true);
 assert.equal(getProductAvailability({is_active: false}).status, "hidden");
 assert.equal(getProductAvailability({availability: {mode: "paused"}}).available, false);
@@ -107,4 +123,30 @@ for (const [index, product] of plans.entries()) {
   assert.equal(rows.length, 1);
   assert.equal(providerCalls, 1);
 }
-console.log("Disponibilidad QA OK: los 4 menús se compran antes/después del despacho; fechas persistidas, pausa/oculto/errores protegidos. Checkout y proveedores simulados, sin efectos externos.");
+// Loose meals persist coordination, never the fixed-menu dispatch promise.
+for (const type of ["mealprep", "family"]) {
+  const product = {...plans[0], product_type: type, plan_frequency: null, slug: `suelto-${type}`, price_clp: 18000};
+  const persisted = {orders: [], items: []};
+  await createCheckoutPreference({
+    cart: [{slug: product.slug, quantity: 1}],
+    fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
+    request: {headers: {host: "fullness.example.test", "x-forwarded-proto": "https"}},
+    dependencies: {now: new Date("2026-10-29T20:00:01Z"), env: {},
+      supabase: {from(table) {
+        if (table === "menu_items") return {select: () => ({in: () => ({eq: async () => ({data: [product], error: null})})})};
+        if (table === "orders") return {insert(row) {persisted.orders.push(row); return {select: () => ({single: async () => ({data: {id: "55555555-5555-4555-8555-555555555555"}, error: null})})};}, update: () => ({eq: async () => ({error: null})})};
+        if (table === "order_items") return {insert: async (rows) => {persisted.items.push(...rows); return {error: null};}};
+        throw Error(`Unexpected QA table: ${table}`);
+      }},
+      mercadoPagoRequest: async () => ({id: "mock-preference", init_point: "https://mp.example.invalid/qa"}),
+      core360FetchImpl: async () => {throw Error("No Core HTTP allowed");}
+    }
+  });
+  assert.equal(persisted.orders[0].customer_snapshot.weeklyDispatchWeekdays, null);
+  assert.deepEqual(persisted.orders[0].customer_snapshot.dispatchPolicies, ["fullness_coordination"]);
+  assert.equal(persisted.items[0].product_snapshot.dispatch, null);
+  assert.equal(persisted.items[0].product_snapshot.dispatchPolicy, "fullness_coordination");
+  assert.equal(persisted.items[0].product_snapshot.dispatchRule, MEALPREP_DISPATCH_RULE_TEXT);
+  assert.equal(persisted.items[0].product_snapshot.weeklyDispatchWeekdays, null);
+}
+console.log("Disponibilidad QA OK: cortes lunes/jueves17h exactos en verano/invierno; mealpreps y familiares a coordinar, sin promesa fija; snapshots persistidos y guards protegidos. Todo simulado, sin efectos externos.");

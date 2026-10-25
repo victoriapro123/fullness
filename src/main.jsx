@@ -84,7 +84,7 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
-import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, getProductAvailability, normalizeAvailability} from "./lib/product-availability.js";
+import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, getProductAvailability, isPlanProduct, normalizeAvailability} from "./lib/product-availability.js";
 import {DELIVERY_COMMUNES, getDeliveryQuote} from "./lib/delivery-rates.js";
 import {
   buildAnalyticsItem,
@@ -317,6 +317,7 @@ const faqGroups = [
         question: "Días de despacho",
         answer: [
           DISPATCH_RULE_TEXT,
+          MEALPREP_DISPATCH_RULE_TEXT,
           "Los pedidos deberán realizarse dentro de los plazos informados en la página web para ser considerados en la siguiente fecha de despacho."
         ]
       },
@@ -423,8 +424,8 @@ const faqGroups = [
       {
         question: "¿Puedo elegir los mealpreps?",
         answer: [
-          "Dependiendo del programa contratado, podrás:",
-          ["Elegir entre las opciones disponibles de la semana.", "Recibir el menú diseñado por nuestro equipo."]
+          "Los planes tienen un menú único preestablecido para cada semana de despacho, sin elección de platos.",
+          MEALPREP_DISPATCH_RULE_TEXT
         ]
       },
       {
@@ -2732,6 +2733,7 @@ const shopMetricIcons = [Leaf, CookingPot, Heart];
 function ProductAvailability({product, compact = false}) {
   const state = getProductAvailability(product);
   const weekly = (product.productType || product.product_type) === "plan" && (product.planFrequency || product.plan_frequency) === "weekly";
+  if (!isPlanProduct(product) && state.available) return <span className="product-availability"><span>{state.message}</span></span>;
   if (!weekly && state.schedule.mode === "always" && state.available) return null;
   return (
     <span className={`product-availability is-${state.status}${compact ? " is-compact" : ""}`}>
@@ -2754,10 +2756,11 @@ function ProductPurchaseButton({product, onAdd, className = "primary-button", ch
 function ProductAvailabilityEditor({form, onChange}) {
   const value = normalizeAvailability(form.availability);
   const error = availabilityValidationError(value);
+  const plan = isPlanProduct(form);
   return (
     <fieldset className="product-availability-editor">
       <legend>Venta y despacho</legend>
-      <p>La fecha sólo informa cuándo se despacha: no bloquea la compra. Ocultar o pausar un producto sigue siendo una decisión manual.</p>
+      <p>{plan ? "La fecha indica la semana de despacho del menú único. Ocultar o pausar un producto sigue siendo una decisión manual." : MEALPREP_DISPATCH_RULE_TEXT}</p>
       <label>Estado de venta
         <select name="availabilityMode" value={value.mode} onChange={(event) => onChange({...value, mode: event.target.value, endsOn: ""})}>
           <option value="always">Activo sin fecha de despacho</option>
@@ -2766,7 +2769,7 @@ function ProductAvailabilityEditor({form, onChange}) {
         </select>
       </label>
       {value.mode === "scheduled" && <div className="backoffice-grid">
-        <label>Semana de despacho
+        <label>{plan ? "Semana de despacho del menú" : "Fecha referencial coordinada por Fullnesslab"}
           <input name="availabilityStartsOn" type="date" required value={value.startsOn} onChange={(event) => onChange({...value, startsOn: event.target.value, endsOn: ""})} />
         </label>
       </div>}
@@ -3087,7 +3090,6 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
               <p className="eyebrow">{formatDisplayEyebrow("Elige tu formato")}</p>
               <h2 id="shop-plans-title">{formatDisplayTitle("Planes y mealpreps para cada ritmo.")}</h2>
               <p>{formatDisplayDescription("Elige el formato que mejor acompañe tu ritmo.")}</p>
-              <p>{DISPATCH_RULE_TEXT}</p>
             </div>
             <div className="shop-catalog-stack">
               {catalogSections.map(({ emptyMessage, id, products, title }) => (
@@ -3096,6 +3098,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
                     <h3 id={`shop-catalog-${id}-title`}>{formatDisplayTitle(title)}</h3>
                     <div className="shop-catalog-section-rule" aria-hidden="true" />
                   </header>
+                  {id !== "monthly" && <p className="checkout-message">{id === "weekly" ? DISPATCH_RULE_TEXT : MEALPREP_DISPATCH_RULE_TEXT}</p>}
                   {products.length > 0 ? (
                     <div className={id === "family" ? "shop-family-grid shop-catalog-grid" : "shop-plan-grid shop-catalog-grid"}>
                       {products.map((product, index) => (
@@ -12575,7 +12578,8 @@ function App() {
                   <div><span>{checkoutForm.mode === "pickup" ? "Retiro" : "Envío"}</span><strong>{deliveryQuote.feeClp === null ? "Por coordinar" : formatPrice(deliveryQuote.feeClp)}</strong></div>
                   <div className="cart-total"><span>{checkoutTotal === null ? "Total con envío" : "Total a pagar"}</span><strong>{checkoutTotal === null ? "Por confirmar" : formatPrice(checkoutTotal)}</strong></div>
                 </div>
-                <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>
+                {cart.some(isPlanProduct) && <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>}
+                {cart.some((item) => !isPlanProduct(item)) && <p className="checkout-message">{MEALPREP_DISPATCH_RULE_TEXT}</p>}
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
 
                 {deliveryQuote.status === "coordination" ? (

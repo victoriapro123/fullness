@@ -1,5 +1,23 @@
 # Venta de menús y fechas informativas de despacho
 
+## Aclaración vigente de Carlos — menú único y cortes17h (2026-10-25)
+
+- Fullnesslab produce un menú único para comenzar a despacharlo desde el martes de la semana siguiente. Pedidos de planes hasta lunes17:00 incluido → martes; después hasta jueves17:00 incluido → viernes; pasado ese corte → martes siguiente. Hora de Santiago. Sustituye el corte jueves23:59 de las secciones históricas.
+- El mensual compra cuatro entregas; los menús son los que corresponden a las semanas de despacho, no una elección del cliente. La implementación actual todavía vincula y congela cuatro semanas estáticas: **la asignación automática por calendario no está terminada ni publicada**. Se pidió confirmar si las cuatro semanas se repiten o se programan nuevos menús por fecha; también si se mantiene preventa semanal o se asigna siempre el único menú del despacho. No inferir ciclos, inventar menús ni alterar relaciones/recetas reales mientras falta esa decisión.
+- Mealpreps sueltos normales y familiares son a pedido; la fecha queda a coordinación de Fullnesslab y no hereda cortes ni promesas automáticas de martes/viernes. Tarifas por comuna permanecen, no se declaró envío gratis.
+
+### Incremento local comprobado, sin publicación
+
+`product-availability.js` comparte cortes lunes/jueves17h, límites de milisegundo y zona Santiago. Los productos que no son plan devuelven despacho automático null. El snapshot por línea conserva `dispatchPolicy=fullness_coordination`, texto propio y weekdays null para sueltos; planes usan weekly_fixed_menu y [2,5]. La orden guarda el conjunto de políticas presentes para que un carrito mixto no aplique fechas fijas a sus sueltos. No se reescribe un pedido existente.
+
+UI: reglas separadas por sección, FAQ sin elección de platos en planes, carrito condicional por los tipos que contiene y editor con fecha sólo referencial para sueltos. Se evita prometer día fijo a un familiar. Revisión React: valores derivados en render, sin efecto/estado duplicado ni dependencia nueva.
+
+QA local: calendario/checkout con cortes verano e invierno, lunes17:00 exacto, jueves16:59:59/17:00:00/17:00:00.001/17:00:01; familias y normales sin fecha automática y persistencia simulada comprobada. Pasan preflight Core, tarifas, servicio Core, checkout TEST aislado, correos simulados y build Node24. Navegador local: carrito semanal muestra jueves17h; carrito sólo familiar muestra coordinación sin regla fija, resumen/CTA cómodos a390px. No se envió checkout ni se guardó administración. La copia local conserva un candidato TEST ajeno a esta publicación; no se debe publicar la rama completa. Medios locales sin credenciales no se usan como evidencia productiva.
+
+Evidencia recortada de UI local: `R:/Entregables-Codex/Fullness/Despachos-2026-10-25/regla-mealpreps-local.png`. No hay push, SQL remoto, nueva configuración Core, pedidos reales, preferencias MP, pagos ni correos. Cerebro central pendiente conforme a su contrato transitorio.
+
+## Antecedente: regla anterior publicada
+
 ## Decisión vigente de Carlos (2026-10-25, corrección posterior)
 
 «Libera los menús, sólo indica que el despacho será en esas fechas» sustituye la ventana de compra descrita en el antecedente inferior. Los cuatro menús se pueden agregar y comprar simultáneamente, antes o después de su fecha informativa. No se reactiva un producto oculto o pausado manualmente, y no se omite la autoridad canónica de stock/precio Core360.

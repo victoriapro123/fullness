@@ -1,7 +1,8 @@
 // Calendar dates describe dispatch, not a window restricting purchases.
 export const AVAILABILITY_TIME_ZONE = "America/Santiago";
-export const DISPATCH_RULE_TEXT = "Pedidos hasta el lunes a las 17:00: despacho el martes. Luego, hasta el jueves a las 23:59: despacho el viernes. Desde el viernes: despacho el martes siguiente. Horario de Santiago.";
-export const DISPATCH_CUTOFF_TEXT = "Cortes: lunes 17:00 / jueves 23:59 (Santiago).";
+export const DISPATCH_RULE_TEXT = "Planes: pedidos hasta el lunes a las 17:00 se despachan el martes. Después, hasta el jueves a las 17:00, se despachan el viernes. Pasado ese corte, se despachan el martes siguiente. Horario de Santiago.";
+export const DISPATCH_CUTOFF_TEXT = "Cortes de planes: lunes y jueves a las 17:00 (Santiago).";
+export const MEALPREP_DISPATCH_RULE_TEXT = "Los mealpreps sueltos, normales y familiares, se preparan a pedido. Fullnesslab coordina su fecha de despacho; no se rigen por los cortes de los planes.";
 const MODES = new Set(["always", "paused", "scheduled"]);
 const santiagoClock = new Intl.DateTimeFormat("en-CA", {timeZone: AVAILABILITY_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"});
 
@@ -16,6 +17,14 @@ export function santiagoDate(now = new Date()) {
     timeZone: AVAILABILITY_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit"
   }).formatToParts(now);
   return ["year", "month", "day"].map((key) => parts.find((part) => part.type === key).value).join("-");
+}
+
+export function isPlanProduct(product) {
+  return (product?.productType || product?.product_type) === "plan";
+}
+
+export function getProductDispatchRule(product) {
+  return isPlanProduct(product) ? DISPATCH_RULE_TEXT : MEALPREP_DISPATCH_RULE_TEXT;
 }
 
 export function normalizeAvailability(value = {}) {
@@ -67,12 +76,15 @@ export function getDispatchSchedule(value, now = new Date()) {
   let week = reference.weekOf > current.weekOf ? reference : current;
   let day = "tuesday";
   if (week.weekOf === current.weekOf) {
-    if (today >= current.friday) {
+    const seconds = Number(part("hour")) * 3600 + Number(part("minute")) * 60 + Number(part("second")) + now.getUTCMilliseconds() / 1000;
+    const thursday = new Date(`${current.weekOf}T12:00:00Z`);
+    thursday.setUTCDate(thursday.getUTCDate() + 3);
+    const thursdayDate = thursday.toISOString().slice(0, 10);
+    if (today > thursdayDate || (today === thursdayDate && seconds > 17 * 3600)) {
       const nextMonday = new Date(`${current.weekOf}T12:00:00Z`);
       nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
       week = getDispatchOptions(nextMonday.toISOString().slice(0, 10));
     } else {
-      const seconds = Number(part("hour")) * 3600 + Number(part("minute")) * 60 + Number(part("second"));
       if (today > current.weekOf || seconds > 17 * 3600) day = "friday";
     }
   }
@@ -89,10 +101,11 @@ export function getProductAvailability(product, now = new Date()) {
   // Existing starts_on is now the dispatch date. Legacy ends_on remains in
   // the snapshot for traceability, but neither date limits a valid purchase.
   const available = status === "active";
-  const dispatch = schedule.mode === "scheduled" ? getDispatchSchedule(schedule.startsOn, now) : null;
+  const dispatch = isPlanProduct(product) && schedule.mode === "scheduled" ? getDispatchSchedule(schedule.startsOn, now) : null;
   const label = status === "hidden" ? "Oculto" : available ? "Disponible" : "Inactivo";
   const message = status === "hidden" ? "No visible en la tienda"
-    : available && schedule.mode === "scheduled"
+    : available && !isPlanProduct(product) ? "Preparación a pedido. Despacho a coordinar con Fullnesslab"
+    : available && dispatch
       ? `Despacho el ${formatAvailabilityDate(dispatch.dispatchOn)}`
       : available ? "Disponible para comprar" : "No disponible para comprar";
   return {available, status, label, message, schedule, dispatch};
