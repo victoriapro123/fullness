@@ -85,6 +85,7 @@ import {
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, getProductAvailability, normalizeAvailability} from "./lib/product-availability.js";
+import {DELIVERY_COMMUNES, getDeliveryQuote} from "./lib/delivery-rates.js";
 import {
   buildAnalyticsItem,
   initializeAnalytics,
@@ -327,7 +328,7 @@ const faqGroups = [
       },
       {
         question: "Costo de despacho",
-        answer: ["El valor del despacho se calcula según la comuna de destino y será informado antes de finalizar la compra."]
+        answer: ["Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. Para otras comunas, el costo y la fecha del despacho se coordinan por WhatsApp antes de pagar."]
       },
       {
         question: "Recepción del pedido",
@@ -8373,6 +8374,16 @@ function App() {
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+  const deliveryQuote = getDeliveryQuote(checkoutForm);
+  const checkoutTotal = deliveryQuote.canPayOnline ? cartTotal + deliveryQuote.feeClp : null;
+  const deliveryWhatsappUrl = createWhatsappUrl([
+    "Hola Fullness Lab, quiero coordinar el despacho de este pedido.",
+    `Comuna: ${deliveryQuote.commune || "Por indicar"}.`,
+    String(checkoutForm.address || "").trim() ? `Dirección: ${String(checkoutForm.address).trim()}.` : "",
+    ...cart.map((item) => `${item.qty} × ${item.name}`),
+    `Subtotal de productos: ${formatPrice(cartTotal)}.`,
+    "Necesito confirmar el costo y la fecha del despacho antes de pagar."
+  ].filter(Boolean).join("\n"));
   const productsBySlug = useMemo(() => {
     const map = new Map();
 
@@ -8589,6 +8600,10 @@ function App() {
 
   async function submitCheckout(event) {
     event.preventDefault();
+    if (!deliveryQuote.canPayOnline) {
+      setCheckoutMessage(deliveryQuote.message);
+      return;
+    }
     const unavailable = cart.find((item) => !getProductAvailability(products.find((product) => product.id === item.id) || item).available);
     if (unavailable) {
       const state = getProductAvailability(products.find((product) => product.id === unavailable.id) || unavailable);
@@ -8599,7 +8614,7 @@ function App() {
 
     trackEvent("begin_checkout", {
       currency: "CLP",
-      value: cartTotal,
+      value: checkoutTotal,
       items: cart.map((item) => buildAnalyticsItem(item, item.qty)).filter(Boolean)
     });
 
@@ -8607,6 +8622,13 @@ function App() {
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
     try {
+      const quoteResponse = await fetch("/api/commerce/checkout-quote", {
+        method: "POST", headers: {Accept: "application/json", "Content-Type": "application/json"},
+        body: JSON.stringify({cart: cart.map((item) => ({slug: item.slug, quantity: item.qty})), fulfillment: {mode: checkoutForm.mode, comuna: checkoutForm.comuna}})
+      });
+      const quote = await quoteResponse.json().catch(() => ({}));
+      if (!quoteResponse.ok) throw new Error(quote.error?.message || "No pudimos validar el costo de envío.");
+      if (quote.data?.amount !== checkoutTotal) throw new Error("El total vigente cambió. Recarga la página y revisa el carrito antes de pagar.");
       const response = await fetch("/api/mercadopago/preferences", {
         method: "POST",
         headers: {
@@ -8615,7 +8637,8 @@ function App() {
         },
         body: JSON.stringify({
           cart: cart.map((item) => ({slug: item.slug, quantity: item.qty})),
-          fulfillment: checkoutForm
+          fulfillment: checkoutForm,
+          expectedAmount: checkoutTotal
         })
       });
       const payload = await response.json().catch(() => ({}));
@@ -8627,6 +8650,8 @@ function App() {
       const pendingOrder = {
         items: cart,
         total: payload.data.amount,
+        subtotal: payload.data.subtotal,
+        deliveryFee: payload.data.deliveryFee,
         fulfillment: checkoutForm,
         orderId: payload.data.orderId,
         preferenceId: payload.data.preferenceId,
@@ -12482,10 +12507,6 @@ function App() {
                   </article>
                 ))}
               </div>
-              <div className="cart-total">
-                <span>Total</span>
-                <strong>{formatPrice(cartTotal)}</strong>
-              </div>
               <form className="checkout-form" data-testid="checkout-form" onSubmit={submitCheckout}>
                 <fieldset className="checkout-mode">
                   <legend>Modalidad</legend>
@@ -12532,8 +12553,11 @@ function App() {
                       </label>
                       <label className="checkout-wide">
                         Comuna
-                        <span><Home size={17} /><input required name="comuna" value={checkoutForm.comuna} onChange={updateCheckoutForm} autoComplete="address-level2" /></span>
+                        <span><Home size={17} /><input required name="comuna" value={checkoutForm.comuna} onChange={updateCheckoutForm} autoComplete="address-level2" list="delivery-communes" placeholder="Selecciona o escribe tu comuna" maxLength={120} aria-describedby="delivery-quote-help" /></span>
                       </label>
+                      <datalist id="delivery-communes">
+                        {DELIVERY_COMMUNES.map((entry) => <option key={entry.name} value={entry.name} />)}
+                      </datalist>
                     </>
                   )}
                   <label className="checkout-wide">
@@ -12542,19 +12566,30 @@ function App() {
                   </label>
                 </div>
 
+                <section className="checkout-delivery" aria-label="Costo de despacho" aria-live="polite" aria-atomic="true">
+                  <p id="delivery-quote-help">{deliveryQuote.message}</p>
+                  {checkoutForm.mode === "delivery" && <p>Lo Barnechea: {formatPrice(3990)}. Las Condes y Vitacura: {formatPrice(5990)}. Otras comunas: coordinar por WhatsApp.</p>}
+                </section>
+                <div className="checkout-summary" data-testid="checkout-summary" aria-live="polite" aria-atomic="true">
+                  <div><span>Subtotal de productos</span><strong>{formatPrice(cartTotal)}</strong></div>
+                  <div><span>{checkoutForm.mode === "pickup" ? "Retiro" : "Envío"}</span><strong>{deliveryQuote.feeClp === null ? "Por coordinar" : formatPrice(deliveryQuote.feeClp)}</strong></div>
+                  <div className="cart-total"><span>{checkoutTotal === null ? "Total con envío" : "Total a pagar"}</span><strong>{checkoutTotal === null ? "Por confirmar" : formatPrice(checkoutTotal)}</strong></div>
+                </div>
                 <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
 
-                <button
+                {deliveryQuote.status === "coordination" ? (
+                  <a className="primary-button full checkout-submit" href={deliveryWhatsappUrl} target="_blank" rel="noreferrer">Coordinar despacho por WhatsApp <ArrowUpRight size={18} /></a>
+                ) : <button
                   className="primary-button full checkout-submit"
                   type="submit"
                   data-testid="checkout-submit"
-                  disabled={checkoutSubmitting}
+                  disabled={checkoutSubmitting || !deliveryQuote.canPayOnline}
                   aria-busy={checkoutSubmitting}
                 >
                   <ShieldCheck size={18} />
                   {checkoutSubmitting ? "Abriendo Mercado Pago..." : "Pagar con Mercado Pago"}
-                </button>
+                </button>}
               </form>
             </>
           )}

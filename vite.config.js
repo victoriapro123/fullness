@@ -6,6 +6,7 @@ import backofficeExportsHandler from "./api/backoffice/exports.js";
 import backofficePasswordRecoveryHandler from "./api/backoffice/password-recovery.js";
 import backofficeR2AssetsHandler from "./api/backoffice/r2-assets.js";
 import mediaHandler from "./api/media.js";
+import checkoutQuoteHandler from "./api/commerce/checkout-quote.js";
 import mercadoPagoPaymentsHandler from "./api/mercadopago/payments.js";
 import mercadoPagoPreferencesHandler from "./api/mercadopago/preferences.js";
 import mercadoPagoWebhookHandler from "./api/mercadopago/webhook.js";
@@ -31,6 +32,7 @@ function apiDevServer() {
       mountApiHandler(server, "/api/backoffice/password-recovery", backofficePasswordRecoveryHandler);
       mountApiHandler(server, "/api/backoffice/r2-assets", backofficeR2AssetsHandler);
       mountApiHandler(server, "/api/media", mediaHandler);
+      mountApiHandler(server, "/api/commerce/checkout-quote", checkoutQuoteHandler);
       mountApiHandler(server, "/api/upload-media", uploadMediaHandler);
       mountApiHandler(server, "/api/mercadopago/preferences", mercadoPagoPreferencesHandler);
       mountApiHandler(server, "/api/mercadopago/payments", mercadoPagoPaymentsHandler);

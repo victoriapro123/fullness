@@ -1,4 +1,5 @@
 import {createHash, randomUUID} from "node:crypto";
+import {assertDeliveryServiceSnapshot, deliveryServiceBinding, deliveryServiceCoreLine, deliveryServiceError, snapshotDeliveryService} from "./delivery-service.mjs";
 
 const CORE360_API_PREFIX = "/api/commerce/v1";
 const CORE360_EVENT_TYPE = "web_order.payment_approved";
@@ -112,6 +113,17 @@ export async function readCore360Catalog({env = process.env, fetchImpl = fetch, 
   });
 
   return {enabled: true, ...result};
+}
+
+export async function resolveCore360DeliveryService({env = process.env, fetchImpl = fetch, feeClp, issuedOn} = {}) {
+  if (feeClp === 0) return null;
+  const binding = deliveryServiceBinding(feeClp);
+  const result = await readCore360Catalog({
+    env, fetchImpl,
+    query: {q: binding.coreSku, limit: 100, quantityMilli: "1000", issuedOn, priceListId: cleanText(env.CORE360_PRICE_LIST_ID)}
+  });
+  if (!result.enabled) throw deliveryServiceError("La validación del servicio de despacho Core360 no está disponible. No se creó un cobro.");
+  return snapshotDeliveryService((result.rows || []).find((row) => row.id === binding.coreItemId), feeClp);
 }
 
 export async function readCore360Stock({env = process.env, fetchImpl = fetch, query = {}} = {}) {
@@ -554,6 +566,7 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
       deliveryFeeClp: asNonNegativeInteger(order?.delivery_fee_clp, "El costo de despacho no es válido."),
       discountClp: asNonNegativeInteger(order?.discount_clp, "El descuento no es válido."),
       deliveryGrossMinor: String(asNonNegativeInteger(order?.delivery_fee_clp, "El costo de despacho no es válido.")),
+      ...(Number(order?.delivery_fee_clp) > 0 ? {deliveryService: customer.deliveryService || null} : {}),
       discountGrossMinor: String(asNonNegativeInteger(order?.discount_clp, "El descuento no es válido.")),
       externalOrderId: orderId,
       id: orderId,
@@ -965,6 +978,10 @@ export function createCore360OrderRequest({config, event, mappings}) {
 
   assertNoUnmappedOrderAdjustments(event);
 
+  if (Number(event.order.deliveryFeeClp) > 0) {
+    coreLines.push(deliveryServiceCoreLine(event.order.deliveryService, event.order.deliveryFeeClp));
+  }
+
   return {
     order: compactUndefined({
       currency: "CLP",
@@ -991,7 +1008,7 @@ export function createCore360OrderRequest({config, event, mappings}) {
  * and represents the payment as unpaid. Core360's preview route is read-only
  * with respect to orders, inventory movement and fiscal documents.
  */
-export function createCore360CheckoutPreviewRequest({config, items, previewId = `preview-${randomUUID()}`} = {}) {
+export function createCore360CheckoutPreviewRequest({config, items, deliveryService = null, previewId = `preview-${randomUUID()}`} = {}) {
   const rows = Array.isArray(items) ? items : [];
   if (!rows.length) throw core360Error("MISSING_ORDER_ITEMS", "El checkout no tiene líneas para validar en Core360.");
   const lines = rows.map(({product, quantity}) => {
@@ -1018,6 +1035,7 @@ export function createCore360CheckoutPreviewRequest({config, items, previewId = 
       unitGrossMinor: String(unitGrossMinor)
     };
   });
+  if (deliveryService) lines.push(deliveryServiceCoreLine(deliveryService, Number(deliveryService.unitGrossMinor)));
   const totalMinor = lines.reduce((total, line) => total + asPositiveInteger(line.lineGrossMinor, "La línea Core360 no tiene total válido."), 0);
   const externalOrderId = cleanText(previewId);
   if (!externalOrderId) throw core360Error("INVALID_CORE_PREVIEW", "La revisión Core360 no tiene identificador temporal.");
@@ -1042,12 +1060,12 @@ export function createCore360CheckoutPreviewRequest({config, items, previewId = 
  * in preparation can quote with zero balance, and Core360 enforces physical
  * availability at the later fulfillment/delivery operation when applicable.
  */
-export async function previewCore360Checkout({env = process.env, fetchImpl = fetch, items, previewId} = {}) {
+export async function previewCore360Checkout({env = process.env, fetchImpl = fetch, items, deliveryService = null, previewId} = {}) {
   if (!isCore360CommerceCheckoutPreflightEnabled(env)) {
     return {enabled: false, skipped: true, reason: "checkout-preflight-disabled"};
   }
   const config = getCore360CheckoutPreviewConfig(env);
-  const request = createCore360CheckoutPreviewRequest({config, items, previewId});
+  const request = createCore360CheckoutPreviewRequest({config, items, deliveryService, previewId});
   const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders/preview"});
   assertCore360CheckoutPreview({request: request.order, result});
   return {enabled: true, request: request.order, result};
@@ -1735,7 +1753,11 @@ function buildSourceLine(item) {
 function assertNoUnmappedOrderAdjustments(event) {
   const deliveryFee = asNonNegativeInteger(event?.order?.deliveryFeeClp, "El costo de despacho no es válido.");
   const discount = asNonNegativeInteger(event?.order?.discountClp, "El descuento no es válido.");
-  if (deliveryFee > 0 || discount > 0) {
+  if (deliveryFee > 0) {
+    try { assertDeliveryServiceSnapshot(event?.order?.deliveryService, deliveryFee); }
+    catch (error) { throw core360Error("ORDER_ADJUSTMENT_RECONCILIATION_REQUIRED", "El despacho no tiene un servicio Core360 aprobado y conciliado.", error); }
+  }
+  if (discount > 0) {
     throw core360Error(
       "ORDER_ADJUSTMENT_RECONCILIATION_REQUIRED",
       "La orden incluye despacho o descuento sin una línea/una regla comercial Core360 aprobada."

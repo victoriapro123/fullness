@@ -45,7 +45,7 @@ const checkout = {
     address: "Av. Fullness 123",
     comuna: "Santiago",
     email: "checkout-qa@fullnesslab.invalid",
-    mode: "delivery",
+    mode: "pickup",
     name: "Checkout QA",
     phone: "+56911111111"
   },

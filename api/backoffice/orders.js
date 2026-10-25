@@ -283,6 +283,9 @@ function presentOrder(order) {
       phone: cleanText(customer.phone)
     },
     deliveryStatus: cleanText(order.delivery_status) || "pending",
+    deliveryFeeClp: Number(order.delivery_fee_clp || 0),
+    subtotalClp: Number(order.subtotal_clp || 0),
+    discountClp: Number(order.discount_clp || 0),
     id: order.id,
     items: (Array.isArray(order.order_items) ? order.order_items : []).map((item) => ({
       createdAt: item.created_at || null,

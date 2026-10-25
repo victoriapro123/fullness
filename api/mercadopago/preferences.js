@@ -23,6 +23,7 @@ export default async function handler(req, res) {
     const data = await createCheckoutPreference({
       cart: body.cart,
       fulfillment: body.fulfillment,
+      expectedAmount: body.expectedAmount,
       request: req
     });
 

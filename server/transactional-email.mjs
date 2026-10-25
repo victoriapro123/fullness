@@ -78,6 +78,7 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
       "Tu pago fue aprobado y recibimos tu pedido Fullness Lab.",
       itemLines,
       "",
+      ...shippingAmountLines(order),
       `Total: ${amount}`,
       `Modalidad: ${deliveryMode}`,
       "",
@@ -91,6 +92,7 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
       body: "Tu pago fue aprobado. Te contactaremos con los detalles de entrega o retiro.",
       details: [
         ...((items || []).map((item) => `${item.quantity}x ${item.product_name}`)),
+        ...shippingAmountLines(order),
         `Total: ${amount}`,
         deliveryMode
       ],
@@ -153,6 +155,7 @@ export async function sendOrderNotificationEmail({order, items, supabase}) {
   const details = [
     `Orden ${orderReference}`,
     ...orderLines,
+    ...shippingAmountLines(order),
     `Total: ${amount}`,
     `Cliente: ${cleanText(customer.name) || "Por confirmar"}`,
     `Correo: ${cleanText(customer.email) || "Por confirmar"}`,
@@ -188,6 +191,11 @@ export async function sendOrderNotificationEmail({order, items, supabase}) {
       ctaLabel: "Abrir Backoffice"
     })
   });
+}
+
+function shippingAmountLines(order) {
+  if (Number(order.delivery_fee_clp) <= 0 || !Number.isFinite(Number(order.delivery_fee_clp))) return [];
+  return [`Subtotal de productos: ${formatClp(order.subtotal_clp)}`, `Envío: ${formatClp(order.delivery_fee_clp)}`];
 }
 
 export async function sendApprovedOrderEmails({order, items, supabase}) {

@@ -5,11 +5,13 @@ import {
   enqueueCore360PaymentApproved,
   isCore360CommerceCheckoutPreflightEnabled,
   isCore360CommercePollingEnabled,
-  previewCore360Checkout
+  previewCore360Checkout,
+  resolveCore360DeliveryService
 } from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
-import {DISPATCH_RULE_TEXT, getProductAvailability, serializeAvailability} from "../src/lib/product-availability.js";
+import {DISPATCH_RULE_TEXT, getProductAvailability, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
+import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rates.js";
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
@@ -62,13 +64,18 @@ const LEGACY_CHECKOUT_OVERRIDES = new Map([
 
 let supabaseAdmin;
 
-export async function createCheckoutPreference({cart, fulfillment, request, dependencies = {}}) {
+export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, dependencies = {}}) {
   await localEnvReady;
   validateFulfillment(fulfillment);
   const checkoutNow = dependencies.now || new Date();
 
   const normalizedCart = normalizeCart(cart);
   const env = dependencies.env || process.env;
+  const deliveryQuote = getDeliveryQuote(fulfillment);
+  if (!deliveryQuote.canPayOnline) throw statusError(422, deliveryQuote.message);
+  const deliveryService = await (dependencies.resolveDeliveryService || resolveCore360DeliveryService)({
+    env, feeClp: deliveryQuote.feeClp, issuedOn: santiagoDate(checkoutNow), fetchImpl: dependencies.core360FetchImpl || fetch
+  });
   const supabase = dependencies.supabase || getSupabaseAdmin();
   if (isCore360CommercePollingEnabled(env) && !isCore360CommerceCheckoutPreflightEnabled(env)) {
     throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
@@ -91,16 +98,21 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
       total: Number(product.price_clp) * cartItem.quantity
     };
   });
-  const total = orderItems.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
+  const total = subtotal + deliveryQuote.feeClp;
 
   if (!Number.isSafeInteger(total) || total <= 0) {
     throw statusError(422, "El total del pedido no es valido.");
+  }
+  if (expectedAmount !== undefined && (!Number.isSafeInteger(expectedAmount) || expectedAmount !== total)) {
+    throw statusError(409, "El total vigente cambió. Revisa el carrito antes de pagar.");
   }
 
   const core360Preflight = await previewCore360Checkout({
     env,
     fetchImpl: dependencies.core360FetchImpl || fetch,
-    items: orderItems
+    items: orderItems,
+    deliveryService
   });
   if (core360Preflight.enabled) {
     const previewVersion = cleanText(core360Preflight.result?.version || core360Preflight.result?.sourceVersion) || null;
@@ -115,7 +127,16 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
     }));
   }
 
+  // The public quote path ends before any order, item, outbox, email or MP write.
+  if (dependencies.quoteOnly === true) {
+    return {amount: total, subtotal, deliveryFee: deliveryQuote.feeClp, currency: "CLP", deliveryVerified: deliveryQuote.feeClp === 0 || Boolean(deliveryService), corePreviewVerified: core360Preflight.enabled === true};
+  }
+
   const customerSnapshot = buildCustomerSnapshot(fulfillment);
+  customerSnapshot.comuna = deliveryQuote.commune;
+  customerSnapshot.deliveryQuote = serializeDeliveryQuote(deliveryQuote);
+  customerSnapshot.weeklyDispatchWeekdays = orderItems.some(({product}) => product.plan_frequency === "weekly" || product.plan_frequency === "monthly") ? [2, 5] : null;
+  if (deliveryService) customerSnapshot.deliveryService = deliveryService;
   const legacyTestSchema = isLegacyTestSchema();
   const {data: order, error: orderError} = await supabase
     .from("orders")
@@ -124,9 +145,9 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
       status: legacyTestSchema ? "cancelled" : "pending_payment",
       payment_status: "pending",
       delivery_status: "pending",
-      subtotal_clp: total,
+      subtotal_clp: subtotal,
       discount_clp: 0,
-      delivery_fee_clp: 0,
+      delivery_fee_clp: deliveryQuote.feeClp,
       total_clp: total,
       currency: "CLP",
       note: cleanText(fulfillment.instructions) || null,
@@ -161,6 +182,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
 
   const siteUrl = getCheckoutSiteUrl(request);
   const preference = {
+    ...(deliveryQuote.feeClp > 0 ? {shipments: {cost: deliveryQuote.feeClp, mode: "not_specified"}} : {}),
     items: orderItems.map(({product, quantity}) => ({
       id: product.slug,
       title: product.name,
@@ -232,6 +254,8 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
 
   return {
     amount: total,
+    subtotal,
+    deliveryFee: deliveryQuote.feeClp,
     currency: "CLP",
     initPoint,
     orderId: order.id,
@@ -240,7 +264,15 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
   };
 }
 
-export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
+export async function quoteCheckout({cart, fulfillment, dependencies = {}}) {
+  return createCheckoutPreference({
+    cart,
+    fulfillment: {mode: fulfillment?.mode, comuna: fulfillment?.comuna, address: "Cotización sin dirección", name: "Cotización web", email: "quote@fullness.invalid", phone: "+56000000000"},
+    dependencies: {...dependencies, quoteOnly: true}
+  });
+}
+
+export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", dependencies = {}) {
   await localEnvReady;
 
   const cleanPaymentId = cleanText(paymentId);
@@ -248,7 +280,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     throw statusError(400, "El identificador de pago no es valido.");
   }
 
-  const payment = await mercadoPagoRequest(`/v1/payments/${encodeURIComponent(cleanPaymentId)}`);
+  const payment = await (dependencies.mercadoPagoRequest || mercadoPagoRequest)(`/v1/payments/${encodeURIComponent(cleanPaymentId)}`);
   const orderId = cleanText(payment.external_reference || payment.metadata?.order_id);
 
   if (!orderId) {
@@ -259,10 +291,10 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     throw statusError(409, "El pago no corresponde a la orden indicada.");
   }
 
-  const supabase = getSupabaseAdmin();
+  const supabase = dependencies.supabase || getSupabaseAdmin();
   const {data: order, error: orderError} = await supabase
     .from("orders")
-    .select("id,status,total_clp,currency,customer_snapshot")
+    .select("id,client_id,status,payment_status,subtotal_clp,discount_clp,delivery_fee_clp,total_clp,currency,customer_snapshot,note,ordered_at,created_at,paid_at")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -339,7 +371,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
     // A failed optional outbox must never turn a reconciled Mercado Pago payment into an error.
     let coreOutbox = null;
     try {
-      coreOutbox = await enqueueCore360PaymentApproved({
+      coreOutbox = await (dependencies.enqueueCore360PaymentApproved || enqueueCore360PaymentApproved)({
         items: emailItems || [],
         order: {...order, ...orderUpdate},
         payment: paymentRow,
@@ -349,7 +381,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "") {
       console.error("Core360 commerce outbox was not queued:", cleanText(error?.message));
     }
 
-    emailDelivery = await sendApprovedOrderEmails({order, items: emailItems || [], supabase});
+    emailDelivery = await (dependencies.sendApprovedOrderEmails || sendApprovedOrderEmails)({order, items: emailItems || [], supabase});
 
     // The daily Vercel Cron is recovery only. A newly persisted event gets one
     // bounded, idempotent delivery attempt after transactional mail is safely

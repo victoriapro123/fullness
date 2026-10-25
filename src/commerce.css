@@ -1276,6 +1276,51 @@
   margin-top: 22px;
 }
 
+.checkout-delivery {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(81, 20, 37, 0.14);
+  background: #fffaf2;
+}
+
+.checkout-delivery p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.checkout-summary {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.checkout-summary > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  overflow-wrap: anywhere;
+}
+
+.checkout-summary strong {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.checkout-summary .cart-total {
+  margin: 4px 0 0;
+}
+
+.checkout-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .checkout-mode {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

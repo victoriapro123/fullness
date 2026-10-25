@@ -337,6 +337,12 @@ export function OrderOperationsAdmin({
                     </li>
                   ))}
                 </ul>
+                <dl className="order-payment-grid">
+                  <div><dt>Subtotal de productos</dt><dd>{formatClp(selectedOrder.subtotalClp)}</dd></div>
+                  <div><dt>{selectedOrder.customer?.mode === "pickup" ? "Retiro" : "Envío"}</dt><dd>{formatClp(selectedOrder.deliveryFeeClp)}</dd></div>
+                  {selectedOrder.discountClp > 0 && <div><dt>Descuento</dt><dd>{formatClp(selectedOrder.discountClp)}</dd></div>}
+                  <div><dt>Total pagadero</dt><dd>{formatClp(selectedOrder.totalClp)}</dd></div>
+                </dl>
               </section>
 
               <section className="order-detail-section" aria-labelledby="order-payment-title">
