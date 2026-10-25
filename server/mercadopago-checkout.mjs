@@ -9,6 +9,7 @@ import {
 } from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
+import {getProductAvailability, serializeAvailability} from "../src/lib/product-availability.js";
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
@@ -72,7 +73,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
     throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
   }
   const catalogItems = await applyCore360ProjectedPrices({
-    catalogItems: await resolveCatalogItems(normalizedCart, {supabase}),
+    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: dependencies.now || new Date()}),
     env,
     supabase
   });
@@ -683,7 +684,7 @@ async function applyCore360ProjectedPrices({catalogItems, env = process.env, sup
   return result;
 }
 
-async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin()} = {}) {
+async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin(), now = new Date()} = {}) {
   const slugs = [...new Set(cart.map((item) => item.slug))];
   const {data, error} = await supabase
     .from("menu_items")
@@ -696,6 +697,12 @@ async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin()} = {}) {
   }
 
   const catalogItems = (data || []).map(applyLegacyCheckoutOverride);
+  for (const product of catalogItems) {
+    const availability = getProductAvailability(product, now);
+    if (!availability.available) {
+      throw statusError(409, `${product.name}: ${availability.message}.`);
+    }
+  }
   const catalogWithMonthlyWeeks = await resolveMonthlyPlanWeeks(catalogItems, {supabase});
 
   return new Map(catalogWithMonthlyWeeks.map((row) => [row.slug, row]));
@@ -839,6 +846,8 @@ function buildProductSnapshot(product) {
     sku: product.sku,
     productType: product.product_type,
     planFrequency: product.plan_frequency,
+    availability: serializeAvailability(product.metadata?.availability),
+    weeklyDispatchWeekday: product.product_type === "plan" && product.plan_frequency === "weekly" ? 1 : null,
     tag: product.tag,
     photoUrl: product.photo_url,
     benefitTags: product.benefit_tags,

@@ -1,4 +1,29 @@
 /* Modulo extraido de styles.css. Mantener aqui sus selectores de dominio. */
+.product-availability-editor {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  margin: 0 0 24px;
+  padding: 20px;
+  border: 1px solid rgba(126, 143, 122, 0.36);
+}
+
+.product-availability-editor legend {
+  padding-inline: 6px;
+  color: var(--fullness-dark);
+  font-weight: 500;
+}
+
+.product-availability-editor > p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.product-availability-editor label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
 
 .backoffice-operations-panel {
   align-content: start;

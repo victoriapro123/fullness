@@ -5,6 +5,56 @@
 }
 
 /* Monthly / weekly / family catalog components. */
+.product-availability,
+.shop-plan-footer .product-availability {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--fullness-rose);
+  color: var(--fullness-dark);
+  background: rgba(169, 136, 128, 0.1);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.product-availability.is-active {
+  border-color: var(--fullness-eucalyptus-deep);
+  background: rgba(167, 187, 166, 0.18);
+}
+
+.product-availability-status {
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.product-availability small {
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.product-availability.is-compact {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  gap: 3px;
+}
+
+.product-purchase-section {
+  display: grid;
+  gap: 16px;
+}
+
+:is(.shop-solid-button, .primary-button):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
 .route-shop .shop-plan-grid.shop-catalog-grid {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)) !important;
   width: min(100%, 1440px);

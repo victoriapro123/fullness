@@ -1,5 +1,6 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 import { benefitPresets, tagPresets } from "./catalog-parameter-presets.js";
+import {normalizeAvailability, serializeAvailability} from "./product-availability.js";
 
 const MENU_ITEM_COLUMNS = "*";
 const MONTHLY_PLAN_WEEK_COLUMNS = "monthly_plan_id,weekly_plan_id,week_position";
@@ -105,6 +106,11 @@ async function findMenuItemBySku(supabase, sku) {
 }
 
 async function updateMenuItemById(supabase, id, payload) {
+  if (payload.metadata?.availability) {
+    const current = await supabase.from("menu_items").select("metadata").eq("id", id).maybeSingle();
+    if (current.error) return {data: null, error: current.error};
+    payload = {...payload, metadata: {...normalizeJsonObject(current.data?.metadata), availability: payload.metadata.availability}};
+  }
   return supabase
     .from("menu_items")
     .update(payload)
@@ -545,6 +551,8 @@ export function mapMenuItem(
     weeklyPlanIds,
     weeklyPlans,
     monthlyWeekCount: weeklyPlanIds.length,
+    metadata: normalizeJsonObject(row.metadata),
+    availability: normalizeAvailability(row.metadata?.availability),
     servingLabel: row.serving_label || "",
     purchaseLabel: row.purchase_label || "",
     displayOrder: Number(row.display_order || 0),
@@ -744,6 +752,9 @@ export function buildMenuItemPayload(input) {
     serving_label: nullableText(input.servingLabel || input.serving_label),
     purchase_label: nullableText(input.purchaseLabel || input.purchase_label),
     is_active: Boolean(input.isActive ?? input.is_active),
+    ...(input.availability !== undefined ? {
+      metadata: {...normalizeJsonObject(input.metadata), availability: serializeAvailability(input.availability)}
+    } : {}),
     display_order: normalizeDisplayOrder(input.displayOrder ?? input.display_order),
     ...(productType === "family"
       ? {

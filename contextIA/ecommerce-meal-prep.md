@@ -246,5 +246,7 @@
 
 ### Planes mensuales compuestos por semanas 2026-08-10
 
+- Para disponibilidad activa/inactiva y programación por fechas, consultar `disponibilidad-semanal.md` (25/10/2026). Las semanas permanecen visibles y relacionadas al mensual; la ventana comercial se guarda separadamente en metadata.
+
 - Esta regla reemplaza la importación histórica que copiaba mealpreps desde un plan semanal a un mensual. El mensual es una relación viva, ordenada y trazable de cuatro semanas; no contiene 24 mealpreps duplicados.
 - Consultar `planes-mensuales-semanales-2026-08-10.md` antes de cambiar el modelo, el editor, la tienda, la nutrición o el checkout de planes. Ahí están la migración aplicada, los límites de publicación, los borradores y la evidencia de validación vigentes.

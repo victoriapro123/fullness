@@ -84,6 +84,7 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
+import {availabilityValidationError, getProductAvailability, normalizeAvailability} from "./lib/product-availability.js";
 import {
   buildAnalyticsItem,
   initializeAnalytics,
@@ -1630,6 +1631,8 @@ function createMenuForm(displayOrder = 0) {
     sku: createAutomaticSku("MP"),
     productType: "plan",
     planFrequency: "weekly",
+    metadata: {},
+    availability: normalizeAvailability(),
     tag: "",
     description: "",
     photoUrl: "",
@@ -1866,6 +1869,8 @@ function menuItemToForm(item) {
     sku: item.sku || createStableSku(item.productType === "plan" ? "MP" : "PF", item.id || item.slug),
     productType: item.productType || "family",
     planFrequency: item.planFrequency || "weekly",
+    metadata: item.metadata || {},
+    availability: normalizeAvailability(item.availability),
     tag: item.tag || "",
     description: item.description || "",
     photoUrl: item.photoUrl || item.image || "",
@@ -2372,6 +2377,8 @@ function parseIncludedMealsFromForm(items, tagDefinitions = []) {
 
 function getMenuFormPublicationIssues(form) {
   const issues = [];
+  const availabilityError = availabilityValidationError(form.availability);
+  if (availabilityError) issues.push(availabilityError);
   const effectiveSlug = form.slug.trim() || slugifyMenuName(form.name);
   const price = Number(form.priceClp);
 
@@ -2717,6 +2724,57 @@ function HoverImage({ alt, primary, secondary }) {
 }
 
 const shopMetricIcons = [Leaf, CookingPot, Heart];
+
+function ProductAvailability({product, compact = false}) {
+  const state = getProductAvailability(product);
+  const weekly = (product.productType || product.product_type) === "plan" && (product.planFrequency || product.plan_frequency) === "weekly";
+  if (!weekly && state.schedule.mode === "always" && state.available) return null;
+  return (
+    <span className={`product-availability is-${state.status}${compact ? " is-compact" : ""}`}>
+      <span className="product-availability-status">{state.label}</span>
+      <span>{state.message}</span>
+      {weekly && !compact && <small>Despachos los lunes de cada semana.</small>}
+    </span>
+  );
+}
+
+function ProductPurchaseButton({product, onAdd, className = "primary-button", children}) {
+  const state = getProductAvailability(product);
+  return (
+    <button className={className} type="button" disabled={!state.available} onClick={() => onAdd(product)}>
+      {state.available ? children : state.status === "upcoming" ? "Próximamente" : "No disponible"}
+    </button>
+  );
+}
+
+function ProductAvailabilityEditor({form, onChange}) {
+  const value = normalizeAvailability(form.availability);
+  const error = availabilityValidationError(value);
+  return (
+    <fieldset className="product-availability-editor">
+      <legend>Disponibilidad para comprar</legend>
+      <p>La visibilidad no cambia. Un producto inactivo puede seguir mostrándose, pero no se puede comprar. Fechas en horario de Santiago.</p>
+      <label>Estado de venta
+        <select name="availabilityMode" value={value.mode} onChange={(event) => onChange({...value, mode: event.target.value})}>
+          <option value="always">Activo sin fechas</option>
+          <option value="paused">Inactivo hasta nuevo aviso</option>
+          <option value="scheduled">Programado por fechas</option>
+        </select>
+      </label>
+      {value.mode === "scheduled" && <div className="backoffice-grid">
+        <label>Se activa el
+          <input name="availabilityStartsOn" type="date" required value={value.startsOn} onChange={(event) => onChange({...value, startsOn: event.target.value})} />
+        </label>
+        <label>Se desactiva el (opcional)
+          <input name="availabilityEndsOn" type="date" min={value.startsOn || undefined} value={value.endsOn} onChange={(event) => onChange({...value, endsOn: event.target.value})} />
+        </label>
+      </div>}
+      {error && <p className="form-error" role="status">{error}</p>}
+      <ProductAvailability product={{...form, availability: value}} />
+      {form.productType === "plan" && form.planFrequency === "weekly" && <p>Despachos: lunes de cada semana. El cambio se aplica desde las 00:00 de la fecha indicada.</p>}
+    </fieldset>
+  );
+}
 const shopProcessSteps = [
   { icon: Leaf, title: "Elige tu objetivo", text: "Define energía, equilibrio o recuperación." },
   { icon: CookingPot, title: "Elige tu formato", text: "Escoge un plan mensual, semanal o un mealprep familiar." },
@@ -2753,6 +2811,7 @@ function MonthlyPlanWeekList({ product, onOpenMeal, onOpenWeek }) {
             <h4>{formatDisplayTitle(weeklyPlan.name)}</h4>
             <p>{formatDisplayDescription(weeklyPlan.description)}</p>
             <small>{formatDisplayDescription(weeklyPlan.servingLabel || "6 mealpreps")}</small>
+            <ProductAvailability product={weeklyPlan} compact />
             <div className="monthly-plan-week-meals" aria-label={`6 mealpreps de ${weeklyPlan.name}`}>
               {(weeklyPlan.includedItems || []).map((meal, mealIndex) => (
                 <button
@@ -2814,15 +2873,16 @@ function ShopPlanCard({ product, index, onAdd, onOpenBenefit, onOpenProduct }) {
       </div>
 
       <div className="shop-plan-footer">
+        <ProductAvailability product={product} />
         <small>{formatDisplayDescription(product.servingLabel || product.tag || (isMonthly ? "4 semanas · 24 mealpreps" : "6 mealpreps"))}</small>
         <strong>{formatPrice(product.price)}</strong>
         <div>
           <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
             Ver menú
           </button>
-          <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
+          <ProductPurchaseButton className="shop-solid-button" product={product} onAdd={onAdd}>
             {purchaseLabel}
-          </button>
+          </ProductPurchaseButton>
         </div>
       </div>
     </article>
@@ -2856,15 +2916,16 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
         />
       </div>
       <div className="shop-plan-footer">
+        <ProductAvailability product={product} />
         <small>{formatDisplayDescription(product.servingLabel || product.tag || "Para compartir")}</small>
         <strong>{formatPrice(product.price)}</strong>
         <div>
           <button className="shop-outline-button" type="button" onClick={() => onOpenProduct(product)}>
             Ver menú
           </button>
-          <button className="shop-solid-button" type="button" onClick={() => onAdd(product)}>
+          <ProductPurchaseButton className="shop-solid-button" product={product} onAdd={onAdd}>
             Agregar plato familiar
-          </button>
+          </ProductPurchaseButton>
         </div>
       </div>
     </article>
@@ -3139,6 +3200,7 @@ function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefi
           <h2 id="product-lightbox-title">{formatDisplayTitle(product.name)}</h2>
           <p>{formatDisplayDescription(product.description)}</p>
           <strong className="product-lightbox-price">{formatPrice(product.price)}</strong>
+          <ProductAvailability product={product} />
 
           {benefitTags.length > 0 && (
             <ul className="product-pill-list">
@@ -3212,10 +3274,10 @@ function ProductQuickView({ product, image, onAdd, onBack, onClose, onOpenBenefi
           )}
 
           <div className="product-lightbox-actions">
-            <button className="primary-button" type="button" onClick={() => onAdd(product)}>
+            <ProductPurchaseButton product={product} onAdd={onAdd}>
               <Plus size={18} />
               {product.purchaseLabel || "Agregar al pedido"}
-            </button>
+            </ProductPurchaseButton>
             <a href={getProductPath(product)} onClick={(event) => onOpenDetail(product, event)}>
               Ver detalle
               <ArrowUpRight size={18} />
@@ -3291,11 +3353,14 @@ function MealPrepQuickView({ meal, parentProduct, purchaseProduct = parentProduc
           </div>
 
           {purchaseProduct && (
-            <div className="product-lightbox-actions single-action">
-              <button className="primary-button" type="button" onClick={() => onAddParent(purchaseProduct)}>
+            <div className="product-purchase-section">
+              <ProductAvailability product={purchaseProduct} />
+              <div className="product-lightbox-actions single-action">
+              <ProductPurchaseButton product={purchaseProduct} onAdd={onAddParent}>
                 <Plus size={18} />
                 {purchaseProduct.purchaseLabel || "Agregar plan completo"}
-              </button>
+              </ProductPurchaseButton>
+              </div>
             </div>
           )}
         </div>
@@ -3377,10 +3442,11 @@ function ProductDetailPage({ product, image, loading, onAdd, onBackToShop, onOpe
             limit={4}
           />
           <strong>{formatPrice(product.price)}</strong>
-          <button className="primary-button" type="button" onClick={() => onAdd(product)}>
+          <ProductAvailability product={product} />
+          <ProductPurchaseButton product={product} onAdd={onAdd}>
             <Plus size={18} />
             {product.purchaseLabel || "Agregar al pedido"}
-          </button>
+          </ProductPurchaseButton>
         </div>
       </section>
 
@@ -5022,6 +5088,16 @@ function App() {
     document.documentElement.classList.contains("intro-scroll-consumed")
   );
   const [products, setProducts] = useState(localDevelopmentCatalog);
+  const [, refreshAvailability] = useState(0);
+  useEffect(() => {
+    const refresh = () => refreshAvailability((version) => version + 1);
+    const timer = window.setInterval(refresh, 30_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
   const [productsLoading, setProductsLoading] = useState(isSupabaseConfigured);
   const [productsError, setProductsError] = useState("");
   const [productPreviewSlug, setProductPreviewSlug] = useState("");
@@ -5730,7 +5806,12 @@ function App() {
   function restoreMenuFormDraft(draft, { announce = true } = {}) {
     if (!draft) return;
 
-    setMenuForm(draft.form);
+    const original = adminItems.find((item) => item.id === draft.form.id);
+    setMenuForm({
+      ...draft.form,
+      metadata: draft.form.metadata || original?.metadata || {},
+      availability: normalizeAvailability(draft.form.availability || original?.availability)
+    });
     setMenuFormDraftKey(draft.draftKey);
     setMenuFormHasUnsavedChanges(true);
     setMenuFormDraftStatus(draft.isServerCopy ? "synced" : "local");
@@ -8378,6 +8459,7 @@ function App() {
     const catalogProduct = products.find((candidate) =>
       candidate.id === product?.id || getProductSlug(candidate) === productSlug
     ) || product;
+    if (!getProductAvailability(catalogProduct).available) return;
     const cartProduct = getProductType(catalogProduct) === "plan"
       ? {
           ...catalogProduct,
@@ -8506,6 +8588,12 @@ function App() {
 
   async function submitCheckout(event) {
     event.preventDefault();
+    const unavailable = cart.find((item) => !getProductAvailability(products.find((product) => product.id === item.id) || item).available);
+    if (unavailable) {
+      const state = getProductAvailability(products.find((product) => product.id === unavailable.id) || unavailable);
+      setCheckoutMessage(`${unavailable.name}: ${state.message}. Retíralo del carrito para continuar.`);
+      return;
+    }
     if (cart.length === 0 || checkoutSubmitting) return;
 
     trackEvent("begin_checkout", {
@@ -9224,6 +9312,8 @@ function App() {
       sku: menuForm.sku,
       productType: menuForm.productType,
       planFrequency: menuForm.planFrequency,
+      metadata: menuForm.metadata,
+      availability: normalizeAvailability(menuForm.availability),
       tag: menuForm.tag,
       description: menuForm.description,
       photoUrl: menuForm.photoUrl,
@@ -9432,8 +9522,8 @@ function App() {
   const editingMonthlyPlan = menuForm.productType === "plan" && menuForm.planFrequency === "monthly";
   const editingNestedWeeklyPlan = monthlyPlanEditorStack.length > 0;
   const familyProductItems = sortByDisplayOrder(adminItems.filter((item) => item.productType === "family"));
-  const activeMealPrepCount = mealPrepItems.filter((item) => item.isActive).length;
-  const activeFamilyProductCount = familyProductItems.filter((item) => item.isActive).length;
+  const activeMealPrepCount = mealPrepItems.filter((item) => getProductAvailability(item).available).length;
+  const activeFamilyProductCount = familyProductItems.filter((item) => getProductAvailability(item).available).length;
   const filteredMealPrepItems = useMemo(() => {
     const query = mealPrepSearch.trim().toLocaleLowerCase("es");
     if (!query) return mealPrepItems;
@@ -10235,12 +10325,13 @@ function App() {
                                 <span>
                                   <strong>{item.name}</strong>
                                   <small>{item.planFrequency === "monthly" ? "Mensual" : "Semanal"} · {formatPrice(item.price)}</small>
+                                  <ProductAvailability product={item} compact />
                                 </span>
                               </button>
                               <div className="backoffice-card-meta">
                                 <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
                                   {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
-                                  {item.isActive ? "Activo" : "Inactivo"}
+                                  {item.isActive ? "Visible" : "Oculto"}
                                 </span>
                                 <span>Posición {planIndex + 1}</span>
                               </div>
@@ -10462,6 +10553,10 @@ function App() {
                           <h4 id="meal-prep-publication-title">Publicación</h4>
                           <p>Revisa el estado del plan y deja los ajustes técnicos sólo para casos especiales.</p>
                         </header>
+                    <ProductAvailabilityEditor form={menuForm} onChange={(availability) => {
+                      markMenuFormChanged();
+                      setMenuForm((current) => ({...current, availability}));
+                    }} />
                     <details className="backoffice-advanced-fields" open>
                       <summary>Ajustes avanzados del plan</summary>
                       <p>El código interno se genera automáticamente. Sólo cambia los otros campos si necesitas un ajuste especial.</p>
@@ -10504,7 +10599,7 @@ function App() {
                                 <option value="">Selecciona una semana existente</option>
                                 {importableWeeklyPlans.map((plan) => (
                                   <option key={plan.id} value={plan.id} disabled={(menuForm.weeklyPlanIds || []).includes(plan.id)}>
-                                    {plan.name} · 6 mealpreps{plan.isActive ? "" : " · Oculto"}
+                                    {plan.name} · {getProductAvailability(plan).label} · {getProductAvailability(plan).message}
                                   </option>
                                 ))}
                               </select>
@@ -10548,6 +10643,7 @@ function App() {
                                       <div>
                                         <strong>{formatDisplayTitle(weeklyPlan.name)}</strong>
                                         <span>{weeklyPlan.includedItems?.length || 0} mealpreps{weeklyPlan.isActive ? "" : " · Oculto"}</span>
+                                        <ProductAvailability product={weeklyPlan} compact />
                                       </div>
                                       <div className="monthly-plan-week-slot-actions">
                                         <button
@@ -11612,6 +11708,10 @@ function App() {
                                     <p className="eyebrow">Publicación</p>
                                   <h4 id="family-publication-title">Visibilidad</h4>
                                   </header>
+                                  <ProductAvailabilityEditor form={menuForm} onChange={(availability) => {
+                                    markMenuFormChanged();
+                                    setMenuForm((current) => ({...current, availability}));
+                                  }} />
                                   <details className="backoffice-advanced-fields" open>
                                     <summary>Ajustes del producto</summary>
                                     <p>El código interno se genera automáticamente.</p>
@@ -12366,6 +12466,7 @@ function App() {
                     <div>
                       <h3>{item.name}</h3>
                       <p>{formatPrice(item.price)}</p>
+                      <ProductAvailability product={products.find((product) => product.id === item.id) || item} />
                       {getProductType(item) === "plan" && <small>Menú semanal preestablecido</small>}
                     </div>
                     <div className="qty">
