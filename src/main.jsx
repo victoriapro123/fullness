@@ -84,7 +84,7 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
-import {availabilityValidationError, getProductAvailability, normalizeAvailability} from "./lib/product-availability.js";
+import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, getProductAvailability, normalizeAvailability} from "./lib/product-availability.js";
 import {
   buildAnalyticsItem,
   initializeAnalytics,
@@ -315,7 +315,7 @@ const faqGroups = [
       {
         question: "Días de despacho",
         answer: [
-          "Los despachos se realizan todos los martes y jueves, según la programación vigente de Fullness Lab.",
+          DISPATCH_RULE_TEXT,
           "Los pedidos deberán realizarse dentro de los plazos informados en la página web para ser considerados en la siguiente fecha de despacho."
         ]
       },
@@ -413,11 +413,11 @@ const faqGroups = [
       },
       {
         question: "¿Cuándo debo realizar mi pedido?",
-        answer: ["Los pedidos se reciben hasta las 23:59 hrs del día miércoles de cada semana."]
+        answer: [DISPATCH_RULE_TEXT]
       },
       {
         question: "¿Cuándo se entregan?",
-        answer: ["Las entregas se realizan los días lunes y martes de la semana siguiente, según la zona de despacho."]
+        answer: [DISPATCH_RULE_TEXT]
       },
       {
         question: "¿Puedo elegir los mealpreps?",
@@ -2736,7 +2736,7 @@ function ProductAvailability({product, compact = false}) {
     <span className={`product-availability is-${state.status}${compact ? " is-compact" : ""}`}>
       <span className="product-availability-status">{state.label}</span>
       <span>{state.message}</span>
-      {weekly && !compact && <small>Despachos los lunes de cada semana.</small>}
+      {weekly && !compact && <small>{DISPATCH_CUTOFF_TEXT}</small>}
     </span>
   );
 }
@@ -2745,7 +2745,7 @@ function ProductPurchaseButton({product, onAdd, className = "primary-button", ch
   const state = getProductAvailability(product);
   return (
     <button className={className} type="button" disabled={!state.available} onClick={() => onAdd(product)}>
-      {state.available ? children : state.status === "upcoming" ? "Próximamente" : "No disponible"}
+      {state.available ? children : "No disponible"}
     </button>
   );
 }
@@ -2755,26 +2755,23 @@ function ProductAvailabilityEditor({form, onChange}) {
   const error = availabilityValidationError(value);
   return (
     <fieldset className="product-availability-editor">
-      <legend>Disponibilidad para comprar</legend>
-      <p>La visibilidad no cambia. Un producto inactivo puede seguir mostrándose, pero no se puede comprar. Fechas en horario de Santiago.</p>
+      <legend>Venta y despacho</legend>
+      <p>La fecha sólo informa cuándo se despacha: no bloquea la compra. Ocultar o pausar un producto sigue siendo una decisión manual.</p>
       <label>Estado de venta
-        <select name="availabilityMode" value={value.mode} onChange={(event) => onChange({...value, mode: event.target.value})}>
-          <option value="always">Activo sin fechas</option>
+        <select name="availabilityMode" value={value.mode} onChange={(event) => onChange({...value, mode: event.target.value, endsOn: ""})}>
+          <option value="always">Activo sin fecha de despacho</option>
           <option value="paused">Inactivo hasta nuevo aviso</option>
-          <option value="scheduled">Programado por fechas</option>
+          <option value="scheduled">Activo con fecha de despacho</option>
         </select>
       </label>
       {value.mode === "scheduled" && <div className="backoffice-grid">
-        <label>Se activa el
-          <input name="availabilityStartsOn" type="date" required value={value.startsOn} onChange={(event) => onChange({...value, startsOn: event.target.value})} />
-        </label>
-        <label>Se desactiva el (opcional)
-          <input name="availabilityEndsOn" type="date" min={value.startsOn || undefined} value={value.endsOn} onChange={(event) => onChange({...value, endsOn: event.target.value})} />
+        <label>Semana de despacho
+          <input name="availabilityStartsOn" type="date" required value={value.startsOn} onChange={(event) => onChange({...value, startsOn: event.target.value, endsOn: ""})} />
         </label>
       </div>}
       {error && <p className="form-error" role="status">{error}</p>}
       <ProductAvailability product={{...form, availability: value}} />
-      {form.productType === "plan" && form.planFrequency === "weekly" && <p>Despachos: lunes de cada semana. El cambio se aplica desde las 00:00 de la fecha indicada.</p>}
+      {form.productType === "plan" && form.planFrequency === "weekly" && <p>{DISPATCH_RULE_TEXT} El menú se puede comprar antes de la semana indicada.</p>}
     </fieldset>
   );
 }
@@ -3089,6 +3086,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
               <p className="eyebrow">{formatDisplayEyebrow("Elige tu formato")}</p>
               <h2 id="shop-plans-title">{formatDisplayTitle("Planes y mealpreps para cada ritmo.")}</h2>
               <p>{formatDisplayDescription("Elige el formato que mejor acompañe tu ritmo.")}</p>
+              <p>{DISPATCH_RULE_TEXT}</p>
             </div>
             <div className="shop-catalog-stack">
               {catalogSections.map(({ emptyMessage, id, products, title }) => (
@@ -12544,6 +12542,7 @@ function App() {
                   </label>
                 </div>
 
+                <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
 
                 <button

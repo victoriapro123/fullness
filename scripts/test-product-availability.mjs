@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {getProductAvailability, serializeAvailability, availabilityValidationError, santiagoDate} from "../src/lib/product-availability.js";
+import {DISPATCH_RULE_TEXT, getDispatchOptions, getDispatchSchedule, getProductAvailability, serializeAvailability, availabilityValidationError, santiagoDate} from "../src/lib/product-availability.js";
 import {buildMenuItemPayload, mapMenuItem} from "../src/lib/menu-items.js";
 import {createCheckoutPreference} from "../server/mercadopago-checkout.mjs";
 
@@ -12,12 +12,31 @@ const plans = windows.map(([startsOn, endsOn], index) => ({
   metadata: {untouched: "preserved", availability: serializeAvailability({mode: "scheduled", startsOn, endsOn})}
 }));
 assert.equal(santiagoDate(new Date("2026-10-26T02:59:59Z")), "2026-10-25");
-assert.equal(plans.filter((p) => getProductAvailability(p, new Date("2026-10-26T02:59:59Z")).available).length, 0);
+assert.equal(plans.filter((p) => getProductAvailability(p, new Date("2026-10-26T02:59:59Z")).available).length, 4);
 for (let index = 0; index < plans.length; index++) {
   const time = new Date(`${windows[index][0]}T03:00:00Z`);
-  assert.deepEqual(plans.map((p) => getProductAvailability(p, time).available), plans.map((_, i) => i === index));
+  assert.deepEqual(plans.map((p) => getProductAvailability(p, time).available), [true, true, true, true]);
+  assert.match(getProductAvailability(plans[index], time).message, /Despacho el martes/);
+  const dispatch = getDispatchOptions(windows[index][0]);
+  assert.equal(dispatch.tuesday, ["2026-10-27", "2026-11-03", "2026-11-10", "2026-11-17"][index]);
+  assert.equal(dispatch.friday, ["2026-10-30", "2026-11-06", "2026-11-13", "2026-11-20"][index]);
+  assert.equal(dispatch.rule, DISPATCH_RULE_TEXT);
+  assert.doesNotMatch(getProductAvailability(plans[index], time).message, /activa|desactiva|Próximamente/);
 }
-assert.equal(getProductAvailability(plans[3], new Date("2026-11-23T03:00:00Z")).available, false);
+assert.equal(getProductAvailability(plans[3], new Date("2026-11-23T03:00:00Z")).available, true);
+for (const [now, expected] of [
+  ["2026-10-25T15:00:00Z", "2026-10-27"],
+  ["2026-10-26T19:59:59Z", "2026-10-27"],
+  ["2026-10-26T20:00:00Z", "2026-10-27"],
+  ["2026-10-26T20:00:01Z", "2026-10-30"],
+  ["2026-10-27T15:00:00Z", "2026-10-30"],
+  ["2026-10-30T02:59:59Z", "2026-10-30"],
+  ["2026-10-30T03:00:00Z", "2026-11-03"],
+  ["2026-10-31T15:00:00Z", "2026-11-03"]
+]) assert.equal(getDispatchSchedule("2026-10-26", new Date(now)).dispatchOn, expected, now);
+assert.equal(getDispatchSchedule("2026-11-16", new Date("2026-10-25T15:00:00Z")).dispatchOn, "2026-11-17", "Una preventa respeta su semana futura");
+assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-01T21:00:00Z")).dispatchOn, "2026-06-02", "Corte de invierno en UTC-4");
+assert.equal(getDispatchSchedule("2026-06-01", new Date("2026-06-01T21:00:01Z")).dispatchOn, "2026-06-05");
 assert.equal(getProductAvailability({metadata: {}}, new Date()).available, true);
 assert.equal(getProductAvailability({is_active: false}).status, "hidden");
 assert.equal(getProductAvailability({availability: {mode: "paused"}}).available, false);
@@ -32,7 +51,6 @@ assert.equal(payload.metadata.availability.starts_on, "2026-10-26");
 // Fail before any order, Core HTTP, email or payment-provider operation.
 for (const availability of [
   {mode: "paused"},
-  {mode: "scheduled", startsOn: "2026-10-26", endsOn: "2026-11-02"},
   {mode: "scheduled", startsOn: "invalid"}
 ]) {
   let mutations = 0;
@@ -55,4 +73,38 @@ for (const availability of [
   assert.equal(mutations, 0);
   assert.equal(providerCalls, 0);
 }
-console.log("Disponibilidad QA OK: límites Santiago, 4 semanas exclusivas, metadata preservada y checkout bloqueado sin efectos externos.");
+// A future (or historical) dispatch date must not fail the server-side guard.
+for (const [index, product] of plans.entries()) {
+  const rows = [];
+  let providerCalls = 0;
+  const selectedProduct = {...product, slug: `semana-${index + 1}`, price_clp: 64260};
+  const checkoutNow = new Date(index % 2 ? "2027-01-01T12:00:00Z" : "2026-10-25T15:00:00Z");
+  const result = await createCheckoutPreference({
+    cart: [{slug: selectedProduct.slug, quantity: 1}],
+    fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
+    request: {headers: {host: "fullness.example.test", "x-forwarded-proto": "https"}},
+    dependencies: {
+      now: checkoutNow, env: {},
+      supabase: {from(name) {
+        if (name === "menu_items") return {select: () => ({in: () => ({eq: async () => ({data: [selectedProduct], error: null})})})};
+        if (name === "orders") return {
+          insert(row) {rows.push(row); return {select: () => ({single: async () => ({data: {id: "55555555-5555-4555-8555-555555555555", ...row}, error: null})})};},
+          update: () => ({eq: async () => ({error: null})})
+        };
+        if (name === "order_items") return {insert: async (items) => {
+          assert.equal(items[0].product_snapshot.availability.starts_on, windows[index][0]);
+          assert.deepEqual(items[0].product_snapshot.dispatch, getDispatchSchedule(windows[index][0], checkoutNow));
+          assert.deepEqual(items[0].product_snapshot.weeklyDispatchWeekdays, [2, 5]);
+          return {error: null};
+        }};
+        throw Error(`Unexpected QA table: ${name}`);
+      }},
+      mercadoPagoRequest: async () => {providerCalls++; return {id: "mock-preference", init_point: "https://mp.example.invalid/qa"};},
+      core360FetchImpl: async () => {throw Error("No Core HTTP allowed");}
+    }
+  });
+  assert.equal(result.amount, 64260);
+  assert.equal(rows.length, 1);
+  assert.equal(providerCalls, 1);
+}
+console.log("Disponibilidad QA OK: los 4 menús se compran antes/después del despacho; fechas persistidas, pausa/oculto/errores protegidos. Checkout y proveedores simulados, sin efectos externos.");

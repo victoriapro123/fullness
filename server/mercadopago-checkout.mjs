@@ -9,7 +9,7 @@ import {
 } from "./core360-commerce-adapter.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
-import {getProductAvailability, serializeAvailability} from "../src/lib/product-availability.js";
+import {DISPATCH_RULE_TEXT, getProductAvailability, serializeAvailability} from "../src/lib/product-availability.js";
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
@@ -65,6 +65,7 @@ let supabaseAdmin;
 export async function createCheckoutPreference({cart, fulfillment, request, dependencies = {}}) {
   await localEnvReady;
   validateFulfillment(fulfillment);
+  const checkoutNow = dependencies.now || new Date();
 
   const normalizedCart = normalizeCart(cart);
   const env = dependencies.env || process.env;
@@ -73,7 +74,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
     throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
   }
   const catalogItems = await applyCore360ProjectedPrices({
-    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: dependencies.now || new Date()}),
+    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: checkoutNow}),
     env,
     supabase
   });
@@ -147,7 +148,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, depe
     unit_price_clp: Number(product.price_clp),
     total_clp: itemTotal,
     product_name: product.name,
-    product_snapshot: buildProductSnapshot(product),
+    product_snapshot: buildProductSnapshot(product, checkoutNow),
     ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
     nutrition_description: product.nutrition_description || null
   }));
@@ -818,7 +819,7 @@ function snapshotWeeklyPresetMenu(weeklyPlan) {
     : [];
 }
 
-function buildProductSnapshot(product) {
+function buildProductSnapshot(product, now = new Date()) {
   const monthlyWeeks = isMonthlyPlan(product) && Array.isArray(product.monthly_weeks)
     ? product.monthly_weeks.map((weeklyPlan) => ({
       weekPosition: Number(weeklyPlan.week_position),
@@ -826,6 +827,7 @@ function buildProductSnapshot(product) {
       weeklyPlanSlug: weeklyPlan.slug || "",
       weeklyPlanSku: weeklyPlan.sku || null,
       weeklyPlanName: weeklyPlan.name || "",
+      dispatch: getProductAvailability(weeklyPlan, now).dispatch,
       mealpreps: snapshotWeeklyPresetMenu(weeklyPlan)
     }))
     : [];
@@ -847,7 +849,9 @@ function buildProductSnapshot(product) {
     productType: product.product_type,
     planFrequency: product.plan_frequency,
     availability: serializeAvailability(product.metadata?.availability),
-    weeklyDispatchWeekday: product.product_type === "plan" && product.plan_frequency === "weekly" ? 1 : null,
+    dispatch: getProductAvailability(product, now).dispatch,
+    dispatchRule: DISPATCH_RULE_TEXT,
+    weeklyDispatchWeekdays: product.product_type === "plan" && product.plan_frequency === "weekly" ? [2, 5] : null,
     tag: product.tag,
     photoUrl: product.photo_url,
     benefitTags: product.benefit_tags,
