@@ -144,7 +144,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
 // The approved logo is versioned locally; header/footer must not depend on R2 availability.
-const logoHeaderFooterSrc = "/assets/brand/fullness-lab-horizontal-contrast-2026.png";
+const logoHeaderFooterSrc = "/api/media?key=assets%2Fbrand%2Ffullness-lab-horizontal-contrast-2026.png";
 const logoVerticalSrc = mediaSrc("assets/brand/fullness-lab-vertical-marfil-2026.png");
 const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
