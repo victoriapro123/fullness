@@ -11455,8 +11455,8 @@ function App() {
                         </section>
 
                         {familyProductEditorOpen && (
-                          <div className="backoffice-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="family-product-editor-title">
-                            <form className="backoffice-form backoffice-workspace-form" noValidate onSubmit={submitMenuItem}>
+                          <div className="backoffice-editor-overlay backoffice-family-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="family-product-editor-title">
+                            <form className="backoffice-form backoffice-workspace-form backoffice-family-product-form" noValidate onSubmit={submitMenuItem}>
                               <div className="backoffice-form-head">
                                 <div className="backoffice-workspace-title">
                                   <button className="backoffice-back-button" type="button" onClick={closeFamilyProductEditor} aria-label="Volver al listado de mealpreps familiares">

@@ -2836,6 +2836,82 @@
   overscroll-behavior: contain;
 }
 
+/* Los familiares pueden traer nombres/URLs largos desde la biblioteca.
+   Encoger las pistas y controles, no recortar campos para ocultar el problema. */
+.backoffice-family-editor-overlay {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-x: hidden;
+}
+
+.backoffice-workspace-form.backoffice-family-product-form {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(1080px, 100%);
+  max-width: 100%;
+  justify-self: center;
+  overflow-x: hidden;
+}
+
+.backoffice-family-product-form > * {
+  min-width: 0;
+}
+
+.backoffice-family-product-form button {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.backoffice-family-product-form :is(section, fieldset, label, .backoffice-grid, .backoffice-wide, .backoffice-photo-editor, .backoffice-photo-row, .backoffice-photo-block, .backoffice-nutrition-editor, .backoffice-library-loader, .benefit-assignment-editor, .tag-selector, .selector-legend, .backoffice-workspace-title, .backoffice-workspace-title > div) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-family-product-form :is(input, select, textarea, button, img) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.backoffice-family-product-form :is(h3, h4, p, .backoffice-breadcrumb, .backoffice-draft-status span) {
+  overflow-wrap: anywhere;
+}
+
+.backoffice-family-product-form .backoffice-photo-row.backoffice-photo-row-double {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.backoffice-family-product-form :is(.backoffice-form-actions, .backoffice-action-buttons, .selector-legend) {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .backoffice-family-product-form > .backoffice-form-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .backoffice-family-product-form :is(.backoffice-grid, .backoffice-library-loader, .backoffice-nutrition-grid, .backoffice-photo-row.backoffice-photo-row-double) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .backoffice-family-product-form .backoffice-form-head-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .backoffice-family-product-form .backoffice-editor-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .backoffice-family-product-form .backoffice-editor-tabs button {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+}
+
 .backoffice-workspace-form > .backoffice-form-head {
   position: sticky;
   top: calc(clamp(18px, 2.4vw, 34px) * -1);
