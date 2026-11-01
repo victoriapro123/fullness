@@ -21,14 +21,15 @@ export default async function handler(req, res) {
     const dataId = queryValue(req.query?.["data.id"]) || payload?.data?.id;
 
     validateWebhookSignature({
+      checkoutMode: "live",
       dataId,
       requestId: req.headers["x-request-id"],
       signature: req.headers["x-signature"]
     });
 
-    event = await recordWebhookEvent(payload);
+    event = await recordWebhookEvent(payload, {checkoutMode: "live"});
     if (!event.alreadyProcessed && payload?.type === "payment" && dataId) {
-      await syncMercadoPagoPayment(dataId);
+      await syncMercadoPagoPayment(dataId, "", {checkoutMode: "live"});
     }
     if (!event.alreadyProcessed) await finishWebhookEvent(event.id);
 

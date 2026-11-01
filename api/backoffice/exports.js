@@ -74,6 +74,7 @@ async function loadCustomers(supabase) {
     selectAll(() => supabase
       .from("orders")
       .select("customer_snapshot,total_clp,ordered_at,payment_status,status")
+      .eq("checkout_mode", "live")
       .order("ordered_at", {ascending: false}))
   ]);
 
@@ -129,6 +130,7 @@ async function loadSales(supabase) {
   const orders = await selectAll(() => supabase
     .from("orders")
     .select("id,ordered_at,status,payment_status,delivery_status,total_clp,currency,customer_snapshot")
+    .eq("checkout_mode", "live")
     .order("ordered_at", {ascending: false}));
 
   return orders.map((order) => {

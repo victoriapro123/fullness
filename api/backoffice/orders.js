@@ -1,11 +1,19 @@
 import {assertBackofficeRequest, cleanText, statusError} from "../../server/backoffice-access.mjs";
 import {readJsonBody, refundMercadoPagoPayment} from "../../server/mercadopago-checkout.mjs";
+import {
+  deliverCore360OutboxEvent,
+  deterministicCore360EventId,
+  enqueueCore360OperationalEvent,
+  isCore360CommerceOrderSyncEnabled,
+  readCore360CanonicalOrder
+} from "../../server/core360-commerce-adapter.mjs";
 import {sendOrderStatusUpdateEmail} from "../../server/transactional-email.mjs";
 
-const CORE360_STATE_SELECT = "core360_commerce_order_states(core_order_id,core_order_version,source_version,commercial_status,fulfillment_status,fiscal_status,fiscal_document_type,fiscal_folio,received_at,updated_at)";
+const CORE360_STATE_SELECT = "core360_commerce_order_states(core_order_id,core_order_version,source_version,commercial_status,fulfillment_status,fiscal_status,fiscal_document_type,fiscal_folio,received_at,updated_at,provider_payload)";
 
 const ORDER_SELECT = [
   "id",
+  "checkout_mode",
   "status",
   "payment_status",
   "delivery_status",
@@ -20,18 +28,19 @@ const ORDER_SELECT = [
   "paid_at",
   "received_at",
   "created_at",
-  "order_items(id,product_name,quantity,unit_price_clp,total_clp,created_at)",
+  "order_items(id,product_name,quantity,unit_price_clp,total_clp,created_at,product_snapshot)",
   "payments(id,provider,provider_payment_id,provider_preference_id,provider_merchant_order_id,status,status_detail,payment_method_id,payment_type_id,installments,transaction_amount_clp,currency,payer_email,paid_at,created_at)"
 ].join(",");
 
 function orderSelect() {
-  // The Core tables are a candidate migration. While polling is off, this
-  // endpoint must remain compatible with the production schema that predates
-  // them. Once polling is explicitly enabled, activation requires that
-  // candidate migration to be applied first.
-  return cleanText(process.env.CORE360_COMMERCE_POLL_ENABLED).toLowerCase() === "true"
-    ? `${ORDER_SELECT},${CORE360_STATE_SELECT}`
-    : ORDER_SELECT;
+  // This release requires the already-applied integration schema. A rollout
+  // flag must not erase a persisted Core authority or reassign legacy orders.
+  return `${ORDER_SELECT},${CORE360_STATE_SELECT}`;
+}
+
+export function coreManagedOrder(order){
+ const state=Array.isArray(order.core360_commerce_order_states)?order.core360_commerce_order_states[0]:order.core360_commerce_order_states;
+ return order.customer_snapshot?.operationalAuthority==='core360'||Boolean(order.customer_snapshot?.corePlanCheckout)||Boolean(state?.core_order_id);
 }
 
 const NEXT_STATUSES = {
@@ -64,6 +73,7 @@ async function listOrders(req, res) {
     const {data, error} = await supabase
       .from("orders")
       .select(orderSelect())
+      .eq("checkout_mode", "live")
       .order("ordered_at", {ascending: false})
       .limit(250);
 
@@ -123,8 +133,20 @@ async function updateOperationalStatus({nextStatus, orderId, supabase, userId}) 
     .maybeSingle();
 
   if (currentError || !current) throw statusError(404, "No encontramos el pedido.", currentError);
+  assertCommercialOrder(current);
   if (!NEXT_STATUSES[current.status]?.has(nextStatus)) {
     throw statusError(422, "Ese cambio de estado no está disponible para este pedido.");
+  }
+
+  if (coreManagedOrder(current)) {
+    if(!isCore360CommerceOrderSyncEnabled(process.env))throw statusError(503,'La conexión operativa con Core360 está deshabilitada; no se alteró la autoridad del pedido.');
+    if (nextStatus !== "cancelled") {
+      throw statusError(
+        409,
+        "Core360 es la autoridad operativa: actualiza preparación, despacho y entrega en Core360. Fullness recibirá el estado firmado."
+      );
+    }
+    return requestCore360Cancellation({current, supabase});
   }
 
   const update = {
@@ -177,8 +199,47 @@ async function refundOrder({orderId, supabase, userId}) {
     .maybeSingle();
 
   if (currentError || !current) throw statusError(404, "No encontramos el pedido.", currentError);
+  assertCommercialOrder(current);
 
-  const refunded = await refundMercadoPagoPayment({orderId: current.id});
+  const coreAuthority = coreManagedOrder(current);
+  if(coreAuthority&&!isCore360CommerceOrderSyncEnabled(process.env))throw statusError(503,'Activa la conexión canónica antes de conciliar este reembolso con Core360.');
+  const refunded = await refundMercadoPagoPayment({orderId: current.id, projectOrderState: !coreAuthority});
+  if (coreAuthority) {
+    const eventId = deterministicCore360EventId(`refund_observed:${current.id}:${cleanText(refunded.payment?.provider_payment_id)}:v1`);
+    const queued = await enqueueCore360OperationalEvent({
+      amountMinor: refunded.payment?.transaction_amount_clp || current.total_clp,
+      confirmed: true,
+      currency: current.currency,
+      env: process.env,
+      eventKind: "refund_observed",
+      externalEventId: eventId,
+      externalOrderId: current.id,
+      externalReference: `mercado_pago_refund:${cleanText(refunded.providerRefund?.id || refunded.payment?.provider_payment_id)}`,
+      issuedOn: coreIssuedOn(current),
+      observedAt: new Date().toISOString(),
+      reason: "Reembolso Mercado Pago conciliado por Fullness",
+      supabase
+    });
+    let coreDelivery = {accepted: false, queued: true};
+    try {
+      coreDelivery = await deliverCore360OutboxEvent({env: process.env, event: {id: queued.eventId}, supabase});
+    } catch (error) {
+      coreDelivery = {accepted: false, code: cleanText(error?.code) || "CORE360_REFUND_PENDING", queued: true};
+    }
+    return {
+      coreDelivery,
+      message: coreDelivery.accepted
+        ? "Reembolso conciliado en Mercado Pago e informado a Core360. Fullness espera su estado firmado."
+        : "Reembolso conciliado en Mercado Pago. El aviso a Core360 quedó en cola para reintento; Fullness no alteró el estado operativo local.",
+      notification: {sent: false, skipped: true, reason: "core360-authority"},
+      order: presentOrder({
+        ...current,
+        payments: (current.payments || []).map((payment) => payment.id === refunded.payment.id
+          ? {...payment, status: "refunded", status_detail: "refunded_by_backoffice"}
+          : payment)
+      })
+    };
+  }
   await recordStatusEvent({
     nextStatus: "refunded",
     orderId: current.id,
@@ -217,6 +278,72 @@ async function refundOrder({orderId, supabase, userId}) {
   };
 }
 
+async function requestCore360Cancellation({current, supabase}) {
+  const canonical = await readCore360CanonicalOrder({env: process.env, externalOrderId: current.id});
+  if (cleanText(canonical?.externalOrderId) !== current.id) {
+    throw statusError(409, "Core360 devolvió una orden distinta; no se realizó ninguna cancelación local.");
+  }
+  const eventId = deterministicCore360EventId(`cancellation_requested:${current.id}:v1`);
+  const queued = await enqueueCore360OperationalEvent({
+    confirmed: true,
+    env: process.env,
+    eventKind: "cancellation_requested",
+    expectedDocumentVersion: requiredCoreVersion(canonical?.order?.version, "documental"),
+    expectedSourceVersion: requiredCoreToken(canonical?.sourceVersion, "fuente"),
+    expectedVersion: requiredCoreVersion(canonical?.version, "operativa"),
+    externalEventId: eventId,
+    externalOrderId: current.id,
+    issuedOn: coreIssuedOn(current),
+    observedAt: new Date().toISOString(),
+    reason: "Cancelación solicitada desde Backoffice Fullness",
+    supabase
+  });
+  let coreDelivery;
+  try {
+    coreDelivery = await deliverCore360OutboxEvent({env: process.env, event: {id: queued.eventId}, supabase});
+  } catch (error) {
+    coreDelivery = {accepted: false, code: cleanText(error?.code) || "CORE360_CANCELLATION_PENDING", queued: true};
+  }
+  return {
+    coreDelivery,
+    message: coreDelivery.accepted
+      ? "Cancelación enviada a Core360. Fullness espera la actualización firmada antes de reflejarla."
+      : "La solicitud de cancelación quedó en cola para Core360; Fullness no alteró el estado local.",
+    notification: {sent: false, skipped: true, reason: "core360-authority"},
+    order: presentOrder(current)
+  };
+}
+
+function coreIssuedOn(order) {
+  const source = order?.ordered_at || order?.created_at;
+  const date = new Date(source);
+  if (!source || Number.isNaN(date.getTime())) {
+    throw statusError(409, "El pedido no tiene una fecha de emisión válida para Core360.");
+  }
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/Santiago",
+    year: "numeric"
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function requiredCoreToken(value, label) {
+  const token = cleanText(value);
+  if (!token) throw statusError(409, `Core360 no devolvió versión ${label}; refresca el pedido antes de reintentar.`);
+  return token;
+}
+
+function requiredCoreVersion(value, label) {
+  const version = Number(value);
+  if (!Number.isSafeInteger(version) || version < 0) {
+    throw statusError(409, `Core360 no devolvió versión ${label} válida; refresca el pedido antes de reintentar.`);
+  }
+  return version;
+}
+
 function deliveryStatusFor(orderStatus, currentDeliveryStatus) {
   const statuses = {
     cancelled: "cancelled",
@@ -241,7 +368,7 @@ async function recordStatusEvent({nextStatus, orderId, previousStatus, source, s
   if (error) throw statusError(502, "El estado fue actualizado, pero no pudimos registrar su seguimiento.", error);
 }
 
-function presentOrder(order) {
+export function presentOrder(order) {
   const customer = asRecord(order.customer_snapshot);
   const payments = Array.isArray(order.payments) ? [...order.payments] : [];
   payments.sort((left, right) => String(right.paid_at || right.created_at || "").localeCompare(String(left.paid_at || left.created_at || "")));
@@ -258,7 +385,10 @@ function presentOrder(order) {
       && !["cancelled", "refunded"].includes(order.status)
     ),
     createdAt: order.created_at || null,
+    operationalAuthority:coreManagedOrder(order)?'core360':'fullness',
+    plans:[...new Map((order.order_items||[]).map(i=>i.product_snapshot?.customPlan).filter(g=>g?.id&&[6,24].includes(g.size)&&Array.isArray(g.items)).map(g=>[g.id,{id:g.id,size:g.size,quantity:g.quantity,unitTotal:g.unitTotal,items:g.items.map(r=>({itemId:r.itemId,week:r.week,name:r.name,quantity:r.quantity,unitPrice:r.unitPrice}))}])).values()],
     core360: coreState ? {
+      plan:coreState.provider_payload?.plan?{status:cleanText(coreState.provider_payload.plan.status),expiresAt:cleanText(coreState.provider_payload.plan.expiresAt),paymentReconciliationRequired:coreState.provider_payload.plan.paymentReconciliationRequired===true}:null,
       commercialStatus: cleanText(coreState.commercial_status) || "unknown",
       coreOrderId: cleanText(coreState.core_order_id),
       coreOrderVersion: Number(coreState.core_order_version),
@@ -291,6 +421,7 @@ function presentOrder(order) {
       createdAt: item.created_at || null,
       id: item.id,
       productName: cleanText(item.product_name),
+      inPlan:Boolean(item.product_snapshot?.customPlan),
       quantity: Number(item.quantity || 0),
       totalClp: Number(item.total_clp || 0),
       unitPriceClp: Number(item.unit_price_clp || 0)
@@ -303,6 +434,12 @@ function presentOrder(order) {
     status: cleanText(order.status) || "pending_payment",
     totalClp: Number(order.total_clp || 0)
   };
+}
+
+function assertCommercialOrder(order) {
+  if (cleanText(order?.checkout_mode).toLowerCase() === "test") {
+    throw statusError(403, "Las compras TEST están aisladas de la operación comercial.");
+  }
 }
 
 function presentPayment(payment) {

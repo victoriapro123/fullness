@@ -24,7 +24,8 @@ export default async function handler(req, res) {
       cart: body.cart,
       fulfillment: body.fulfillment,
       expectedAmount: body.expectedAmount,
-      request: req
+      request: req,
+      testSessionToken: body.testSessionToken
     });
 
     sendJson(res, 201, {data});

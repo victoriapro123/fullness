@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
+import {createHash} from "node:crypto";
 import {
   buildCore360PaymentApprovedEvent,
+  buildCore360UnpaidOrderEvent,
   createCore360CheckoutPreviewRequest,
   createCore360OrderEventRequest,
   createCore360OrderRequest,
+  deterministicCore360EventId,
   deliverCore360OrderEvent,
   deliverCore360OutboxEvent,
+  enqueueCore360OperationalEvent,
   enqueueCore360PaymentApproved,
+  enqueueCore360UnpaidOrder,
   isCore360CommerceReadEnabled,
   isCore360CommerceCheckoutPreflightEnabled,
   isCore360CommercePollingEnabled,
@@ -14,6 +19,7 @@ import {
   isCore360CommerceMediaProxyEnabled,
   isCore360CommerceMediaWriteEnabled,
   isCore360CommerceDeliveryEnabled,
+  isCore360CommerceOrderSyncEnabled,
   previewCore360Order,
   previewCore360Checkout,
   projectCore360CommerceRead,
@@ -95,6 +101,7 @@ assert.equal(isCore360CommerceCheckoutPreflightEnabled({CORE360_COMMERCE_READ_EN
 assert.equal(isCore360CommerceMediaProxyEnabled({CORE360_COMMERCE_READ_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceMediaWriteEnabled({CORE360_COMMERCE_MEDIA_WRITE_ENABLED: "true"}), false);
 assert.equal(isCore360CommerceDeliveryEnabled({CORE360_COMMERCE_SYNC_ENABLED: "true"}), false);
+assert.equal(isCore360CommerceOrderSyncEnabled({CORE360_COMMERCE_DELIVERY_ENABLED: "true", CORE360_COMMERCE_SYNC_ENABLED: "true"}), false);
 
 assert.deepEqual(
   await readCore360Catalog({fetchImpl: () => { throw new Error("The disabled reader must not call Core360."); }}),
@@ -591,6 +598,60 @@ assert.equal(event.schemaVersion, 2);
 assert.equal(event.idempotencyKey, `web_order.payment_approved:${approvedOrder.id}:v2`);
 assert.match(event.eventId, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 
+const unpaidEvent = buildCore360UnpaidOrderEvent({items: approvedItems, order: approvedOrder});
+assert.equal(unpaidEvent.event, "web_order.created");
+assert.equal(unpaidEvent.idempotencyKey, `web_order.created:${approvedOrder.id}:v2`);
+assert.deepEqual(unpaidEvent.payment, {method: "other", reference: "", status: "unpaid"});
+const unpaidRequest = createCore360OrderRequest({
+  config: {fiscalIntent: "pending", priceListId: ""},
+  event: unpaidEvent,
+  mappings: [approvedCoreMapping]
+});
+assert.equal(unpaidRequest.order.payment.status, "unpaid");
+assert.equal("reference" in unpaidRequest.order.payment, false);
+assert.deepEqual(
+  await enqueueCore360UnpaidOrder({
+    items: approvedItems,
+    order: approvedOrder,
+    supabase: {from() { throw new Error("The disabled adapter must not query Supabase."); }}
+  }),
+  {enabled: false, skipped: true, reason: "order-sync-disabled"}
+);
+
+const cancellationEventId = deterministicCore360EventId(`cancellation_requested:${approvedOrder.id}:v1`);
+assert.equal(cancellationEventId, deterministicCore360EventId(`cancellation_requested:${approvedOrder.id}:v1`));
+const operationalOutboxRows = [];
+const queuedCancellation = await enqueueCore360OperationalEvent({
+  confirmed: true,
+  env: {
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true"
+  },
+  eventKind: "cancellation_requested",
+  expectedDocumentVersion: 4,
+  expectedSourceVersion: "source-v4",
+  expectedVersion: 5,
+  externalEventId: cancellationEventId,
+  externalOrderId: approvedOrder.id,
+  issuedOn: "2026-10-19",
+  observedAt: "2026-10-19T16:00:00.000Z",
+  supabase: {
+    from(table) {
+      assert.equal(table, "core360_commerce_outbox");
+      return {
+        insert(row) {
+          operationalOutboxRows.push(row);
+          return {select: () => ({maybeSingle: async () => ({data: {id: "cancel-event", status: "pending"}, error: null})})};
+        }
+      };
+    }
+  }
+});
+assert.equal(queuedCancellation.eventId, "cancel-event");
+assert.equal(operationalOutboxRows[0]?.event_type, "web_order.cancellation_requested");
+assert.equal(operationalOutboxRows[0]?.payload?.request?.eventKind, "cancellation_requested");
+
 const request = createCore360OrderRequest({
   config: {fiscalIntent: "pending", priceListId: ""},
   event,
@@ -890,6 +951,165 @@ assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_id, "core-order-1");
 assert.equal(acceptedOutboxUpdates.at(-1)?.core_order_version, 1);
 assert.equal(acceptedOutboxUpdates.at(-1)?.status, "accepted");
 
+const paymentEventUpdates = [];
+const paymentEventSupabase = {
+  from(table) {
+    assert.equal(table, "core360_commerce_outbox");
+    return {select() { return mockOutboxSelect(event); }, update(patch) { return mockOutboxUpdate(patch, paymentEventUpdates); }};
+  }
+};
+const paymentEventCalls = [];
+const paymentEventDelivery = await deliverCore360OutboxEvent({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  event: {attempt_count: 0, id: "event-payment-observed", status: "pending"},
+  fetchImpl: async (url, request) => {
+    paymentEventCalls.push({request, url});
+    if (request.method === "GET") {
+      return {ok: true, json: async () => ({
+        coreOrderId: "core-order-existing",
+        externalOrderId: approvedOrder.id,
+        sourceVersion: "source-v1",
+        state: {delivery: "pending", fiscal: "not_loaded", order: "confirmed"},
+        version: 1
+      }), status: 200};
+    }
+    return {ok: true, json: async () => ({coreOrderId: "core-order-existing", version: 2}), status: 200};
+  },
+  supabase: paymentEventSupabase
+});
+assert.equal(paymentEventDelivery.accepted, true);
+assert.equal(paymentEventCalls.length, 2);
+assert.equal(paymentEventCalls[0].request.method, "GET");
+assert.match(paymentEventCalls[0].url, /\/api\/commerce\/v1\/orders\//);
+assert.equal(paymentEventCalls[1].request.method, "POST");
+assert.match(paymentEventCalls[1].url, /\/api\/commerce\/v1\/orders\/.*\/events$/);
+assert.equal(JSON.parse(paymentEventCalls[1].request.body).eventKind, "payment_observed");
+assert.equal(paymentEventCalls.some((call) => call.request.method === "POST" && /\/orders$/.test(call.url)), false, "Payment must not create a second Core order.");
+assert.equal(paymentEventUpdates.at(-1)?.core_order_id, "core-order-existing");
+
+const legacyObservedRequest = request.order;
+const legacyObservedHash = canonicalRequestHash(legacyObservedRequest);
+const legacyObservedUpdates = [];
+const legacyObservedCalls = [];
+const legacyObservedDelivery = await deliverCore360OutboxEvent({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  event: {attempt_count: 0, id: "event-legacy-observed", status: "pending"},
+  fetchImpl: async (url, requestInit) => {
+    legacyObservedCalls.push({request: requestInit, url});
+    if (requestInit.method === "GET" && legacyObservedCalls.filter((call) => call.request.method === "GET").length === 1) {
+      return {ok: false, json: async () => ({code: "NOT_FOUND"}), status: 404};
+    }
+    if (/\/orders$/.test(url)) {
+      assert.deepEqual(JSON.parse(requestInit.body), legacyObservedRequest, "A sealed historical request must not be rewritten as unpaid.");
+      return {ok: true, json: async () => ({coreOrderId: "legacy-core-order", version: 1}), status: 200};
+    }
+    return {ok: true, json: async () => observedCanonical({coreOrderId: "legacy-core-order"}), status: 200};
+  },
+  supabase: outboxSupabase({
+    coreRequest: legacyObservedRequest,
+    coreRequestHash: legacyObservedHash,
+    payload: event,
+    updates: legacyObservedUpdates
+  })
+});
+assert.equal(legacyObservedDelivery.accepted, true);
+assert.equal(legacyObservedCalls.filter((call) => /\/orders$/.test(call.url)).length, 1);
+assert.equal(legacyObservedCalls.some((call) => /\/events$/.test(call.url)), false, "A legacy observed creation must not emit payment_observed twice.");
+assert.equal(legacyObservedUpdates.at(-1)?.status, "accepted");
+
+const alreadyObservedCalls = [];
+const alreadyObservedDelivery = await deliverCore360OutboxEvent({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  event: {attempt_count: 0, id: "event-existing-observed", status: "pending"},
+  fetchImpl: async (url, requestInit) => {
+    alreadyObservedCalls.push({request: requestInit, url});
+    return {ok: true, json: async () => observedCanonical({coreOrderId: "existing-observed-core"}), status: 200};
+  },
+  supabase: outboxSupabase({payload: event, updates: []})
+});
+assert.equal(alreadyObservedDelivery.accepted, true);
+assert.equal(alreadyObservedCalls.length, 1);
+assert.equal(alreadyObservedCalls[0].request.method, "GET");
+
+for (const [name, mutate] of Object.entries({
+  amount: (state) => { state.order.total_minor = "44901"; },
+  currency: (state) => { state.order.currency = "USD"; },
+  identity: (state) => { state.externalOrderId = "foreign-order"; },
+  reference: (state) => { state.payment.reference = "mercado_pago:other"; }
+})) {
+  await assert.rejects(
+    () => deliverCore360OutboxEvent({
+      env: {
+        CORE360_BASE_URL: "https://core360.example.test",
+        CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+        CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+        CORE360_COMMERCE_SYNC_ENABLED: "true",
+        CORE360_COMMERCE_SYNC_FROM: "2026-01-01T00:00:00.000Z",
+        CORE360_COMMERCE_TOKEN: "test-only"
+      },
+      event: {attempt_count: 0, id: `event-mismatch-${name}`, status: "pending"},
+      fetchImpl: async () => {
+        const state = observedCanonical({coreOrderId: "mismatch-core"});
+        mutate(state);
+        return {ok: true, json: async () => state, status: 200};
+      },
+      supabase: outboxSupabase({payload: event, updates: []})
+    }),
+    (error) => error.code === "CORE360_OBSERVED_PAYMENT_RECONCILIATION_REQUIRED",
+    `${name} mismatch must not be accepted as an existing observed payment.`
+  );
+}
+
+const operationalDeliveryUpdates = [];
+const operationalEvent = operationalOutboxRows[0].payload;
+let operationalRequest;
+const operationalDelivery = await deliverCore360OutboxEvent({
+  env: {
+    CORE360_BASE_URL: "https://core360.example.test",
+    CORE360_COMMERCE_DELIVERY_ENABLED: "true",
+    CORE360_COMMERCE_ORDER_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_SYNC_ENABLED: "true",
+    CORE360_COMMERCE_TOKEN: "test-only"
+  },
+  event: {attempt_count: 0, id: "event-cancellation", status: "pending"},
+  fetchImpl: async (url, request) => {
+    operationalRequest = {request, url};
+    return {ok: true, json: async () => ({coreOrderId: "core-order-existing", version: 6}), status: 200};
+  },
+  supabase: {
+    from(table) {
+      assert.equal(table, "core360_commerce_outbox");
+      return {select() { return mockOutboxSelect(operationalEvent); }, update(patch) { return mockOutboxUpdate(patch, operationalDeliveryUpdates); }};
+    }
+  }
+});
+assert.equal(operationalDelivery.accepted, true);
+assert.match(operationalRequest.url, /\/api\/commerce\/v1\/orders\/.*\/events$/);
+assert.equal(operationalRequest.request.method, "POST");
+assert.equal(JSON.parse(operationalRequest.request.body).eventKind, "cancellation_requested");
+assert.equal(operationalDeliveryUpdates.at(-1)?.status, "accepted");
+
 const publicDeliveryEnv = {
   CORE360_BASE_URL: "https://core.prof3sional.com",
   CORE360_COMMERCE_SYNC_ENABLED: "true",
@@ -907,15 +1127,14 @@ for (const liveMode of [false, undefined, "true"]) {
     supabase: {from() { nonLiveDatabaseCalls += 1; throw new Error("Non-live payment must not reach the outbox"); }}
   }), (error) => error.code === "CORE360_NON_LIVE_PAYMENT");
 }
-for (const providerEnv of [{MERCADOPAGO_TEST_MODE: "true"}, {MERCADOPAGO_ACCESS_TOKEN: "TEST-synthetic"}]) {
-  await assert.rejects(enqueueCore360PaymentApproved({
-    env: {...publicDeliveryEnv, ...providerEnv},
-    order: approvedOrder,
-    items: approvedItems,
-    payment: approvedPayment,
-    supabase: {from() { nonLiveDatabaseCalls += 1; throw new Error("Test configuration must not reach the outbox"); }}
-  }), (error) => error.code === "CORE360_NON_LIVE_PAYMENT");
-}
+const testCheckoutOutbox = await enqueueCore360PaymentApproved({
+  env: publicDeliveryEnv,
+  order: {...approvedOrder, checkout_mode: "test"},
+  items: approvedItems,
+  payment: approvedPayment,
+  supabase: {from() { nonLiveDatabaseCalls += 1; throw new Error("TEST checkout must not reach the Core360 outbox"); }}
+});
+assert.equal(testCheckoutOutbox.reason, "test-checkout");
 assert.equal(nonLiveDatabaseCalls, 0);
 assert.equal(event.payment.liveMode, true);
 
@@ -983,6 +1202,51 @@ function mockOutboxSelect(payload) {
     })
   };
   return query;
+}
+
+function outboxSupabase({coreRequest = null, coreRequestHash = null, payload, updates}) {
+  return {
+    from(table) {
+      assert.equal(table, "core360_commerce_outbox");
+      return {
+        select() {
+          const query = {
+            eq() { return query; },
+            maybeSingle: async () => ({
+              data: {core_request: coreRequest, core_request_hash: coreRequestHash, id: "claimed-outbox", payload},
+              error: null
+            })
+          };
+          return query;
+        },
+        update(patch) {
+          return mockOutboxUpdate(patch, updates);
+        }
+      };
+    }
+  };
+}
+
+function observedCanonical({coreOrderId}) {
+  return {
+    coreOrderId,
+    externalOrderId: approvedOrder.id,
+    order: {currency: "CLP", id: coreOrderId, total_minor: "44900"},
+    payment: {reference: "mercado_pago:123456789", status: "observed"},
+    version: 1
+  };
+}
+
+function canonicalRequestHash(value) {
+  return createHash("sha256").update(canonicalRequestJson(value)).digest("hex");
+}
+
+function canonicalRequestJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalRequestJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalRequestJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function staleRecoverySupabase({event, mappings, updates}) {

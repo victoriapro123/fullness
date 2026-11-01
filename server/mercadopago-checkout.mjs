@@ -3,19 +3,34 @@ import {createClient} from "@supabase/supabase-js";
 import {
   deliverCore360OutboxEvent,
   enqueueCore360PaymentApproved,
+  enqueueCore360UnpaidOrder,
   isCore360CommerceCheckoutPreflightEnabled,
   isCore360CommercePollingEnabled,
+  isCore360CommerceOrderSyncEnabled,
   previewCore360Checkout,
+  previewCore360Plans,
+  cancelCore360PlanCheckout,
   resolveCore360DeliveryService
 } from "./core360-commerce-adapter.mjs";
+import {
+  attachTestSessionOrder,
+  attachTestSessionPayment,
+  authorizeTestCheckoutSession,
+  checkoutMode,
+  consumeTestCheckoutSession,
+  resolveMercadoPagoProfile
+} from "./mercadopago-test-checkout.mjs";
 import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 import {getProductAvailability, getProductDispatchRule, isPlanProduct, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
 import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rates.js";
 import {resolveDispatchProducts} from "./dispatch-calendar.mjs";
+import {normalizeCustomPlan,resolveCustomPlans} from "./custom-plans.mjs";
+import {CORE_PLAN_CONTRACT,assertCorePlanReservation} from './core360-plan-contract.mjs';
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
+  loadEnvFile(new URL("../.env.mercadopago.local", import.meta.url)),
   loadEnvFile(new URL("../.core360-commerce.local", import.meta.url))
 ]);
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
@@ -65,7 +80,17 @@ const LEGACY_CHECKOUT_OVERRIDES = new Map([
 
 let supabaseAdmin;
 
-export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, dependencies = {}}) {
+export async function createTestCheckoutSession({accessCode, dependencies = {}} = {}) {
+  await localEnvReady;
+  return (dependencies.authorizeTestCheckoutSession || authorizeTestCheckoutSession)({
+    accessCode,
+    env: dependencies.env || process.env,
+    fetchImpl: dependencies.fetchImpl || fetch,
+    supabase: dependencies.supabase || getSupabaseAdmin()
+  });
+}
+
+export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, testSessionToken = "", dependencies = {}}) {
   await localEnvReady;
   validateFulfillment(fulfillment);
   const checkoutNow = dependencies.now || new Date();
@@ -73,20 +98,39 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   const normalizedCart = normalizeCart(cart);
   const env = dependencies.env || process.env;
   const deliveryQuote = getDeliveryQuote(fulfillment);
-  if (!deliveryQuote.canPayOnline) throw statusError(422, deliveryQuote.message);
-  const deliveryService = await (dependencies.resolveDeliveryService || resolveCore360DeliveryService)({
+  if (!deliveryQuote.canPayOnline) {
+    throw statusError(422, deliveryQuote.message);
+  }
+  const supabase = dependencies.supabase || getSupabaseAdmin();
+  const testSession = cleanText(testSessionToken)
+    ? await (dependencies.consumeTestCheckoutSession || consumeTestCheckoutSession)({env, sessionToken: testSessionToken, supabase})
+    : null;
+  const paymentProfile = testSession
+    ? await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "test"})
+    : dependencies.mercadoPagoRequest
+      ? {mode: "live"}
+      : await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "live"});
+  const mode = checkoutMode(paymentProfile?.mode);
+  const isTestCheckout = mode === "test";
+  const deliveryService = isTestCheckout ? null : await (dependencies.resolveDeliveryService || resolveCore360DeliveryService)({
     env, feeClp: deliveryQuote.feeClp, issuedOn: santiagoDate(checkoutNow), fetchImpl: dependencies.core360FetchImpl || fetch
   });
-  const supabase = dependencies.supabase || getSupabaseAdmin();
-  if (isCore360CommercePollingEnabled(env) && !isCore360CommerceCheckoutPreflightEnabled(env)) {
+
+  if (!isTestCheckout && isCore360CommercePollingEnabled(env) && !isCore360CommerceCheckoutPreflightEnabled(env)) {
     throw statusError(503, "La validación canónica pre-pago Core360 aún no está habilitada.");
   }
-  const catalogItems = await applyCore360ProjectedPrices({
-    catalogItems: await resolveCatalogItems(normalizedCart, {supabase, now: checkoutNow, resolveDispatch: dependencies.resolveDispatchProducts || resolveDispatchProducts}),
-    env,
-    supabase
-  });
-  let orderItems = normalizedCart.map((cartItem) => {
+  const hasCustomPlans = normalizedCart.some(item=>item.kind==='custom_plan');
+  const checkoutOrderId=hasCustomPlans?randomUUID():null;
+  const ordinaryCart = normalizedCart.filter(item=>item.kind!=='custom_plan');
+  const customPlans = hasCustomPlans ? await (dependencies.resolveCustomPlans||resolveCustomPlans)(normalizedCart.filter(item=>item.kind==='custom_plan'), {supabase,env,now:checkoutNow,fetchImpl:dependencies.core360FetchImpl||fetch}) : null;
+  const resolvedCatalogItems = ordinaryCart.length ? await resolveCatalogItems(ordinaryCart, {supabase, now: checkoutNow, resolveDispatch: dependencies.resolveDispatchProducts || resolveDispatchProducts}) : new Map();
+  if (hasCustomPlans || env.FULLNESS_CUSTOM_PLANS_ENABLED === 'true') {
+    for (const product of resolvedCatalogItems.values()) if (product.product_type!=='family') throw statusError(409,'Arma tu plan de 6 o 24 mealpreps. Los familiares siguen disponibles por separado.');
+  }
+  const catalogItems = isTestCheckout
+    ? resolvedCatalogItems
+    : await applyCore360ProjectedPrices({catalogItems: resolvedCatalogItems, env, supabase});
+  let orderItems = [...(customPlans?.lines||[]), ...ordinaryCart.map((cartItem) => {
     const product = catalogItems.get(cartItem.slug);
 
     if (!product) {
@@ -98,7 +142,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       quantity: cartItem.quantity,
       total: Number(product.price_clp) * cartItem.quantity
     };
-  });
+  })];
   const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
   const total = subtotal + deliveryQuote.feeClp;
 
@@ -109,12 +153,17 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     throw statusError(409, "El total vigente cambió. Revisa el carrito antes de pagar.");
   }
 
-  const core360Preflight = await previewCore360Checkout({
-    env,
-    fetchImpl: dependencies.core360FetchImpl || fetch,
-    items: orderItems,
-    deliveryService
-  });
+  const core360Preflight = hasCustomPlans
+    ? await (dependencies.previewCore360Plans||previewCore360Plans)({env,fetchImpl:dependencies.core360FetchImpl||fetch,groups:customPlans.groups,items:orderItems,deliveryService,externalOrderId:checkoutOrderId,issuedOn:santiagoDate(checkoutNow),total})
+    : isTestCheckout
+    ? {enabled: false}
+    : await previewCore360Checkout({
+      env,
+      fetchImpl: dependencies.core360FetchImpl || fetch,
+      items: orderItems,
+      deliveryService
+    });
+  if(customPlans&&(core360Preflight.checkout?.contractVersion!==CORE_PLAN_CONTRACT||core360Preflight.checkout?.externalOrderId!==checkoutOrderId))throw statusError(503,'Core360 no confirmó la composición versionada. No se creó un cobro.');
   if (core360Preflight.enabled) {
     const previewVersion = cleanText(core360Preflight.result?.version || core360Preflight.result?.sourceVersion) || null;
     const checkedAt = new Date().toISOString();
@@ -130,21 +179,31 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
 
   // The public quote path ends before any order, item, outbox, email or MP write.
   if (dependencies.quoteOnly === true) {
-    return {amount: total, subtotal, deliveryFee: deliveryQuote.feeClp, currency: "CLP", deliveryVerified: deliveryQuote.feeClp === 0 || Boolean(deliveryService), corePreviewVerified: core360Preflight.enabled === true};
+    return {amount: total, subtotal, deliveryFee: deliveryQuote.feeClp, currency: "CLP", deliveryVerified: deliveryQuote.feeClp === 0 || Boolean(deliveryService), corePreviewVerified: core360Preflight.enabled === true, ...(customPlans ? {plans:customPlans.groups,paymentReady:core360Preflight.enabled===true} : {})};
   }
 
-  const customerSnapshot = buildCustomerSnapshot(fulfillment);
+  // TEST never reserves a production Core order or reports a simulated payment
+  // as a live financial fact. Core lifecycle QA uses its isolated fixture.
+  if(customPlans&&isTestCheckout)throw statusError(409,'Los planes requieren una reserva canónica. El perfil TEST de Mercado Pago no afecta inventario productivo.');
+
+  const customerSnapshot = buildCustomerSnapshot(fulfillment, {
+    checkoutMode: mode,
+    testSessionId: testSession?.sessionId || null
+  });
   customerSnapshot.comuna = deliveryQuote.commune;
+  customerSnapshot.operationalAuthority=!isTestCheckout&&isCore360CommerceOrderSyncEnabled(env)?'core360':'fullness';
   customerSnapshot.deliveryQuote = serializeDeliveryQuote(deliveryQuote);
+  if(customPlans)customerSnapshot.corePlanCheckout=core360Preflight.checkout;
   if (deliveryService) customerSnapshot.deliveryService = deliveryService;
   customerSnapshot.weeklyDispatchWeekdays = orderItems.some(({product}) => isPlanProduct(product)) ? [2, 5] : null;
   customerSnapshot.dispatchPolicies = [...new Set(orderItems.map(({product}) => isPlanProduct(product) ? "weekly_fixed_menu" : "fullness_coordination"))];
-  const legacyTestSchema = isLegacyTestSchema();
   const {data: order, error: orderError} = await supabase
     .from("orders")
     .insert({
-      client_id: isTestMode() ? cleanText(process.env.MERCADOPAGO_TEST_CLIENT_ID) || null : null,
-      status: legacyTestSchema ? "cancelled" : "pending_payment",
+      ...(checkoutOrderId?{id:checkoutOrderId}:{}),
+      checkout_mode: mode,
+      client_id: null,
+      status: "pending_payment",
       payment_status: "pending",
       delivery_status: "pending",
       subtotal_clp: subtotal,
@@ -155,18 +214,29 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       note: cleanText(fulfillment.instructions) || null,
       customer_snapshot: customerSnapshot
     })
-    .select("id")
+    .select("*")
     .single();
 
   if (orderError || !order?.id) {
     throw statusError(502, "No pudimos crear la orden en Fullness.", orderError);
   }
 
+  if (isTestCheckout) {
+    try {
+      await (dependencies.attachTestSessionOrder || attachTestSessionOrder)({
+        orderId: order.id,
+        sessionId: testSession?.sessionId,
+        supabase
+      });
+    } catch (error) {
+      await supabase.from("orders").update({status: "cancelled"}).eq("id", order.id);
+      throw error;
+    }
+  }
+
   const orderRows = orderItems.map(({product, quantity, total: itemTotal}) => ({
     order_id: order.id,
-    product_id: legacyTestSchema
-      ? cleanText(process.env.MERCADOPAGO_TEST_PRODUCT_ID) || null
-      : product.id,
+    product_id: product.id,
     quantity,
     unit_price_clp: Number(product.price_clp),
     total_clp: itemTotal,
@@ -182,8 +252,50 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     throw statusError(502, "No pudimos guardar los productos de la orden.", itemsError);
   }
 
+  // The Core360 order is an unpaid commercial fact, not a payment operation.
+  // Queue it durably before a Mercado Pago preference exists and attempt one
+  // bounded delivery. When the opt-in is off this returns without a database
+  // or network side effect, preserving the currently deployed checkout.
+  let coreCreationOutbox = null;
+  let corePlanReservation = null;
+  if (!isTestCheckout) {
+    try {
+      coreCreationOutbox = await (dependencies.enqueueCore360UnpaidOrder || enqueueCore360UnpaidOrder)({
+        env,
+        items: orderRows,
+        order,
+        supabase
+      });
+      if(customPlans&&!coreCreationOutbox?.eventId)throw statusError(503,'No pudimos registrar la reserva durable del plan. No se creó un cobro.');
+    } catch (error) {
+      throw statusError(503, "No pudimos registrar el pedido pendiente en Core360. No se creó un cobro.", error);
+    }
+    if (coreCreationOutbox?.eventId) {
+      try {
+        const coreDelivery = await (dependencies.deliverCore360OutboxEvent || deliverCore360OutboxEvent)({
+          env,
+          event: {id: coreCreationOutbox.eventId, status: coreCreationOutbox.status},
+          fetchImpl: dependencies.core360FetchImpl || fetch,
+          supabase
+        });
+        if (coreDelivery?.accepted !== true) {
+          // A claimed/paused delivery is deliberately not equivalent to an
+          // accepted Core order. The durable record stays available for recovery,
+          // but Mercado Pago must not receive a preference until Core confirms it.
+          throw statusError(503, "Core360 aún no confirmó el pedido pendiente. No se creó un cobro.");
+        }
+        if(customPlans)corePlanReservation=assertCorePlanReservation(coreDelivery.result,order.id,new Date(),core360Preflight.checkout);
+      } catch (error) {
+        // The durable receipt remains available to recovery. Do not create a
+        // payment preference while the authoritative order is still unknown.
+        throw statusError(503, "No pudimos confirmar el pedido pendiente en Core360. No se creó un cobro.", error);
+      }
+    }
+  }
+
   const siteUrl = getCheckoutSiteUrl(request);
   const preference = {
+    ...(corePlanReservation?{expires:true,expiration_date_to:corePlanReservation.plan.expiresAt}:{}),
     ...(deliveryQuote.feeClp > 0 ? {shipments: {cost: deliveryQuote.feeClp, mode: "not_specified"}} : {}),
     items: orderItems.map(({product, quantity}) => ({
       id: product.slug,
@@ -196,15 +308,14 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     })),
     payer: {
       name: customerSnapshot.name,
-      email: isTestMode()
-        ? process.env.MERCADOPAGO_TEST_PAYER_EMAIL || "test@testuser.com"
-        : customerSnapshot.email,
+      ...(customerSnapshot.email ? {email: customerSnapshot.email} : {}),
       phone: {
         number: customerSnapshot.phone
       }
     },
     external_reference: order.id,
     metadata: {
+      checkout_mode: mode,
       order_id: order.id,
       customer_email: customerSnapshot.email,
       fulfillment_mode: customerSnapshot.mode
@@ -215,11 +326,13 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       pending: `${siteUrl}/tienda?checkout_status=pending&order_id=${encodeURIComponent(order.id)}`,
       failure: `${siteUrl}/tienda?checkout_status=failure&order_id=${encodeURIComponent(order.id)}`
     },
-    auto_return: "approved"
+    ...(isPublicHttpsOrigin(siteUrl) ? {auto_return: "approved"} : {})
   };
 
-  if (process.env.MERCADOPAGO_WEBHOOK_SECRET && siteUrl.startsWith("https://")) {
-    preference.notification_url = `${siteUrl}/api/mercadopago/webhook`;
+  if (paymentProfile.webhookSecret && siteUrl.startsWith("https://")) {
+    preference.notification_url = isTestCheckout
+      ? `${siteUrl}/api/mercadopago/test-webhook`
+      : `${siteUrl}/api/mercadopago/webhook`;
   }
 
   let mercadoPagoPreference;
@@ -227,10 +340,12 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   try {
     mercadoPagoPreference = await (dependencies.mercadoPagoRequest || mercadoPagoRequest)("/checkout/preferences", {
       body: preference,
-      method: "POST"
+      method: "POST",
+      profile: paymentProfile
     });
   } catch (error) {
     await supabase.from("orders").update({status: "cancelled"}).eq("id", order.id);
+    if(customPlans)try{await (dependencies.cancelCore360PlanCheckout||cancelCore360PlanCheckout)({env,fetchImpl:dependencies.core360FetchImpl||fetch,externalOrderId:order.id,supabase});}catch{console.error('Liberación de reserva pendiente de recuperación o vencimiento canónico.');}
     throw error;
   }
 
@@ -246,9 +361,17 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     throw statusError(502, "Mercado Pago creo el pago, pero no pudimos enlazarlo a la orden.", preferenceSaveError);
   }
 
-  const initPoint = isTestMode()
-    ? mercadoPagoPreference.sandbox_init_point || mercadoPagoPreference.init_point
-    : mercadoPagoPreference.init_point;
+  if (isTestCheckout) {
+    await (dependencies.attachTestSessionOrder || attachTestSessionOrder)({
+      orderId: order.id,
+      preferenceId: mercadoPagoPreference.id,
+      sessionId: testSession?.sessionId,
+      supabase
+    });
+  }
+
+  // Checkout Pro test-user accounts use the regular checkout URL too.
+  const initPoint = mercadoPagoPreference.init_point;
 
   if (!initPoint) {
     throw statusError(502, "Mercado Pago no devolvio un enlace de pago.");
@@ -262,7 +385,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     initPoint,
     orderId: order.id,
     preferenceId: mercadoPagoPreference.id,
-    testMode: isTestMode()
+    testMode: isTestCheckout
   };
 }
 
@@ -282,7 +405,17 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     throw statusError(400, "El identificador de pago no es valido.");
   }
 
-  const payment = await (dependencies.mercadoPagoRequest || mercadoPagoRequest)(`/v1/payments/${encodeURIComponent(cleanPaymentId)}`);
+  const supabase = dependencies.supabase || getSupabaseAdmin();
+  const mode = await resolvePaymentCheckoutMode({
+    dependencies,
+    expectedOrderId,
+    supabase
+  });
+  const paymentProfile = dependencies.paymentProfile
+    || (dependencies.mercadoPagoRequest ? {mode} : await resolveMercadoPagoProfile({env: dependencies.env || process.env, mode}));
+  const payment = await (dependencies.mercadoPagoRequest || mercadoPagoRequest)(`/v1/payments/${encodeURIComponent(cleanPaymentId)}`, {
+    profile: paymentProfile
+  });
   const orderId = cleanText(payment.external_reference || payment.metadata?.order_id);
 
   if (!orderId) {
@@ -293,15 +426,23 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     throw statusError(409, "El pago no corresponde a la orden indicada.");
   }
 
-  const supabase = dependencies.supabase || getSupabaseAdmin();
   const {data: order, error: orderError} = await supabase
     .from("orders")
-    .select("id,client_id,status,payment_status,subtotal_clp,discount_clp,delivery_fee_clp,total_clp,currency,customer_snapshot,note,ordered_at,created_at,paid_at")
+    .select("id,checkout_mode,client_id,status,payment_status,subtotal_clp,discount_clp,delivery_fee_clp,total_clp,currency,customer_snapshot,note,ordered_at,created_at,paid_at")
     .eq("id", orderId)
     .maybeSingle();
 
   if (orderError || !order) {
     throw statusError(404, "No encontramos la orden asociada al pago.", orderError);
+  }
+  if (checkoutMode(order.checkout_mode) !== mode) {
+    throw statusError(409, "El pago no corresponde al perfil de checkout de la orden.");
+  }
+  if (typeof payment.live_mode !== "boolean" || payment.live_mode !== (mode === "live")) {
+    throw statusError(409, "Mercado Pago devolvió un modo de pago que no corresponde a la orden.");
+  }
+  if (mode === "test" && cleanText(payment.collector_id) !== cleanText(paymentProfile.merchantId)) {
+    throw statusError(409, "El pago TEST no corresponde al colector de pruebas autorizado.");
   }
 
   const paymentStatus = normalizePaymentStatus(payment.status);
@@ -312,6 +453,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
   }
 
   const paymentRow = {
+    checkout_mode: mode,
     order_id: order.id,
     provider: "mercado_pago",
     provider_payment_id: String(payment.id),
@@ -332,6 +474,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     .from("payments")
     .select("id")
     .eq("provider", "mercado_pago")
+    .eq("checkout_mode", mode)
     .eq("provider_payment_id", String(payment.id))
     .maybeSingle();
 
@@ -358,8 +501,21 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     throw statusError(502, "No pudimos actualizar el estado de la orden.", orderUpdateError);
   }
 
+  if (mode === "test") {
+    await (dependencies.attachTestSessionPayment || attachTestSessionPayment)({
+      orderId: order.id,
+      paymentId: String(payment.id),
+      supabase
+    });
+  }
+
+  if(mode==='live'&&order.customer_snapshot?.corePlanCheckout&&['cancelled','rejected'].includes(paymentStatus)){
+    try{await (dependencies.cancelCore360PlanCheckout||cancelCore360PlanCheckout)({env:dependencies.env||process.env,fetchImpl:dependencies.core360FetchImpl||fetch,externalOrderId:order.id,supabase});}
+    catch{console.error('Cancelación del plan pendiente en la cola canónica; no se altera el pago conciliado.');}
+  }
+
   let emailDelivery = null;
-  if (paymentStatus === "approved") {
+  if (paymentStatus === "approved" && mode === "live") {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
       .select("id,product_id,product_name,quantity,unit_price_clp,total_clp,product_snapshot")
@@ -383,7 +539,13 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
       console.error("Core360 commerce outbox was not queued:", cleanText(error?.message));
     }
 
-    emailDelivery = await (dependencies.sendApprovedOrderEmails || sendApprovedOrderEmails)({order, items: emailItems || [], supabase});
+    // Mail is a secondary effect: its failure must not hide an already
+    // reconciled payment or prevent the independent Core delivery attempt.
+    try {
+      emailDelivery = await (dependencies.sendApprovedOrderEmails || sendApprovedOrderEmails)({order, items: emailItems || [], supabase});
+    } catch {
+      console.error("Transactional order emails remain pending after payment reconciliation.");
+    }
 
     // The daily Vercel Cron is recovery only. A newly persisted event gets one
     // bounded, idempotent delivery attempt after transactional mail is safely
@@ -391,7 +553,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     // Mercado Pago result or turns mail confirmation into a failed checkout.
     if (coreOutbox?.eventId) {
       try {
-        await deliverCore360OutboxEvent({
+        await (dependencies.deliverCore360OutboxEvent || deliverCore360OutboxEvent)({
           event: {id: coreOutbox.eventId, status: coreOutbox.status},
           supabase
         });
@@ -399,7 +561,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
         console.error("Core360 commerce immediate delivery failed:", cleanText(error?.message));
       }
     }
-  } else if (order.status !== orderUpdate.status) {
+  } else if (order.status !== orderUpdate.status && mode === "live") {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
       .select("product_name,quantity")
@@ -421,13 +583,35 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     paymentId: String(payment.id),
     status: paymentStatus,
     statusDetail: cleanText(payment.status_detail),
+    testMode: mode === "test",
     total: Number(order.total_clp),
     customerConfirmationSent: Boolean(emailDelivery?.customer?.sent),
     operationsNotificationSent: Boolean(emailDelivery?.operations?.sent)
   };
 }
 
-export async function refundMercadoPagoPayment({orderId}) {
+async function resolvePaymentCheckoutMode({dependencies, expectedOrderId, supabase}) {
+  const explicitMode = cleanText(dependencies.checkoutMode).toLowerCase();
+  if (explicitMode === "live" || explicitMode === "test") return explicitMode;
+
+  const orderId = cleanText(expectedOrderId);
+  if (orderId) {
+    const {data: order, error} = await supabase
+      .from("orders")
+      .select("id,checkout_mode")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (error || !order?.id) throw statusError(404, "No encontramos la orden asociada al pago.", error);
+    return checkoutMode(order.checkout_mode);
+  }
+
+  // Dependency injection is used by local unit tests only. Public handlers
+  // either bind their dedicated webhook profile or provide the persisted order.
+  if (dependencies.mercadoPagoRequest) return "live";
+  throw statusError(422, "Falta la orden asociada para confirmar el pago.");
+}
+
+export async function refundMercadoPagoPayment({orderId, projectOrderState = true} = {}) {
   await localEnvReady;
 
   const cleanOrderId = cleanText(orderId);
@@ -436,11 +620,14 @@ export async function refundMercadoPagoPayment({orderId}) {
   const supabase = getSupabaseAdmin();
   const {data: order, error: orderError} = await supabase
     .from("orders")
-    .select("id,status,payment_status,total_clp,currency,customer_snapshot,paid_at")
+    .select("id,checkout_mode,status,payment_status,total_clp,currency,customer_snapshot,paid_at")
     .eq("id", cleanOrderId)
     .maybeSingle();
 
   if (orderError || !order) throw statusError(404, "No encontramos la orden a reembolsar.", orderError);
+  if (checkoutMode(order.checkout_mode) === "test") {
+    throw statusError(403, "Las compras TEST están aisladas y no se reembolsan desde la operación comercial.");
+  }
   if (["refunded", "cancelled"].includes(order.status) || order.payment_status === "refunded") {
     throw statusError(409, "Esta orden ya fue cancelada o reembolsada.");
   }
@@ -475,7 +662,8 @@ export async function refundMercadoPagoPayment({orderId}) {
     {
       body: {amount},
       idempotencyKey: order.id,
-      method: "POST"
+      method: "POST",
+      profile: await resolveMercadoPagoProfile({mode: "live"})
     }
   );
 
@@ -493,23 +681,27 @@ export async function refundMercadoPagoPayment({orderId}) {
 
   if (paymentUpdateError) throw statusError(502, "Mercado Pago aprobó el reembolso, pero no pudimos registrarlo.", paymentUpdateError);
 
-  const {error: orderUpdateError} = await supabase
-    .from("orders")
-    .update({
-      delivery_status: "cancelled",
-      payment_status: "refunded",
-      status: "refunded"
-    })
-    .eq("id", order.id);
+  if (projectOrderState) {
+    const {error: orderUpdateError} = await supabase
+      .from("orders")
+      .update({
+        delivery_status: "cancelled",
+        payment_status: "refunded",
+        status: "refunded"
+      })
+      .eq("id", order.id);
 
-  if (orderUpdateError) throw statusError(502, "Mercado Pago aprobó el reembolso, pero no pudimos actualizar la orden.", orderUpdateError);
+    if (orderUpdateError) throw statusError(502, "Mercado Pago aprobó el reembolso, pero no pudimos actualizar la orden.", orderUpdateError);
+  }
 
   return {
     order: {
       ...order,
-      delivery_status: "cancelled",
-      payment_status: "refunded",
-      status: "refunded"
+      ...(projectOrderState ? {
+        delivery_status: "cancelled",
+        payment_status: "refunded",
+        status: "refunded"
+      } : {})
     },
     payment: {
       ...payment,
@@ -519,9 +711,10 @@ export async function refundMercadoPagoPayment({orderId}) {
   };
 }
 
-export async function recordWebhookEvent(payload) {
+export async function recordWebhookEvent(payload, {checkoutMode: requestedMode = "live"} = {}) {
   await localEnvReady;
   const supabase = getSupabaseAdmin();
+  const mode = checkoutMode(requestedMode);
   const providerEventId = cleanText(payload?.id) || `${cleanText(payload?.action)}:${cleanText(payload?.data?.id)}`;
 
   if (providerEventId) {
@@ -529,6 +722,7 @@ export async function recordWebhookEvent(payload) {
       .from("payment_events")
       .select("id,processed_at")
       .eq("provider", "mercado_pago")
+      .eq("checkout_mode", mode)
       .eq("provider_event_id", providerEventId)
       .maybeSingle();
 
@@ -549,6 +743,7 @@ export async function recordWebhookEvent(payload) {
     .from("payment_events")
     .insert({
       provider: "mercado_pago",
+      checkout_mode: mode,
       provider_event_id: providerEventId || null,
       event_type: cleanText(payload?.type) || null,
       action: cleanText(payload?.action) || null,
@@ -592,8 +787,11 @@ export async function readJsonBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
 }
 
-export function validateWebhookSignature({dataId, requestId, signature}) {
-  const secret = cleanText(process.env.MERCADOPAGO_WEBHOOK_SECRET);
+export function validateWebhookSignature({checkoutMode: requestedMode = "live", dataId, env = process.env, requestId, signature}) {
+  const mode = checkoutMode(requestedMode);
+  const secret = cleanText(mode === "test"
+    ? env.MERCADOPAGO_TEST_WEBHOOK_SECRET
+    : env.MERCADOPAGO_WEBHOOK_SECRET);
   if (!secret) {
     throw statusError(503, "Falta configurar la firma del webhook de Mercado Pago.");
   }
@@ -733,6 +931,7 @@ async function resolveCatalogItems(cart, {supabase = getSupabaseAdmin(), now = n
 
   const catalogItems = (data || []).map(applyLegacyCheckoutOverride);
   for (const product of catalogItems) {
+    if (product.product_type === 'mealprep') throw statusError(422, 'Los mealpreps no se venden individualmente. Asígnalos a un plan.');
     const availability = getProductAvailability(product, now);
     if (!availability.available) {
       throw statusError(409, `${product.name}: ${availability.message}.`);
@@ -801,7 +1000,9 @@ function buildProductSnapshot(product, now = new Date()) {
     benefitTags: product.benefit_tags,
     servingLabel: product.serving_label,
     dispatchPlan: product.dispatch_plan || null,
-    planStructure: Array.isArray(product.dispatch_plan) ? "dispatch_calendar_v1" : isMonthlyPlan(product)
+    customPlan: product.custom_plan || null,
+    allergens:Array.isArray(product.allergens)?product.allergens:[],
+    planStructure: product.custom_plan ? "custom_stock_plan_v1" : Array.isArray(product.dispatch_plan) ? "dispatch_calendar_v1" : isMonthlyPlan(product)
       ? "monthly_weeks_v1"
       : product.product_type === "plan"
         ? "weekly_mealpreps_v1"
@@ -829,11 +1030,12 @@ function normalizeCart(cart) {
   }
 
   return cart.map((item) => {
+    if (item?.kind === 'custom_plan') return normalizeCustomPlan(item);
     const slug = cleanText(item?.slug);
     const quantity = Math.round(Number(item?.quantity ?? item?.qty));
 
-    // Existing published identifiers contain dots or single spaces. Resolve
-    // the literal identifier; never rename products or accept path syntax.
+    // Legacy published menu identifiers contain dots and single spaces.
+    // Query them verbatim; do not rewrite IDs or accept paths/empty parts.
     if (slug.length > 160 || !/^[a-z0-9]+(?:[ .-][a-z0-9]+)*$/.test(slug)) {
       throw statusError(422, "Uno de los productos no tiene un identificador valido.");
     }
@@ -874,15 +1076,17 @@ function validateFulfillment(fulfillment) {
   }
 }
 
-function buildCustomerSnapshot(fulfillment) {
+function buildCustomerSnapshot(fulfillment, {checkoutMode: mode = "live", testSessionId = null} = {}) {
   return {
+    checkoutMode: checkoutMode(mode),
     mode: cleanText(fulfillment.mode),
     name: cleanText(fulfillment.name),
     email: cleanText(fulfillment.email).toLowerCase(),
     phone: cleanText(fulfillment.phone),
     address: cleanText(fulfillment.address),
     comuna: cleanText(fulfillment.comuna),
-    instructions: cleanText(fulfillment.instructions)
+    instructions: cleanText(fulfillment.instructions),
+    testSessionId: checkoutMode(mode) === "test" ? cleanText(testSessionId) || null : null
   };
 }
 
@@ -899,12 +1103,25 @@ function getCheckoutSiteUrl(request) {
   return `${proto}://${host}`;
 }
 
+function isPublicHttpsOrigin(value) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    return url.protocol === "https:" && !url.username && !url.password &&
+      !["localhost", "127.0.0.1", "0.0.0.0", "[::1]"].includes(hostname) &&
+      !hostname.endsWith(".localhost");
+  } catch {
+    return false;
+  }
+}
+
 function buildItemDescription(product) {
   return [product.tag, product.serving_label].map(cleanText).filter(Boolean).join(" - ").slice(0, 250);
 }
 
-async function mercadoPagoRequest(path, {body, idempotencyKey = randomUUID(), method = "GET"} = {}) {
-  const token = cleanText(process.env.MERCADOPAGO_ACCESS_TOKEN);
+async function mercadoPagoRequest(path, {body, idempotencyKey = randomUUID(), method = "GET", profile = null} = {}) {
+  const activeProfile = profile || await resolveMercadoPagoProfile({mode: "live"});
+  const token = cleanText(activeProfile?.accessToken);
   if (!token) {
     throw statusError(500, "Falta configurar Mercado Pago.");
   }
@@ -944,14 +1161,6 @@ function orderUpdateForPayment(status, dateApproved) {
     return {delivery_status: "cancelled", status: "refunded", payment_status: status};
   }
   return {status: "pending_payment", payment_status: status};
-}
-
-function isTestMode() {
-  return cleanText(process.env.MERCADOPAGO_TEST_MODE).toLowerCase() === "true";
-}
-
-function isLegacyTestSchema() {
-  return isTestMode() && cleanText(process.env.MERCADOPAGO_LEGACY_SCHEMA_TEST_MODE).toLowerCase() === "true";
 }
 
 function cleanText(value) {

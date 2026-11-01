@@ -125,11 +125,11 @@ for (const [index, product] of plans.entries()) {
   assert.equal(rows.length, 1);
   assert.equal(providerCalls, 1);
 }
-// Loose meals persist coordination, never the fixed-menu dispatch promise.
+// Families retain coordination. Normal mealpreps can no longer be sold loose.
 for (const type of ["mealprep", "family"]) {
   const product = {...plans[0], product_type: type, plan_frequency: null, slug: `suelto-${type}`, price_clp: 18000};
   const persisted = {orders: [], items: []};
-  await createCheckoutPreference({
+  const execute=()=>createCheckoutPreference({
     cart: [{slug: product.slug, quantity: 1}],
     fulfillment: {mode: "pickup", name: "QA local", phone: "+56911111111", email: "qa@example.invalid"},
     request: {headers: {host: "fullness.example.test", "x-forwarded-proto": "https"}},
@@ -145,6 +145,8 @@ for (const type of ["mealprep", "family"]) {
       core360FetchImpl: async () => {throw Error("No Core HTTP allowed");}
     }
   });
+  if(type==='mealprep'){await assert.rejects(execute(),/no se venden individualmente/);assert.equal(persisted.orders.length,0);continue;}
+  await execute();
   assert.equal(persisted.orders[0].customer_snapshot.weeklyDispatchWeekdays, null);
   assert.deepEqual(persisted.orders[0].customer_snapshot.dispatchPolicies, ["fullness_coordination"]);
   assert.equal(persisted.items[0].product_snapshot.dispatch, null);
@@ -152,4 +154,4 @@ for (const type of ["mealprep", "family"]) {
   assert.equal(persisted.items[0].product_snapshot.dispatchRule, MEALPREP_DISPATCH_RULE_TEXT);
   assert.equal(persisted.items[0].product_snapshot.weeklyDispatchWeekdays, null);
 }
-console.log("Disponibilidad QA OK: cortes lunes/jueves17h exactos en verano/invierno; mealpreps y familiares a coordinar, sin promesa fija; snapshots persistidos y guards protegidos. Todo simulado, sin efectos externos.");
+console.log("Disponibilidad QA OK: cortes lunes/jueves17h exactos en verano/invierno; familiares a coordinar, mealpreps sueltos rechazados; snapshots persistidos y guards protegidos. Todo simulado, sin efectos externos.");

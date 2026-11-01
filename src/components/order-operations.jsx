@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
+import {CustomPlanBreakdown} from './custom-plan-builder.jsx';
 import {
   CheckCircle2,
   ChevronRight,
@@ -164,7 +165,7 @@ export function OrderOperationsAdmin({
   }, [filters, orders]);
 
   const selectedOrder = filteredOrders.find((order) => order.id === selectedOrderId) || filteredOrders[0] || null;
-  const allowedStatuses = selectedOrder ? NEXT_STATUSES[selectedOrder.status] || [] : [];
+  const allowedStatuses = selectedOrder ? (NEXT_STATUSES[selectedOrder.status] || []).filter(s=>selectedOrder.operationalAuthority!=='core360'||s==='cancelled') : [];
 
   useEffect(() => {
     setNextStatus("");
@@ -329,8 +330,9 @@ export function OrderOperationsAdmin({
                   <span id="order-items-title"><PackageCheck size={17} /> Contenido del pedido</span>
                   <span>{formatClp(selectedOrder.totalClp)}</span>
                 </div>
+                {(selectedOrder.plans||[]).map(g=><CustomPlanBreakdown key={g.id} item={{size:g.size,price:g.unitTotal,qty:g.quantity,selectedMeals:g.items.map(r=>({...r,title:r.name,priceClp:r.unitPrice}))}}/>)}
                 <ul className="order-items-list">
-                  {(selectedOrder.items || []).map((item) => (
+                  {(selectedOrder.items || []).filter(item=>!item.inPlan).map((item) => (
                     <li key={item.id}>
                       <span>{item.quantity}x {item.productName || "Producto"}</span>
                       <span>{formatClp(item.totalClp)}</span>
@@ -363,6 +365,7 @@ export function OrderOperationsAdmin({
                   <span id="order-actions-title"><Truck size={17} /> Preparación y entrega</span>
                   <span>{deliveryStatusLabel(selectedOrder.deliveryStatus)}</span>
                 </div>
+                {selectedOrder.operationalAuthority==='core360'&&<div className="order-action-note"><p>Core360 gestiona la preparación, el despacho y la entrega física. Fullness conserva el pedido y recibe su estado canónico.</p>{selectedOrder.core360?.plan&&<p>Reserva: {({held:'Pendiente de pago',confirmed:'Confirmada',expired:'Vencida',cancelled:'Cancelada',delivered:'Entregada'})[selectedOrder.core360.plan.status]||'Por verificar'}.{selectedOrder.core360.plan.expiresAt?` Plazo: ${formatDate(selectedOrder.core360.plan.expiresAt)}.`:''}</p>}{selectedOrder.core360?.plan?.paymentReconciliationRequired&&<p role="alert">Pago recibido después del vencimiento o cancelación. Requiere conciliación en Core360; no prometer stock ni reactivar la reserva manualmente.</p>}<a href="https://core.prof3sional.com/" target="_blank" rel="noreferrer">ABRIR CORE360 ↗</a></div>}
                 {allowedStatuses.length > 0 ? (
                   <div className="order-status-action">
                     <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)} aria-label="Nuevo estado del pedido">

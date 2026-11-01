@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 const environmentKeys = [
   "EMAIL_FROM",
   "EMAIL_REPLY_TO",
-  "EMAIL_TEST_RECIPIENT",
-  "MERCADOPAGO_TEST_MODE",
   "ORDER_NOTIFICATION_RECIPIENT",
   "RESEND_API_KEY",
   "SITE_URL"
@@ -16,8 +14,6 @@ try {
   Object.assign(process.env, {
     EMAIL_FROM: "Fullness Lab <cecilia@fullnesslab.com>",
     EMAIL_REPLY_TO: "cecilia@fullnesslab.com",
-    EMAIL_TEST_RECIPIENT: "qa@fullnesslab.com",
-    MERCADOPAGO_TEST_MODE: "false",
     ORDER_NOTIFICATION_RECIPIENT: "cecilia@fullnesslab.com",
     RESEND_API_KEY: "re_qa",
     SITE_URL: "https://www.fullnesslab.com"
@@ -36,7 +32,9 @@ try {
   const supabase = createEmailDeliveryStore();
   const order = {
     id: "620b9baa-8b74-4baf-8d30-3dd552ae1b6d",
-    total_clp: 58200,
+    subtotal_clp: 58200,
+    delivery_fee_clp: 3990,
+    total_clp: 62190,
     customer_snapshot: {
       name: "Cliente QA",
       email: "cliente@example.com",
@@ -61,6 +59,12 @@ try {
   assert.match(messages[1].text, /Avenida Prueba 123/);
   assert.match(messages[1].text, /Plan semanal antinflamatorio/);
   assert.match(messages[1].text, /Lo Barnechea/);
+  for (const message of messages.slice(0, 2)) {
+    assert.match(message.text, /Subtotal de productos:.*58.200/);
+    assert.match(message.text, /Envío:.*3.990/);
+    assert.match(message.text, /Total:.*62.190/);
+    assert.match(message.html, /Envío:.*3.990/);
+  }
 
   const duplicateDelivery = await sendApprovedOrderEmails({order, items, supabase});
   assert.equal(duplicateDelivery.customer.duplicate, true);
@@ -87,17 +91,17 @@ try {
   assert.equal(duplicateStatusDelivery.duplicate, true);
   assert.equal(messages.length, 3, "Un mismo cambio de estado no debe reenviar el correo.");
 
-  process.env.MERCADOPAGO_TEST_MODE = "true";
   const sandboxSupabase = createEmailDeliveryStore();
-  await sendApprovedOrderEmails({
-    order: {...order, id: "1e1f75b8-e2d6-4ad1-82a8-4e5f88741f23"},
+  const testDelivery = await sendApprovedOrderEmails({
+    order: {...order, checkout_mode: "test", id: "1e1f75b8-e2d6-4ad1-82a8-4e5f88741f23"},
     items,
     supabase: sandboxSupabase
   });
-  assert.equal(messages[3].to[0], "qa@fullnesslab.com");
-  assert.equal(messages[4].to[0], "qa@fullnesslab.com");
+  assert.equal(testDelivery.customer.reason, "test-checkout");
+  assert.equal(testDelivery.operations.reason, "test-checkout");
+  assert.equal(messages.length, 3, "Una compra TEST nunca dispara correos comerciales.");
 
-  console.log("Checkout email QA OK: confirmación cliente, aviso operativo, cambios de estado, deduplicación y sandbox verificados.");
+  console.log("Checkout email QA OK: confirmación cliente, aviso operativo, cambios de estado, deduplicación y aislamiento TEST verificados.");
 } finally {
   globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnvironment)) {

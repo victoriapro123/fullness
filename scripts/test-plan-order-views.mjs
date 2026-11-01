@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {coreManagedOrder,presentOrder} from '../api/backoffice/orders.js';
+assert.equal(coreManagedOrder({customer_snapshot:{}}),false,'Historical local orders are not reassigned by a global flag.');
+assert.equal(coreManagedOrder({customer_snapshot:{operationalAuthority:'core360'}}),true);
+assert.equal(coreManagedOrder({customer_snapshot:{corePlanCheckout:{contractVersion:'commerce-plans/1'}}}),true);
+assert.equal(coreManagedOrder({core360_commerce_order_states:[{core_order_id:'canonical'}]}),true);
+const group={id:'group',size:6,quantity:1,unitTotal:60000,items:[{itemId:'meal',week:1,name:'Plato QA',quantity:2,unitPrice:10000}]};
+const view=presentOrder({customer_snapshot:{corePlanCheckout:{}},order_items:[{id:'line1',product_snapshot:{customPlan:group}},{id:'line2',product_snapshot:{customPlan:group}},{id:'family',product_name:'Familiar',quantity:1}],core360_commerce_order_states:[{core_order_id:'canonical',provider_payload:{plan:{status:'expired',paymentReconciliationRequired:true},privateOtherData:'not exported'}}]});
+assert.equal(view.plans.length,1);assert.equal(view.items[0].inPlan,true);assert.equal(view.items[2].inPlan,false);assert.equal(view.operationalAuthority,'core360');assert.equal(view.core360.plan.paymentReconciliationRequired,true);assert.ok(!JSON.stringify(view).includes('privateOtherData'));
+console.log('PASS: immutable plan breakdown, late-payment reconciliation visible to staff, payload whitelisted and legacy authority preserved.');

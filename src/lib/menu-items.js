@@ -291,7 +291,7 @@ function normalizeDisplayOrder(value) {
 }
 
 function normalizeProductType(value) {
-  return value === "plan" ? "plan" : "family";
+  return value === "mealprep" ? "mealprep" : value === "plan" ? "plan" : "family";
 }
 
 function normalizePlanFrequency(value, productType) {
@@ -1115,6 +1115,7 @@ export async function listActiveMenuItems() {
       .from("menu_items")
       .select(MENU_ITEM_COLUMNS)
       .eq("is_active", true)
+      .in("product_type", ["plan", "family"])
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
     fetchCatalogContext(supabase),

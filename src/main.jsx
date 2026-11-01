@@ -84,6 +84,7 @@ import {
   saveBackofficeDraft
 } from "./lib/backoffice-drafts.js";
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
+import { checkoutPaymentMessage,checkoutStartError } from "./lib/checkout-result.js";
 import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, formatAvailabilityDate, getProductAvailability, isPlanProduct, normalizeAvailability} from "./lib/product-availability.js";
 import {DELIVERY_COMMUNES, getDeliveryQuote} from "./lib/delivery-rates.js";
 import {
@@ -104,6 +105,12 @@ import {
 import { FilePickerButton } from "./components/file-picker-button.jsx";
 import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
+import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
+import {StockLetterAdmin} from "./components/stock-letter-admin.jsx";
+import {LocalMenuPage} from "./components/local-menu-page.jsx";
+import {LocalMenuAdmin,MealprepAvailabilityAdmin} from "./components/local-menu-admin.jsx";
+import {PLAN_CONDITIONS} from "./lib/local-menu.js";
+import {customPlanRequest} from "./lib/custom-plans.js";
 import {applyDispatchCalendar, buildMonthlyDeliveries, MONTHLY_MENU_RULE_TEXT} from "./lib/dispatch-calendar.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
@@ -136,7 +143,8 @@ import "./palette.css";
 gsap.registerPlugin(ScrollTrigger);
 
 const mediaSrc = (key) => `/api/media?key=${encodeURIComponent(key)}`;
-const logoHeaderFooterSrc = mediaSrc("assets/brand/fullness-lab-horizontal-contrast-2026.png");
+// The approved logo is versioned locally; header/footer must not depend on R2 availability.
+const logoHeaderFooterSrc = "/assets/brand/fullness-lab-horizontal-contrast-2026.png";
 const logoVerticalSrc = mediaSrc("assets/brand/fullness-lab-vertical-marfil-2026.png");
 const silhouetteRootOneSrc = mediaSrc("assets/fullness-silhouette-root-1.png");
 const silhouetteRootThreeSrc = mediaSrc("assets/fullness-silhouette-root-3.png");
@@ -919,7 +927,6 @@ const adminPersonaEmail = "carlos@prof3sional.com";
 const checkoutCartStorageKey = "fullness_checkout_cart";
 const viewportModeStorageKey = "fullness_viewport_mode";
 const preserveIntroConsumedStorageKey = "fullness_preserve_intro_consumed";
-const checkoutTestMode = import.meta.env.VITE_CHECKOUT_TEST_MODE === "true";
 function createDefaultSubscriptionPopupSettings() {
   return {
     enabled: true,
@@ -2608,7 +2615,7 @@ function getNutritionEntries(product) {
 }
 
 function getProductType(product) {
-  return product?.productType === "plan" ? "plan" : "family";
+  return product?.productType === "mealprep" ? "mealprep" : product?.productType === "plan" ? "plan" : "family";
 }
 
 function getProductTypeLabel(product) {
@@ -2636,12 +2643,12 @@ function getProductBenefits(product) {
 function createDefaultCheckoutForm() {
   return {
     mode: "delivery",
-    name: checkoutTestMode ? "Carlos Rodriguez" : "",
-    email: checkoutTestMode ? "carlos@prof3sional.com" : "",
-    phone: checkoutTestMode ? "+56 9 1234 5678" : "",
-    address: checkoutTestMode ? "Av. Providencia 1234" : "",
-    comuna: checkoutTestMode ? "Providencia" : "",
-    instructions: checkoutTestMode ? "Compra de prueba Fullness Lab" : ""
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    comuna: "",
+    instructions: ""
   };
 }
 
@@ -2650,11 +2657,7 @@ function loadStoredCheckoutForm() {
 
   try {
     const stored = JSON.parse(window.localStorage.getItem("fullness_checkout_form") || "null");
-    const storedValues = stored && typeof stored === "object"
-      ? Object.fromEntries(
-          Object.entries(stored).filter(([key, value]) => key === "mode" || !checkoutTestMode || String(value || "").trim())
-        )
-      : {};
+    const storedValues = stored && typeof stored === "object" ? stored : {};
 
     return {
       ...createDefaultCheckoutForm(),
@@ -2939,7 +2942,7 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
   );
 }
 
-function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings }) {
+function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenBenefit, onOpenMeal, onOpenProduct, plans, shopSettings,stockLetter }) {
   const settings = mergeShopSettings(shopSettings);
   const catalogPlans = plans;
   const monthlyPlans = catalogPlans.filter((product) => product.planFrequency === "monthly");
@@ -2960,7 +2963,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
   const heroImage = heroImageUsesPreviousDefault
     ? shopHeroBoxCuratedCutoutSrc
     : configuredHeroImage || getProductImage(heroFallbackProduct);
-  const heroMetrics = settings.heroMetrics.slice(0, 3);
+  const heroMetrics = stockLetter?.enabled?['6 MEALPREPS POR SEMANA','PRECIO SEGÚN TU SELECCIÓN','ELIGE ENTRE LOS PLATOS CON STOCK']:settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
   const catalogSections = [
     {
@@ -2995,14 +2998,14 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
         <div className="shop-hero-copy">
           <p className="eyebrow">{formatDisplayEyebrow(settings.heroEyebrow)}</p>
           <h1 id="shop-hero-title">{renderShopHeroTitle(settings.heroTitle)}</h1>
-          <p>{formatDisplayDescription(settings.heroBody)}</p>
+          <p>{stockLetter?.enabled?'Elige tus mealpreps de la carta disponible. Arma seis por semana y paga la suma de los platos que seleccionaste.':formatDisplayDescription(settings.heroBody)}</p>
           <div className="shop-hero-actions">
             <a className="shop-solid-link" href="#shop-plans" onClick={(event) => scrollToBlock(event, "#shop-plans")}>
-              {settings.heroPrimaryLabel}
+              {stockLetter?.enabled?'Arma tu plan':settings.heroPrimaryLabel}
               <ArrowUpRight size={17} />
             </a>
             <a className="shop-outline-link" href="#shop-subscription" onClick={(event) => scrollToBlock(event, "#shop-subscription")}>
-              {settings.heroSecondaryLabel}
+              {stockLetter?.enabled?'Cómo funciona':settings.heroSecondaryLabel}
               <ArrowUpRight size={17} />
             </a>
           </div>
@@ -3032,7 +3035,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
         <p className="products-empty" role="alert">{catalogError}</p>
       ) : (
         <>
-          <section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
+          {stockLetter?.enabled?<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="custom-process-title"><div className="shop-subscription-copy"><p className="eyebrow">A TU MEDIDA</p><h2 id="custom-process-title">TÚ ELIGES LOS PLATOS.</h2><p>Elige un plan semanal de seis o uno mensual de cuatro semanas de seis. Puedes duplicar sólo un plato en cada semana. No hay precio fijo de caja: el total es la suma de tu selección.</p><a className="shop-solid-link" href="#shop-plans" onClick={e=>scrollToBlock(e,'#shop-plans')}>ARMAR MI PLAN <ArrowUpRight size={17}/></a></div><ul className="shop-subscription-benefits">{['Elige entre los platos con disponibilidad confirmada.','Revisa cada semana y su precio en el carrito.','Antes de pagar validamos precios y reservamos stock en Core360.','Los familiares se compran por separado.'].map(text=><li key={text}><CheckCircle2 size={17} aria-hidden="true"/>{text}</li>)}</ul></section>:<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
             <div className="shop-subscription-copy">
               <p className="eyebrow">{formatDisplayEyebrow(settings.subscriptionEyebrow)}</p>
               <h2 id="shop-subscription-title">{formatDisplayTitle(settings.subscriptionTitle)}</h2>
@@ -3086,7 +3089,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
                 <ArrowUpRight size={17} />
               </button>
             </div>
-          </section>
+          </section>}
 
           <section className="shop-plans-section" id="shop-plans" aria-labelledby="shop-plans-title">
             <div className="shop-section-heading">
@@ -3094,7 +3097,14 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
               <h2 id="shop-plans-title">{formatDisplayTitle("Planes y mealpreps para cada ritmo.")}</h2>
               <p>{formatDisplayDescription("Elige el formato que mejor acompañe tu ritmo.")}</p>
             </div>
-            <div className="shop-catalog-stack">
+            {stockLetter?.enabled ? <>
+              <CustomPlanBuilder data={stockLetter} onAdd={onAdd}/>
+              <section className="shop-catalog-section shop-catalog-section-family" aria-labelledby="custom-family-title">
+                <header className="shop-catalog-section-heading"><h3 id="custom-family-title">ÚNICO FAMILIAR</h3><div className="shop-catalog-section-rule" aria-hidden="true"/></header>
+                <p className="checkout-message">Los familiares se compran por separado y su despacho se coordina con Fullnesslab.</p>
+                <div className="shop-family-grid shop-catalog-grid">{familyProducts.map((product,index)=><ShopFamilyCard key={product.id} product={product} index={index} onAdd={onAdd} onOpenBenefit={onOpenBenefit} onOpenProduct={onOpenProduct}/>)}</div>
+              </section>
+            </> : <div className="shop-catalog-stack">
               {catalogSections.map(({ emptyMessage, id, products, title }) => (
                 <section className={`shop-catalog-section shop-catalog-section-${id}`} key={id} aria-labelledby={`shop-catalog-${id}-title`}>
                   <header className="shop-catalog-section-heading">
@@ -3131,7 +3141,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
                   )}
                 </section>
               ))}
-            </div>
+            </div>}
           </section>
 
           <section className="shop-process-band" aria-labelledby="shop-process-title">
@@ -5009,7 +5019,16 @@ function FaqAnswer({ blocks }) {
   });
 }
 
-function FaqPage({ onNavigateToShop }) {
+function FaqPage({ onNavigateToShop,customPlansEnabled=false }) {
+  const buyingGroup={id:'comprar',navLabel:'Cómo comprar',eyebrow:'Cómo funciona',title:'TU COMPRA, PASO A PASO.',items:[
+    {question:'¿Dónde consulto la carta del local?',answer:['En fullnesslab.com/carta puedes consultar la selección vigente del local. El equipo actualiza los productos, los cinco platos rotativos de Lunch y sus precios. La carta presencial y la tienda online tienen modalidades distintas.']},
+    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos habilitados y con stock confirmado de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. El total se valida en el servidor antes de continuar a Mercado Pago.']},
+    {question:'¿Qué ocurre si cambia la disponibilidad o el precio?',answer:['El carrito no reserva stock. Si un producto se agota, termina su período o cambia el total, te pediremos revisar la compra. No cobraremos un total distinto al que confirmaste.']},
+    {question:'¿Cómo sé si mi pago quedó aprobado?',answer:['Mercado Pago informa el resultado. Volver a la tienda no confirma por sí solo un pago: Fullness Lab verifica su estado con el proveedor. Si está pendiente, no vuelvas a pagar sin consultar el estado de tu pedido.']},
+    {question:'¿Cómo se calcula el despacho?',answer:['Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. En otras comunas coordinamos disponibilidad, fecha y costo por WhatsApp antes del pago. El retiro no agrega tarifa de despacho.']},
+    {question:'¿Puedo comprar un mealprep individual?',answer:['Los mealpreps normales sólo se asignan a planes. Los platos familiares se compran por separado. Los platos para llevar del local son una modalidad presencial distinta.']}
+  ]};
+  const groups=[buyingGroup,...faqGroups];
   return (
     <article className="faq-page">
       <section className="faq-hero">
@@ -5022,7 +5041,7 @@ function FaqPage({ onNavigateToShop }) {
             cuidado y confianza.
           </p>
           <nav className="faq-anchor-nav" aria-label="Secciones de preguntas frecuentes">
-            {faqGroups.map((group) => (
+            {groups.map((group) => (
               <a key={group.id} href={`#${group.id}`}>{group.navLabel}</a>
             ))}
           </nav>
@@ -5030,7 +5049,7 @@ function FaqPage({ onNavigateToShop }) {
       </section>
 
       <div className="faq-groups">
-        {faqGroups.map((group, groupIndex) => (
+        {groups.map((group, groupIndex) => (
           <section className="faq-group" id={group.id} key={group.id}>
             <div className="faq-group-heading">
               <p className="eyebrow">{group.eyebrow}</p>
@@ -5064,8 +5083,8 @@ function FaqPage({ onNavigateToShop }) {
             WhatsApp
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
-          <a href="mailto:contacto@fullnesslab.com">
-            contacto@fullnesslab.com
+          <a href="mailto:cecilia@fullnesslab.com">
+            cecilia@fullnesslab.com
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
           <a href={shopPath} onClick={onNavigateToShop}>
@@ -5096,6 +5115,12 @@ function App() {
     document.documentElement.classList.contains("intro-scroll-consumed")
   );
   const [products, setProducts] = useState(localDevelopmentCatalog);
+  const [stockLetter,setStockLetter]=useState({enabled:true,loading:true,letter:null,items:[]});
+  useEffect(()=>{let alive=true,sequence=0;const controller=new AbortController();
+    const refresh=()=>{const current=++sequence;fetch('/api/commerce/stock-letter',{cache:'no-store',signal:controller.signal}).then(async r=>{const payload=await r.json();if(!r.ok)throw Error(payload.error||'No pudimos consultar la carta.');return payload;}).then(payload=>{if(alive&&current===sequence&&payload?.data)setStockLetter(payload.data);}).catch(error=>{if(alive&&current===sequence&&error.name!=='AbortError')setStockLetter(previous=>({...previous,enabled:true,loading:false,error:'No pudimos actualizar la carta. Vuelve a intentarlo en un momento.'}));});};
+    const visible=()=>{if(document.visibilityState==='visible')refresh();};refresh();const timer=window.setInterval(visible,60000);document.addEventListener('visibilitychange',visible);
+    return()=>{alive=false;controller.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
+  },[]);
   const [, refreshAvailability] = useState(0);
   useEffect(() => {
     const refresh = () => refreshAvailability((version) => version + 1);
@@ -5118,6 +5143,11 @@ function App() {
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState(readCheckoutReturnState);
+  const [testCheckoutAccessOpen, setTestCheckoutAccessOpen] = useState(false);
+  const [testCheckoutAccessCode, setTestCheckoutAccessCode] = useState("");
+  const [testCheckoutAuthorizing, setTestCheckoutAuthorizing] = useState(false);
+  const [testCheckoutSessionToken, setTestCheckoutSessionToken] = useState("");
+  const [testCheckoutExpiresAt, setTestCheckoutExpiresAt] = useState("");
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [initialAuthRedirect] = useState(() => readAuthRedirectState());
@@ -5394,14 +5424,13 @@ function App() {
           ...checkoutReturn,
           ...payload.data,
           syncing: false,
-          message: approved
-            ? "Recibimos tu pago y enviamos la confirmación de compra a tu correo."
-            : "Mercado Pago dejo la operacion pendiente. Te avisaremos cuando cambie de estado."
+          message: checkoutPaymentMessage(payload.data)
         });
 
         if (approved) {
           setCart([]);
           window.localStorage.removeItem("fullness_pending_order");
+          if (payload.data?.testMode) return;
           const transactionId = checkoutReturn.orderId || checkoutReturn.paymentId;
           let purchaseAlreadyTracked = false;
 
@@ -8427,6 +8456,7 @@ function App() {
   const isShopPage = currentPath === shopPath && !currentProductSlug;
   const isFaqPage = currentPath === faqPath && !currentProductSlug;
   const isAboutPage = currentPath === aboutPath && !currentProductSlug;
+  const isLocalMenuPage = currentPath.replace(/\/$/, '') === '/carta' && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
   const showIntroReplay =
     currentPath === "/" &&
@@ -8473,6 +8503,14 @@ function App() {
   }, [currentProductSlug, currentProduct]);
 
   function addToCart(product) {
+    if(product?.productType==='mealprep'||product?.product_type==='mealprep'){
+      setCheckoutMessage('Los mealpreps normales sólo se asignan a planes; no se compran individualmente.');
+      return;
+    }
+    if(product?.kind==='custom_plan'){
+      setCart(items=>[...items,{...product,qty:1}]);setCartOpen(true);return;
+    }
+    if(stockLetter?.enabled&&getProductType(product)!=='family'){document.getElementById('custom-plan-builder')?.scrollIntoView({behavior:'smooth'});return;}
     const productSlug = getProductSlug(product);
     const catalogProduct = products.find((candidate) =>
       candidate.id === product?.id || getProductSlug(candidate) === productSlug
@@ -8604,6 +8642,35 @@ function App() {
     setCheckoutMessage("");
   }
 
+  async function authorizeTestCheckout(event) {
+    event.preventDefault();
+    if (testCheckoutAuthorizing || !testCheckoutAccessCode.trim()) return;
+
+    setTestCheckoutAuthorizing(true);
+    setCheckoutMessage("");
+    try {
+      const response = await fetch("/api/mercadopago/test-session", {
+        method: "POST",
+        headers: {Accept: "application/json", "Content-Type": "application/json"},
+        body: JSON.stringify({accessCode: testCheckoutAccessCode})
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.data?.testSessionToken) {
+        throw new Error(payload.error?.message || "No pudimos habilitar la compra de prueba.");
+      }
+      setTestCheckoutAccessCode("");
+      setTestCheckoutSessionToken(payload.data.testSessionToken);
+      setTestCheckoutExpiresAt(payload.data.expiresAt || "");
+      setCheckoutMessage("Compra TEST habilitada para un único intento. No generará correo, despacho ni una orden operativa.");
+    } catch (error) {
+      setTestCheckoutSessionToken("");
+      setTestCheckoutExpiresAt("");
+      setCheckoutMessage(error.message || "No pudimos habilitar la compra de prueba.");
+    } finally {
+      setTestCheckoutAuthorizing(false);
+    }
+  }
+
   async function submitCheckout(event) {
     event.preventDefault();
     if (!deliveryQuote.canPayOnline) {
@@ -8628,13 +8695,16 @@ function App() {
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
     try {
-      const quoteResponse = await fetch("/api/commerce/checkout-quote", {
-        method: "POST", headers: {Accept: "application/json", "Content-Type": "application/json"},
-        body: JSON.stringify({cart: cart.map((item) => ({slug: item.slug, quantity: item.qty})), fulfillment: {mode: checkoutForm.mode, comuna: checkoutForm.comuna}})
-      });
-      const quote = await quoteResponse.json().catch(() => ({}));
-      if (!quoteResponse.ok) throw new Error(quote.error?.message || "No pudimos validar el costo de envío.");
-      if (quote.data?.amount !== checkoutTotal) throw new Error("El total vigente cambió. Recarga la página y revisa el carrito antes de pagar.");
+      if (!testCheckoutSessionToken) {
+        const quoteResponse = await fetch("/api/commerce/checkout-quote", {
+          method: "POST", headers: {Accept: "application/json", "Content-Type": "application/json"},
+          body: JSON.stringify({cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})), fulfillment: {mode: checkoutForm.mode, comuna: checkoutForm.comuna}})
+        });
+        const quote = await quoteResponse.json().catch(() => ({}));
+        if (!quoteResponse.ok) throw new Error(checkoutStartError(quote.error));
+        if (quote.data?.paymentReady === false) throw new Error(quote.data.blockedReason || 'El pago de planes aún no está habilitado.');
+        if (quote.data?.amount !== checkoutTotal) throw new Error("El total vigente cambió. Recarga la página y revisa el carrito antes de pagar.");
+      }
       const response = await fetch("/api/mercadopago/preferences", {
         method: "POST",
         headers: {
@@ -8642,9 +8712,10 @@ function App() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          cart: cart.map((item) => ({slug: item.slug, quantity: item.qty})),
+          cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})),
           fulfillment: checkoutForm,
-          expectedAmount: checkoutTotal
+          expectedAmount: checkoutTotal,
+          ...(testCheckoutSessionToken ? {testSessionToken: testCheckoutSessionToken} : {})
         })
       });
       const payload = await response.json().catch(() => ({}));
@@ -8661,6 +8732,7 @@ function App() {
         fulfillment: checkoutForm,
         orderId: payload.data.orderId,
         preferenceId: payload.data.preferenceId,
+        testMode: payload.data.testMode === true,
         createdAt: new Date().toISOString()
       };
 
@@ -8670,6 +8742,8 @@ function App() {
       } catch {
         // Checkout can continue when browser storage is unavailable.
       }
+      setTestCheckoutSessionToken("");
+      setTestCheckoutExpiresAt("");
       window.location.assign(payload.data.initPoint);
     } catch (error) {
       setCheckoutMessage(error.message || "No pudimos iniciar el pago. Intenta nuevamente.");
@@ -9621,6 +9695,9 @@ function App() {
             Icon: CookingPot
           },
           {id:"dispatch-calendar",label:"Calendario de menús",description:"Menú único por fecha y entregas mensuales",Icon:CalendarDays},
+          {id:"stock-letter",label:"Carta de mealpreps",description:"Cartas por período y planes personalizados con stock Core360",Icon:CalendarDays},
+          {id:"local-menu",label:"Carta del local",description:"Productos, precios y cinco opciones Lunch · /carta",Icon:Utensils},
+          {id:"mealprep-availability",label:"Disponibilidad",description:"Confirmar mealpreps, agotados y fechas",Icon:CalendarDays},
           {
             id: "parameters",
             label: "Parámetros",
@@ -9690,6 +9767,7 @@ function App() {
         <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }}>Menú</a>
         <a href={shopPath} onClick={openShopPage}>Planes</a>
         <a href={shopPath} onClick={openShopPage}>Tienda</a>
+        <a href="/carta">Carta del local</a>
         <a href="/comunidad" onClick={openCommunityPage}>Comunidad</a>
         <a href={aboutPath} onClick={openAboutPage}>Nosotros</a>
         <a href="#contacto" onClick={(event) => { event.preventDefault(); navigateToSection("#contacto"); }}>Contacto</a>
@@ -9879,9 +9957,11 @@ function App() {
           />
           {renderSiteFooter()}
         </>
+      ) : isLocalMenuPage ? (
+        <><LocalMenuPage />{renderSiteFooter()}</>
       ) : isFaqPage ? (
         <>
-          <FaqPage onNavigateToShop={openShopPage} />
+          <FaqPage onNavigateToShop={openShopPage} customPlansEnabled={stockLetter?.enabled===true} />
           {renderSiteFooter()}
         </>
       ) : isAboutPage ? (
@@ -9897,6 +9977,7 @@ function App() {
           <div className="shop-page-shell">
             <MealPrepCatalog
               plans={planProducts}
+              stockLetter={stockLetter}
               familyProducts={familyProducts}
               shopSettings={shopSettings}
               loading={productsLoading}
@@ -10303,6 +10384,9 @@ function App() {
 
                   <div className="backoffice-module-content">
                     {activeBackofficeModule === "dispatch-calendar" && <DispatchCalendarAdmin plans={adminItems} draftKey={`fullness_dispatch_calendar_${authUser?.id||""}`} onChanged={async()=>{await refreshAdminItems({silent:true});await refreshPublicProducts();}} />}
+                    {activeBackofficeModule === "stock-letter" && <StockLetterAdmin draftKey={`fullness_stock_letter_${authUser?.id||""}`} />}
+                    {activeBackofficeModule === "local-menu" && <LocalMenuAdmin draftKey={`fullness_local_menu_${authUser?.id||""}`} />}
+                    {activeBackofficeModule === "mealprep-availability" && <MealprepAvailabilityAdmin draftKey={`fullness_mealprep_availability_${authUser?.id||""}`} />}
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
                   <section className="backoffice-catalog-panel" aria-label="Planes configurados">
@@ -12399,7 +12483,7 @@ function App() {
                       <h3>{item.name}</h3>
                       <p>{formatPrice(item.price)}</p>
                       <ProductAvailability product={products.find((product) => product.id === item.id) || item} />
-                      {getProductType(item) === "plan" && <small>Menú semanal preestablecido</small>}
+                      {item.kind==='custom_plan'?<CustomPlanBreakdown item={item}/>:getProductType(item) === "plan" && <small>Menú semanal preestablecido</small>}
                     </div>
                     <div className="qty">
                       <button type="button" onClick={() => updateQty(item.id, -1)} aria-label={`Restar ${item.name}`}>
@@ -12481,8 +12565,51 @@ function App() {
                   <div><span>{checkoutForm.mode === "pickup" ? "Retiro" : "Envío"}</span><strong>{deliveryQuote.feeClp === null ? "Por coordinar" : formatPrice(deliveryQuote.feeClp)}</strong></div>
                   <div className="cart-total"><span>{checkoutTotal === null ? "Total con envío" : "Total a pagar"}</span><strong>{checkoutTotal === null ? "Por confirmar" : formatPrice(checkoutTotal)}</strong></div>
                 </div>
+
+                {activeIsAdmin&&!cart.some(item=>item.kind==='custom_plan')&&<section className="checkout-test-access" aria-labelledby="checkout-test-access-title">
+                  <button
+                    className="checkout-test-toggle"
+                    type="button"
+                    aria-expanded={testCheckoutAccessOpen}
+                    aria-controls="checkout-test-access-panel"
+                    onClick={() => setTestCheckoutAccessOpen((open) => !open)}
+                  >
+                    <KeyRound size={16} />
+                    Compra de prueba autorizada
+                  </button>
+                  {testCheckoutAccessOpen && (
+                    <div className="checkout-test-panel" id="checkout-test-access-panel">
+                      <p id="checkout-test-access-title">Sólo para pruebas autorizadas. El código se valida en el servidor y habilita un único intento TEST.</p>
+                      <label>
+                        Código de acceso
+                        <input
+                          value={testCheckoutAccessCode}
+                          type="password"
+                          autoComplete="off"
+                          onChange={(event) => setTestCheckoutAccessCode(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") authorizeTestCheckout(event);
+                          }}
+                        />
+                      </label>
+                      <button
+                        className="checkout-test-authorize"
+                        type="button"
+                        disabled={testCheckoutAuthorizing || !testCheckoutAccessCode.trim()}
+                        onClick={authorizeTestCheckout}
+                      >
+                        {testCheckoutAuthorizing ? "Validando código…" : testCheckoutSessionToken ? "Código TEST validado" : "Habilitar intento TEST"}
+                      </button>
+                      {testCheckoutSessionToken && (
+                        <small>Sesión TEST activa{testCheckoutExpiresAt ? ` hasta ${new Date(testCheckoutExpiresAt).toLocaleTimeString("es-CL", {hour: "2-digit", minute: "2-digit"})}` : ""}. No se guardará en este dispositivo.</small>
+                      )}
+                    </div>
+                  )}
+                </section>}
+
                 {cart.some(isPlanProduct) && <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>}
-                {cart.some((item)=>isPlanProduct(item)&&item.planFrequency==="monthly") && <p className="checkout-message">{MONTHLY_MENU_RULE_TEXT}</p>}
+                {cart.some((item)=>item.kind==='custom_plan') && <p className="checkout-message">Elegiste los platos de tu plan. El total es su suma; no se compran mealpreps individualmente. La disponibilidad se revalida antes del pago.</p>}
+                {cart.some((item)=>item.kind!=='custom_plan'&&isPlanProduct(item)&&item.planFrequency==="monthly") && <p className="checkout-message">{MONTHLY_MENU_RULE_TEXT}</p>}
                 {cart.filter((item)=>isPlanProduct(item)&&item.planFrequency==="monthly").map(item=><p className="checkout-message" key={`dispatch-${item.id}`}>Entregas de {item.name}: {buildMonthlyDeliveries(products.find(p=>p.id===item.id)?.calendarRows||[]).map(d=>formatAvailabilityDate(d.dispatchOn)).join(" · ")}. Los menús aún no publicados quedarán por programar.</p>)}
                 {cart.some((item) => !isPlanProduct(item)) && <p className="checkout-message">{MEALPREP_DISPATCH_RULE_TEXT}</p>}
                 {checkoutMessage && <p className="checkout-message" role="status">{checkoutMessage}</p>}
@@ -12497,7 +12624,7 @@ function App() {
                   aria-busy={checkoutSubmitting}
                 >
                   <ShieldCheck size={18} />
-                  {checkoutSubmitting ? "Abriendo Mercado Pago..." : "Pagar con Mercado Pago"}
+                  {checkoutSubmitting ? "Abriendo Mercado Pago..." : testCheckoutSessionToken ? "Pagar con Mercado Pago TEST" : "Pagar con Mercado Pago"}
                 </button>}
               </form>
             </>

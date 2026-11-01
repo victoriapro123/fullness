@@ -44,11 +44,10 @@ try {
   assert.equal(config.flags.CORE360_COMMERCE_DELIVERY_ENABLED, true);
   assert.equal(config.flags.CORE360_COMMERCE_MEDIA_WRITE_ENABLED, false);
   assert.deepEqual(config.mercadoPago, {
-    accessTokenConfigured: true,
-    accessTokenKind: "unknown",
-    clientTestMode: false,
+    liveProfileConfigured: true,
     notificationUrl: "https://www.fullnesslab.com/api/mercadopago/webhook",
-    testMode: false,
+    testCheckoutConfigured: false,
+    testWebhookUrl: "https://www.fullnesslab.com/api/mercadopago/test-webhook",
     webhookSecretConfigured: true
   });
   assert.ok(!JSON.stringify(config).includes(privateToken));
@@ -56,6 +55,8 @@ try {
   const empty = runtimeConfiguration({CORE360_COMMERCE_SYNC_FROM: "invalid", CHECKOUT_SITE_URL: "https://user:password@example.invalid/"});
   assert.equal(empty.syncFrom, null);
   assert.equal(empty.mercadoPago.notificationUrl, null);
+  assert.equal(runtimeConfiguration({MERCADOPAGO_ACCESS_TOKEN: "APP_USR-synthetic"}).mercadoPago.liveProfileConfigured, true);
+  assert.equal(Object.hasOwn(runtimeConfiguration({MERCADOPAGO_ACCESS_TOKEN: "APP_USR-synthetic"}).mercadoPago,'accessTokenKind'),false,'A token prefix does not prove merchant live/test status.');
   let providerCalls = 0;
   const provider = await probeMercadoPagoCredential({
     env: {MERCADOPAGO_ACCESS_TOKEN: privateToken},
@@ -71,10 +72,22 @@ try {
   assert.equal(provider.verified, true);
   assert.equal(provider.status, 200);
   assert.equal(provider.merchantIdSha256.length, 64);
+  assert.equal(provider.testUser, null, "No tags means unknown, not a non-test merchant.");
   assert.ok(!JSON.stringify(provider).includes(privateToken));
   assert.ok(!JSON.stringify(provider).includes("private@example.invalid"));
   const missingProvider = await probeMercadoPagoCredential({env: {}, fetchImpl: () => { throw new Error("Missing provider credential must not use HTTP"); }});
-  assert.deepEqual(missingProvider, {configured: false, status: null, verified: false});
+  assert.deepEqual(missingProvider, {configured: false, status: null, testUser: null, verified: false});
+  for (const [tags, expected] of [[['test_user'], true], [[], false], [['normal'], false], ['test_user', null]]) {
+    const classified = await probeMercadoPagoCredential({
+      env: {MERCADOPAGO_ACCESS_TOKEN: "APP_USR-synthetic"},
+      fetchImpl: async () => ({ok: true, status: 200, json: async () => ({id: "synthetic-merchant", tags})})
+    });
+    assert.equal(classified.testUser, expected);
+    assert.equal(classified.verified, true);
+    assert.ok(!Object.hasOwn(classified, "liveMode"));
+  }
+  const unavailableProvider = await probeMercadoPagoCredential({env: {MERCADOPAGO_ACCESS_TOKEN: privateToken}, fetchImpl: async () => { throw new Error("synthetic transport failure"); }});
+  assert.deepEqual(unavailableProvider, {configured: true, status: null, testUser: null, verified: false});
 } finally {
   restoreEnvironment("CORE360_RECOVERY_TOKEN", saved.CORE360_RECOVERY_TOKEN);
   restoreEnvironment("CRON_SECRET", saved.CRON_SECRET);

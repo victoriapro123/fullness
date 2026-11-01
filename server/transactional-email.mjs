@@ -58,6 +58,7 @@ export async function registerEmailSubscriber({email, name, phone}) {
 
 export async function sendOrderConfirmationEmail({order, items, supabase}) {
   await localEnvReady;
+  if (isTestCheckoutOrder(order)) return skippedTestDelivery();
   const customerEmail = cleanText(order.customer_snapshot?.email).toLowerCase();
   if (!customerEmail) return {sent: false, skipped: true};
 
@@ -104,6 +105,7 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
 
 export async function sendOrderStatusUpdateEmail({order, items, nextStatus, supabase}) {
   await localEnvReady;
+  if (isTestCheckoutOrder(order)) return skippedTestDelivery();
 
   const customerEmail = cleanText(order.customer_snapshot?.email).toLowerCase();
   if (!customerEmail) return {sent: false, skipped: true, reason: "missing-recipient"};
@@ -147,6 +149,7 @@ export async function sendOrderStatusUpdateEmail({order, items, nextStatus, supa
 
 export async function sendOrderNotificationEmail({order, items, supabase}) {
   await localEnvReady;
+  if (isTestCheckoutOrder(order)) return skippedTestDelivery();
   const customer = order.customer_snapshot || {};
   const orderReference = formatOrderReference(order.id);
   const amount = formatClp(order.total_clp);
@@ -199,6 +202,9 @@ function shippingAmountLines(order) {
 }
 
 export async function sendApprovedOrderEmails({order, items, supabase}) {
+  if (isTestCheckoutOrder(order)) {
+    return {customer: skippedTestDelivery(), operations: skippedTestDelivery()};
+  }
   const [customer, operations] = await Promise.all([
     sendOrderConfirmationEmail({order, items, supabase}),
     sendOrderNotificationEmail({order, items, supabase})
@@ -332,10 +338,15 @@ function normalizeSubscriber({email, name, phone}) {
 }
 
 function resolveRecipient(email) {
-  if (cleanText(process.env.MERCADOPAGO_TEST_MODE).toLowerCase() === "true") {
-    return cleanText(process.env.EMAIL_TEST_RECIPIENT || process.env.ORDER_CONFIRMATION_RECIPIENT) || email;
-  }
   return email;
+}
+
+function isTestCheckoutOrder(order) {
+  return cleanText(order?.checkout_mode || order?.customer_snapshot?.checkoutMode).toLowerCase() === "test";
+}
+
+function skippedTestDelivery() {
+  return {sent: false, skipped: true, reason: "test-checkout"};
 }
 
 function resolveOrderNotificationRecipient() {

@@ -16,12 +16,18 @@ const BRAND_DESCRIPTION =
 export const SEO_PUBLIC_ROUTES = [
   "/",
   "/tienda",
+  "/carta",
   "/comunidad",
   "/quienes-somos",
   "/preguntas-frecuentes"
 ];
 
 const ROUTE_METADATA = {
+  "/carta": {
+    title: "Carta del local | Fullness Lab",
+    description: "Consulta la carta de Fullness Lab en La Dehesa: Fullness Lunch, platos para llevar, bowls, ensaladas, desayuno, cafetería, jugos, snacks y mealpreps.",
+    pageType: "WebPage"
+  },
   "/": {
     title: "Fullness Lab | Meal prep saludable en Santiago",
     description: BRAND_DESCRIPTION,

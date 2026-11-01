@@ -6,6 +6,8 @@
     }
   ],
   "rewrites": [
+    {"source":"/carta","destination":"/index.html"},
+    {"source":"/carta/","destination":"/index.html"},
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap.xml"

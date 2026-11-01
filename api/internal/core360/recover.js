@@ -103,13 +103,16 @@ export function runtimeConfiguration(env = process.env) {
       "CORE360_COMMERCE_DELIVERY_ENABLED"
     ].map((key) => [key, enabled(key)])),
     mercadoPago: {
-      accessTokenConfigured: Boolean(text(env.MERCADOPAGO_ACCESS_TOKEN)),
-      accessTokenKind: text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("TEST-")
-        ? "test"
-        : text(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("APP_USR-") ? "production" : "unknown",
-      clientTestMode: enabled("VITE_CHECKOUT_TEST_MODE"),
+      liveProfileConfigured: Boolean(text(env.MERCADOPAGO_PRODUCTION_ACCESS_TOKEN || env.MERCADOPAGO_ACCESS_TOKEN)),
       notificationUrl,
-      testMode: enabled("MERCADOPAGO_TEST_MODE"),
+      testCheckoutConfigured: Boolean(
+        text(env.FULLNESS_TEST_CHECKOUT_ACCESS_CODE)
+        && text(env.MERCADOPAGO_TEST_ACCESS_TOKEN)
+        && text(env.MERCADOPAGO_TEST_PUBLIC_KEY)
+        && text(env.MERCADOPAGO_TEST_USER_ID)
+        && text(env.MERCADOPAGO_TEST_WEBHOOK_SECRET)
+      ),
+      testWebhookUrl: notificationUrl ? notificationUrl.replace(/\/webhook$/, "/test-webhook") : null,
       webhookSecretConfigured: Boolean(text(env.MERCADOPAGO_WEBHOOK_SECRET))
     },
     syncFrom: cutover && !Number.isNaN(cutover.getTime()) ? cutover.toISOString() : null
@@ -118,7 +121,7 @@ export function runtimeConfiguration(env = process.env) {
 
 export async function probeMercadoPagoCredential({env = process.env, fetchImpl = fetch} = {}) {
   const token = text(env.MERCADOPAGO_ACCESS_TOKEN);
-  if (!token) return {configured: false, status: null, verified: false};
+  if (!token) return {configured: false, status: null, testUser: null, verified: false};
   try {
     const result = await fetchImpl("https://api.mercadopago.com/users/me", {
       headers: {Authorization: `Bearer ${token}`, Accept: "application/json"},
@@ -131,10 +134,12 @@ export async function probeMercadoPagoCredential({env = process.env, fetchImpl =
       merchantIdSha256: result.ok && merchant?.id
         ? createHash("sha256").update(String(merchant.id)).digest("hex") : null,
       status: result.status,
+      testUser: result.ok && merchant?.id && Array.isArray(merchant.tags)
+        ? merchant.tags.includes("test_user") : null,
       verified: result.ok && Boolean(merchant?.id)
     };
   } catch {
-    return {configured: true, status: null, verified: false};
+    return {configured: true, status: null, testUser: null, verified: false};
   }
 }
 

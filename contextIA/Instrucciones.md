@@ -2,9 +2,15 @@
 
 Este archivo es el punto de entrada transitorio mientras Cerebro central no disponga de consulta/escritura remota operativa. No acredita una importación central.
 
+- Cierre vigente autorizado por Carlos01/11: `cierre-planes-carta-20261101.md`. Sustituye los límites de publicación anteriores para este lote: autorización explícita de cerrar Core, habilitar constructor, probar y publicar carta/Lunch/planes. Dos migraciones Fullness nuevas aplicadas; flags Production y modalidad DB preparados. No equivale a release terminado: seguir el recibo final del mismo documento. Main conserva release Core y CoreQA3151 único; no inventar existencias ni exportar TESTMP como Live. Carta/stock quedan editables por Cecilia.
+
 - Instrucciones y antecedentes del proyecto: `instrucciones.md.txt`. Contrastar las notas históricas con el módulo vigente y con las instrucciones actuales de Carlos.
 - Venta, menú semanal y despacho: `disponibilidad-semanal.md`. Carlos confirmó calendario por fecha sin repetición automática y preventa semanal. El mensual compra cuatro entregas asignadas por ese calendario; los sueltos siguen a pedido. Ver allí aplicación de base, pruebas y estado de publicación.
-- Tarifas y cobro de despacho: `tarifas-despacho.md`. La última publicación comprobada es `5ce3f2a`; los ajustes locales posteriores no se consideran publicados.
+- Tarifas y cobro de despacho: `tarifas-despacho.md`. El calendario y el flujo por fechas están publicados en `74dbeec`; ver el cierre de `disponibilidad-semanal.md` y no confundir la rama local con candidatos TEST aún excluidos.
 - Comercio canónico y fronteras con Core360: `Integracion-Core360-Comercio.md`.
+- Modelo nuevo31/10: `carta-mealpreps-stock-20261031.md`. SQL aplicado y carta15platos borrador; semanal6/mensual4×6, una sola duplicación por semana (nunca3delmismo), familiares aparte. Constructor/carrito/API locales. No activar ni publicar checkout nuevo: faltan identidades comerciales individuales y extensión Core de planes/reservas. No confundir con calendario que sigue desplegado.
+- Propuesta posterior de Cecilia: `fullness-club-propuesta-20261031.md`. Precios por categoría y Club de4compras separadas con35% en la cuarta; sólo factibilidad analizada. Pendiente confirmar reemplazo del mensual, seis distintos vs duplicación, semanas/interrupciones/reversiones. No aplicar precios/descuentos ni sustituir reglas anteriores por una propuesta todavía no cerrada.
+
+- Carta presencial `/carta`: `carta-local-implementacion-20261101.md` sustituye el estado de revisión `carta-local-revision-20261031.md`. Ruta/CSS/backoffice/FAQ locales implementados; SQL privado aplicado,25recetas editables por Cecilia,0existencias confirmadas, sin publicación de oferta. Borrador/publicación/CAS/historial y veto por fechas/agotado; stock físico sigue Core. Checkout productivo real403 TENANT_READ_ONLY comunicado a Core; credenciales MP200 no equivalen a pago E2E. Sin push/deploy; iPhone/Safari real y reserva de planes pendientes. Prompt QA/manual y capturas en R:.
 
 Los registros locales no autorizan push, SQL remoto, cambios en Core360 ni cobros por sí mismos. Conservar cambios ajenos y publicar sólo con autorización explícita vigente.

@@ -494,7 +494,7 @@ async function testPrivateMediaRoundTrip({env, qa}) {
 async function testPublicLivePaymentReload({env, qa, supabase}) {
   const source = await createPaidOrder({qa, suffix: "live-public-reload", supabase, liveMode: true});
   const publicOrigin = "https://core360-native-qa.example.invalid";
-  const publicEnv = {...env, CORE360_BASE_URL: publicOrigin, CORE360_COMMERCE_TEST_MODE: "false", MERCADOPAGO_TEST_MODE: "false"};
+  const publicEnv = {...env, CORE360_BASE_URL: publicOrigin, CORE360_COMMERCE_TEST_MODE: "false"};
   const {data: reloaded, error} = await supabase.from("orders")
     .select("id,currency,total_clp,mercadopago_external_reference,payments(provider,provider_payment_id,status,transaction_amount_clp,currency,paid_at,live_mode:raw_payload->live_mode)")
     .eq("id", source.order.id).maybeSingle();

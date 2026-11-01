@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {availabilityStatus,approvedMenuDraft} from '../src/lib/local-menu.js';
+import {normalizeLocalMenu,readLocalMenu} from '../server/local-menu.mjs';
+const id='10000000-0000-4000-8000-000000000001';
+const now=new Date('2026-11-02T02:59:00Z'); // Still Nov1 in Santiago.
+assert.equal(availabilityStatus({state:'available',startsOn:'2026-11-01',endsOn:'2026-11-01'},now).available,true);
+assert.equal(availabilityStatus({state:'available',startsOn:'2026-11-02'},now).code,'scheduled');
+assert.equal(availabilityStatus({state:'available',endsOn:'2026-10-31'},now).code,'ended');
+for(const state of ['unconfirmed','sold_out','paused'])assert.equal(availabilityStatus({state},now).available,false);
+const draft=approvedMenuDraft();assert.equal(draft.items.length,21);assert.ok(draft.items.every(r=>r.state==='unconfirmed'));normalizeLocalMenu(draft);
+const item={id:'real-library',name:'Receta real',description:'Descripción',section:'individuales',libraryMealId:id,lunchSlot:1,price:9800,state:'available',startsOn:'',endsOn:''};
+const document={lunchPrice:13500,lunchDescription:'Menú completo',items:[item]};
+assert.equal(normalizeLocalMenu(document).items[0].price,9800);
+for(const bad of [{price:9800.1},{price:-1},{price:'9800'},{name:''},{section:'otro'},{state:'otro'},{startsOn:'2026-02-30'},{startsOn:'2026-11-03',endsOn:'2026-11-01'},{lunchSlot:6},{libraryMealId:''}])assert.throws(()=>normalizeLocalMenu({...document,items:[{...item,...bad}]}));
+assert.throws(()=>normalizeLocalMenu({...document,items:[item,{...item,id:'two'}]}),/Lunch/);
+const tables={local_menu_settings:[{id:true,revision:1,document,published_document:document,published_at:'2026-11-01T15:00:00Z'}],mealprep_availability:[{library_meal_id:id,state:'available',starts_on:'2026-11-01',ends_on:'2026-11-01',revision:1}],meal_library_items:[{id,name:'Receta real',description:'Real',is_active:true,photo_url:''}]};
+const supabase={from(table){const q={select(){return q},eq(){return q},order(){return q},single(){return Promise.resolve({data:tables[table][0]})},then(r){return Promise.resolve({data:tables[table]}).then(r)}};return q;}};
+let result=await readLocalMenu({supabase,now});assert.equal(result.items.length,1);assert.equal(result.mealpreps.length,1);assert.equal('availability'in result,false);
+tables.mealprep_availability[0].state='sold_out';result=await readLocalMenu({supabase,now});assert.equal(result.items.length,0);assert.equal(result.mealpreps.length,0);
+tables.mealprep_availability[0].state='available';tables.local_menu_settings[0].document.items.push({...item,id:'draft-only',name:'Borrador invisible'});
+tables.local_menu_settings[0].published_document={...document,items:[item]};result=await readLocalMenu({supabase,now});assert.equal(result.items.length,1);
+tables.local_menu_settings[0].published_document=null;assert.equal((await readLocalMenu({supabase,now})).published,false);
+console.log('PASS local menu: real links, no draft leakage, explicit availability, inclusive Santiago dates, typed prices, lunch slots, safe empty state.');

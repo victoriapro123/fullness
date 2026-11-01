@@ -1,8 +1,16 @@
 import {createHash, randomUUID} from "node:crypto";
 import {assertDeliveryServiceSnapshot, deliveryServiceBinding, deliveryServiceCoreLine, deliveryServiceError, snapshotDeliveryService} from "./delivery-service.mjs";
+import {CORE_PLAN_CONTRACT,createCorePlanRequest,assertCorePlanPreview,assertCorePlanReservation} from './core360-plan-contract.mjs';
 
 const CORE360_API_PREFIX = "/api/commerce/v1";
 const CORE360_EVENT_TYPE = "web_order.payment_approved";
+const CORE360_ORDER_CREATED_EVENT_TYPE = "web_order.created";
+const CORE360_ORDER_CANCELLATION_EVENT_TYPE = "web_order.cancellation_requested";
+const CORE360_ORDER_REFUND_EVENT_TYPE = "web_order.refund_observed";
+const CORE360_OPERATIONAL_EVENT_TYPES = new Set([
+  CORE360_ORDER_CANCELLATION_EVENT_TYPE,
+  CORE360_ORDER_REFUND_EVENT_TYPE
+]);
 const CORE360_SCHEMA_VERSION = 2;
 const OUTBOX_TABLE = "core360_commerce_outbox";
 const CUSTOMER_MAPPING_TABLE = "core360_customer_mappings";
@@ -25,6 +33,7 @@ const RETRY_MAX_DELAY_MS = 60 * 60 * 1000;
 let lastCore360PollEpochMs = 0;
 const RECONCILE_ORDER_SELECT = [
   "id",
+  "checkout_mode",
   "client_id",
   "status",
   "payment_status",
@@ -48,6 +57,17 @@ export function isCore360CommerceSyncEnabled(env = process.env) {
 export function isCore360CommerceDeliveryEnabled(env = process.env) {
   return isCore360CommerceSyncEnabled(env)
     && cleanText(env.CORE360_COMMERCE_DELIVERY_ENABLED).toLowerCase() === "true";
+}
+
+/**
+ * Creating an unpaid Core360 order is intentionally a separate opt-in from
+ * the historical payment outbox.  That outbox is restricted to confirmed
+ * Mercado Pago facts; turning it on must never make a newly deployed checkout
+ * create unpaid orders unexpectedly.
+ */
+export function isCore360CommerceOrderSyncEnabled(env = process.env) {
+  return isCore360CommerceDeliveryEnabled(env)
+    && cleanText(env.CORE360_COMMERCE_ORDER_SYNC_ENABLED).toLowerCase() === "true";
 }
 
 /**
@@ -140,6 +160,67 @@ export async function readCore360Stock({env = process.env, fetchImpl = fetch, qu
   });
 
   return {enabled: true, ...result};
+}
+
+export async function readCore360PlanProfiles({env=process.env,fetchImpl=fetch}={}) {
+  if(!isCore360CommerceReadEnabled(env))throw core360Error('PLAN_READ_DISABLED','La consulta de perfiles Core360 no está habilitada.');
+  return requestCore360Read({config:getCore360ReadConfig(env),fetchImpl,path:'/plan-profiles',query:{}});
+}
+
+// Live observations for the builder, not an inventory ledger or reservation.
+export async function readCore360PlanFacts({env=process.env,fetchImpl=fetch,mappings=[]}={}){
+  if(!mappings.length)return {prices:[],stocks:[]};
+  await expireCore360Plans({env,fetchImpl});
+  const [products,stockRows]=await Promise.all([
+    collectCore360ReadPages({env,fetchImpl,query:{quantities:core360MappingQuantities(mappings)},read:readCore360Catalog}),
+    collectCore360ReadPages({env,fetchImpl,read:readCore360Stock})
+  ]);
+  const observedAt=new Date().toISOString(),prices=[],stocks=[];
+  for(const m of mappings){
+    const p=products.find(p=>p.id===m.core_item_id),c=normalizeCore360CommercialProjection({mapping:m,product:p});
+    prices.push({source_menu_item_id:m.source_menu_item_id,core_item_id:m.core_item_id,core_item_available:c.coreItemAvailable&&p?.canUseInPlan===true,price_available:c.priceAvailable,uom_compatible:c.uomCompatible,factor_compatible:c.factorCompatible,currency:c.currency,gross_minor:c.grossMinor,quantity_milli_per_unit:c.quantityMilliPerUnit});
+    stocks.push({source_menu_item_id:m.source_menu_item_id,core_item_id:m.core_item_id,observed_at:observedAt,...planStockObservation(p,stockRows,m.core_item_id)});
+  }
+  return {prices,stocks};
+}
+
+// /stock rows identify a balance by id, and its product by item_id. The
+// catalog carries the canonical aggregate; never mistake one warehouse for it.
+export function planStockObservation(product,rows,itemId){
+  const balances=rows.filter(r=>(r.item_id||r.itemId||r.id)===itemId);
+  const canonical=product?.available_milli??product?.availableMilli;
+  const values=balances.map(r=>r.available_milli??r.availableMilli);
+  const known=product?.inventory_enabled===true&&balances.length>0&&balances.every(r=>r.stockKnown!==false&&r.stock_known!==false)&&values.every(v=>/^\d+$/.test(String(v??'')));
+  const available=canonical??(known?values.reduce((n,v)=>n+BigInt(v),0n).toString():null);
+  return {inventory_managed:product?.inventory_enabled===true,stock_known:known&&/^\d+$/.test(String(available??'')),available_milli:available};
+}
+
+export async function expireCore360Plans({env=process.env,fetchImpl=fetch}={}){
+  if(env.FULLNESS_CUSTOM_PLANS_ENABLED!=='true'||!isCore360CommerceOrderSyncEnabled(env))return {skipped:true};
+  return requestCore360({body:{limit:25},config:getCore360Config(env),fetchImpl,path:'/plan-checkouts/expire'});
+}
+
+export async function cancelCore360PlanCheckout({env=process.env,fetchImpl=fetch,externalOrderId,supabase}={}){
+  if(!isCore360CommerceOrderSyncEnabled(env))return {skipped:true};
+  const canonical=await readCore360CanonicalOrder({env,fetchImpl,externalOrderId});
+  if(canonical?.plan?.status!=='held')return {skipped:true,reason:'not-held'};
+  const queued=await enqueueCore360OperationalEvent({env,supabase,eventKind:'cancellation_requested',externalOrderId,
+    externalEventId:deterministicCore360EventId(`plan_checkout_cancelled:${externalOrderId}:v1`),observedAt:new Date().toISOString(),issuedOn:chileBusinessDate(new Date()),confirmed:true,
+    expectedVersion:canonical.version,expectedDocumentVersion:canonical.order?.version,expectedSourceVersion:canonical.sourceVersion,reason:'Checkout de plan cancelado antes del pago'});
+  if(!queued.eventId)throw core360Error('PLAN_CANCELLATION_NOT_QUEUED','La liberación quedó pendiente de vencimiento canónico.');
+  return deliverCore360OutboxEvent({env,fetchImpl,event:{id:queued.eventId},supabase});
+}
+
+export async function previewCore360Plans({env=process.env,fetchImpl=fetch,groups,items,deliveryService,externalOrderId,issuedOn,total}={}) {
+  if(env.FULLNESS_CUSTOM_PLANS_ENABLED!=='true'||!isCore360CommerceOrderSyncEnabled(env))throw core360Error('PLAN_CHECKOUT_DISABLED','La reserva canónica de planes aún no está habilitada. No se creó un cobro.');
+  const profiles=await readCore360PlanProfiles({env,fetchImpl});
+  if(profiles.contractVersion!==CORE_PLAN_CONTRACT)throw core360Error('PLAN_CONTRACT_UNAVAILABLE','Core360 no confirmó la versión de planes.');
+  const config=getCore360Config(env);
+  await expireCore360Plans({env,fetchImpl});
+  const request=createCorePlanRequest({groups,items,profiles:profiles.rows,deliveryService,externalOrderId,issuedOn,priceListId:config.priceListId});
+  const result=await requestCore360({body:request,config,fetchImpl,path:'/plan-checkouts/preview'});
+  const checkout=assertCorePlanPreview({request,result,total});
+  return {enabled:true,request,checkout,result};
 }
 
 /**
@@ -294,6 +375,55 @@ export async function readCore360OrderStates({env = process.env, fetchImpl = fet
   });
 
   return {enabled: true, ...result};
+}
+
+/**
+ * Reads one canonical order after an authenticated Core notification. Unlike
+ * the periodic poller, this is an explicit request/response operation and is
+ * not gated by CORE360_COMMERCE_POLL_ENABLED. The caller still has to validate
+ * the inbound notification before invoking it.
+ */
+export async function readCore360CanonicalOrder({env = process.env, fetchImpl = fetch, externalOrderId} = {}) {
+  const orderId = cleanText(externalOrderId);
+  if (!orderId) {
+    throw core360Error("MISSING_EXTERNAL_ORDER_ID", "Debes indicar externalOrderId para consultar el estado Core360.");
+  }
+  const config = getCore360ReadConfig(env);
+  return requestCore360Read({
+    config,
+    fetchImpl,
+    path: `/orders/${encodeURIComponent(orderId)}`
+  });
+}
+
+/**
+ * Persists only a freshly read canonical Core360 representation. Both the
+ * outbound order path and the inbound webhook use this same projection so a
+ * notification can never become the source of commercial truth by itself.
+ */
+export async function projectCanonicalCore360OrderState({
+  env = process.env,
+  expectedCoreOrderId,
+  externalOrderId,
+  fetchImpl = fetch,
+  now = new Date(),
+  state,
+  supabase
+} = {}) {
+  if (!supabase?.rpc) {
+    throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para proyectar el estado Core360.");
+  }
+  const orderId = cleanText(externalOrderId);
+  const canonical = state || await readCore360CanonicalOrder({env, externalOrderId: orderId, fetchImpl});
+  const projection = normalizeCore360OrderState({
+    expectedCoreOrderId: cleanText(expectedCoreOrderId),
+    orderId,
+    polledAt: new Date(now).toISOString(),
+    state: canonical
+  });
+  const {data, error} = await supabase.rpc("project_core360_commerce_order_state", projection);
+  if (error) throw core360Error("ORDER_STATE_PROJECTION_WRITE_FAILED", "No pudimos guardar el estado Core360.", error);
+  return {persisted: data === true, projection, state: canonical};
 }
 
 /**
@@ -549,6 +679,11 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
 
   const customer = asRecord(order?.customer_snapshot);
   const paidAt = cleanText(payment?.paid_at || order?.paid_at) || new Date().toISOString();
+  // The commercial document is born with the checkout order, not when the
+  // payment notification happens. This matters if a pending-order delivery is
+  // retried after payment: its idempotent creation request must retain the
+  // same issuing day as the original unpaid event.
+  const issuedAt = cleanText(order?.ordered_at || order?.created_at) || paidAt;
 
   const lines = sourceItems.map((item) => buildSourceLine(item));
   const idempotencyKey = `${CORE360_EVENT_TYPE}:${orderId}:v2`;
@@ -556,7 +691,7 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
 
   return {
     channel: "fullness-web",
-    eventId: deterministicEventId(idempotencyKey),
+    eventId: deterministicCore360EventId(idempotencyKey),
     event: CORE360_EVENT_TYPE,
     idempotencyKey,
     occurredAt: paidAt,
@@ -568,9 +703,10 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
       deliveryGrossMinor: String(asNonNegativeInteger(order?.delivery_fee_clp, "El costo de despacho no es válido.")),
       ...(Number(order?.delivery_fee_clp) > 0 ? {deliveryService: customer.deliveryService || null} : {}),
       discountGrossMinor: String(asNonNegativeInteger(order?.discount_clp, "El descuento no es válido.")),
+      ...(customer.corePlanCheckout?{planCheckout:customer.corePlanCheckout}:{}),
       externalOrderId: orderId,
       id: orderId,
-      issuedOn: chileBusinessDate(paidAt),
+      issuedOn: chileBusinessDate(issuedAt),
       subtotalClp: asNonNegativeInteger(order?.subtotal_clp, "El subtotal de la orden no es válido."),
       subtotalGrossMinor: String(asNonNegativeInteger(order?.subtotal_clp, "El subtotal de la orden no es válido.")),
       totalClp,
@@ -603,10 +739,125 @@ export function buildCore360PaymentApprovedEvent({items, order, payment}) {
 }
 
 /**
+ * Builds the immutable creation fact for an unpaid web order. It shares the
+ * frozen product snapshot contract with the payment path but deliberately has
+ * no Mercado Pago dependency, outbox row or fiscal side effect.
+ */
+export function buildCore360UnpaidOrderEvent({items, order}) {
+  const orderId = cleanText(order?.id);
+  const totalClp = asPositiveInteger(order?.total_clp, "El total de la orden no es válido para Core360.");
+  if (!isUuid(orderId)) throw core360Error("INVALID_ORDER", "La orden no tiene un UUID válido para Core360.");
+  if (cleanText(order?.currency || "CLP") !== "CLP") {
+    throw core360Error("UNSUPPORTED_CURRENCY", "Core360 Commerce espera montos CLP.");
+  }
+
+  const sourceItems = Array.isArray(items) ? items : [];
+  if (sourceItems.length === 0) {
+    throw core360Error("MISSING_ORDER_ITEMS", "La orden no tiene líneas para Core360.");
+  }
+
+  const lines = sourceItems.map((item) => buildSourceLine(item));
+  const customer = asRecord(order?.customer_snapshot);
+  const occurredAt = cleanText(order?.ordered_at || order?.created_at) || new Date().toISOString();
+  const idempotencyKey = `web_order.created:${orderId}:v2`;
+  const catalogVersions = uniqueDefined(lines.map((line) => line.commercial.catalogVersion));
+  const event = {
+    channel: "fullness-web",
+    eventId: deterministicCore360EventId(idempotencyKey),
+    event: "web_order.created",
+    idempotencyKey,
+    occurredAt,
+    schemaVersion: CORE360_SCHEMA_VERSION,
+    order: {
+      catalogVersion: catalogVersions.length === 1 ? catalogVersions[0] : null,
+      deliveryFeeClp: asNonNegativeInteger(order?.delivery_fee_clp, "El costo de despacho no es válido."),
+      discountClp: asNonNegativeInteger(order?.discount_clp, "El descuento no es válido."),
+      deliveryGrossMinor: String(asNonNegativeInteger(order?.delivery_fee_clp, "El costo de despacho no es válido.")),
+      ...(Number(order?.delivery_fee_clp) > 0 ? {deliveryService: customer.deliveryService || null} : {}),
+      discountGrossMinor: String(asNonNegativeInteger(order?.discount_clp, "El descuento no es válido.")),
+      ...(customer.corePlanCheckout?{planCheckout:customer.corePlanCheckout}:{}),
+      externalOrderId: orderId,
+      id: orderId,
+      issuedOn: chileBusinessDate(occurredAt),
+      subtotalClp: asNonNegativeInteger(order?.subtotal_clp, "El subtotal de la orden no es válido."),
+      subtotalGrossMinor: String(asNonNegativeInteger(order?.subtotal_clp, "El subtotal de la orden no es válido.")),
+      totalClp,
+      totalGrossMinor: String(totalClp),
+      currency: "CLP",
+      fulfillment: {
+        address: cleanText(customer.address),
+        comuna: cleanText(customer.comuna),
+        instructions: cleanText(customer.instructions || order?.note),
+        mode: cleanText(customer.mode) || "delivery"
+      }
+    },
+    customer: {
+      externalCustomerId: externalCustomerIdFor(orderId, order?.client_id),
+      email: cleanText(customer.email).toLowerCase(),
+      phone: cleanText(customer.phone),
+      title: cleanText(customer.name)
+    },
+    payment: {method: "other", reference: "", status: "unpaid"},
+    lines
+  };
+  assertCore360OrderTotals(event);
+  assertNoUnmappedOrderAdjustments(event);
+  return event;
+}
+
+/**
+ * Creates or deterministically replays one unpaid Core360 order and then
+ * persists its canonical representation. No payment, email, stock movement
+ * or fiscal operation is performed by this path.
+ */
+export async function deliverCore360UnpaidOrder({env = process.env, fetchImpl = fetch, items, order, supabase} = {}) {
+  if (!isCore360CommerceOrderSyncEnabled(env)) {
+    return {enabled: false, skipped: true, reason: "order-sync-disabled"};
+  }
+  if (!supabase?.from || typeof supabase.rpc !== "function") {
+    throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para entregar la orden Core360.");
+  }
+
+  const event = buildCore360UnpaidOrderEvent({items, order});
+  if(event.order.planCheckout)throw core360Error('PLAN_DURABLE_OUTBOX_REQUIRED','Los planes deben reservarse mediante su outbox persistido.');
+  const config = getCore360Config(env);
+  const mappings = await loadProductMappings({
+    supabase,
+    menuItemIds: event.lines.map((line) => line?.source?.menuItemId)
+  });
+  const partnerIdCore = await resolveCore360Customer({config, event, fetchImpl, supabase});
+  const request = createCore360OrderRequest({config: {...config, partnerIdCore}, event, mappings});
+  const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders"});
+  const coreOrderId = cleanText(result?.coreOrderId || result?.id);
+  if (!coreOrderId) {
+    throw core360Error("INVALID_CORE_ORDER_RESPONSE", "Core360 no devolvió el identificador de la orden creada.");
+  }
+  const canonical = await projectCanonicalCore360OrderState({
+    env,
+    expectedCoreOrderId: coreOrderId,
+    externalOrderId: event.order.id,
+    fetchImpl,
+    supabase
+  });
+  return {
+    accepted: true,
+    coreOrderId,
+    event,
+    enabled: true,
+    request: request.order,
+    result,
+    state: canonical
+  };
+}
+
+/**
  * This is the only hook intended for the Mercado Pago reconciliation path.
  * With the default flag it returns before any database or HTTP operation.
  */
 export async function enqueueCore360PaymentApproved({env = process.env, items, order, payment, supabase}) {
+  if (cleanText(order?.checkout_mode).toLowerCase() === "test") {
+    return {enabled: false, skipped: true, reason: "test-checkout"};
+  }
   if (!isCore360CommerceSyncEnabled(env)) {
     return {enabled: false, skipped: true, reason: "sync-disabled"};
   }
@@ -650,6 +901,105 @@ export async function enqueueCore360PaymentApproved({env = process.env, items, o
     throw core360Error("OUTBOX_IDEMPOTENCY_LOOKUP_FAILED", "No pudimos recuperar el evento Core360 existente.", existingError);
   }
 
+  return {enabled: true, eventId: existing.id, idempotencyKey, reused: true, status: existing.status || "pending"};
+}
+
+/**
+ * Persists the initial unpaid order as a durable event before any checkout
+ * provider preference is created. It uses a different outbox event from the
+ * payment observation so a Core retry cannot re-create the same external
+ * order with different payment facts.
+ */
+export async function enqueueCore360UnpaidOrder({env = process.env, items, order, supabase}) {
+  if (cleanText(order?.checkout_mode).toLowerCase() === "test") {
+    return {enabled: false, skipped: true, reason: "test-checkout"};
+  }
+  if (!isCore360CommerceOrderSyncEnabled(env)) {
+    return {enabled: false, skipped: true, reason: "order-sync-disabled"};
+  }
+  if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para registrar la orden pendiente Core360.");
+
+  const payload = buildCore360UnpaidOrderEvent({items, order});
+  const row = {
+    event_type: CORE360_ORDER_CREATED_EVENT_TYPE,
+    idempotency_key: payload.idempotencyKey,
+    order_id: payload.order.id,
+    payload,
+    schema_version: payload.schemaVersion,
+    source_catalog_version: payload.order.catalogVersion || null,
+    status: "pending"
+  };
+  const {data, error} = await supabase
+    .from(OUTBOX_TABLE)
+    .insert(row)
+    .select("id,status")
+    .maybeSingle();
+  if (!error && data?.id) {
+    return {enabled: true, eventId: data.id, idempotencyKey: payload.idempotencyKey, status: data.status || "pending"};
+  }
+  if (!isUniqueViolation(error)) {
+    throw core360Error("ORDER_OUTBOX_WRITE_FAILED", "No pudimos registrar la orden pendiente Core360.", error);
+  }
+  const {data: existing, error: existingError} = await supabase
+    .from(OUTBOX_TABLE)
+    .select("id,status")
+    .eq("idempotency_key", payload.idempotencyKey)
+    .maybeSingle();
+  if (existingError || !existing?.id) {
+    throw core360Error("ORDER_OUTBOX_IDEMPOTENCY_LOOKUP_FAILED", "No pudimos recuperar la orden pendiente Core360.", existingError);
+  }
+  return {enabled: true, eventId: existing.id, idempotencyKey: payload.idempotencyKey, reused: true, status: existing.status || "pending"};
+}
+
+/**
+ * Persists the only two operational facts Fullness may report after the
+ * original web order exists. This is deliberately not a generic status patch:
+ * Core360 remains the authority and later returns its canonical projection by
+ * signed webhook.
+ */
+export async function enqueueCore360OperationalEvent({env = process.env, supabase, ...input} = {}) {
+  if (!isCore360CommerceOrderSyncEnabled(env)) {
+    return {enabled: false, skipped: true, reason: "order-sync-disabled"};
+  }
+  if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para registrar el evento operativo Core360.");
+
+  const {externalOrderId, request} = createCore360OrderEventRequest(input);
+  const eventType = core360OperationalOutboxType(request.eventKind);
+  const idempotencyKey = `${eventType}:${externalOrderId}:${request.externalEventId}:v1`;
+  const row = {
+    event_type: eventType,
+    idempotency_key: idempotencyKey,
+    order_id: externalOrderId,
+    payload: {
+      event: eventType,
+      externalOrderId,
+      idempotencyKey,
+      request,
+      schemaVersion: CORE360_SCHEMA_VERSION
+    },
+    schema_version: CORE360_SCHEMA_VERSION,
+    source_catalog_version: null,
+    status: "pending"
+  };
+  const {data, error} = await supabase
+    .from(OUTBOX_TABLE)
+    .insert(row)
+    .select("id,status")
+    .maybeSingle();
+  if (!error && data?.id) {
+    return {enabled: true, eventId: data.id, idempotencyKey, status: data.status || "pending"};
+  }
+  if (!isUniqueViolation(error)) {
+    throw core360Error("OPERATIONAL_OUTBOX_WRITE_FAILED", "No pudimos registrar el evento operativo Core360.", error);
+  }
+  const {data: existing, error: existingError} = await supabase
+    .from(OUTBOX_TABLE)
+    .select("id,status")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+  if (existingError || !existing?.id) {
+    throw core360Error("OPERATIONAL_OUTBOX_IDEMPOTENCY_LOOKUP_FAILED", "No pudimos recuperar el evento operativo Core360 existente.", existingError);
+  }
   return {enabled: true, eventId: existing.id, idempotencyKey, reused: true, status: existing.status || "pending"};
 }
 
@@ -788,10 +1138,23 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
   try {
     const persisted = await loadCore360OutboxDispatch({outboxId, leaseToken: claim.token, supabase});
     const persistedPayload = asRecord(persisted?.payload);
-    if (persistedPayload.event !== CORE360_EVENT_TYPE) {
+    const payloadType = cleanText(persistedPayload.event);
+    if (![CORE360_ORDER_CREATED_EVENT_TYPE, CORE360_EVENT_TYPE, ...CORE360_OPERATIONAL_EVENT_TYPES].includes(payloadType)) {
       throw core360Error("INVALID_OUTBOX_EVENT", "El evento persistido Core360 no es válido.");
     }
-    if (!isCore360SyncEventEligible({env, occurredAt: persistedPayload?.occurredAt})) {
+    if (payloadType === CORE360_ORDER_CREATED_EVENT_TYPE && !isCore360CommerceOrderSyncEnabled(env)) {
+      // A roll-out flag can be switched off while a durable creation record is
+      // pending. Keep the record intact and releasable instead of converting a
+      // valid commercial fact into a terminal delivery failure.
+      await updateOutbox(supabase, outboxId, {
+        lease_expires_at: null,
+        lease_token: null,
+        next_attempt_at: null,
+        status: "pending"
+      }, claim.token);
+      return {accepted: false, skipped: true, reason: "order-sync-disabled"};
+    }
+    if (payloadType === CORE360_EVENT_TYPE && !isCore360SyncEventEligible({env, occurredAt: persistedPayload?.occurredAt})) {
       await updateOutbox(supabase, outboxId, {
         last_error: "El pago ocurrió antes del corte operativo Core360.",
         lease_expires_at: null,
@@ -801,22 +1164,19 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
       }, claim.token);
       return {accepted: false, skipped: true, reason: "before-sync-cutover"};
     }
-    assertCore360LivePayment({env, liveMode: persistedPayload.payment?.liveMode});
+    if (payloadType === CORE360_EVENT_TYPE) {
+      assertCore360LivePayment({env, liveMode: persistedPayload.payment?.liveMode});
+    }
     const config = getCore360Config(env);
-    const request = await resolveCore360OutboxRequest({
-      config,
-      event: persistedPayload,
-      fetchImpl,
-      outboxId,
-      persisted,
-      leaseToken: claim.token,
-      supabase
-    });
-
-    const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders"});
+    const delivery = payloadType === CORE360_ORDER_CREATED_EVENT_TYPE
+      ? await deliverCore360CreatedOutboxOrder({config, event: persistedPayload, fetchImpl, outboxId, persisted, leaseToken: claim.token, supabase})
+      : payloadType === CORE360_EVENT_TYPE
+        ? await deliverCore360PaymentOutboxEvent({config, env, event: persistedPayload, fetchImpl, outboxId, persisted, leaseToken: claim.token, supabase})
+        : await deliverCore360OperationalOutboxEvent({config, event: persistedPayload, fetchImpl});
+    const result = delivery.result;
 
     await updateOutbox(supabase, outboxId, {
-      core_order_id: cleanText(result?.coreOrderId || result?.id) || null,
+      core_order_id: cleanText(delivery.coreOrderId || result?.coreOrderId || result?.id) || null,
       core_order_version: optionalVersion(result?.version ?? result?.orderVersion),
       delivered_at: new Date().toISOString(),
       lease_expires_at: null,
@@ -827,9 +1187,9 @@ export async function deliverCore360OutboxEvent({env = process.env, event, fetch
       status: "accepted"
     }, claim.token);
 
-    return {accepted: true, coreOrderId: cleanText(result?.coreOrderId || result?.id) || null, result};
+    return {accepted: true, coreOrderId: cleanText(delivery.coreOrderId || result?.coreOrderId || result?.id) || null, result};
   } catch (error) {
-    const state = error.code === "OUTBOX_REQUEST_INTEGRITY_FAILED" || error.code === "CORE360_NON_LIVE_PAYMENT"
+    const state = error.code === "OUTBOX_REQUEST_INTEGRITY_FAILED" || error.code === "CORE360_NON_LIVE_PAYMENT" || error.code === "CORE360_OBSERVED_PAYMENT_RECONCILIATION_REQUIRED"
       ? "failed"
       : error.code === "PRICE_RECONCILIATION_REQUIRED"
       ? "price_reconciliation_required"
@@ -873,6 +1233,7 @@ export async function recoverCore360CommerceDelivery({
   if (!supabase?.from) throw core360Error("MISSING_SUPABASE", "No hay cliente de Supabase para recuperar el outbox Core360.");
 
   const reconciled = await reconcileMissingCore360ApprovedOrders({cursor, env, limit, supabase});
+  const planExpiry = await expireCore360Plans({env,fetchImpl});
   const candidates = await loadRecoverableCore360OutboxEvents({now, limit, supabase});
   const delivered = [];
   const failed = [];
@@ -884,7 +1245,7 @@ export async function recoverCore360CommerceDelivery({
       failed.push({code: cleanText(error?.code) || "CORE360_DELIVERY_FAILED", eventId: cleanText(event.id)});
     }
   }
-  return {enabled: true, delivered, failed, ...wakeup, reconciled, scanned: candidates.length};
+  return {enabled: true, delivered, failed, ...wakeup, reconciled, planExpiry, scanned: candidates.length};
 }
 
 /**
@@ -982,6 +1343,15 @@ export function createCore360OrderRequest({config, event, mappings}) {
     coreLines.push(deliveryServiceCoreLine(event.order.deliveryService, event.order.deliveryFeeClp));
   }
 
+  const paymentStatus = cleanText(event?.payment?.status) || "unpaid";
+  if (!["unpaid", "observed"].includes(paymentStatus)) {
+    throw core360Error("INVALID_CORE_PAYMENT_STATUS", "La orden Core360 debe declarar payment.status unpaid u observed.");
+  }
+  const paymentReference = cleanText(event?.payment?.reference);
+  if (paymentStatus === "observed" && !paymentReference) {
+    throw core360Error("INVALID_CORE_PAYMENT_STATUS", "Un pago observado requiere una referencia externa.");
+  }
+
   return {
     order: compactUndefined({
       currency: "CLP",
@@ -989,13 +1359,13 @@ export function createCore360OrderRequest({config, event, mappings}) {
       externalOrderId: event.order.id,
       fiscalIntent: config.fiscalIntent,
       issuedOn: event.order.issuedOn,
-      lines: coreLines,
+      lines: consolidateCore360Lines(coreLines),
       partnerId: config.partnerIdCore || undefined,
-      payment: {
+      payment: compactUndefined({
         method: "other",
-        reference: event.payment.reference,
-        status: "observed"
-      },
+        reference: paymentReference || undefined,
+        status: paymentStatus
+      }),
       priceListId: config.priceListId || undefined,
       title: `Pedido web Fullness ${event.order.id.slice(0, 8).toUpperCase()}`
     })
@@ -1046,7 +1416,7 @@ export function createCore360CheckoutPreviewRequest({config, items, deliveryServ
       externalOrderId,
       fiscalIntent: "pending",
       issuedOn: chileBusinessDate(new Date()),
-      lines,
+      lines: consolidateCore360Lines(lines),
       payment: {method: "other", reference: "", status: "unpaid"},
       priceListId: cleanText(config?.priceListId) || undefined,
       title: "Revisión checkout web Fullness"
@@ -1069,6 +1439,25 @@ export async function previewCore360Checkout({env = process.env, fetchImpl = fet
   const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders/preview"});
   assertCore360CheckoutPreview({request: request.order, result});
   return {enabled: true, request: request.order, result};
+}
+
+// Ordinary v1 orders have flat canonical lines. Typed plans use the separate
+// commerce-plans/1 boundary; never flatten them to bypass plan-only validation.
+export function consolidateCore360Lines(lines) {
+  const byId = new Map();
+  for (const line of lines) {
+    const existing = byId.get(line.itemId);
+    if (!existing) { byId.set(line.itemId, {...line}); continue; }
+    for (const field of ['commercialVersion','sku','taxBps','unit','unitGrossMinor']) {
+      if (existing[field] !== line[field]) throw core360Error('CORE360_LINE_CONFLICT', 'Un artículo tiene condiciones comerciales distintas dentro del pedido.');
+    }
+    const quantity = BigInt(existing.quantityMilli) + BigInt(line.quantityMilli);
+    const gross = BigInt(existing.lineGrossMinor) + BigInt(line.lineGrossMinor);
+    if (quantity > BigInt(Number.MAX_SAFE_INTEGER) || gross > BigInt(Number.MAX_SAFE_INTEGER)) throw core360Error('INVALID_CORE_QUANTITY', 'El total Core360 supera el rango seguro.');
+    existing.quantityMilli = String(quantity); existing.lineGrossMinor = String(gross);
+  }
+  if (byId.size > 100) throw core360Error('INVALID_CORE_QUANTITY', 'Core360 admite hasta cien artículos por pedido.');
+  return [...byId.values()];
 }
 
 /** A disabled-by-default Core price/stock assertion before payment. */
@@ -1326,6 +1715,7 @@ async function loadApprovedOrderRecoveryPage({cursor, limit, supabase, syncFrom}
   let ordersQuery = supabase
     .from("orders")
     .select(RECONCILE_ORDER_SELECT)
+    .eq("checkout_mode", "live")
     .eq("status", "paid")
     .eq("payment_status", "approved")
     .gte("paid_at", syncFrom);
@@ -1445,6 +1835,181 @@ async function loadCore360OutboxDispatch({outboxId, leaseToken, supabase}) {
   return data;
 }
 
+async function deliverCore360CreatedOutboxOrder({config, event, fetchImpl, outboxId, persisted, leaseToken, supabase}) {
+  const request = await resolveCore360OutboxRequest({
+    config,
+    event,
+    fetchImpl,
+    outboxId,
+    persisted,
+    leaseToken,
+    supabase
+  });
+  const isPlan=request.order.contractVersion===CORE_PLAN_CONTRACT;
+  const result = await requestCore360({body: request.order, config, fetchImpl, path: isPlan?'/plan-checkouts':"/orders"});
+  if(isPlan)assertCorePlanReservation(result,event.order.id,new Date(),request.order);
+  return {coreOrderId: cleanText(result?.coreOrderId || result?.id), result};
+}
+
+/**
+ * A payment is a separate Core360 event once the initial unpaid order exists.
+ * Legacy rows created before the unpaid-order flag can still recover safely:
+ * if GET returns 404, their sealed request is sent byte-for-byte. A legacy
+ * request may itself contain an observed payment; after creation (or a GET of
+ * an existing legacy order), it is accepted only after exact reconciliation,
+ * never by re-posting a second payment observation.
+ */
+async function deliverCore360PaymentOutboxEvent({config, env, event, fetchImpl, outboxId, persisted, leaseToken, supabase}) {
+  let canonical;
+  if (isCore360CommerceOrderSyncEnabled(env)) {
+    try {
+      canonical = await readCore360CanonicalOrder({env, externalOrderId: event.order?.id, fetchImpl});
+    } catch (error) {
+      if (error?.statusCode !== 404) throw error;
+      const unpaidEvent = unpaidEventFromPaymentEvent(event);
+      const created = await deliverCore360CreatedOutboxOrder({
+        config,
+        event: unpaidEvent,
+        fetchImpl,
+        outboxId,
+        persisted,
+        leaseToken,
+        supabase
+      });
+      canonical = await readCore360CanonicalOrder({env, externalOrderId: event.order?.id, fetchImpl});
+      if (cleanText(canonical?.coreOrderId || canonical?.id) !== cleanText(created.coreOrderId)) {
+        throw core360Error("INVALID_CORE_ORDER_STATE", "Core360 devolvió una orden distinta durante la recuperación de pago.");
+      }
+    }
+    if (canonicalPaymentAlreadyObserved({canonical, event})) {
+      return {
+        coreOrderId: cleanText(canonical?.coreOrderId || canonical?.id),
+        result: canonical
+      };
+    }
+    const {externalOrderId, request} = createCore360OrderEventRequest({
+      amountMinor: event.payment?.amountGrossMinor || event.payment?.amountClp,
+      currency: "CLP",
+      eventKind: "payment_observed",
+      externalEventId: event.eventId,
+      externalOrderId: event.order?.id,
+      externalReference: event.payment?.reference,
+      observedAt: event.occurredAt
+    });
+    const result = await requestCore360({
+      body: request,
+      config,
+      fetchImpl,
+      path: `/orders/${encodeURIComponent(externalOrderId)}/events`
+    });
+    return {
+      coreOrderId: cleanText(result?.coreOrderId || result?.id || canonical?.coreOrderId || canonical?.id),
+      result
+    };
+  }
+
+  // Compatibility path for the explicitly disabled unpaid-order rollout. It
+  // remains only to avoid changing deployed historical behavior before the
+  // new order-sync flag is intentionally enabled.
+  const request = await resolveCore360OutboxRequest({
+    config,
+    event,
+    fetchImpl,
+    outboxId,
+    persisted,
+    leaseToken,
+    supabase
+  });
+  const result = await requestCore360({body: request.order, config, fetchImpl, path: "/orders"});
+  return {coreOrderId: cleanText(result?.coreOrderId || result?.id), result};
+}
+
+function canonicalPaymentAlreadyObserved({canonical, event}) {
+  const payment = asRecord(canonical?.payment);
+  if (cleanText(payment.status).toLowerCase() !== "observed") return false;
+
+  const expectedExternalOrderId = cleanText(event?.order?.id);
+  const expectedCoreOrderId = cleanText(canonical?.coreOrderId || canonical?.id);
+  const document = asRecord(canonical?.order);
+  const expectedAmount = String(asPositiveInteger(
+    event?.payment?.amountGrossMinor || event?.payment?.amountClp,
+    "El pago observado Fullness no tiene monto válido."
+  ));
+  const actualAmount = coreCanonicalOrderAmount(document);
+  const expectedCurrency = cleanText(event?.order?.currency || "CLP");
+  const actualCurrency = cleanText(document.currency || canonical?.currency);
+  const expectedReference = cleanText(event?.payment?.reference);
+  const actualReference = cleanText(payment.reference);
+  const canonicalExternalOrderId = cleanText(canonical?.externalOrderId);
+  const canonicalDocumentId = cleanText(document.id);
+
+  if (
+    !expectedExternalOrderId
+    || !expectedCoreOrderId
+    || canonicalExternalOrderId !== expectedExternalOrderId
+    || canonicalDocumentId !== expectedCoreOrderId
+    || !actualAmount
+    || actualAmount !== expectedAmount
+    || actualCurrency !== expectedCurrency
+    || !expectedReference
+    || actualReference !== expectedReference
+  ) {
+    throw core360Error(
+      "CORE360_OBSERVED_PAYMENT_RECONCILIATION_REQUIRED",
+      "Core360 ya informa un pago observado que no coincide exactamente con la orden Fullness; requiere conciliación manual."
+    );
+  }
+  return true;
+}
+
+function coreCanonicalOrderAmount(document) {
+  const value = document?.total_minor ?? document?.totalMinor ?? document?.total_clp ?? document?.totalClp;
+  if (value === undefined || value === null || value === "") return "";
+  try {
+    return String(asPositiveInteger(value, "El total Core360 no es válido."));
+  } catch {
+    return "";
+  }
+}
+
+async function deliverCore360OperationalOutboxEvent({config, event, fetchImpl}) {
+  const externalOrderId = cleanText(event?.externalOrderId);
+  const request = asRecord(event?.request);
+  const expectedType = core360OperationalOutboxType(request.eventKind);
+  if (!externalOrderId || !CORE360_OPERATIONAL_EVENT_TYPES.has(expectedType) || cleanText(event?.event) !== expectedType) {
+    throw core360Error("INVALID_OUTBOX_EVENT", "El evento operativo Core360 persistido no es válido.");
+  }
+  const result = await requestCore360({
+    body: request,
+    config,
+    fetchImpl,
+    path: `/orders/${encodeURIComponent(externalOrderId)}/events`
+  });
+  return {coreOrderId: cleanText(result?.coreOrderId || result?.id), result};
+}
+
+function unpaidEventFromPaymentEvent(event) {
+  const orderId = cleanText(event?.order?.id);
+  if (!orderId) throw core360Error("INVALID_OUTBOX_EVENT", "El pago Core360 no tiene orden externa.");
+  const idempotencyKey = `${CORE360_ORDER_CREATED_EVENT_TYPE}:${orderId}:v2`;
+  return {
+    ...event,
+    event: CORE360_ORDER_CREATED_EVENT_TYPE,
+    eventId: deterministicCore360EventId(idempotencyKey),
+    idempotencyKey,
+    payment: {method: "other", reference: "", status: "unpaid"}
+  };
+}
+
+function core360OperationalOutboxType(eventKind) {
+  const kind = cleanText(eventKind);
+  const eventType = `web_order.${kind}`;
+  if (!CORE360_OPERATIONAL_EVENT_TYPES.has(eventType)) {
+    throw core360Error("INVALID_CORE_ORDER_EVENT", "El evento operativo Core360 no está permitido.");
+  }
+  return eventType;
+}
+
 async function resolveCore360OutboxRequest({config, event, fetchImpl, outboxId, persisted, leaseToken, supabase}) {
   const persistedRequest = asRecord(persisted?.core_request);
   const persistedHash = cleanText(persisted?.core_request_hash);
@@ -1453,9 +2018,15 @@ async function resolveCore360OutboxRequest({config, event, fetchImpl, outboxId, 
     return {order: persistedRequest};
   }
 
-  const mappings = await loadProductMappings({supabase, menuItemIds: event.lines?.map((line) => line?.source?.menuItemId)});
-  const partnerIdCore = await resolveCore360Customer({config, event, fetchImpl, supabase});
-  const request = createCore360OrderRequest({config: {...config, partnerIdCore}, event, mappings});
+  let request;
+  if(event.order?.planCheckout){
+    request={order:event.order.planCheckout};
+    if(request.order.contractVersion!==CORE_PLAN_CONTRACT||request.order.externalOrderId!==event.order.id||request.order.expectedTotalMinor!==String(event.order.totalClp)||request.order.currency!=='CLP')throw core360Error('OUTBOX_REQUEST_INTEGRITY_FAILED','La reserva no coincide con el pedido Fullness.');
+  }else{
+    const mappings = await loadProductMappings({supabase, menuItemIds: event.lines?.map((line) => line?.source?.menuItemId)});
+    const partnerIdCore = await resolveCore360Customer({config, event, fetchImpl, supabase});
+    request = createCore360OrderRequest({config: {...config, partnerIdCore}, event, mappings});
+  }
   const requestHash = core360RequestHash(request.order);
   await updateOutbox(supabase, outboxId, {
     core_request: request.order,
@@ -1468,7 +2039,9 @@ function assertPersistedCore360Request({event, hash, request}) {
   if (!hash || core360RequestHash(request) !== hash || cleanText(request?.externalOrderId) !== cleanText(event?.order?.id)) {
     throw core360Error("OUTBOX_REQUEST_INTEGRITY_FAILED", "La solicitud Core360 persistida no coincide con la orden Fullness y requiere revisión.");
   }
-  if (!Array.isArray(request.lines) || request.lines.length === 0) {
+  if (request.contractVersion===CORE_PLAN_CONTRACT) {
+    if(!event.order?.planCheckout||core360RequestHash(request)!==core360RequestHash(event.order.planCheckout))throw core360Error('OUTBOX_REQUEST_INTEGRITY_FAILED','La composición reservada no coincide con su snapshot.');
+  } else if (!Array.isArray(request.lines) || request.lines.length === 0) {
     throw core360Error("OUTBOX_REQUEST_INTEGRITY_FAILED", "La solicitud Core360 persistida no tiene líneas válidas.");
   }
 }
@@ -1961,15 +2534,16 @@ function normalizeCore360OrderState({expectedCoreOrderId, orderId, polledAt, sta
   const commercial = asRecord(state?.commercial);
   const fulfillment = asRecord(state?.fulfillment);
   const fiscal = asRecord(state?.fiscal);
+  const canonicalState = asRecord(state?.state);
   return {
-    p_commercial_status: cleanText(commercial.status || state?.commercialStatus || state?.status) || "unknown",
+    p_commercial_status: cleanText(commercial.status || canonicalState.order || state?.commercialStatus || state?.status) || "unknown",
     p_core_order_id: coreOrderId,
     p_core_order_version: coreOrderVersion,
     p_fiscal_artifact_reference: cleanText(fiscal.artifactReference || fiscal.artifact_url || state?.fiscalArtifactReference) || null,
     p_fiscal_document_type: cleanText(fiscal.documentType || fiscal.document_type || state?.fiscalDocumentType) || null,
     p_fiscal_folio: cleanText(fiscal.folio || state?.fiscalFolio) || null,
-    p_fiscal_status: cleanText(fiscal.status || state?.fiscalStatus) || "unknown",
-    p_fulfillment_status: cleanText(fulfillment.status || state?.fulfillmentStatus) || null,
+    p_fiscal_status: cleanText(fiscal.status || canonicalState.fiscal || state?.fiscalStatus) || "unknown",
+    p_fulfillment_status: cleanText(fulfillment.status || canonicalState.delivery || state?.fulfillmentStatus) || null,
     p_order_id: orderId,
     p_provider_payload: asRecord(state),
     p_received_at: cleanText(polledAt) || nextCore360PollTimestamp(),
@@ -1994,9 +2568,7 @@ function assertCore360LivePayment({env, liveMode}) {
       && cleanText(env.CORE360_COMMERCE_TEST_MODE).toLowerCase() === "true";
   } catch {}
   if (loopbackQa) return;
-  if (liveMode !== true
-    || cleanText(env.MERCADOPAGO_TEST_MODE).toLowerCase() === "true"
-    || cleanText(env.MERCADOPAGO_ACCESS_TOKEN).startsWith("TEST-")) {
+  if (liveMode !== true) {
     throw core360Error("CORE360_NON_LIVE_PAYMENT", "Core360 productivo requiere un pago Mercado Pago live_mode=true y configuración de cobro real.");
   }
 }
@@ -2076,7 +2648,7 @@ function uniqueDefined(values) {
   return [...new Set((values || []).map(cleanText).filter(Boolean))];
 }
 
-function deterministicEventId(seed) {
+export function deterministicCore360EventId(seed) {
   const hex = createHash("sha256").update(cleanText(seed)).digest("hex");
   const variant = Number.parseInt(hex.slice(16, 18), 16);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${((variant & 0x3f) | 0x80).toString(16).padStart(2, "0")}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;

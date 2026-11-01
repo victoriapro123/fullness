@@ -2,7 +2,7 @@
 export const AVAILABILITY_TIME_ZONE = "America/Santiago";
 export const DISPATCH_RULE_TEXT = "Planes: pedidos hasta el lunes a las 17:00 se despachan el martes. Después, hasta el jueves a las 17:00, se despachan el viernes. Pasado ese corte, se despachan el martes siguiente. Horario de Santiago.";
 export const DISPATCH_CUTOFF_TEXT = "Cortes de planes: lunes y jueves a las 17:00 (Santiago).";
-export const MEALPREP_DISPATCH_RULE_TEXT = "Los mealpreps sueltos, normales y familiares, se preparan a pedido. Fullnesslab coordina su fecha de despacho; no se rigen por los cortes de los planes.";
+export const MEALPREP_DISPATCH_RULE_TEXT = "Los platos familiares se compran por separado. Fullness Lab coordina su fecha de despacho; no se rigen por los cortes de los planes. Los mealpreps normales no se venden individualmente.";
 const MODES = new Set(["always", "paused", "scheduled"]);
 const santiagoClock = new Intl.DateTimeFormat("en-CA", {timeZone: AVAILABILITY_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"});
 
@@ -20,7 +20,7 @@ export function santiagoDate(now = new Date()) {
 }
 
 export function isPlanProduct(product) {
-  return (product?.productType || product?.product_type) === "plan";
+  return product?.kind==='custom_plan'||Boolean(product?.custom_plan)||(product?.productType || product?.product_type) === "plan";
 }
 
 export function getProductDispatchRule(product) {
