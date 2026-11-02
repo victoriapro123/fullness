@@ -17,6 +17,7 @@ for(const failure of [null,'preview','reservation','outbox','mercadopago']){
  };
  const execute=()=>createCheckoutPreference({cart,fulfillment:{mode:'pickup',name:'QA',email:'qa@example.invalid',phone:'999999999'},request:{headers:{}},expectedAmount:60000,dependencies});
  if(failure)await assert.rejects(execute());else {const response=await execute();assert.equal(response.amount,60000);assert.equal(items.length,6);assert.deepEqual(events,['preview','insert:orders','insert:order_items','queue','reserve','mercadopago']);}
+ for(const item of items){assert.deepEqual(item.product_snapshot.customPlan,group,'Plan snapshot ABI stays intact');assert.equal(item.product_snapshot.planStructure,'custom_stock_plan_v1');}
  if(['preview','reservation','outbox'].includes(failure))assert.ok(!events.includes('mercadopago'));
  if(failure==='preview')assert.equal(orders.length,0);
  if(failure==='mercadopago')assert.ok(events.includes('cancel-reservation'));

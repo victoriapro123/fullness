@@ -1000,7 +1000,7 @@ function buildProductSnapshot(product, now = new Date()) {
     benefitTags: product.benefit_tags,
     servingLabel: product.serving_label,
     dispatchPlan: product.dispatch_plan || null,
-    customPlan: product.custom_plan || null,
+    ...(product.custom_plan ? {customPlan: product.custom_plan} : {}),
     allergens:Array.isArray(product.allergens)?product.allergens:[],
     planStructure: product.custom_plan ? "custom_stock_plan_v1" : Array.isArray(product.dispatch_plan) ? "dispatch_calendar_v1" : isMonthlyPlan(product)
       ? "monthly_weeks_v1"
