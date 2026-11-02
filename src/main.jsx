@@ -107,6 +107,7 @@ import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
 import {StockLetterAdmin} from "./components/stock-letter-admin.jsx";
+import {MealprepStockProvider,MealprepStockStatus} from './components/mealprep-stock.jsx';
 import {LocalMenuPage} from "./components/local-menu-page.jsx";
 import {LocalMenuAdmin,MealprepAvailabilityAdmin} from "./components/local-menu-admin.jsx";
 import {PLAN_CONDITIONS} from "./lib/local-menu.js";
@@ -11171,6 +11172,7 @@ function App() {
                     )}
 
                     {activeBackofficeModule === "meal-library" && (
+                      <MealprepStockProvider key={authUser?.id||'stock-no-user'} draftKey={`fullness_stock_counts_${authUser?.id||''}`}>
                       <div className="backoffice-catalog-view">
                         <section className="backoffice-catalog-panel" aria-label="Mealpreps configurados">
                           <div className="backoffice-catalog-heading">
@@ -11222,6 +11224,7 @@ function App() {
                                       {item.isActive ? "Activo" : "Inactivo"}
                                     </span>
                                   </div>
+                                  <MealprepStockStatus recipeId={item.id} compact/>
                                   <div className="backoffice-card-actions">
                                     <button type="button" onClick={() => openMealLibraryItemForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
                                       <Pencil size={16} />
@@ -11311,6 +11314,7 @@ function App() {
                                 </p>
                               )}
 
+                              <MealprepStockStatus key={mealLibraryForm.id||'new-mealprep-stock'} recipeId={mealLibraryForm.id}/>
                               <section className="backoffice-editor-section" aria-labelledby="library-general-title">
                                 <header>
                                   <p className="eyebrow">Mealprep</p>
@@ -11417,6 +11421,7 @@ function App() {
                           </div>
                         )}
                       </div>
+                      </MealprepStockProvider>
                     )}
 
                     {activeBackofficeModule === "family-products" && (

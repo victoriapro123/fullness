@@ -1,0 +1,16 @@
+import assert from'node:assert/strict';import{validateStockConfig,publicStockConfig}from'../server/stock-handoff-config.mjs';import{stockClientPolicy}from'../src/lib/stock-handoff-policy.js';
+import{loadStockHandoffConfig}from'../server/stock-handoff-metadata.mjs';
+const qa={environment:'qa',productionEnabled:false,sourceIssuer:'http://127.0.0.1:3120',coreIssuer:'http://127.0.0.1:3151',corePage:'http://127.0.0.1:3151/stock-handoff',sourceMetadataEndpoint:'http://127.0.0.1:3120/api/backoffice/mealprep-stock-handoff',maxIntentAge:600,maxMetadataAge:60,maxResultAge:300,consumers:['fullness.mealprep-list.stock.v1'],bindingEnabled:true};
+assert.equal(validateStockConfig(qa),qa);const pub=publicStockConfig(qa);assert.equal(stockClientPolicy(pub,qa.sourceIssuer).corePage,qa.corePage);
+for(const changed of [{productionEnabled:true},{sourceIssuer:'https://fullnesslab.com'},{corePage:'http://127.0.0.1:3024/stock-handoff'},{sourceMetadataEndpoint:'https://evil.invalid/api'},{maxMetadataAge:0},{environment:'unknown'}])assert.throws(()=>validateStockConfig({...qa,...changed}));
+const prod={...qa,environment:'production',productionEnabled:true,sourceIssuer:'https://www.fullnesslab.com',coreIssuer:'https://core.prof3sional.com',corePage:'https://core.prof3sional.com/stock-handoff',sourceMetadataEndpoint:'https://www.fullnesslab.com/api/backoffice/mealprep-stock-handoff',signingKeys:{own:{kid:'source-production-intent',environment:'production'}},peerKeys:{peer:{kid:'core-production-result',environment:'production'}}};
+assert.equal(validateStockConfig(prod),prod);assert.equal(stockClientPolicy(publicStockConfig(prod),prod.sourceIssuer).corePage,prod.corePage);
+for(const changed of [{productionEnabled:false},{sourceIssuer:'https://fullnesslab.com'},{coreIssuer:qa.coreIssuer},{signingKeys:{own:{kid:'source-qa-intent',environment:'production'}}},{peerKeys:{peer:{kid:'production-peer'}}}])assert.throws(()=>validateStockConfig({...prod,...changed}));
+assert.throws(()=>stockClientPolicy(null,qa.sourceIssuer));assert.throws(()=>stockClientPolicy(pub,prod.sourceIssuer));assert.throws(()=>stockClientPolicy(publicStockConfig(prod),'https://fullnesslab.com'));assert.throws(()=>stockClientPolicy({...pub,bindingEnabled:false},qa.sourceIssuer,{binding:true}));
+assert.deepEqual(Object.keys(pub).sort(),['bindingEnabled','consumers','corePage','enabled','environment','sourceOrigin'].sort());
+assert.equal((await loadStockHandoffConfig({FULLNESS_STOCK_HANDOFF_CONFIG_JSON:'\uFEFF'+JSON.stringify(qa)})).environment,'qa');
+await assert.rejects(loadStockHandoffConfig({}),/no está habilitado/);
+await assert.rejects(loadStockHandoffConfig({FULLNESS_STOCK_HANDOFF_CONFIG_FILE:'private-path-must-not-be-read',FULLNESS_STOCK_HANDOFF_CONFIG_JSON:JSON.stringify(qa)}),/una sola fuente/);
+await assert.rejects(loadStockHandoffConfig({FULLNESS_STOCK_HANDOFF_CONFIG_JSON:'PRIVATE-MATERIAL-MUST-NOT-LEAK'}),e=>e.statusCode===503&&!e.message.includes('PRIVATE-MATERIAL'));
+await assert.rejects(loadStockHandoffConfig({FULLNESS_STOCK_HANDOFF_CONFIG_FILE:'private-path-must-not-leak'}),e=>e.statusCode===503&&!e.message.includes('private-path'));
+console.log('PASS: registered QA/Production pairs, explicit production opt-in, no alias/body URLs, QA-key rejection and minimal public client config. No production config/key provisioned.');
