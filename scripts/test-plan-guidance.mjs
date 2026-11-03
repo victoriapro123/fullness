@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {planAdditionMessage,normalizePlanSelection} from '../src/lib/custom-plans.js';
+const id=n=>`20000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const item=n=>({id:id(n),priceClp:8900,availableUnits:20,availableForPlans:true});
+const row=(n,quantity,week=1)=>({itemId:id(n),quantity,week});
+assert.equal(planAdditionMessage([],item(1),1),'');
+assert.equal(planAdditionMessage([row(1,1)],item(1),1),'');
+assert.match(planAdditionMessage([row(1,2)],item(1),1),/dos porciones/);
+assert.match(planAdditionMessage([row(1,2),row(2,1)],item(2),1),/Ya elegiste un plato/);
+assert.equal(planAdditionMessage([row(1,2),row(2,1)],item(3),1),'');
+assert.equal(planAdditionMessage([row(1,2),row(2,1,2)],item(2),2),'');
+assert.equal(planAdditionMessage([row(1,1),row(2,1)],item(2),1),'');
+assert.match(planAdditionMessage([row(1,2),...Array.from({length:4},(_,i)=>row(i+2,1))],item(6),1),/seis platos/);
+assert.match(planAdditionMessage([row(1,2),row(1,1,2)],{...item(1),availableUnits:3},3),/no quedan/);
+assert.match(planAdditionMessage([],{...item(1),availableForPlans:false},1),/no quedan/);
+assert.throws(()=>normalizePlanSelection([row(1,2),row(2,2)]),/Sólo un plato/);
+assert.throws(()=>normalizePlanSelection([row(1,2),row(1,1)]),/Máximo 2/);
+console.log('PASS: contextual guidance, weekly boundaries, stock and serialization remain enforced (12 checks).');

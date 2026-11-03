@@ -2915,11 +2915,11 @@ function ShopFamilyCard({ product, index, onAdd, onOpenBenefit, onOpenProduct })
     <article className="shop-plan-card">
       <button className="shop-plan-media-button" type="button" onClick={() => onOpenProduct(product)}>
         <HoverImage primary={primaryImage} secondary={secondaryImage} alt={product.name} />
-        <span>{formatDisplayEyebrow("Único Familiar")}</span>
+        <span>{formatDisplayEyebrow("Plato familiar")}</span>
       </button>
       <div className="shop-plan-body">
         <button className="shop-plan-title-button" type="button" onClick={() => onOpenProduct(product)}>
-          <span>{formatDisplayEyebrow("Único Familiar")}</span>
+          <span>{formatDisplayEyebrow("Compra individual")}</span>
           <h3>{formatDisplayTitle(product.name)}</h3>
           <p>{formatDisplayDescription(product.description)}</p>
         </button>
@@ -2987,7 +2987,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
     },
     {
       id: "family",
-      title: "Único Familiar",
+      title: "Platos familiares",
       products: familyProducts,
       emptyMessage: "Aún no hay mealpreps familiares visibles."
     }
@@ -3042,7 +3042,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
         <p className="products-empty" role="alert">{catalogError}</p>
       ) : (
         <>
-          {stockLetter?.enabled?<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="custom-process-title"><div className="shop-subscription-copy"><p className="eyebrow">A TU MEDIDA</p><h2 id="custom-process-title">TÚ ELIGES LOS PLATOS.</h2><p>Elige un plan semanal de seis o uno mensual de cuatro semanas de seis. Puedes duplicar sólo un plato en cada semana. No hay precio fijo de caja: el total es la suma de tu selección.</p><a className="shop-solid-link" href="#shop-plans" onClick={e=>scrollToBlock(e,'#shop-plans')}>ARMAR MI PLAN <ArrowUpRight size={17}/></a></div><ul className="shop-subscription-benefits">{['Elige entre los platos con disponibilidad confirmada.','Revisa cada semana y su precio en el carrito.','Revisa el total de tu plan antes de pagar.','Los familiares se compran por separado.'].map(text=><li key={text}><CheckCircle2 size={17} aria-hidden="true"/>{text}</li>)}</ul></section>:<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
+          {stockLetter?.enabled?<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="custom-process-title"><div className="shop-subscription-copy"><p className="eyebrow">A TU MEDIDA</p><h2 id="custom-process-title">TÚ ELIGES LOS PLATOS.</h2><p>Una semana o todo el mes: prepara tu plan con los sabores que más te gustan.</p><a className="shop-solid-link" href="#shop-plans" onClick={e=>scrollToBlock(e,'#shop-plans')}>ARMAR MI PLAN <ArrowUpRight size={17}/></a></div><ul className="shop-subscription-benefits">{['Elige seis platos para cada semana.','Combina tus favoritos de la carta.','El total es la suma de los platos que elijas.'].map(text=><li key={text}><CheckCircle2 size={17} aria-hidden="true"/>{text}</li>)}</ul></section>:<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
             <div className="shop-subscription-copy">
               <p className="eyebrow">{formatDisplayEyebrow(settings.subscriptionEyebrow)}</p>
               <h2 id="shop-subscription-title">{formatDisplayTitle(settings.subscriptionTitle)}</h2>
@@ -3105,11 +3105,15 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
               <p>{formatDisplayDescription("Elige el formato que mejor acompañe tu ritmo.")}</p>
             </div>
             {stockLetter?.enabled ? <>
+              <nav className="shop-purchase-paths" aria-label="Formas de comprar">
+                <a href="#custom-plan-builder"><strong>Planes a tu gusto</strong><span>6 platos por semana, elegidos por ti</span><ArrowUpRight size={20} aria-hidden="true"/></a>
+                <a href="#family-dishes"><strong>Platos familiares</strong><span>Compra por plato, fuera de los planes</span><ArrowDown size={20} aria-hidden="true"/></a>
+              </nav>
               <CustomPlanBuilder data={stockLetter} onAdd={onAdd}/>
-              <section className="shop-catalog-section shop-catalog-section-family" aria-labelledby="custom-family-title">
-                <header className="shop-catalog-section-heading"><h3 id="custom-family-title">ÚNICO FAMILIAR</h3><div className="shop-catalog-section-rule" aria-hidden="true"/></header>
-                <p className="checkout-message">Los familiares se compran por separado y su despacho se coordina con Fullnesslab.</p>
+              <section className="shop-catalog-section shop-catalog-section-family shop-family-independent" id="family-dishes" aria-labelledby="custom-family-title">
+                <header className="shop-catalog-section-heading"><div className="shop-catalog-section-rule" aria-hidden="true"/><p className="eyebrow">PARA COMPARTIR</p><h3 id="custom-family-title">PLATOS FAMILIARES</h3><p>Elige un plato para compartir. Se compran individualmente, sin armar un plan.</p><small>Coordinamos contigo la entrega o el retiro.</small></header>
                 <div className="shop-family-grid shop-catalog-grid">{familyProducts.map((product,index)=><ShopFamilyCard key={product.id} product={product} index={index} onAdd={onAdd} onOpenBenefit={onOpenBenefit} onOpenProduct={onOpenProduct}/>)}</div>
+                {!familyProducts.length&&<p className="products-empty">Pronto tendremos más platos para compartir.</p>}
               </section>
             </> : <div className="shop-catalog-stack">
               {catalogSections.map(({ emptyMessage, id, products, title }) => (
@@ -12621,7 +12625,7 @@ function App() {
                 </section>}
 
                 {cart.some(isPlanProduct) && <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>}
-                {cart.some((item)=>item.kind==='custom_plan') && <p className="checkout-message">Elegiste los platos de tu plan. El total es su suma; no se compran mealpreps individualmente. La disponibilidad se revalida antes del pago.</p>}
+                {cart.some((item)=>item.kind==='custom_plan') && <p className="checkout-message">Tu plan incluye los platos que elegiste. Despliega el detalle para revisarlos antes de pagar.</p>}
                 {cart.some((item)=>item.kind!=='custom_plan'&&isPlanProduct(item)&&item.planFrequency==="monthly") && <p className="checkout-message">{MONTHLY_MENU_RULE_TEXT}</p>}
                 {cart.filter((item)=>isPlanProduct(item)&&item.planFrequency==="monthly").map(item=><p className="checkout-message" key={`dispatch-${item.id}`}>Entregas de {item.name}: {buildMonthlyDeliveries(products.find(p=>p.id===item.id)?.calendarRows||[]).map(d=>formatAvailabilityDate(d.dispatchOn)).join(" · ")}. Los menús aún no publicados quedarán por programar.</p>)}
                 {cart.some((item) => !isPlanProduct(item)) && <p className="checkout-message">{MEALPREP_DISPATCH_RULE_TEXT}</p>}

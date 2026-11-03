@@ -1,6 +1,17 @@
 export const CUSTOM_PLAN_STRUCTURE = 'custom_stock_plan_v1';
 export const CUSTOM_PLAN_SIZES = Object.freeze([6,24]);
 export const MAX_MEAL_UNITS_PER_PLAN = 2;
+// Feedback for an attempted addition; the server remains the final validator.
+export function planAdditionMessage(selection,item,week) {
+ const current=selection.filter(row=>(row.week??1)===week);
+ const quantity=current.find(row=>row.itemId===item.id)?.quantity||0;
+ if(quantity>=2)return 'Ya tienes dos porciones de este plato. Elige otro para completar tu semana con más variedad.';
+ if(quantity===1&&current.some(row=>row.quantity===2))return 'Ya elegiste un plato para repetir esta semana. Puedes elegir uno diferente o quitar una porción del que repetiste.';
+ if(current.reduce((sum,row)=>sum+row.quantity,0)>=6)return 'Tu semana ya tiene sus seis platos. Si quieres cambiar uno, quita una porción antes de agregar otro.';
+ const total=selection.filter(row=>row.itemId===item.id).reduce((sum,row)=>sum+row.quantity,0);
+ if(!item.priceClp||item.availableForPlans===false||item.availableUnits===null||total>=item.availableUnits)return 'Por ahora no quedan más porciones de este plato para tu selección. Puedes elegir otra opción de la carta.';
+ return '';
+}
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function planError(message, statusCode=422) {return Object.assign(new Error(message), {statusCode});}
 export function normalizePlanSelection(value,{size=6}={}) {
