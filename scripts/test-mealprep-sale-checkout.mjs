@@ -28,7 +28,7 @@ try{
  const letter=(await db.query('select * from stock_letters')).rows[0];await db.query("update stock_letters set state='active',starts_on=current_date-1,ends_on=current_date+21 where id=$1",[letter.id]);
  await db.exec("update custom_plan_settings set enabled=true,stock_authority='fullness_sale_capacity_v1'");
  for(let i=1;i<=6;i++){await db.query("insert into menu_items(id,slug,name,description,price_clp,is_active,product_type) values($1,$2,$3,'Ingredients are optional free text',$4,true,'mealprep')",[id(10+i),'fixture-'+i,'Fixture plate '+i,8900+i*100]);await db.query('update stock_letter_items set menu_item_id=$1 where letter_id=$2 and position=$3',[id(10+i),letter.id,i]);await db.query('select save_mealprep_sale_capacity($1,3,true,0,$2,$3)',[id(10+i),id(100+i),id(1)]);}
- const catalog=await readSaleLetter({supabase});assert.equal(catalog.items.length,6);assert.ok(catalog.items.every(i=>i.libraryMealId===null&&i.availableUnits===3));
+const catalog=await readSaleLetter({supabase});assert.equal(catalog.items.length,6);assert.ok(catalog.items.every(i=>i.libraryMealId===null&&i.availableForPlans));
  const plan={kind:'custom_plan',letterId:letter.id,revision:letter.revision,size:6,quantity:1,selection:catalog.items.map(i=>({itemId:i.id,week:1,quantity:1}))};
  assert.equal(catalog.items.reduce((n,i)=>n+i.priceClp,0),55500);
  const amount=55500,firstKey=id(200),base={cart:[plan],fulfillment,request,expectedAmount:amount,dependencies:deps};
@@ -56,5 +56,33 @@ try{
  assert.ok((await db.query('select reason from mealprep_sale_capacity_updates')).rows.every(r=>r.reason==='modificado en web'));
  const storageMap=new Map(),storage={getItem:k=>storageMap.get(k)||null,setItem:(k,v)=>storageMap.set(k,v)},customerPayload={cart:[{id:'opaque'}],address:'PRIVATE ADDRESS MUST NOT BE STORED'};
  const keyA=await checkoutAttemptKey(customerPayload,{storage});assert.equal(await checkoutAttemptKey(customerPayload,{storage}),keyA);assert.ok(![...storageMap.values()].join('').includes(customerPayload.address));forgetCheckoutAttemptKey(keyA,{storage});assert.notEqual(await checkoutAttemptKey(customerPayload,{storage}),keyA);
- console.log('PASS autonomous store: Source prices/stock, real SQL composition gates without mappings, quote writes zero, external integration offline, single preference per key, lost response searched not reposted, verified payment consumes once/replay zero, snapshots and async outbox preserved. Synthetic payment only.');
+ // Preserve a historical pending purchase when switching new purchases to active-only.
+ const activeCatalog=await readSaleLetter({supabase});
+ const activePlan={...plan,selection:activeCatalog.items.map(i=>({itemId:i.id,week:1,quantity:1}))};
+ const activeAmount=activeCatalog.items.reduce((sum,i)=>sum+i.priceClp,0);
+ const activeBase={...base,cart:[activePlan],expectedAmount:activeAmount};
+ const historical=await createCheckoutPreference({...activeBase,checkoutKey:id(500)});
+ const balancesBefore=(await db.query('select menu_item_id,quantity,reserved_quantity from mealprep_sale_capacity order by menu_item_id')).rows;
+ await db.exec(await readFile('supabase/migrations/20261103230247_active_only_mealpreps.sql','utf8'));
+ const activePurchase=await createCheckoutPreference({...activeBase,checkoutKey:id(501)});
+ assert.deepEqual((await db.query('select menu_item_id,quantity,reserved_quantity from mealprep_sale_capacity order by menu_item_id')).rows,balancesBefore);
+ const activeAttempt=(await db.query('select quantities from mealprep_sale_checkouts where checkout_key=$1',[id(501)])).rows[0];assert.deepEqual(activeAttempt.quantities,{});
+ payment={...payment,id:'987654321',external_reference:activePurchase.orderId,transaction_amount:activeAmount};
+ await syncMercadoPagoPayment(payment.id,activePurchase.orderId,deps);await syncMercadoPagoPayment(payment.id,activePurchase.orderId,deps);
+ assert.deepEqual((await db.query('select menu_item_id,quantity,reserved_quantity from mealprep_sale_capacity order by menu_item_id')).rows,balancesBefore);
+ payment={...payment,id:'987654322',external_reference:historical.orderId};await syncMercadoPagoPayment(payment.id,historical.orderId,deps);
+ assert.ok((await db.query('select * from mealprep_sale_capacity')).rows.every(r=>r.reserved_quantity===0));
+ await db.exec('update mealprep_sale_capacity set quantity=0');
+ const zeroBalancePurchase=await createCheckoutPreference({...activeBase,checkoutKey:id(502)});assert.ok(zeroBalancePurchase.initPoint);
+ const beforeToggle=(await db.query('select * from mealprep_sale_capacity where menu_item_id=$1',[id(11)])).rows[0];
+ const toggle=await db.query('select save_mealprep_sale_visibility($1,false,$2,$3,$4) r',[id(11),beforeToggle.revision,id(600),id(1)]);
+ assert.equal(toggle.rows[0].r.published,false);
+ await db.query('select save_mealprep_sale_visibility($1,false,$2,$3,$4)',[id(11),beforeToggle.revision,id(600),id(1)]);
+ assert.equal((await readSaleLetter({supabase})).items.length,5);
+ await assert.rejects(createCheckoutPreference({...activeBase,checkoutKey:id(503)}),/no está disponible/);
+ const afterToggle=(await db.query('select * from mealprep_sale_capacity where menu_item_id=$1',[id(11)])).rows[0];assert.equal(afterToggle.quantity,0);
+ await db.query('select save_mealprep_sale_visibility($1,true,$2,$3,$4)',[id(11),afterToggle.revision,id(601),id(1)]);
+ assert.equal((await readSaleLetter({supabase})).items.length,6);
+ assert.ok((await readSaleLetter({supabase})).items.every(i=>i.availableForPlans&&!('availableUnits' in i)));
+ console.log('PASS active-only: new purchases/payments/replay never reserve or consume quantities; zero quantity allows plans; inactive rejects purchase; toggle idempotent and old pending payment settles safely. Synthetic only.');
 }finally{await db.close();}

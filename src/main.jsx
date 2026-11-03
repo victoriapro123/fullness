@@ -2970,7 +2970,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
   const heroImage = heroImageUsesPreviousDefault
     ? shopHeroBoxCuratedCutoutSrc
     : configuredHeroImage || getProductImage(heroFallbackProduct);
-  const heroMetrics = stockLetter?.enabled?['6 MEALPREPS POR SEMANA','PRECIO SEGÚN TU SELECCIÓN','ELIGE ENTRE LOS PLATOS CON STOCK']:settings.heroMetrics.slice(0, 3);
+  const heroMetrics = stockLetter?.enabled?['6 MEALPREPS POR SEMANA','PRECIO SEGÚN TU SELECCIÓN','ELIGE ENTRE LOS PLATOS DISPONIBLES']:settings.heroMetrics.slice(0, 3);
   const comparisonRows = settings.subscriptionComparison;
   const catalogSections = [
     {
@@ -5033,8 +5033,8 @@ function FaqAnswer({ blocks }) {
 function FaqPage({ onNavigateToShop,customPlansEnabled=false }) {
   const buyingGroup={id:'comprar',navLabel:'Cómo comprar',eyebrow:'Cómo funciona',title:'TU COMPRA, PASO A PASO.',items:[
     {question:'¿Dónde consulto la carta del local?',answer:['En fullnesslab.com/carta puedes consultar la selección vigente del local. El equipo actualiza los productos, los cinco platos rotativos de Lunch y sus precios. La carta presencial y la tienda online tienen modalidades distintas.']},
-    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos habilitados y con stock confirmado de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. Revisa el total antes de continuar a Mercado Pago.']},
-    {question:'¿Qué ocurre si cambia la disponibilidad o el precio?',answer:['El carrito no reserva stock. Si un producto se agota, termina su período o cambia el total, te pediremos revisar la compra. No cobraremos un total distinto al que confirmaste.']},
+    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos disponibles de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. Revisa el total antes de continuar a Mercado Pago.']},
+    {question:'¿Qué ocurre si cambia la disponibilidad o el precio?',answer:['Si un plato deja de estar disponible o cambia el total, te pediremos revisar la compra. No cobraremos un total distinto al que confirmaste.']},
     {question:'¿Cómo sé si mi pago quedó aprobado?',answer:['Mercado Pago informa el resultado. Volver a la tienda no confirma por sí solo un pago: Fullness Lab verifica su estado con el proveedor. Si está pendiente, no vuelvas a pagar sin consultar el estado de tu pedido.']},
     {question:'¿Cómo se calcula el despacho?',answer:['Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. En otras comunas coordinamos disponibilidad, fecha y costo por WhatsApp antes del pago. El retiro no agrega tarifa de despacho.']},
     {question:'¿Puedo comprar un mealprep individual?',answer:['Los mealpreps normales sólo se asignan a planes. Los platos familiares se compran por separado. Los platos para llevar del local son una modalidad presencial distinta.']}
@@ -9712,8 +9712,8 @@ function App() {
           },
           {
             id: "meal-library",
-            label: "Inventario de mealpreps",
-            description: "Unidades y publicación",
+            label: "Disponibilidad de mealpreps",
+            description: "Platos activos e inactivos",
             Icon: CookingPot
           },
           {id:"meal-library-recipes",label:"Biblioteca de mealpreps",description:"Fichas, fotos, nutrición y beneficios",Icon:Utensils},
@@ -11331,7 +11331,7 @@ function App() {
                                 </p>
                               )}
 
-                              {mealLibraryForm.id&&<section className="backoffice-editor-section"><h4>Inventario y publicación</h4><MealprepSaleAdmin key={mealLibraryForm.id} libraryMealId={mealLibraryForm.id} embedded draftKey={`fullness_sale_stock_${authUser?.id||''}`}/></section>}
+                              {mealLibraryForm.id&&<section className="backoffice-editor-section"><h4>Disponibilidad en la tienda</h4><MealprepSaleAdmin key={mealLibraryForm.id} libraryMealId={mealLibraryForm.id} embedded draftKey={`fullness_sale_stock_${authUser?.id||''}`}/></section>}
                               <section className="backoffice-editor-section" aria-labelledby="library-general-title">
                                 <header>
                                   <p className="eyebrow">Mealprep</p>

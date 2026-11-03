@@ -20,9 +20,9 @@ export default async function handler(req,res){
    if(r.error)throw saleError('El plato cambió o falta algún dato. Actualiza la lista y revisa la información.',409);
    res.statusCode=200;res.end(JSON.stringify({data:r.data}));return;
   }
-  if(!Number.isSafeInteger(b.quantity)||b.quantity<0||b.quantity>1000000||typeof b.published!=='boolean'||!Number.isSafeInteger(b.revision)||b.revision<0)throw saleError('Revisa las unidades y la publicación.',422);
-  const r=await supabase.rpc('save_mealprep_sale_capacity',{p_menu_id:b.menuItemId,p_quantity:b.quantity,p_published:b.published,p_revision:b.revision,p_request_key:b.requestKey,p_actor:user.id});
-  if(r.error)throw saleError(r.error.code==='40001'?'Las unidades cambiaron. Actualiza la lista y revisa tu cantidad.':'No pudimos guardar. Revisa la cantidad y el precio del plato.',r.error.code==='40001'?409:422);
+  if(typeof b.published!=='boolean'||!Number.isSafeInteger(b.revision)||b.revision<0)throw saleError('Revisa el estado del plato.',422);
+  const r=await supabase.rpc('save_mealprep_sale_visibility',{p_menu_id:b.menuItemId,p_published:b.published,p_revision:b.revision,p_request_key:b.requestKey,p_actor:user.id});
+  if(r.error)throw saleError(r.error.code==='40001'?'El plato cambió. Actualiza la lista antes de guardar.':'No pudimos guardar el estado del plato.',r.error.code==='40001'?409:422);
   res.statusCode=200;res.end(JSON.stringify({data:r.data}));
  }catch(e){res.statusCode=e.statusCode||503;res.end(JSON.stringify({error:e.statusCode?e.message:'No pudimos guardar. Conservamos tus cambios; vuelve a intentarlo.'}));}
 }

@@ -9,7 +9,7 @@ export function planAdditionMessage(selection,item,week) {
  if(quantity===1&&current.some(row=>row.quantity===2))return 'Ya elegiste un plato para repetir esta semana. Puedes elegir uno diferente o quitar una porción del que repetiste.';
  if(current.reduce((sum,row)=>sum+row.quantity,0)>=6)return 'Tu semana ya tiene sus seis platos. Si quieres cambiar uno, quita una porción antes de agregar otro.';
  const total=selection.filter(row=>row.itemId===item.id).reduce((sum,row)=>sum+row.quantity,0);
- if(!item.priceClp||item.availableForPlans===false||item.availableUnits===null||total>=item.availableUnits)return 'Por ahora no quedan más porciones de este plato para tu selección. Puedes elegir otra opción de la carta.';
+ if(!item.priceClp||item.availableForPlans===false)return 'Este plato no está disponible en este momento. Puedes elegir otra opción de la carta.';
  return '';
 }
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
