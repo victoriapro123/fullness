@@ -21,6 +21,9 @@
 .custom-plan-progress span:last-child{color:#596953}
 .custom-plan-card{scroll-margin-block:140px}
 .custom-plan-card>img{height:auto}
+.custom-plan-card>.custom-plan-photo-placeholder{aspect-ratio:4/3;flex:none;box-sizing:border-box;justify-content:center;align-items:center;padding:20px;background:#e4decf;color:#625850;gap:12px;text-align:center;letter-spacing:.12em}
+.custom-plan-photo-placeholder span{font-size:clamp(12px,1.2vw,18px)}
+.custom-plan-photo-placeholder small{font-size:11px}
 .custom-plan-format select{background:#f6f2e9;color:#292323;border:1px solid #a98880;font:inherit;line-height:1.5}
 .custom-plan-quantity button:not(:disabled):hover{background:#91a78f}
 .custom-plans :is(button,summary,select):focus-visible,.shop-purchase-paths a:focus-visible{outline:3px solid #792635;outline-offset:4px}

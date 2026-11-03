@@ -5,4 +5,10 @@ const rows={menu_items:menus,mealprep_sale_capacity:[{menu_item_id:'a',quantity:
 const supabase={from(table){const q={select(){return q},eq(){return q},lte(){return q},gt(){return q},order(){return q},limit(){return q},maybeSingle(){return Promise.resolve({data:rows[table][0],error:null})},then(a,b){return Promise.resolve({data:rows[table],error:null}).then(a,b)}};return q}};
 const publicData=await readSaleLetter({supabase});assert.equal(publicData.items.length,2);assert.equal(publicData.items[0].libraryMealId,'recipe-a');assert.equal(publicData.items[0].availableUnits,3);assert.equal(publicData.items[1].availableForPlans,false);assert.equal(publicData.items[1].availabilityLabel,'Agotado');assert(!publicData.items.some(m=>m.menuItemId==='b'));
 const admin=await readSaleLetter({supabase,admin:true});assert.equal(admin.items.length,3);assert.equal(admin.offers.length,3);assert.equal(admin.choices[0].library_meal_id,'recipe-a');assert.equal(admin.items.find(i=>i.menuItemId==='b').availableForPlans,false);
-console.log('PASS: linked recipe identity preserved, unpublished hidden publicly, sold-out shown as sold out, admin retains all products. No network or writes.');
+rows.mealprep_sale_capacity[1].published=true;
+const newlyPublished=await readSaleLetter({supabase});
+const withoutRecipe=newlyPublished.items.find(i=>i.menuItemId==='b');
+assert.equal(newlyPublished.items.length,3);assert.equal(withoutRecipe.libraryMealId,null);
+assert.equal(withoutRecipe.availableForPlans,true);assert.equal(withoutRecipe.availableUnits,5);
+assert.equal(withoutRecipe.photoUrl,'');assert.deepEqual(withoutRecipe.ingredients,[]);
+console.log('PASS: unpublished hidden, sold-out labeled, admin retains all; a published stocked mealprep is purchasable without a historical recipe/photo. No network or writes.');
