@@ -2,6 +2,7 @@ import {
   createCheckoutPreference,
   readJsonBody
 } from "../../server/mercadopago-checkout.mjs";
+import {ECOMMERCE_MAINTENANCE, ECOMMERCE_MAINTENANCE_MESSAGE} from '../../src/lib/ecommerce-maintenance.js';
 
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
@@ -15,6 +16,12 @@ export default async function handler(req, res) {
     res.statusCode = 405;
     res.setHeader("Allow", "POST,OPTIONS");
     sendJson(res, 405, {error: {code: "METHOD_NOT_ALLOWED", message: "Metodo no permitido."}});
+    return;
+  }
+
+  if (ECOMMERCE_MAINTENANCE) {
+    res.setHeader('Retry-After', '3600');
+    sendJson(res, 503, {error:{code:'SHOP_UNDER_CONSTRUCTION',message:ECOMMERCE_MAINTENANCE_MESSAGE}});
     return;
   }
 

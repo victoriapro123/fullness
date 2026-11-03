@@ -6,6 +6,11 @@
     }
   ],
   "rewrites": [
+    {"source":"/carrito","destination":"/index.html"},
+    {"source":"/carrito/","destination":"/index.html"},
+    {"source":"/checkout","destination":"/index.html"},
+    {"source":"/checkout/","destination":"/index.html"},
+    {"source":"/producto","destination":"/index.html"},
     {"source":"/carta","destination":"/index.html"},
     {"source":"/carta/","destination":"/index.html"},
     {

@@ -1,0 +1,8 @@
+.ecommerce-maintenance{box-sizing:border-box;min-height:72svh;width:min(1100px,calc(100% - 40px));margin:0 auto;padding:clamp(130px,18vh,200px) clamp(24px,6vw,80px) 80px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:20px;color:var(--paper,#efe7d7);background:var(--petrol,#12231d)}
+.ecommerce-maintenance h1{font-family:inherit;font-size:clamp(2.5rem,7vw,5.8rem);line-height:1.02;letter-spacing:-.04em;margin:0;max-width:100%;overflow-wrap:normal}
+.ecommerce-maintenance>p:not(.eyebrow){font-size:clamp(1rem,2vw,1.2rem);line-height:1.65;max-width:560px;margin:0}
+.ecommerce-maintenance-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.ecommerce-maintenance-links a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:1px solid var(--sage,#b9c3ad);border-radius:4px;text-decoration:none;font-weight:600;color:var(--paper,#efe7d7)}
+.ecommerce-maintenance-links a:first-child{background:var(--sage,#b9c3ad);color:var(--petrol,#12231d)}
+.ecommerce-maintenance-links a:focus-visible{outline:3px solid #927a35;outline-offset:4px}
+@media(max-width:480px){.ecommerce-maintenance{width:calc(100% - 32px);min-height:70svh;padding-top:140px}.ecommerce-maintenance-links{width:100%;flex-direction:column}.ecommerce-maintenance-links a{width:100%;box-sizing:border-box}}

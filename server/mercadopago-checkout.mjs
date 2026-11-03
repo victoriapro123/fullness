@@ -1,4 +1,5 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
+import {assertShoppingOpen} from '../src/lib/ecommerce-maintenance.js';
 import {createClient} from "@supabase/supabase-js";
 import {
   deliverCore360OutboxEvent,
@@ -91,6 +92,7 @@ export async function createTestCheckoutSession({accessCode, dependencies = {}} 
 }
 
 export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, testSessionToken = "", dependencies = {}}) {
+  assertShoppingOpen();
   await localEnvReady;
   validateFulfillment(fulfillment);
   const checkoutNow = dependencies.now || new Date();

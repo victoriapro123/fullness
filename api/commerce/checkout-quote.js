@@ -1,4 +1,5 @@
 import {quoteCheckout, readJsonBody} from "../../server/mercadopago-checkout.mjs";
+import {ECOMMERCE_MAINTENANCE, ECOMMERCE_MAINTENANCE_MESSAGE} from '../../src/lib/ecommerce-maintenance.js';
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -7,6 +8,12 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     res.statusCode = 405;
     res.end(JSON.stringify({error: {code: "METHOD_NOT_ALLOWED", message: "Método no permitido."}}));
+    return;
+  }
+  if (ECOMMERCE_MAINTENANCE) {
+    res.statusCode = 503;
+    res.setHeader('Retry-After', '3600');
+    res.end(JSON.stringify({error:{code:'SHOP_UNDER_CONSTRUCTION',message:ECOMMERCE_MAINTENANCE_MESSAGE}}));
     return;
   }
   try {

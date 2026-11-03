@@ -130,6 +130,9 @@ import aboutHeroBotanicalSrc from "./assets/about/nosotros-hero-ilustracion-alph
 import aboutBeetSrc from "./assets/about/betarraga-nosotros-alpha.png";
 import aboutCookingSrc from "./assets/about/cecilia-cooking-final.jpeg";
 import "./styles.css";
+import "./ecommerce-maintenance.css";
+import {ShopMaintenance} from './components/shop-maintenance.jsx';
+import {ECOMMERCE_MAINTENANCE, ECOMMERCE_MAINTENANCE_MESSAGE, isEcommercePath} from './lib/ecommerce-maintenance.js';
 import "./landing.css";
 import "./landing-meal-prep.css";
 import "./commerce.css";
@@ -8504,6 +8507,7 @@ function App() {
   }, [currentProductSlug, currentProduct]);
 
   function addToCart(product) {
+    if (ECOMMERCE_MAINTENANCE) { openShopPage(); return; }
     if(product?.productType==='mealprep'||product?.product_type==='mealprep'){
       setCheckoutMessage('Los mealpreps normales sólo se asignan a planes; no se compran individualmente.');
       return;
@@ -8674,6 +8678,7 @@ function App() {
 
   async function submitCheckout(event) {
     event.preventDefault();
+    if (ECOMMERCE_MAINTENANCE) { setCheckoutMessage(ECOMMERCE_MAINTENANCE_MESSAGE); return; }
     if (!deliveryQuote.canPayOnline) {
       setCheckoutMessage(deliveryQuote.message);
       return;
@@ -9859,6 +9864,8 @@ function App() {
             type="button"
             onClick={() => setCartOpen(true)}
             data-testid="open-cart"
+            disabled={ECOMMERCE_MAINTENANCE}
+            title={ECOMMERCE_MAINTENANCE ? 'Tienda en construcción' : undefined}
             aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
           >
             <ShoppingBag size={20} aria-hidden="true" />
@@ -9923,7 +9930,7 @@ function App() {
         </div>
       )}
 
-      {subscriptionPopupOpen && (
+      {subscriptionPopupOpen && !(ECOMMERCE_MAINTENANCE && isEcommercePath(currentPath)) && (
         <SubscriptionLightbox
           settings={subscriptionPopupSettings}
           mode={subscriptionPopupMode}
@@ -9936,7 +9943,9 @@ function App() {
         />
       )}
 
-      {isProductPage ? (
+      {ECOMMERCE_MAINTENANCE && (isEcommercePath(currentPath) || isShopPage || isProductPage) ? (
+        <><ShopMaintenance />{renderSiteFooter()}</>
+      ) : isProductPage ? (
         <ProductDetailPage
           product={currentProduct}
           image={currentProduct ? getProductImage(currentProduct, currentProductIndex) : ""}
@@ -10171,7 +10180,7 @@ function App() {
         </>
       )}
 
-      {productPreview && (
+      {productPreview && (!ECOMMERCE_MAINTENANCE || adminOpen) && (
         <ProductQuickView
           product={productPreview}
           image={getProductImage(productPreview, productPreviewIndex)}
@@ -10185,7 +10194,7 @@ function App() {
         />
       )}
 
-      {mealPreviewItem && (
+      {mealPreviewItem && (!ECOMMERCE_MAINTENANCE || adminOpen) && (
         <MealPrepQuickView
           meal={mealPreviewItem}
           parentProduct={mealPreviewParent}
@@ -12470,7 +12479,7 @@ function App() {
         </div>
       )}
 
-      {cartOpen && (
+      {!ECOMMERCE_MAINTENANCE && cartOpen && (
         <div className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
           <button className="icon-button close" type="button" onClick={() => setCartOpen(false)} aria-label="Cerrar carrito">
             <X size={22} />
