@@ -1,5 +1,6 @@
 import {createClient} from "@supabase/supabase-js";
 import {loadEnvFile} from "./r2-media.mjs";
+import {DELIVERY_COORDINATION_MESSAGE} from "../src/lib/delivery-rates.js";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const RESEND_API_URL = "https://api.resend.com";
@@ -197,7 +198,8 @@ export async function sendOrderNotificationEmail({order, items, supabase}) {
 }
 
 function shippingAmountLines(order) {
-  if (Number(order.delivery_fee_clp) <= 0 || !Number.isFinite(Number(order.delivery_fee_clp))) return [];
+  if (order.customer_snapshot?.mode === "pickup") return ["Retiro en local, sin costo de despacho."];
+  if (Number(order.delivery_fee_clp) <= 0 || !Number.isFinite(Number(order.delivery_fee_clp))) return [DELIVERY_COORDINATION_MESSAGE, "WhatsApp: https://wa.me/56996588199"];
   return [`Subtotal de productos: ${formatClp(order.subtotal_clp)}`, `Envío: ${formatClp(order.delivery_fee_clp)}`];
 }
 

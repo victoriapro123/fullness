@@ -101,7 +101,15 @@ try {
   assert.equal(testDelivery.operations.reason, "test-checkout");
   assert.equal(messages.length, 3, "Una compra TEST nunca dispara correos comerciales.");
 
-  console.log("Checkout email QA OK: confirmación cliente, aviso operativo, cambios de estado, deduplicación y aislamiento TEST verificados.");
+  for(const mode of ['delivery','pickup']){
+    const before=messages.length;
+    await sendApprovedOrderEmails({order:{...order,id:mode+'-qa',delivery_fee_clp:0,total_clp:58200,customer_snapshot:{...order.customer_snapshot,mode,comuna:'Providencia'}},items,supabase:createEmailDeliveryStore()});
+    for(const message of messages.slice(before)){
+      assert.match(message.text,mode==='delivery'?/no incluye despacho/:/Retiro en local, sin costo/);
+      if(mode==='delivery')assert.match(message.html,/wa.me\/56996588199/);
+    }
+  }
+  console.log("Checkout email QA OK: tarifas, coordinación, retiro, deduplicación y aislamiento TEST verificados.");
 } finally {
   globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnvironment)) {

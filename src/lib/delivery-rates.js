@@ -1,4 +1,6 @@
 export const DELIVERY_RATES_VERSION = "2026-10-25";
+export const DELIVERY_COORDINATION_MESSAGE = "El valor de tu pedido no incluye despacho. Escríbenos por WhatsApp y coordinaremos contigo el costo y la entrega.";
+export const DELIVERY_ORDER_NOTICE = "Despacho: Lo Barnechea $3.990; Las Condes y Vitacura $5.990. Para otras comunas, el despacho no está incluido: escríbenos por WhatsApp para cotizar y coordinar tu entrega.";
 export const DELIVERY_COMMUNES = Object.freeze([
   {name: "Lo Barnechea", feeClp: 3990},
   {name: "Las Condes", feeClp: 5990},
@@ -24,7 +26,7 @@ export function getDeliveryQuote({mode, comuna} = {}) {
   }
   const rate = DELIVERY_COMMUNES.find((entry) => entry.name === commune);
   if (!rate) {
-    return {status: "coordination", commune, feeClp: null, canPayOnline: false, message: "El despacho a esta comuna se coordina por WhatsApp antes de pagar."};
+    return {status: "coordination", commune, feeClp: null, canPayOnline: false, message: DELIVERY_COORDINATION_MESSAGE};
   }
   return {status: "quoted", commune, feeClp: rate.feeClp, canPayOnline: true, message: `Despacho a ${commune}.`};
 }

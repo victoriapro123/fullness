@@ -1,6 +1,7 @@
 import {assertOwnerBackofficeRequest} from '../../server/backoffice-access.mjs';
 import {readJsonBody} from '../../server/mercadopago-checkout.mjs';
 import {readSaleOffers,uuid,saleError} from '../../server/mealprep-sale-capacity.mjs';
+import {validMealprepPhotoUrl} from '../../server/mealprep-photo-url.mjs';
 export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','application/json; charset=utf-8');
  try{const {supabase,user}=await assertOwnerBackofficeRequest(req);
@@ -14,7 +15,7 @@ export default async function handler(req,res){
   if(req.method!=='PUT')throw saleError('Método no permitido.',405);
   if(b.action==='details'){
    const d=b.document;if(!d||typeof d.name!=='string'||d.name.trim().length<3||!Number.isSafeInteger(d.priceClp)||d.priceClp<0||d.priceClp>1000000||typeof d.ingredientsText!=='string'||d.ingredientsText.length>6000||!Number.isSafeInteger(b.revision)||b.revision<0)throw saleError('Revisa el nombre, el precio y los ingredientes.',422);
-   if(d.photoUrl){let url;try{url=new URL(d.photoUrl);}catch{throw saleError('Revisa el enlace de la foto.',422);}if(url.protocol!=='https:'||url.username||url.password)throw saleError('Usa un enlace seguro para la foto.',422);}
+   if(!validMealprepPhotoUrl(d.photoUrl))throw saleError('Usa una foto cargada o un enlace seguro.',422);
    const r=await supabase.rpc('save_mealprep_sale_details',{p_menu_id:b.menuItemId,p_document:{name:d.name.trim(),priceClp:d.priceClp,description:String(d.description||''),ingredientsText:d.ingredientsText,photoUrl:d.photoUrl||''},p_revision:b.revision,p_request_key:b.requestKey,p_actor:user.id});
    if(r.error)throw saleError('El plato cambió o falta algún dato. Actualiza la lista y revisa la información.',409);
    res.statusCode=200;res.end(JSON.stringify({data:r.data}));return;

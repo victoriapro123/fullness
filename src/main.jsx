@@ -86,7 +86,7 @@ import {
 import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase.js";
 import { checkoutPaymentMessage,checkoutStartError } from "./lib/checkout-result.js";
 import {availabilityValidationError, DISPATCH_CUTOFF_TEXT, DISPATCH_RULE_TEXT, MEALPREP_DISPATCH_RULE_TEXT, formatAvailabilityDate, getProductAvailability, isPlanProduct, normalizeAvailability} from "./lib/product-availability.js";
-import {DELIVERY_COMMUNES, getDeliveryQuote} from "./lib/delivery-rates.js";
+import {DELIVERY_COMMUNES, DELIVERY_ORDER_NOTICE, getDeliveryQuote} from "./lib/delivery-rates.js";
 import {
   buildAnalyticsItem,
   initializeAnalytics,
@@ -12574,6 +12574,7 @@ function App() {
                 </div>
 
                 <section className="checkout-delivery" aria-label="Costo de despacho" aria-live="polite" aria-atomic="true">
+                  <p>{DELIVERY_ORDER_NOTICE} <a href={deliveryWhatsappUrl} target="_blank" rel="noreferrer">Hablar por WhatsApp</a></p>
                   <p id="delivery-quote-help">{deliveryQuote.message}</p>
                   {checkoutForm.mode === "delivery" && <p>Lo Barnechea: {formatPrice(3990)}. Las Condes y Vitacura: {formatPrice(5990)}. Otras comunas: coordinar por WhatsApp.</p>}
                 </section>
