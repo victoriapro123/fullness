@@ -1,5 +1,5 @@
-// Reopen the shop only after its next release is accepted and authorized.
-export const ECOMMERCE_MAINTENANCE = true;
+// Reopening authorized by Carlos; retain this switch for explicit maintenance.
+export const ECOMMERCE_MAINTENANCE = false;
 export const ECOMMERCE_MAINTENANCE_MESSAGE = 'La tienda está en construcción. Pronto podrás comprar aquí.';
 export function isEcommercePath(pathname) {
   return /^\/(?:tienda|producto|carrito|checkout)(?:\/|$)/.test(String(pathname || '').split(/[?#]/)[0]);

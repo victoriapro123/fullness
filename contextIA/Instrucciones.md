@@ -2,7 +2,7 @@
 
 Este archivo es el punto de entrada transitorio mientras Cerebro central no disponga de consulta/escritura remota operativa. No acredita una importación central.
 
-- Decisión vigente de inventario web: `mealpreps-inventario-web-20261103.md`. Cecilia gestiona unidades/publicación y precio en Fullness; ingredientes libres. La integración externa no bloquea venta ni exige motivo. Sustituye los requisitos físicos/canónicos anteriores para los nuevos pedidos. Cantidades reales pendientes de Cecilia; Main conserva SQL/release y el mantenimiento no se levanta por terminar pruebas.
+- Decisión vigente de inventario web: `mealpreps-inventario-web-20261103.md`. Cecilia gestiona unidades/publicación y precio en Fullness; ingredientes libres. La integración externa no bloquea venta ni exige motivo. Sustituye los requisitos físicos/canónicos anteriores para los nuevos pedidos. Carlos confirmó las cantidades de los 15 platos y autorizó publicarlos y reabrir tienda/compras. Main conserva SQL/release. Ver `reapertura-stock-visible-main-20261103.md`; no mostrar fechas internas de carta/stock en la UI pública ni alterar fechas de despacho.
 
 - Cierre vigente autorizado por Carlos01/11: `cierre-planes-carta-20261101.md`. Sustituye los límites de publicación anteriores para este lote: autorización explícita de cerrar Core, habilitar constructor, probar y publicar carta/Lunch/planes. Dos migraciones Fullness nuevas aplicadas; flags Production y modalidad DB preparados. No equivale a release terminado: seguir el recibo final del mismo documento. Main conserva release Core y CoreQA3151 único; no inventar existencias ni exportar TESTMP como Live. Carta/stock quedan editables por Cecilia.
 
