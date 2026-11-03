@@ -108,6 +108,7 @@ import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
 import {StockLetterAdmin} from "./components/stock-letter-admin.jsx";
 import {MealprepSaleAdmin} from './components/mealprep-sale-admin.jsx';
+import {ExperienceNotice,TEMP_EXPERIENCE_NOTICE_ENABLED} from './components/experience-notice.jsx';
 import {checkoutAttemptKey,forgetCheckoutAttemptKey} from './lib/checkout-attempt.js';
 const MealprepStockProvider=({children})=>children;
 const MealprepStockStatus=()=>null;
@@ -5484,6 +5485,7 @@ function App() {
   }, [introConsumed, subscriptionPopupOpen]);
 
   useEffect(() => {
+    if (TEMP_EXPERIENCE_NOTICE_ENABLED) return undefined;
     if (!subscriptionPopupSettings.enabled) return undefined;
     if (subscriptionPopupDismissed || subscriptionPopupOpenedRef.current) return undefined;
     if (currentPath !== "/" || currentProductSlug) return undefined;
@@ -9941,7 +9943,8 @@ function App() {
         </div>
       )}
 
-      {subscriptionPopupOpen && !(ECOMMERCE_MAINTENANCE && isEcommercePath(currentPath)) && (
+      <ExperienceNotice eligible={TEMP_EXPERIENCE_NOTICE_ENABLED&&["/","/tienda"].includes(currentPath)&&introConsumed&&!accountOpen&&!cartOpen&&!adminOpen&&!menuOpen&&!passwordSetupOpen&&!checkoutResult&&!productPreview&&!mealPreviewItem&&!benefitPreview&&window.location.hash!=="#backoffice"}/>
+      {!TEMP_EXPERIENCE_NOTICE_ENABLED && subscriptionPopupOpen && !(ECOMMERCE_MAINTENANCE && isEcommercePath(currentPath)) && (
         <SubscriptionLightbox
           settings={subscriptionPopupSettings}
           mode={subscriptionPopupMode}

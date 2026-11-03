@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const main=await readFile(new URL('../src/main.jsx',import.meta.url),'utf8');
+const notice=await readFile(new URL('../src/components/experience-notice.jsx',import.meta.url),'utf8');
+assert.match(main,/if \(TEMP_EXPERIENCE_NOTICE_ENABLED\) return undefined;\s*if \(!subscriptionPopupSettings.enabled\)/);
+assert.match(main,/!TEMP_EXPERIENCE_NOTICE_ENABLED && subscriptionPopupOpen/);
+assert.match(main,/settings={subscriptionPopupSettings}/);
+assert.match(notice,/fullness_experience_notice_20261103_v1/);
+assert.match(notice,/showModal\(\)/);
+assert.match(notice,/aria-describedby="experience-notice-body"/);
+assert.match(notice,/https:\/\/wa.me\/56996588199/);
+assert.doesNotMatch(notice,/fetch\(|localStorage|subscriptionPopupStorageKey/);
+console.log('PASS: aviso independiente, accesible, temporal por sesión; lightbox anterior suspendido sin reescribir su configuración.');
