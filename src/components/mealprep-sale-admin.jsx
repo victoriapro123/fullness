@@ -3,18 +3,19 @@ import {backofficeRequest} from '../lib/backoffice-request.js';
 import {uploadMenuPhoto} from '../lib/menu-items.js';
 import './mealprep-stock.css';
 const request=(...args)=>backofficeRequest(...args),money=n=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
-export function MealprepSaleAdmin({draftKey='fullness_sale_stock',requestImpl=request,uploadImpl=uploadMenuPhoto}){
+export function MealprepSaleAdmin({draftKey='fullness_sale_stock',requestImpl=request,uploadImpl=uploadMenuPhoto,libraryMealId='',embedded=false,onOpenLibrary}){
  const [data,setData]=useState(null),[message,setMessage]=useState(''),[query,setQuery]=useState('');
  const load=async()=>{const d=await requestImpl('/api/backoffice/mealprep-sale-stock');setData(d);return d;};
  useEffect(()=>{let alive=true;requestImpl('/api/backoffice/mealprep-sale-stock').then(d=>alive&&setData(d)).catch(()=>alive&&setMessage('No pudimos cargar los platos. Vuelve a intentarlo.'));return()=>{alive=false;};},[requestImpl]);
- return <section className="custom-plan-admin mealprep-sale-admin"><p className="eyebrow">INVENTARIO Y PUBLICACIÓN</p><h2>MEALPREPS</h2><p>Ingresa las unidades listas y elige qué platos mostrar en la tienda. Con 0 unidades, el plato queda agotado.</p>
+ const offers=(data?.offers||[]).filter(o=>!libraryMealId||o.libraryMealId===libraryMealId);
+ return <section className="custom-plan-admin mealprep-sale-admin">{!embedded&&<><p className="eyebrow">INVENTARIO Y PUBLICACIÓN</p><h2>MEALPREPS</h2><p>Ingresa las unidades listas y elige qué platos mostrar en la tienda. Con 0 unidades, el plato queda agotado.</p>{onOpenLibrary&&<button type="button" onClick={()=>onOpenLibrary()}>Abrir biblioteca de mealpreps</button>}</>}
   <label>Buscar plato<input type="search" name="mealprepSearch" value={query} onChange={e=>setQuery(e.target.value)}/></label><button type="button" onClick={()=>load().then(()=>setMessage('Lista actualizada. Tus cambios sin guardar se conservan.')).catch(()=>setMessage('No pudimos actualizar la lista. Vuelve a intentarlo.'))}>Actualizar lista</button>
   {message&&<p role="status">{message}</p>}{!data&&!message&&<p role="status">Cargando platos…</p>}
-  {data?.offers.length===0&&<p>No hay platos para publicar todavía.</p>}
-  {data?.offers.filter(o=>o.name.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'))).map(offer=><SaleEditor key={offer.menuItemId} offer={offer} draftKey={`${draftKey}_${offer.menuItemId}`} request={requestImpl} upload={uploadImpl} onSaved={load}/>)}
+  {data&&offers.length===0&&<p>{embedded?'Esta ficha todavía no tiene un plato vinculado para la venta.':'No hay platos para publicar todavía.'}</p>}
+  {offers.filter(o=>o.name.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'))).map(offer=><SaleEditor key={offer.menuItemId} offer={offer} draftKey={`${draftKey}_${offer.menuItemId}`} request={requestImpl} upload={uploadImpl} onSaved={load} stockOnly={embedded} onOpenLibrary={onOpenLibrary}/>)}
  </section>;
 }
-function SaleEditor({offer,draftKey,request,upload,onSaved}){
+function SaleEditor({offer,draftKey,request,upload,onSaved,stockOnly,onOpenLibrary}){
  const [draft,setDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem(draftKey)||'null')||{quantity:offer.quantity??'',published:offer.published,revision:offer.revision};}catch{return{quantity:offer.quantity??'',published:offer.published,revision:offer.revision};}}),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[dirty,setDirty]=useState(()=>{try{return Boolean(localStorage.getItem(draftKey));}catch{return false;}});const busyRef=useRef(false);
  const change=patch=>setDraft(previous=>{const next={...previous,...patch};try{localStorage.setItem(draftKey,JSON.stringify(next));}catch{}setDirty(true);return next;});
  useEffect(()=>{if(!dirty&&!draft.pending)setDraft({quantity:offer.quantity??'',published:offer.published,revision:offer.revision});},[offer.revision]);
@@ -32,7 +33,8 @@ function SaleEditor({offer,draftKey,request,upload,onSaved}){
   {draft.pending&&<button type="button" disabled={busy} onClick={()=>act(true)}>Consultar guardado</button>}
   {offer.reservedQuantity>0&&<p>{offer.reservedQuantity} unidades están en compras pendientes.</p>}{message&&<p role="status">{message}</p>}
   {offer.revision>draft.revision&&!draft.pending&&<button type="button" onClick={()=>{setDraft({quantity:offer.quantity??'',published:offer.published,revision:offer.revision});setDirty(false);try{localStorage.removeItem(draftKey);}catch{}setMessage('Unidades actualizadas. Puedes revisarlas antes de guardar.');}}>Actualizar unidades</button>}
-  <SaleDetails offer={offer} request={request} upload={upload} onSaved={onSaved} draftKey={`${draftKey}_details`}/>
+  {!stockOnly&&onOpenLibrary&&offer.libraryMealId&&<button type="button" onClick={()=>onOpenLibrary(offer.libraryMealId)}>Ver ficha completa y nutrición</button>}
+  {!stockOnly&&<SaleDetails offer={offer} request={request} upload={upload} onSaved={onSaved} draftKey={`${draftKey}_details`}/>}
  </article>;
 }
 function SaleDetails({offer,request,upload,onSaved,draftKey}){

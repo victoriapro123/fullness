@@ -5115,7 +5115,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-library");
+  const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-library-recipes");
   const [webContentTab, setWebContentTab] = useState("shop");
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
@@ -6295,6 +6295,12 @@ function App() {
     setMealLibraryEditorOpen(false);
   }
 
+  function openMealprepLibrary(libraryId) {
+    openBackofficeModule("meal-library-recipes");
+    const item = libraryId ? mealLibrary.find(meal => meal.id === libraryId) : null;
+    if (item) openMealLibraryItemForEditing(item);
+  }
+
   function acknowledgeBackofficeFeedback() {
     const returnTo = backofficeFeedback?.returnTo;
     setBackofficeFeedback(null);
@@ -6312,7 +6318,7 @@ function App() {
 
     if (returnTo === "meal-library") {
       setMealLibraryEditorOpen(false);
-      setActiveBackofficeModule("meal-library");
+      setActiveBackofficeModule("meal-library-recipes");
     }
   }
 
@@ -9706,10 +9712,11 @@ function App() {
           },
           {
             id: "meal-library",
-            label: "Mealpreps",
+            label: "Inventario de mealpreps",
             description: "Unidades y publicación",
             Icon: CookingPot
           },
+          {id:"meal-library-recipes",label:"Biblioteca de mealpreps",description:"Fichas, fotos, nutrición y beneficios",Icon:Utensils},
           {id:"dispatch-calendar",label:"Calendario de menús",description:"Menú único por fecha y entregas mensuales",Icon:CalendarDays},
           {id:"stock-letter",label:"Carta de mealpreps",description:"Platos disponibles para armar planes",Icon:CalendarDays},
           {id:"local-menu",label:"Carta del local",description:"Productos, precios y cinco opciones Lunch · /carta",Icon:Utensils},
@@ -10398,7 +10405,7 @@ function App() {
                     {activeBackofficeModule === "dispatch-calendar" && <DispatchCalendarAdmin plans={adminItems} draftKey={`fullness_dispatch_calendar_${authUser?.id||""}`} onChanged={async()=>{await refreshAdminItems({silent:true});await refreshPublicProducts();}} />}
                     {activeBackofficeModule === "stock-letter" && <StockLetterAdmin draftKey={`fullness_stock_letter_${authUser?.id||""}`} />}
                     {activeBackofficeModule === "local-menu" && <LocalMenuAdmin draftKey={`fullness_local_menu_${authUser?.id||""}`} />}
-                    {activeBackofficeModule === "mealprep-availability" && <MealprepSaleAdmin draftKey={`fullness_mealprep_availability_${authUser?.id||""}`} />}
+                    {activeBackofficeModule === "mealprep-availability" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||""}`} onOpenLibrary={openMealprepLibrary} />}
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
                   <section className="backoffice-catalog-panel" aria-label="Planes configurados">
@@ -11182,16 +11189,15 @@ function App() {
                 </div>
                     )}
 
-                    {activeBackofficeModule === "meal-library" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||''}`}/>}
+                    {activeBackofficeModule === "meal-library" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||''}`} onOpenLibrary={openMealprepLibrary}/>}
                     {activeBackofficeModule === "meal-library-recipes" && (
-                      <MealprepStockProvider key={authUser?.id||'stock-no-user'} draftKey={`fullness_stock_counts_${authUser?.id||''}`}>
                       <div className="backoffice-catalog-view">
                         <section className="backoffice-catalog-panel" aria-label="Mealpreps configurados">
                           <div className="backoffice-catalog-heading">
                             <div>
                               <p className="eyebrow">Catálogo</p>
-                              <h3>Mealpreps</h3>
-                              <p>Administra las bolsas individuales que pueden formar parte de planes semanales y mensuales.</p>
+                              <h3>Biblioteca de mealpreps</h3>
+                              <p>Edita las fotos, ingredientes, alérgenos, información nutricional y beneficios de cada preparación.</p>
                             </div>
                             <button className="primary-button" type="button" onClick={startNewMealLibraryItem}>
                               <Plus size={17} />
@@ -11236,7 +11242,6 @@ function App() {
                                       {item.isActive ? "Activo" : "Inactivo"}
                                     </span>
                                   </div>
-                                  <MealprepStockStatus recipeId={item.id} compact/>
                                   <div className="backoffice-card-actions">
                                     <button type="button" onClick={() => openMealLibraryItemForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
                                       <Pencil size={16} />
@@ -11326,7 +11331,7 @@ function App() {
                                 </p>
                               )}
 
-                              <MealprepStockStatus key={mealLibraryForm.id||'new-mealprep-stock'} recipeId={mealLibraryForm.id}/>
+                              {mealLibraryForm.id&&<section className="backoffice-editor-section"><h4>Inventario y publicación</h4><MealprepSaleAdmin key={mealLibraryForm.id} libraryMealId={mealLibraryForm.id} embedded draftKey={`fullness_sale_stock_${authUser?.id||''}`}/></section>}
                               <section className="backoffice-editor-section" aria-labelledby="library-general-title">
                                 <header>
                                   <p className="eyebrow">Mealprep</p>
@@ -11433,7 +11438,6 @@ function App() {
                           </div>
                         )}
                       </div>
-                      </MealprepStockProvider>
                     )}
 
                     {activeBackofficeModule === "family-products" && (

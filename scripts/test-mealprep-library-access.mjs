@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const main=await readFile(new URL('../src/main.jsx',import.meta.url),'utf8');
+const editor=await readFile(new URL('../src/components/mealprep-sale-admin.jsx',import.meta.url),'utf8');
+assert.match(main,/id:"meal-library-recipes",label:"Biblioteca de mealpreps"/);
+assert.match(main,/activeBackofficeModule === "meal-library-recipes"/);
+assert.match(main,/setActiveBackofficeModule\("meal-library-recipes"\)/);
+assert.match(main,/mealLibrary\.find\(meal => meal.id === libraryId\)/);
+assert.match(main,/libraryMealId={mealLibraryForm.id} embedded/);
+assert.match(main,/name="nutritionDescription"/);
+assert.match(main,/idPrefix="library-meal-nutrition"/);
+assert.match(main,/name="allergens"/);
+assert.match(editor,/o.libraryMealId===libraryMealId/);
+assert.match(editor,/Ver ficha completa y nutrición/);
+assert.match(editor,/!stockOnly&&<SaleDetails/);
+console.log('PASS: biblioteca accesible, vínculo por ID, nutrición/alérgenos y stock en la ficha sin duplicar sus campos.');
