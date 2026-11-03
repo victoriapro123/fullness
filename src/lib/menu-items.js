@@ -1160,9 +1160,13 @@ export async function applyPublicCore360Prices(items, {fetchImpl = fetch} = {}) 
     const response = await fetchImpl("/api/commerce/catalog-projection", {cache: "no-store"});
     if (response.status === 404) return {data: items, error: null};
     if (!response.ok) {
-      return {data: [], error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+      return {data: [], error: new Error("No pudimos consultar los precios. Vuelve a intentarlo.")};
     }
     const payload = await response.json();
+    if(payload?.data?.authority==='fullness'){
+      const prices=new Map((payload.data.products||[]).filter(p=>Number.isSafeInteger(p.priceClp)&&p.priceClp>0).map(p=>[p.id,p.priceClp]));
+      return{data:items.filter(i=>prices.has(i.id)).map(i=>({...i,price:prices.get(i.id)})),error:null};
+    }
     if (payload?.data?.enabled !== true) return {data: items, error: null};
 
     const byMenuItemId = new Map((payload?.data?.products || [])
@@ -1209,7 +1213,7 @@ export async function applyPublicCore360Prices(items, {fetchImpl = fetch} = {}) 
     // closed so the cart never advertises a price that checkout rejects.
     return import.meta.env.DEV
       ? {data: items, error: null}
-      : {data: [], error: new Error("No pudimos confirmar los precios canónicos del catálogo.")};
+      : {data: [], error: new Error("No pudimos consultar los precios. Vuelve a intentarlo.")};
   }
 }
 

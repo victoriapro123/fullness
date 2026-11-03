@@ -107,7 +107,10 @@ import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
 import {StockLetterAdmin} from "./components/stock-letter-admin.jsx";
-import {MealprepStockProvider,MealprepStockStatus} from './components/mealprep-stock.jsx';
+import {MealprepSaleAdmin} from './components/mealprep-sale-admin.jsx';
+import {checkoutAttemptKey,forgetCheckoutAttemptKey} from './lib/checkout-attempt.js';
+const MealprepStockProvider=({children})=>children;
+const MealprepStockStatus=()=>null;
 import {LocalMenuPage} from "./components/local-menu-page.jsx";
 import {LocalMenuAdmin,MealprepAvailabilityAdmin} from "./components/local-menu-admin.jsx";
 import {PLAN_CONDITIONS} from "./lib/local-menu.js";
@@ -131,8 +134,8 @@ import aboutBeetSrc from "./assets/about/betarraga-nosotros-alpha.png";
 import aboutCookingSrc from "./assets/about/cecilia-cooking-final.jpeg";
 import "./styles.css";
 import "./ecommerce-maintenance.css";
-import {ShopMaintenance} from './components/shop-maintenance.jsx';
-import {ECOMMERCE_MAINTENANCE, ECOMMERCE_MAINTENANCE_MESSAGE, isEcommercePath} from './lib/ecommerce-maintenance.js';
+import {ShopMaintenance} from "./components/shop-maintenance.jsx";
+import {ECOMMERCE_MAINTENANCE,ECOMMERCE_MAINTENANCE_MESSAGE,isEcommercePath} from "./lib/ecommerce-maintenance.js";
 import "./landing.css";
 import "./landing-meal-prep.css";
 import "./commerce.css";
@@ -2424,7 +2427,7 @@ function isConnectionError(error) {
 
 function getSupabaseErrorMessage(error, fallback = "No pudimos completar la acción.") {
   if (isConnectionError(error)) {
-    return "No pudimos conectarnos con el servidor. Revisa tu conexión e inténtalo nuevamente.";
+    return "No pudimos conectarnos con la página. Revisa tu conexión e inténtalo nuevamente.";
   }
 
   const detail = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
@@ -3039,7 +3042,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
         <p className="products-empty" role="alert">{catalogError}</p>
       ) : (
         <>
-          {stockLetter?.enabled?<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="custom-process-title"><div className="shop-subscription-copy"><p className="eyebrow">A TU MEDIDA</p><h2 id="custom-process-title">TÚ ELIGES LOS PLATOS.</h2><p>Elige un plan semanal de seis o uno mensual de cuatro semanas de seis. Puedes duplicar sólo un plato en cada semana. No hay precio fijo de caja: el total es la suma de tu selección.</p><a className="shop-solid-link" href="#shop-plans" onClick={e=>scrollToBlock(e,'#shop-plans')}>ARMAR MI PLAN <ArrowUpRight size={17}/></a></div><ul className="shop-subscription-benefits">{['Elige entre los platos con disponibilidad confirmada.','Revisa cada semana y su precio en el carrito.','Antes de pagar validamos precios y reservamos stock en Core360.','Los familiares se compran por separado.'].map(text=><li key={text}><CheckCircle2 size={17} aria-hidden="true"/>{text}</li>)}</ul></section>:<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
+          {stockLetter?.enabled?<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="custom-process-title"><div className="shop-subscription-copy"><p className="eyebrow">A TU MEDIDA</p><h2 id="custom-process-title">TÚ ELIGES LOS PLATOS.</h2><p>Elige un plan semanal de seis o uno mensual de cuatro semanas de seis. Puedes duplicar sólo un plato en cada semana. No hay precio fijo de caja: el total es la suma de tu selección.</p><a className="shop-solid-link" href="#shop-plans" onClick={e=>scrollToBlock(e,'#shop-plans')}>ARMAR MI PLAN <ArrowUpRight size={17}/></a></div><ul className="shop-subscription-benefits">{['Elige entre los platos con disponibilidad confirmada.','Revisa cada semana y su precio en el carrito.','Revisa el total de tu plan antes de pagar.','Los familiares se compran por separado.'].map(text=><li key={text}><CheckCircle2 size={17} aria-hidden="true"/>{text}</li>)}</ul></section>:<section className="shop-subscription-panel" id="shop-subscription" aria-labelledby="shop-subscription-title">
             <div className="shop-subscription-copy">
               <p className="eyebrow">{formatDisplayEyebrow(settings.subscriptionEyebrow)}</p>
               <h2 id="shop-subscription-title">{formatDisplayTitle(settings.subscriptionTitle)}</h2>
@@ -5026,7 +5029,7 @@ function FaqAnswer({ blocks }) {
 function FaqPage({ onNavigateToShop,customPlansEnabled=false }) {
   const buyingGroup={id:'comprar',navLabel:'Cómo comprar',eyebrow:'Cómo funciona',title:'TU COMPRA, PASO A PASO.',items:[
     {question:'¿Dónde consulto la carta del local?',answer:['En fullnesslab.com/carta puedes consultar la selección vigente del local. El equipo actualiza los productos, los cinco platos rotativos de Lunch y sus precios. La carta presencial y la tienda online tienen modalidades distintas.']},
-    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos habilitados y con stock confirmado de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. El total se valida en el servidor antes de continuar a Mercado Pago.']},
+    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos habilitados y con stock confirmado de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. Revisa el total antes de continuar a Mercado Pago.']},
     {question:'¿Qué ocurre si cambia la disponibilidad o el precio?',answer:['El carrito no reserva stock. Si un producto se agota, termina su período o cambia el total, te pediremos revisar la compra. No cobraremos un total distinto al que confirmaste.']},
     {question:'¿Cómo sé si mi pago quedó aprobado?',answer:['Mercado Pago informa el resultado. Volver a la tienda no confirma por sí solo un pago: Fullness Lab verifica su estado con el proveedor. Si está pendiente, no vuelvas a pagar sin consultar el estado de tu pedido.']},
     {question:'¿Cómo se calcula el despacho?',answer:['Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. En otras comunas coordinamos disponibilidad, fecha y costo por WhatsApp antes del pago. El retiro no agrega tarifa de despacho.']},
@@ -5108,7 +5111,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-preps");
+  const [activeBackofficeModule, setActiveBackofficeModule] = useState("meal-library");
   const [webContentTab, setWebContentTab] = useState("shop");
   const [member, setMember] = useState(null);
   const [googleMessage, setGoogleMessage] = useState("");
@@ -6602,7 +6605,7 @@ function App() {
         throw result.error || new Error("No pudimos subir el icono.");
       }
 
-      setCatalogParametersMessage("Icono cargado en R2.");
+      setCatalogParametersMessage("Imagen guardada.");
       return result.data;
     } catch (error) {
       const message = getPhotoUploadErrorMessage(error, "No pudimos subir el icono.");
@@ -8701,13 +8704,14 @@ function App() {
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
     try {
+      const checkoutKey=await checkoutAttemptKey({cart:cart.map(item=>item.kind==='custom_plan'?customPlanRequest(item):({slug:item.slug,quantity:item.qty})),fulfillment:checkoutForm,expectedAmount:checkoutTotal,testMode:Boolean(testCheckoutSessionToken)});
       if (!testCheckoutSessionToken) {
         const quoteResponse = await fetch("/api/commerce/checkout-quote", {
           method: "POST", headers: {Accept: "application/json", "Content-Type": "application/json"},
-          body: JSON.stringify({cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})), fulfillment: {mode: checkoutForm.mode, comuna: checkoutForm.comuna}})
+          body: JSON.stringify({cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})), fulfillment: checkoutForm,checkoutKey,expectedAmount:checkoutTotal})
         });
         const quote = await quoteResponse.json().catch(() => ({}));
-        if (!quoteResponse.ok) throw new Error(checkoutStartError(quote.error));
+        if (!quoteResponse.ok){if(['CHECKOUT_EXPIRED','CHECKOUT_ALREADY_PAID'].includes(quote.error?.code))forgetCheckoutAttemptKey(checkoutKey);throw new Error(checkoutStartError(quote.error));}
         if (quote.data?.paymentReady === false) throw new Error(quote.data.blockedReason || 'El pago de planes aún no está habilitado.');
         if (quote.data?.amount !== checkoutTotal) throw new Error("El total vigente cambió. Recarga la página y revisa el carrito antes de pagar.");
       }
@@ -8721,12 +8725,14 @@ function App() {
           cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})),
           fulfillment: checkoutForm,
           expectedAmount: checkoutTotal,
+          checkoutKey,
           ...(testCheckoutSessionToken ? {testSessionToken: testCheckoutSessionToken} : {})
         })
       });
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok || !payload.data?.initPoint) {
+        if(['CHECKOUT_EXPIRED','CHECKOUT_ALREADY_PAID'].includes(payload.error?.code))forgetCheckoutAttemptKey(checkoutKey);
         throw new Error(payload.error?.message || "No pudimos iniciar el pago.");
       }
 
@@ -9697,11 +9703,11 @@ function App() {
           {
             id: "meal-library",
             label: "Mealpreps",
-            description: `${mealLibrary.length} disponibles`,
+            description: "Unidades y publicación",
             Icon: CookingPot
           },
           {id:"dispatch-calendar",label:"Calendario de menús",description:"Menú único por fecha y entregas mensuales",Icon:CalendarDays},
-          {id:"stock-letter",label:"Carta de mealpreps",description:"Cartas por período y planes personalizados con stock Core360",Icon:CalendarDays},
+          {id:"stock-letter",label:"Carta de mealpreps",description:"Platos disponibles para armar planes",Icon:CalendarDays},
           {id:"local-menu",label:"Carta del local",description:"Productos, precios y cinco opciones Lunch · /carta",Icon:Utensils},
           {id:"mealprep-availability",label:"Disponibilidad",description:"Confirmar mealpreps, agotados y fechas",Icon:CalendarDays},
           {
@@ -9728,12 +9734,6 @@ function App() {
             description: `${communityActivities.length} actividades · ${subscriptionPopupForm.enabled ? "Lightbox activo" : "Lightbox inactivo"}`,
             Icon: Store
           },
-          {
-            id: "site-tools",
-            label: "Respaldo y conexión",
-            description: "Datos, R2 y DNS",
-            Icon: Database
-          }
         ]
       : []),
     {
@@ -9865,7 +9865,7 @@ function App() {
             onClick={() => setCartOpen(true)}
             data-testid="open-cart"
             disabled={ECOMMERCE_MAINTENANCE}
-            title={ECOMMERCE_MAINTENANCE ? 'Tienda en construcción' : undefined}
+            title={ECOMMERCE_MAINTENANCE ? "Tienda en construcción" : undefined}
             aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
           >
             <ShoppingBag size={20} aria-hidden="true" />
@@ -9943,9 +9943,7 @@ function App() {
         />
       )}
 
-      {ECOMMERCE_MAINTENANCE && (isEcommercePath(currentPath) || isShopPage || isProductPage) ? (
-        <><ShopMaintenance />{renderSiteFooter()}</>
-      ) : isProductPage ? (
+      {ECOMMERCE_MAINTENANCE && (isEcommercePath(currentPath)||isShopPage||isProductPage) ? (<><ShopMaintenance />{renderSiteFooter()}</>) : isProductPage ? (
         <ProductDetailPage
           product={currentProduct}
           image={currentProduct ? getProductImage(currentProduct, currentProductIndex) : ""}
@@ -10180,7 +10178,7 @@ function App() {
         </>
       )}
 
-      {productPreview && (!ECOMMERCE_MAINTENANCE || adminOpen) && (
+      {productPreview && (!ECOMMERCE_MAINTENANCE||adminOpen) && (
         <ProductQuickView
           product={productPreview}
           image={getProductImage(productPreview, productPreviewIndex)}
@@ -10194,7 +10192,7 @@ function App() {
         />
       )}
 
-      {mealPreviewItem && (!ECOMMERCE_MAINTENANCE || adminOpen) && (
+      {mealPreviewItem && (!ECOMMERCE_MAINTENANCE||adminOpen) && (
         <MealPrepQuickView
           meal={mealPreviewItem}
           parentProduct={mealPreviewParent}
@@ -10396,7 +10394,7 @@ function App() {
                     {activeBackofficeModule === "dispatch-calendar" && <DispatchCalendarAdmin plans={adminItems} draftKey={`fullness_dispatch_calendar_${authUser?.id||""}`} onChanged={async()=>{await refreshAdminItems({silent:true});await refreshPublicProducts();}} />}
                     {activeBackofficeModule === "stock-letter" && <StockLetterAdmin draftKey={`fullness_stock_letter_${authUser?.id||""}`} />}
                     {activeBackofficeModule === "local-menu" && <LocalMenuAdmin draftKey={`fullness_local_menu_${authUser?.id||""}`} />}
-                    {activeBackofficeModule === "mealprep-availability" && <MealprepAvailabilityAdmin draftKey={`fullness_mealprep_availability_${authUser?.id||""}`} />}
+                    {activeBackofficeModule === "mealprep-availability" && <MealprepSaleAdmin draftKey={`fullness_mealprep_availability_${authUser?.id||""}`} />}
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
                   <section className="backoffice-catalog-panel" aria-label="Planes configurados">
@@ -10535,11 +10533,11 @@ function App() {
                           {menuFormDraftStatus === "saving" ? <RefreshCw size={15} /> : menuFormDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                           <span>
                             {menuFormDraftStatus === "saving"
-                              ? "Guardando en servidor"
+                              ? "Guardando…"
                               : menuFormDraftStatus === "local"
                                 ? "Solo en este dispositivo"
                                 : menuFormDraftStatus === "synced"
-                                  ? "Respaldo en servidor"
+                                  ? "Guardado"
                                   : "Sin cambios"}
                           </span>
                         </div>
@@ -11180,7 +11178,8 @@ function App() {
                 </div>
                     )}
 
-                    {activeBackofficeModule === "meal-library" && (
+                    {activeBackofficeModule === "meal-library" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||''}`}/>}
+                    {activeBackofficeModule === "meal-library-recipes" && (
                       <MealprepStockProvider key={authUser?.id||'stock-no-user'} draftKey={`fullness_stock_counts_${authUser?.id||''}`}>
                       <div className="backoffice-catalog-view">
                         <section className="backoffice-catalog-panel" aria-label="Mealpreps configurados">
@@ -11271,11 +11270,11 @@ function App() {
                                     {mealLibraryDraftStatus === "saving" ? <RefreshCw size={15} /> : mealLibraryDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                                     <span>
                                       {mealLibraryDraftStatus === "saving"
-                                        ? "Guardando en servidor"
+                                        ? "Guardando…"
                                         : mealLibraryDraftStatus === "local"
                                           ? "Solo en este dispositivo"
                                           : mealLibraryDraftStatus === "synced"
-                                            ? "Respaldo en servidor"
+                                            ? "Guardado"
                                             : "Sin cambios"}
                                     </span>
                                   </div>
@@ -11570,11 +11569,11 @@ function App() {
                                     {menuFormDraftStatus === "saving" ? <RefreshCw size={15} /> : menuFormDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                                     <span>
                                       {menuFormDraftStatus === "saving"
-                                        ? "Guardando en servidor"
+                                        ? "Guardando…"
                                         : menuFormDraftStatus === "local"
                                           ? "Solo en este dispositivo"
                                           : menuFormDraftStatus === "synced"
-                                            ? "Respaldo en servidor"
+                                            ? "Guardado"
                                             : "Sin cambios"}
                                     </span>
                                   </div>
@@ -12168,7 +12167,7 @@ function App() {
                           </label>
                         </div>
                         <footer className="website-content-actions">
-                          <p>La actividad se publica al agregarla y queda resguardada en el servidor.</p>
+                          <p>La actividad se publica al agregarla y queda resguardada .</p>
                           <button className="backoffice-command" type="submit" disabled={communityActivitiesSaving || !shopSettingsReady}>
                             {communityActivitiesSaving ? <RefreshCw size={17} /> : <Plus size={17} />}
                             {communityActivitiesSaving ? "Publicando…" : "Agregar actividad"}
@@ -12593,7 +12592,7 @@ function App() {
                   </button>
                   {testCheckoutAccessOpen && (
                     <div className="checkout-test-panel" id="checkout-test-access-panel">
-                      <p id="checkout-test-access-title">Sólo para pruebas autorizadas. El código se valida en el servidor y habilita un único intento TEST.</p>
+                      <p id="checkout-test-access-title">Sólo para pruebas autorizadas. El código se valida  y habilita un único intento TEST.</p>
                       <label>
                         Código de acceso
                         <input

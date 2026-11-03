@@ -39,6 +39,7 @@ function orderSelect() {
 }
 
 export function coreManagedOrder(order){
+ if(order.customer_snapshot?.stockAuthority==='fullness_sale_capacity_v1'&&order.customer_snapshot?.operationalAuthority==='fullness')return false;
  const state=Array.isArray(order.core360_commerce_order_states)?order.core360_commerce_order_states[0]:order.core360_commerce_order_states;
  return order.customer_snapshot?.operationalAuthority==='core360'||Boolean(order.customer_snapshot?.corePlanCheckout)||Boolean(state?.core_order_id);
 }

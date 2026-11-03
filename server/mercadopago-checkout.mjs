@@ -1,5 +1,5 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
-import {assertShoppingOpen} from '../src/lib/ecommerce-maintenance.js';
+import {assertShoppingOpen} from "../src/lib/ecommerce-maintenance.js";
 import {createClient} from "@supabase/supabase-js";
 import {
   deliverCore360OutboxEvent,
@@ -28,6 +28,9 @@ import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rate
 import {resolveDispatchProducts} from "./dispatch-calendar.mjs";
 import {normalizeCustomPlan,resolveCustomPlans} from "./custom-plans.mjs";
 import {CORE_PLAN_CONTRACT,assertCorePlanReservation} from './core360-plan-contract.mjs';
+import {saleAuthorityEnabled,SALE_AUTHORITY} from './mealprep-sale-capacity.mjs';
+import {createSaleCheckout} from './mealprep-sale-checkout.mjs';
+import {recoverSaleCheckouts} from './mealprep-sale-recovery.mjs';
 
 const localEnvReady = Promise.all([
   loadEnvFile(new URL("../.env.local", import.meta.url)),
@@ -91,7 +94,7 @@ export async function createTestCheckoutSession({accessCode, dependencies = {}} 
   });
 }
 
-export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, testSessionToken = "", dependencies = {}}) {
+export async function createCheckoutPreference({cart, fulfillment, request, expectedAmount, checkoutKey, testSessionToken = "", dependencies = {}}) {
   assertShoppingOpen();
   await localEnvReady;
   validateFulfillment(fulfillment);
@@ -114,6 +117,11 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       : await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "live"});
   const mode = checkoutMode(paymentProfile?.mode);
   const isTestCheckout = mode === "test";
+  if(await saleAuthorityEnabled(supabase)){
+    const result=await createSaleCheckout({cart:normalizedCart,fulfillment,expectedAmount,checkoutKey,supabase,mode,profile:paymentProfile,deliveryQuote,now:checkoutNow,quoteOnly:dependencies.quoteOnly===true,services:{gateway:dependencies.mercadoPagoRequest||mercadoPagoRequest,customerSnapshot:(f,o)=>buildCustomerSnapshot(f,{...o,testSessionId:testSession?.sessionId||null}),productSnapshot:buildProductSnapshot,deliverySnapshot:serializeDeliveryQuote,siteUrl:()=>getCheckoutSiteUrl(request)}});
+    if(isTestCheckout&&result.orderId)await(dependencies.attachTestSessionOrder||attachTestSessionOrder)({orderId:result.orderId,preferenceId:result.preferenceId,sessionId:testSession?.sessionId,supabase});
+    return result;
+  }
   const deliveryService = isTestCheckout ? null : await (dependencies.resolveDeliveryService || resolveCore360DeliveryService)({
     env, feeClp: deliveryQuote.feeClp, issuedOn: santiagoDate(checkoutNow), fetchImpl: dependencies.core360FetchImpl || fetch
   });
@@ -391,12 +399,20 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   };
 }
 
-export async function quoteCheckout({cart, fulfillment, dependencies = {}}) {
+export async function quoteCheckout({cart, fulfillment, checkoutKey, expectedAmount, dependencies = {}}) {
   return createCheckoutPreference({
     cart,
-    fulfillment: {mode: fulfillment?.mode, comuna: fulfillment?.comuna, address: "Cotización sin dirección", name: "Cotización web", email: "quote@fullness.invalid", phone: "+56000000000"},
+    fulfillment: fulfillment?.name&&fulfillment?.email&&fulfillment?.phone?fulfillment:{mode: fulfillment?.mode, comuna: fulfillment?.comuna, address: "Cotización sin dirección", name: "Cotización web", email: "quote@fullness.invalid", phone: "+56000000000"},
+    checkoutKey,expectedAmount,
     dependencies: {...dependencies, quoteOnly: true}
   });
+}
+
+export async function runSaleRecovery(dependencies={}){
+  await localEnvReady;const supabase=dependencies.supabase||getSupabaseAdmin();
+  if(!await saleAuthorityEnabled(supabase))return{checked:0,released:0,paid:0,pending:0};
+  const profile=dependencies.paymentProfile||await resolveMercadoPagoProfile({env:dependencies.env||process.env,mode:'live'}),gateway=dependencies.mercadoPagoRequest||mercadoPagoRequest;
+  return recoverSaleCheckouts({supabase,gateway,profile,now:dependencies.now||new Date(),syncPayment:(paymentId,orderId)=>syncMercadoPagoPayment(paymentId,orderId,{...dependencies,supabase,paymentProfile:profile,mercadoPagoRequest:gateway})});
 }
 
 export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", dependencies = {}) {
@@ -493,11 +509,12 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     throw statusError(502, "No pudimos guardar el pago.", paymentSaveError);
   }
 
-  const orderUpdate = orderUpdateForPayment(paymentStatus, payment.date_approved);
-  const {error: orderUpdateError} = await supabase
+  const orderUpdate = order.customer_snapshot?.stockAuthority===SALE_AUTHORITY&&order.payment_status==='approved'&&!['approved','refunded','charged_back'].includes(paymentStatus)
+    ? {} : orderUpdateForPayment(paymentStatus, payment.date_approved);
+  const {error: orderUpdateError} = Object.keys(orderUpdate).length?await supabase
     .from("orders")
     .update(orderUpdate)
-    .eq("id", order.id);
+    .eq("id", order.id):{error:null};
 
   if (orderUpdateError) {
     throw statusError(502, "No pudimos actualizar el estado de la orden.", orderUpdateError);
@@ -531,12 +548,14 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     // A failed optional outbox must never turn a reconciled Mercado Pago payment into an error.
     let coreOutbox = null;
     try {
+      if(order.customer_snapshot?.stockAuthority!==SALE_AUTHORITY){
       coreOutbox = await (dependencies.enqueueCore360PaymentApproved || enqueueCore360PaymentApproved)({
         items: emailItems || [],
         order: {...order, ...orderUpdate},
         payment: paymentRow,
         supabase
       });
+      }
     } catch (error) {
       console.error("Core360 commerce outbox was not queued:", cleanText(error?.message));
     }
@@ -563,7 +582,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
         console.error("Core360 commerce immediate delivery failed:", cleanText(error?.message));
       }
     }
-  } else if (order.status !== orderUpdate.status && mode === "live") {
+  } else if (Object.keys(orderUpdate).length&&order.status !== orderUpdate.status && mode === "live") {
     const {data: emailItems, error: emailItemsError} = await supabase
       .from("order_items")
       .select("product_name,quantity")
@@ -1129,6 +1148,7 @@ async function mercadoPagoRequest(path, {body, idempotencyKey = randomUUID(), me
   }
 
   const response = await fetch(`${MERCADOPAGO_API_URL}${path}`, {
+    signal: AbortSignal.timeout(15000),
     method,
     headers: {
       Authorization: `Bearer ${token}`,

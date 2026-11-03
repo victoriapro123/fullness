@@ -1,5 +1,7 @@
 import {createClient} from "@supabase/supabase-js";
 import {isCore360CommerceMediaProxyEnabled, isCore360CommercePollingEnabled} from "../../server/core360-commerce-adapter.mjs";
+import {getSupabaseAdmin} from '../../server/backoffice-access.mjs';
+import {saleAuthorityEnabled} from '../../server/mealprep-sale-capacity.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -9,6 +11,11 @@ export default async function handler(request, response) {
     return response.status(405).json({error: "method_not_allowed"});
   }
 
+  try{const source=getSupabaseAdmin();if(await saleAuthorityEnabled(source)){
+    const menus=await source.from('menu_items').select('id,price_clp,updated_at').eq('is_active',true);
+    if(menus.error)throw menus.error;
+    return sendJson(response,200,{data:{enabled:true,authority:'fullness',products:menus.data.filter(m=>Number(m.price_clp)>0).map(m=>({id:m.id,priceClp:Number(m.price_clp),updatedAt:m.updated_at}))}});
+  }}catch{return sendJson(response,503,{error:'No pudimos consultar los precios. Vuelve a intentarlo.'});}
   if (!isCore360CommercePollingEnabled()) {
     return sendJson(response, 200, {data: {enabled: false, products: []}});
   }

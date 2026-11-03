@@ -49,5 +49,5 @@ export function CustomPlanBuilder({data,onAdd}){
  </section>;
 }
 export function CustomPlanBreakdown({item}){
- return <details className="custom-plan-breakdown"><summary>Ver tus {item.size} mealpreps</summary>{Array.from({length:item.size===24?4:1},(_,i)=>i+1).map(week=><section key={week}><h4>SEMANA {week}</h4><ul>{(item.selectedMeals||[]).filter(m=>(m.week??1)===week).map(meal=><li key={`${week}-${meal.itemId}`}><span>{meal.quantity} × {meal.title}</span><strong>{money(meal.priceClp*meal.quantity)}</strong></li>)}</ul></section>)}<p>Total por plan: {money(item.price)}. {item.qty>1?`${item.qty} planes idénticos.`:''}</p><small>Selección congelada en tu pedido; no se reemplaza al cambiar la carta.</small></details>;
+ return <details className="custom-plan-breakdown"><summary>Ver tus {item.size} mealpreps</summary>{Array.from({length:item.size===24?4:1},(_,i)=>i+1).map(week=><section key={week}><h4>SEMANA {week}</h4><ul>{(item.selectedMeals||[]).filter(m=>(m.week??1)===week).map(meal=><li key={`${week}-${meal.itemId}`}><span>{meal.quantity} × {meal.title}</span><strong>{money(meal.priceClp*meal.quantity)}</strong></li>)}</ul></section>)}<p>Total por plan: {money(item.price)}. {item.qty>1?`${item.qty} planes idénticos.`:''}</p><small>Los platos elegidos quedan guardados en tu pedido.</small></details>;
 }

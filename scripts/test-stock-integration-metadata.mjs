@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+const path=process.argv[process.argv.indexOf('--pglite-module')+1];assert.ok(process.argv.includes('--pglite-module')&&path);
+const {PGlite}=await import(pathToFileURL(path).href),db=new PGlite();
+const id=n=>`10000000-0000-4000-8000-${String(n).padStart(12,'0')}`,actor=id(1),other=id(2),recipe=id(3),product=id(4),core=id(5);
+try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
+ create table profiles(id uuid primary key,is_admin boolean);create table meal_library_items(id uuid primary key);
+ create table menu_items(id uuid primary key,library_meal_id uuid,product_type text,is_active boolean);
+ create table core360_product_mappings(source_menu_item_id uuid,core_item_id text,is_active boolean,updated_at timestamptz);
+ create table mealprep_stock_handoff_attempts(source_user_id uuid,source_recipe_id uuid,kind text,state text);
+ insert into profiles values('${actor}',true),('${other}',false);insert into meal_library_items values('${recipe}');
+ insert into menu_items values('${product}','${recipe}','mealprep',true);
+ insert into core360_product_mappings values('${product}','${core}',true,'2026-11-02T12:00:00Z');
+ grant usage on schema public to service_role;grant all on all tables in schema public to service_role;`);
+ await db.exec(await readFile('supabase/migrations/20261102233503_integrated_inventory_metadata.sql','utf8'));
+ const document={requestKey:id(10),recipeId:recipe,productId:product,coreItemId:core,integrationId:id(6),tenantId:id(7),companyId:id(8),sourceOrigin:'https://fullness.example.invalid',linkRevision:'2026-11-02T12:00:00Z',payload:{balanceId:id(9),countedQuantityMilli:'24000',reason:'Fixture physical count'},intent:{basisVersion:1,unit:'un'}};
+ const transition=(action,doc,revision=null,who=actor)=>db.query('select transition_stock_integration($1,$2::jsonb,$3::uuid,$4) result',[action,JSON.stringify(doc),who,revision]);
+ await assert.rejects(transition('prepare',document,null,other),/Administración/);
+ await db.exec('set role service_role');
+ const a=(await transition('prepare',document)).rows[0].result;assert.equal(a.state,'prepared');assert.equal(a.source_user_id,actor);assert.equal('binding_id'in a,false);
+ assert.equal((await transition('prepare',document)).rows[0].result.id,a.id);
+ await assert.rejects(transition('prepare',{...document,payload:{...document.payload,countedQuantityMilli:'99000'}}),/clave/);
+ await assert.rejects(transition('prepare',{...document,requestKey:id(11)}),/anterior/);
+ const reviewed=(await transition('review',{attemptId:a.id,review:{physicalMilli:'20000'},reviewToken:'fixture-review-token'},1)).rows[0].result;
+ assert.equal(reviewed.state,'reviewed');
+ await assert.rejects(transition('confirm',{attemptId:a.id},1),/cambió/);
+ await db.exec(`update profiles set is_admin=false where id='${actor}'`);
+ await assert.rejects(transition('confirm',{attemptId:a.id},2),/Administración/);
+ await db.exec(`update profiles set is_admin=true where id='${actor}';update core360_product_mappings set is_active=false`);
+ await assert.rejects(transition('confirm',{attemptId:a.id},2),/vínculo/);
+ await db.exec('update core360_product_mappings set is_active=true');
+ assert.equal((await transition('confirm',{attemptId:a.id},2)).rows[0].result.state,'confirming');
+ await assert.rejects(transition('confirm',{attemptId:a.id},3),/Transición/);
+ const result={receiptId:id(12),canonicalVersion:2};
+ assert.equal((await transition('observe',{attemptId:a.id,receiptId:id(12),result},3)).rows[0].result.state,'result_pending');
+ await assert.rejects(transition('commit',{attemptId:a.id},4),/lectura/);
+ await assert.rejects(transition('observe',{attemptId:a.id,receiptId:id(13),result},4),/inconsistente/);
+ assert.equal((await transition('commit',{attemptId:a.id,freshObservation:{version:2}},4)).rows[0].result.state,'committed');
+ await db.exec(`insert into mealprep_stock_handoff_attempts values('${actor}','${recipe}','count','claimed')`);
+ await assert.rejects(transition('prepare',{...document,requestKey:id(14)}),/anterior/);
+ await db.exec("update mealprep_stock_handoff_attempts set state='cancelled'");
+ const b=(await transition('prepare',{...document,requestKey:id(14)})).rows[0].result;
+ const waiting=(await transition('cancel_request',{attemptId:b.id},1)).rows[0].result;assert.equal(waiting.state,'cancel_requested');
+ await assert.rejects(transition('cancel',{attemptId:b.id},2),/canónica/);
+ assert.equal((await transition('cancel',{attemptId:b.id,cancellationProof:{tombstoneId:id(15)}},2)).rows[0].result.state,'cancelled');
+ await db.exec('reset role');
+ for(const table of ['mealprep_stock_integration_attempts','mealprep_stock_integration_events']){
+  assert.equal((await db.query('select relrowsecurity ok from pg_class where oid=$1::regclass',[table])).rows[0].ok,true);
+  assert.equal((await db.query("select has_table_privilege('authenticated',$1,'select') ok",[table])).rows[0].ok,false);
+ }
+ assert.equal((await db.query("select has_function_privilege('anon','transition_stock_integration(text,jsonb,uuid,integer)','execute') ok")).rows[0].ok,false);
+ console.log('PASS integration metadata: service-only RLS/invoker, owner revocation, immutable replay, legacy pending block, CAS/link recheck, receipt/fresh-read commit, canonical cancellation. Synthetic metadata only.');
+}finally{await db.close();}

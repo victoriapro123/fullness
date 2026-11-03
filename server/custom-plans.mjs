@@ -4,6 +4,7 @@ import {santiagoDate} from '../src/lib/product-availability.js';
 import {readCore360Catalog,readCore360Stock,readCore360PlanFacts,readCore360PlanProfiles,isCore360CommerceOrderSyncEnabled,planStockObservation} from './core360-commerce-adapter.mjs';
 import {selectCorePlanProfile,assertCorePlanReservation} from './core360-plan-contract.mjs';
 import {availabilityStatus} from '../src/lib/local-menu.js';
+import {saleAuthorityEnabled,readSaleLetter,resolveSaleCart} from './mealprep-sale-capacity.mjs';
 
 export function normalizeCustomPlan(row) {
  if(!UUID_PATTERN.test(String(row.letterId||''))||!Number.isSafeInteger(row.revision)||row.revision<1
@@ -15,6 +16,7 @@ export function normalizeCustomPlan(row) {
  return {kind:'custom_plan',letterId:row.letterId,revision:row.revision,size:row.size,quantity:row.quantity,selection};
 }
 export async function readStockLetter({supabase,now=new Date(),admin=false,env=process.env,fetchImpl=fetch}={}) {
+ if(await saleAuthorityEnabled(supabase))return readSaleLetter({supabase,admin,now});
  let query=supabase.from('stock_letters').select('*').order('updated_at',{ascending:false});
  if(!admin)query=query.eq('state','active').lte('starts_on',santiagoDate(now)).gt('ends_on',santiagoDate(now));
  const {data:letters,error}=await query;
@@ -83,6 +85,7 @@ export function customPlanReadiness({letter,items=[],contractReady=false}) {
 }
 
 export async function resolveCustomPlans(cart,{supabase,env,fetchImpl=fetch,now=new Date(),readCatalog=readCore360Catalog,readStock=readCore360Stock}={}) {
+ if(await saleAuthorityEnabled(supabase))return resolveSaleCart(cart,{supabase,now});
  const current=await readStockLetter({supabase,now,env,fetchImpl});
  if(!current.enabled||!current.letter)throw planError('La nueva carta aún no está habilitada.',409);
  if(cart.some(row=>row.kind!=='custom_plan'))throw planError('La selección del plan no es válida.',409);

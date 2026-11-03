@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Check,
-  Copy,
-  ImagePlus,
+  Check,  ImagePlus,
   Pencil,
   Plus,
   RefreshCw,
@@ -98,36 +96,6 @@ function findMatchingDefinition(definitions, name) {
   ));
 }
 
-const benefitImagePromptTemplate = `Diseña un ícono de interfaz cuadrado 1:1 para el beneficio "[NOMBRE DEL BENEFICIO]" de Fullness Lab. Es un recurso pequeño para web, pensado para leerse a unos 80 px: entrega un PNG de 512 x 512 px, optimizado y liviano. No uses transparencia ni canal alfa. Usa un fondo de chroma key verde fluor #00FF00, completamente plano y uniforme, para retirarlo después con una aplicación de transparencia. No dibujes ni simules un damero, cuadrícula, patrón gris/blanco, fondo blanco, textura, degradado ni sombra. Fullness Lab es una marca chilena de mealpreps de alimentación consciente: comida real, ingredientes naturales y nutrición funcional para el bienestar diario.
-
-Traduce el beneficio a una sola metáfora natural y alimentaria, inspirada en un ingrediente, una planta, una raíz, una hoja, una semilla o un gesto de cuidado. No ilustres el concepto de forma literal ni uses iconografía genérica. El resultado debe sentirse parte de una colección editorial botánica ya existente: simple, serena y fácil de reconocer a tamaño pequeño.
-
-Ejemplos de criterio: para "Fuerza", representa dos manos estilizadas sosteniendo una raíz o alimento natural pesado, no un bíceps ni un árbol complejo. Para "Regeneración Celular", representa una hélice biológica mínima formada por una rama joven y dos hojas, no una cadena científica detallada.
-
-Composición: un motivo central, máximo tres elementos principales, mucho espacio vacío y silueta clara. Ilustración monocromática en tinta burdeos #762531, línea orgánica fina y continua, estética editorial botánica contemporánea. El único color adicional permitido es el fondo verde fluor plano #00FF00. Sin texto, letras, números, logo, marco, sombras, degradados, acuarela, escena completa, árbol frondoso, exceso de ramas ni detalles pequeños. Entrega solamente el ícono como PNG con ese fondo verde fluor uniforme.`;
-
-function buildBenefitImagePrompt(name) {
-  return benefitImagePromptTemplate.replace("[NOMBRE DEL BENEFICIO]", cleanText(name) || "[NOMBRE DEL BENEFICIO]");
-}
-
-async function copyText(value) {
-  try {
-    await navigator.clipboard.writeText(value);
-    return true;
-  } catch {
-    const temporaryField = document.createElement("textarea");
-    temporaryField.value = value;
-    temporaryField.setAttribute("readonly", "");
-    temporaryField.style.position = "fixed";
-    temporaryField.style.opacity = "0";
-    document.body.appendChild(temporaryField);
-    temporaryField.select();
-    const copied = document.execCommand("copy");
-    temporaryField.remove();
-    return copied;
-  }
-}
-
 function QuickParameterDialog({
   kind,
   definitions,
@@ -146,21 +114,17 @@ function QuickParameterDialog({
   const [selectedIconId, setSelectedIconId] = useState("");
   const [customIcon, setCustomIcon] = useState(null);
   const [uploadingIcon, setUploadingIcon] = useState(false);
-  const [promptCopyMessage, setPromptCopyMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const isBenefit = kind === "benefit";
   const singular = isBenefit ? "beneficio" : "tag";
   const dialogTitleId = `quick-${kind}-title`;
-  const populatedBenefitImagePrompt = buildBenefitImagePrompt(name);
-
   useEffect(() => {
     setName("");
     setDescription("");
     setSelectedIconId(iconOptions[0]?.id || "");
     setCustomIcon(null);
     setUploadingIcon(false);
-    setPromptCopyMessage("");
     setSaving(false);
     setError("");
     window.requestAnimationFrame(() => closeRef.current?.focus());
@@ -202,10 +166,6 @@ function QuickParameterDialog({
     }
   }
 
-  async function copyBenefitImagePrompt() {
-    const copied = await copyText(populatedBenefitImagePrompt);
-    setPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
-  }
 
   async function submitQuickDefinition() {
     const trimmedName = cleanText(name);
@@ -348,15 +308,6 @@ function QuickParameterDialog({
                   <span>Imagen personalizada seleccionada</span>
                 </div>
               )}
-              <div className="quick-parameter-ai-prompt">
-                <p>Si vas a usar IA para la imagen, copia este prompt base</p>
-                <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={populatedBenefitImagePrompt} />
-                <button type="button" onClick={copyBenefitImagePrompt}>
-                  <Copy size={15} aria-hidden="true" />
-                  Copiar prompt
-                </button>
-                {promptCopyMessage && <span role="status">{promptCopyMessage}</span>}
-              </div>
             </div>
 
             <fieldset className="quick-parameter-icons">
@@ -760,8 +711,6 @@ export function CatalogParametersAdmin({
   const [tagSearch, setTagSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [benefitPromptCopyMessage, setBenefitPromptCopyMessage] = useState("");
-  const populatedBenefitImagePrompt = buildBenefitImagePrompt(benefitForm.name);
   const filteredBenefits = useMemo(() => {
     const query = cleanText(benefitSearch).toLocaleLowerCase("es");
     if (!query) return benefits;
@@ -842,10 +791,6 @@ export function CatalogParametersAdmin({
     }
   }
 
-  async function copyParameterBenefitImagePrompt() {
-    const copied = await copyText(populatedBenefitImagePrompt);
-    setBenefitPromptCopyMessage(copied ? "Prompt copiado." : "Selecciona el texto para copiarlo.");
-  }
 
   return (
     <section className="catalog-parameters-admin" aria-labelledby="catalog-parameters-title">
@@ -1021,15 +966,6 @@ export function CatalogParametersAdmin({
                   <ImagePlus size={17} aria-hidden="true" />
                   {uploading ? "Subiendo imagen..." : "Subir imagen personalizada"}
                 </FilePickerButton>
-                <div className="quick-parameter-ai-prompt">
-                  <p>Si vas a usar IA para la imagen, copia este prompt base</p>
-                  <textarea aria-label="Prompt base para imagen de beneficio" readOnly rows="5" value={populatedBenefitImagePrompt} />
-                  <button type="button" onClick={copyParameterBenefitImagePrompt}>
-                    <Copy size={15} aria-hidden="true" />
-                    Copiar prompt
-                  </button>
-                  {benefitPromptCopyMessage && <span role="status">{benefitPromptCopyMessage}</span>}
-                </div>
                 <label className="parameter-icon-url">
                   URL del icono
                   <input

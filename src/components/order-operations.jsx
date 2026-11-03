@@ -365,7 +365,7 @@ export function OrderOperationsAdmin({
                   <span id="order-actions-title"><Truck size={17} /> Preparación y entrega</span>
                   <span>{deliveryStatusLabel(selectedOrder.deliveryStatus)}</span>
                 </div>
-                {selectedOrder.operationalAuthority==='core360'&&<div className="order-action-note"><p>Core360 gestiona la preparación, el despacho y la entrega física. Fullness conserva el pedido y recibe su estado canónico.</p>{selectedOrder.core360?.plan&&<p>Reserva: {({held:'Pendiente de pago',confirmed:'Confirmada',expired:'Vencida',cancelled:'Cancelada',delivered:'Entregada'})[selectedOrder.core360.plan.status]||'Por verificar'}.{selectedOrder.core360.plan.expiresAt?` Plazo: ${formatDate(selectedOrder.core360.plan.expiresAt)}.`:''}</p>}{selectedOrder.core360?.plan?.paymentReconciliationRequired&&<p role="alert">Pago recibido después del vencimiento o cancelación. Requiere conciliación en Core360; no prometer stock ni reactivar la reserva manualmente.</p>}<a href="https://core.prof3sional.com/" target="_blank" rel="noreferrer">ABRIR CORE360 ↗</a></div>}
+                {selectedOrder.operationalAuthority==='core360'&&<div className="order-action-note"><p>Consulta el estado actual de este pedido antes de cambiar su preparación o entrega.</p>{selectedOrder.core360?.plan?.paymentReconciliationRequired&&<p role="alert">El pago está recibido y requiere revisión antes de confirmar la entrega. Contacta al equipo.</p>}</div>}
                 {allowedStatuses.length > 0 ? (
                   <div className="order-status-action">
                     <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)} aria-label="Nuevo estado del pedido">

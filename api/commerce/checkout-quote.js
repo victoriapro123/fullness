@@ -1,7 +1,8 @@
 import {quoteCheckout, readJsonBody} from "../../server/mercadopago-checkout.mjs";
-import {ECOMMERCE_MAINTENANCE, ECOMMERCE_MAINTENANCE_MESSAGE} from '../../src/lib/ecommerce-maintenance.js';
 
+import {ECOMMERCE_MAINTENANCE,ECOMMERCE_MAINTENANCE_MESSAGE} from "../../src/lib/ecommerce-maintenance.js";
 export default async function handler(req, res) {
+  if (ECOMMERCE_MAINTENANCE && req.method === "POST") { res.statusCode=503;res.setHeader("Cache-Control","no-store");res.setHeader("Content-Type","application/json; charset=utf-8");res.setHeader("Retry-After","3600");res.end(JSON.stringify({error:{code:"SHOP_UNDER_CONSTRUCTION",message:ECOMMERCE_MAINTENANCE_MESSAGE}}));return; }
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (req.method !== "POST") {
@@ -10,15 +11,9 @@ export default async function handler(req, res) {
     res.end(JSON.stringify({error: {code: "METHOD_NOT_ALLOWED", message: "Método no permitido."}}));
     return;
   }
-  if (ECOMMERCE_MAINTENANCE) {
-    res.statusCode = 503;
-    res.setHeader('Retry-After', '3600');
-    res.end(JSON.stringify({error:{code:'SHOP_UNDER_CONSTRUCTION',message:ECOMMERCE_MAINTENANCE_MESSAGE}}));
-    return;
-  }
   try {
     const body = await readJsonBody(req);
-    const data = await quoteCheckout({cart: body.cart, fulfillment: body.fulfillment});
+    const data = await quoteCheckout({cart: body.cart, fulfillment: body.fulfillment,checkoutKey:body.checkoutKey,expectedAmount:body.expectedAmount});
     res.statusCode = 200;
     res.end(JSON.stringify({data}));
   } catch (error) {

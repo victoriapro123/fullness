@@ -1,18 +1,23 @@
 {
   "crons": [
     {
+      "path": "/api/internal/mealprep-sales-recover",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/internal/core360/recover",
       "schedule": "0 4 * * *"
     }
   ],
   "rewrites": [
-    {"source":"/carrito","destination":"/index.html"},
-    {"source":"/carrito/","destination":"/index.html"},
-    {"source":"/checkout","destination":"/index.html"},
-    {"source":"/checkout/","destination":"/index.html"},
-    {"source":"/producto","destination":"/index.html"},
-    {"source":"/carta","destination":"/index.html"},
-    {"source":"/carta/","destination":"/index.html"},
+    {
+      "source": "/carta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/carta/",
+      "destination": "/index.html"
+    },
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap.xml"
@@ -55,6 +60,26 @@
     },
     {
       "source": "/producto/:slug/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/carrito",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/carrito/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/checkout/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/producto",
       "destination": "/index.html"
     }
   ]

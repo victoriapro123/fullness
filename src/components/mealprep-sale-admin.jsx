@@ -1,0 +1,50 @@
+import {useEffect,useRef,useState} from 'react';
+import {backofficeRequest} from '../lib/backoffice-request.js';
+import './mealprep-stock.css';
+const request=(...args)=>backofficeRequest(...args),money=n=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
+export function MealprepSaleAdmin({draftKey='fullness_sale_stock',requestImpl=request}){
+ const [data,setData]=useState(null),[message,setMessage]=useState(''),[query,setQuery]=useState('');
+ const load=async()=>{const d=await requestImpl('/api/backoffice/mealprep-sale-stock');setData(d);return d;};
+ useEffect(()=>{let alive=true;requestImpl('/api/backoffice/mealprep-sale-stock').then(d=>alive&&setData(d)).catch(()=>alive&&setMessage('No pudimos cargar los platos. Vuelve a intentarlo.'));return()=>{alive=false;};},[requestImpl]);
+ return <section className="custom-plan-admin mealprep-sale-admin"><p className="eyebrow">INVENTARIO Y PUBLICACIÓN</p><h2>MEALPREPS</h2><p>Ingresa las unidades listas y elige qué platos mostrar en la tienda. Con 0 unidades, el plato queda agotado.</p>
+  <label>Buscar plato<input type="search" name="mealprepSearch" value={query} onChange={e=>setQuery(e.target.value)}/></label><button type="button" onClick={()=>load().then(()=>setMessage('Lista actualizada. Tus cambios sin guardar se conservan.')).catch(()=>setMessage('No pudimos actualizar la lista. Vuelve a intentarlo.'))}>Actualizar lista</button>
+  {message&&<p role="status">{message}</p>}{!data&&!message&&<p role="status">Cargando platos…</p>}
+  {data?.offers.length===0&&<p>No hay platos para publicar todavía.</p>}
+  {data?.offers.filter(o=>o.name.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'))).map(offer=><SaleEditor key={offer.menuItemId} offer={offer} draftKey={`${draftKey}_${offer.menuItemId}`} request={requestImpl} onSaved={load}/>)}
+ </section>;
+}
+function SaleEditor({offer,draftKey,request,onSaved}){
+ const [draft,setDraft]=useState(()=>{try{return JSON.parse(localStorage.getItem(draftKey)||'null')||{quantity:offer.quantity??'',published:offer.published,revision:offer.revision};}catch{return{quantity:offer.quantity??'',published:offer.published,revision:offer.revision};}}),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[dirty,setDirty]=useState(()=>{try{return Boolean(localStorage.getItem(draftKey));}catch{return false;}});const busyRef=useRef(false);
+ const change=patch=>setDraft(previous=>{const next={...previous,...patch};try{localStorage.setItem(draftKey,JSON.stringify(next));}catch{}setDirty(true);return next;});
+ useEffect(()=>{if(!dirty&&!draft.pending)setDraft({quantity:offer.quantity??'',published:offer.published,revision:offer.revision});},[offer.revision]);
+ useEffect(()=>{if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+ async function act(inspect=false){if(busyRef.current)return;busyRef.current=true;setBusy(true);let sent=false;try{
+  if(!inspect&&(!/^\d{1,7}$/.test(String(draft.quantity))||Number(draft.quantity)>1000000))throw Error('Ingresa una cantidad de unidades completas, desde 0.');
+  const requestKey=draft.requestKey||crypto.randomUUID();change({requestKey,pending:true});sent=true;
+  const result=await request('/api/backoffice/mealprep-sale-stock',inspect?'POST':'PUT',{menuItemId:offer.menuItemId,requestKey,...(inspect?{action:'inspect'}:{quantity:Number(draft.quantity),published:draft.published,revision:draft.revision})});
+  if(result.status==='not_started'){change({pending:false});setMessage('El cambio no se guardó. Puedes revisar las unidades y volver a guardar.');return;}
+  if(result.status!=='saved')throw Error('No pudimos comprobar el guardado. Consulta el resultado antes de repetir.');
+  setDraft({quantity:result.quantity,published:result.published,revision:result.revision});setDirty(false);try{localStorage.removeItem(draftKey);}catch{}setMessage(result.quantity===0?'Guardado. El plato está agotado.':result.published?'Guardado y publicado.':'Inventario guardado. El plato está oculto.');try{await onSaved();}catch{setMessage('Guardado. No pudimos actualizar la lista; vuelve a cargarla sin repetir el cambio.');}
+ }catch(e){if(!sent)change({pending:false});setMessage(e.message||'No pudimos comprobar el guardado. Consulta el resultado.');}finally{busyRef.current=false;setBusy(false);}}
+ return <article className="mealprep-stock" style={{marginTop:16}}><div className="mealprep-stock-heading"><h3 style={{fontSize:'1rem',margin:0}}>{offer.name.toLocaleUpperCase('es')}</h3><strong>{offer.priceClp?money(offer.priceClp):'Precio pendiente'}</strong></div><p>{offer.quantity===null?'Sin inventario ingresado':!offer.published?'Oculto':offer.availableUnits>0?`${offer.availableUnits} disponibles`:'Agotado'}</p>
+  <fieldset disabled={busy||draft.pending===true}><legend>Disponibilidad</legend><label>Unidades listas<input type="number" name={`units_${offer.menuItemId}`} autoComplete="off" min="0" max="1000000" step="1" inputMode="numeric" value={draft.quantity} onChange={e=>change({quantity:e.target.value})}/></label><label><span><input style={{width:22,minHeight:22,verticalAlign:'middle'}} type="checkbox" checked={draft.published} onChange={e=>change({published:e.target.checked})}/> Mostrar en la tienda</span></label><button type="button" onClick={()=>act()}>{busy?'Guardando…':'Guardar'}</button></fieldset>
+  {draft.pending&&<button type="button" disabled={busy} onClick={()=>act(true)}>Consultar guardado</button>}
+  {offer.reservedQuantity>0&&<p>{offer.reservedQuantity} unidades están en compras pendientes.</p>}{message&&<p role="status">{message}</p>}
+  {offer.revision>draft.revision&&!draft.pending&&<button type="button" onClick={()=>{setDraft({quantity:offer.quantity??'',published:offer.published,revision:offer.revision});setDirty(false);try{localStorage.removeItem(draftKey);}catch{}setMessage('Unidades actualizadas. Puedes revisarlas antes de guardar.');}}>Actualizar unidades</button>}
+  <SaleDetails offer={offer} request={request} onSaved={onSaved} draftKey={`${draftKey}_details`}/>
+ </article>;
+}
+function SaleDetails({offer,request,onSaved,draftKey}){
+ const [form,setForm]=useState(()=>{try{return JSON.parse(localStorage.getItem(draftKey)||'null')||{name:offer.name,description:offer.description,priceClp:offer.priceClp??'',ingredientsText:offer.ingredientsText,photoUrl:offer.photoUrl,revision:offer.revision};}catch{return{name:offer.name,description:offer.description,priceClp:offer.priceClp??'',ingredientsText:offer.ingredientsText,photoUrl:offer.photoUrl,revision:offer.revision};}}),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[dirty,setDirty]=useState(()=>{try{return Boolean(localStorage.getItem(draftKey));}catch{return false;}});
+ useEffect(()=>{if(!dirty&&!form.pending)setForm({name:offer.name,description:offer.description,priceClp:offer.priceClp??'',ingredientsText:offer.ingredientsText,photoUrl:offer.photoUrl,revision:offer.revision});},[offer.revision]);
+ useEffect(()=>{if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+ function change(patch){const next={...form,...patch};setForm(next);setDirty(true);try{localStorage.setItem(draftKey,JSON.stringify(next));}catch{}}
+ async function save(inspect=false){setBusy(true);try{
+  const requestKey=form.requestKey||crypto.randomUUID();change({requestKey,pending:true});
+  const data=await request('/api/backoffice/mealprep-sale-stock',inspect?'POST':'PUT',{menuItemId:offer.menuItemId,requestKey,...(inspect?{action:'inspect'}:{action:'details',revision:form.revision,document:{name:form.name,description:form.description,priceClp:form.priceClp===''?0:Number(form.priceClp),ingredientsText:form.ingredientsText||'',photoUrl:form.photoUrl||''}})});
+  if(data.status==='not_started'){change({pending:false});setMessage('No se guardó el cambio. Puedes revisarlo y volver a guardar.');return;}
+  if(data.status!=='saved')throw Error('Consulta el guardado antes de repetir.');
+  setDirty(false);setForm({...form,...data.details,revision:data.revision,pending:false,requestKey:null});try{localStorage.removeItem(draftKey);}catch{}setMessage('Información guardada.');try{await onSaved();}catch{setMessage('Guardado. Vuelve a cargar la lista para verla actualizada.');}
+ }catch(e){setMessage(e.message||'No pudimos comprobar el guardado. Consulta su resultado.');}finally{setBusy(false);}}
+ return <details><summary>Editar información del plato</summary><fieldset disabled={busy||form.pending===true}><legend>Información del plato</legend><label>Nombre<input name="mealName" value={form.name} maxLength={240} onChange={e=>change({name:e.target.value})}/></label><label>Precio por unidad (IVA incluido)<input type="number" min="0" max="1000000" step="1" name="mealPrice" inputMode="numeric" value={form.priceClp} onChange={e=>change({priceClp:e.target.value})}/></label><label>Descripción<textarea name="mealDescription" maxLength={4000} value={form.description||''} onChange={e=>change({description:e.target.value})}/></label><label>Ingredientes (opcional)<textarea name="mealIngredients" maxLength={6000} value={form.ingredientsText||''} onChange={e=>change({ingredientsText:e.target.value})}/></label><label>Enlace de la foto (opcional)<input name="mealPhoto" type="url" value={form.photoUrl||''} onChange={e=>change({photoUrl:e.target.value})}/></label><button type="button" onClick={()=>save()}>Guardar información</button></fieldset>{form.pending&&<button type="button" disabled={busy} onClick={()=>save(true)}>Consultar guardado</button>}{message&&<p role="status">{message}</p>}</details>;
+}

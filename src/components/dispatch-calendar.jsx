@@ -81,7 +81,7 @@ export function DispatchCalendarAdmin({
         setConfirming(false);
         if (draftKey) localStorage.setItem(draftKey, JSON.stringify(next));
         setMessage(
-          "Calendario actualizado sin perder tu borrador. Revisa los cambios del servidor y vuelve a confirmar antes de guardar.",
+          "Calendario actualizado sin perder tus cambios. Revisa la programación antes de guardar.",
         );
       }
     } catch (e) {
@@ -165,7 +165,7 @@ export function DispatchCalendarAdmin({
         reassign: false,
       }));
       setMessage(
-        `Programación guardada en el servidor. ${result.assignedDeliveries || 0} entregas asignadas.`,
+        `Programación guardada. ${result.assignedDeliveries || 0} entregas asignadas.`,
       );
       try {
         await onChanged?.();
@@ -276,7 +276,7 @@ export function DispatchCalendarAdmin({
             disabled={saving}
           />
           Confirmo aplicar el menú nuevo también a las entregas pendientes ya
-          asignadas, si existen. Se conservará la trazabilidad del cambio.
+          asignadas, si existen. Tus cambios quedarán guardados.
         </label>
         {confirming && (
           <div className="dispatch-calendar-confirm" role="alert">
@@ -319,8 +319,8 @@ export function DispatchCalendarAdmin({
         {discarding && (
           <div className="dispatch-calendar-confirm">
             <p>
-              ¿Descartar sólo los cambios locales sin guardar? La programación
-              del servidor no se elimina.
+              ¿Descartar los cambios sin guardar? La programación guardada
+              se conserva.
             </p>
             <button
               type="button"
@@ -345,7 +345,7 @@ export function DispatchCalendarAdmin({
                   reassign: false,
                 });
                 setMessage(
-                  "Borrador local descartado. La programación del servidor se conserva.",
+                  "Cambios descartados. La programación guardada se conserva.",
                 );
               }}
             >
@@ -356,7 +356,7 @@ export function DispatchCalendarAdmin({
         <small>
           {dirty
             ? "Borrador local: aún no está publicado. No se pierde al cambiar de módulo."
-            : "Los cambios guardados se persisten en el servidor."}
+            : "Tus cambios están guardados."}
         </small>
       </form>
       <div className="dispatch-calendar-list" aria-label="Semanas programadas">
