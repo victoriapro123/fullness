@@ -9678,6 +9678,7 @@ function App() {
   }
 
   const navItems = [
+    { href: "#programa", label: "Inicio" },
     { href: shopPath, label: "Planes" },
     { href: "/comunidad", label: "Comunidad" },
     { href: aboutPath, label: "Nosotros" },

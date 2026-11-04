@@ -4211,7 +4211,6 @@
   }
 
   .plate-hero-visual-stage {
-    display: none !important;
     position: absolute !important;
     inset: auto auto -34px auto !important;
     right: -34vw !important;
@@ -4471,6 +4470,11 @@
 
 /* Mobile: la decoración acompaña la lectura y las fotos nunca la cubren. */
 @media (max-width: 860px) {
+  /* El plato se conserva únicamente en escritorio, también tras la animación. */
+  .plate-hero-visual-stage {
+    display: none !important;
+  }
+
   .plate-hero-illustration--left {
     left: calc(-38vw - 20vw) !important;
   }
