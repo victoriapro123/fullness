@@ -1,0 +1,17 @@
+/* Only /tienda owns this compact header; keep the landing's header space unchanged. */
+html:has(main.route-shop [data-testid="approved-shop"]) {
+  scrollbar-gutter: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+html .intro-scroll-consumed main.route-shop,
+html.intro-scroll-consumed main.route-shop,
+html main.route-shop:has([data-testid="approved-shop"]) {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+/* The approved store keeps WhatsApp in its contact footer, not over the catalog. */
+main.route-shop .whatsapp-float { display: none !important; }

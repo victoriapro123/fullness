@@ -2,6 +2,8 @@
 
 Este archivo es el punto de entrada transitorio mientras Cerebro central no disponga de consulta/escritura remota operativa. No acredita una importación central.
 
+- Implementación local vigente de /tienda: `tienda-maqueta-integrada-20261104.md`. Maquetas exactas de escritorio/móvil del chat Maqueta, compra libre desde1, familiares combinables, Rewards10%/35% con seis unidades acumuladas por semana, cuenta mínima y despacho separado. Sustituye la obligación6/24 de las notas históricas siguientes. SQL aditivo preparado y pruebas locales aprobadas; NO publicado ni aplicado a producción todavía. No editar precios/fotos/visibilidad reales por esta nota.
+
 - Prevención de errores en biblioteca: `publicacion-mealpreps-poka-yoke-20261104.md`. Estado guardado separado del borrador, precio antes de habilitar oferta, botones publicar/ocultar/guardar ficha y salida protegida. Corregido y probado localmente; no cambia datos de Cecilia ni autoriza push por sí solo.
 
 - Regla vigente: `biblioteca-unica-planes-20261103.md`. Sólo las25fichas originales alimentan Arma tu plan; precio/disponibilidad en la misma biblioteca, sin stock numérico ni otro editor. Carlos confirmó8conprecio disponibles y17sinprecio/no disponibles. Se conservan todas las fotos/nutrición/datos originales y pedidos. Sustituye la oferta separada15y las reglas históricas de stock/carta siguientes. Fullness es autónomo; no coordinar con Core360 sin petición explícita.

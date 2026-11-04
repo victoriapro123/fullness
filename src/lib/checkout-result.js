@@ -11,6 +11,14 @@ export function checkoutPaymentMessage(payment) {
   if (payment?.status !== "approved") {
     return "El pago continúa pendiente. Te avisaremos cuando cambie de estado.";
   }
+  if(payment.purchaseModel==='mix_v1'&&['pickup','delivery'].includes(payment.fulfillmentMode)){
+    const fulfillment=payment.fulfillmentMode==='pickup'
+      ? 'Gracias por tu compra. Te contactaremos para coordinar el retiro de tu pedido.'
+      : 'Gracias por tu compra. Te informaremos el valor del despacho para tu aprobación antes de coordinar el envío.';
+    return `${fulfillment} ${payment.customerConfirmationSent===true
+      ? 'Enviamos la confirmación de compra a tu correo.'
+      : 'El correo de confirmación está pendiente de envío.'}`;
+  }
   return payment.customerConfirmationSent === true
     ? "Recibimos tu pago y enviamos la confirmación de compra a tu correo."
     : "Recibimos tu pago y confirmamos tu compra. El correo de confirmación está pendiente de envío.";

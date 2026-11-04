@@ -109,7 +109,17 @@ try {
       if(mode==='delivery')assert.match(message.html,/wa.me\/56996588199/);
     }
   }
-  console.log("Checkout email QA OK: tarifas, coordinación, retiro, deduplicación y aislamiento TEST verificados.");
+  for(const mode of ['delivery','pickup']){
+    const before=messages.length;
+    await sendApprovedOrderEmails({order:{...order,id:'mix-'+mode+'-qa',delivery_fee_clp:0,discount_clp:23520,subtotal_clp:235200,total_clp:211680,customer_snapshot:{...order.customer_snapshot,purchaseModel:'mix_v1',mode}},items,supabase:createEmailDeliveryStore()});
+    const customer=messages[before];
+    assert.match(customer.text,mode==='delivery'?/Te informaremos el valor del despacho para tu aprobación antes de coordinar el envío\./:/Te contactaremos para coordinar el retiro de tu pedido\./);
+    assert.match(customer.html,/Arma tu mix/);
+    assert.match(customer.text,/Descuento Fullness Rewards:.*23.520/);
+    assert.match(customer.text,/Total:.*211.680/);
+    assert.doesNotMatch(customer.text,/3.990|5.990/);
+  }
+  console.log("Checkout email QA OK: tarifas legacy, mix con despacho separado/retiro, descuento, deduplicación y aislamiento TEST verificados.");
 } finally {
   globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnvironment)) {

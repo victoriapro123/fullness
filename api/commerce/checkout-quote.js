@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
   try {
     const body = await readJsonBody(req);
-    const data = await quoteCheckout({cart: body.cart, fulfillment: body.fulfillment,checkoutKey:body.checkoutKey,expectedAmount:body.expectedAmount});
+    const data = await quoteCheckout({cart: body.cart, fulfillment: body.fulfillment,checkoutKey:body.checkoutKey,expectedAmount:body.expectedAmount,request:req});
     res.statusCode = 200;
     res.end(JSON.stringify({data}));
   } catch (error) {

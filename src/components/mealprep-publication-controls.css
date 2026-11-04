@@ -1,7 +1,7 @@
 .mealprep-publication{min-width:0;display:grid;gap:12px;color:#292323}
 .mealprep-editor-fields{display:contents;border:0;padding:0;margin:0;min-width:0}
 .mealprep-publication h4{margin:12px 0!important;line-height:1.4}
-.mealprep-publication input[type=number]{scroll-margin-block:180px;width:100%;min-height:48px;box-sizing:border-box}
+.mealprep-publication input[type=number],.mealprep-publication select{scroll-margin-block:180px;width:100%;max-width:100%;min-height:48px;box-sizing:border-box}
 .mealprep-publication input[aria-invalid=true]{border-color:#8b3445}
 .mealprep-publication :is(p,small){margin:0;line-height:1.6;overflow-wrap:anywhere}
 .mealprep-live-status{display:grid;gap:8px;padding:20px;background:#eee7d9;border:1px solid #c9baaa;min-width:0}
@@ -25,7 +25,7 @@
 .mealprep-leave-actions button{min-height:48px;white-space:normal;font:inherit}
 .mealprep-leave-actions .primary-button{background:#a7bba6;color:#252421;border:1px solid #7c927b}
 .mealprep-leave-secondary{background:transparent;border:0;text-decoration:underline;color:#625850;padding:12px}
-.mealprep-publication :is(input,button):focus-visible,.mealprep-leave-dialog button:focus-visible{outline:3px solid #792635;outline-offset:3px}
+.mealprep-publication :is(input,select,button):focus-visible,.mealprep-leave-dialog button:focus-visible{outline:3px solid #792635;outline-offset:3px}
 .backoffice-meal-library-form .backoffice-form-actions .backoffice-action-copy{min-width:0}
 .backoffice-meal-library-form .backoffice-action-copy small{line-height:1.5;overflow-wrap:anywhere}
 .backoffice-meal-library-form .backoffice-draft-status>span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.5;min-width:0}

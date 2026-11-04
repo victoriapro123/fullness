@@ -25,6 +25,8 @@ import {loadEnvFile} from "./r2-media.mjs";
 import {sendApprovedOrderEmails, sendOrderStatusUpdateEmail} from "./transactional-email.mjs";
 import {getProductAvailability, getProductDispatchRule, isPlanProduct, santiagoDate, serializeAvailability} from "../src/lib/product-availability.js";
 import {getDeliveryQuote, serializeDeliveryQuote} from "../src/lib/delivery-rates.js";
+import {mixDeliveryQuote} from '../src/lib/mix-commerce.js';
+import {normalizeMixItem,verifiedRewardsUser} from './mix-commerce.mjs';
 import {resolveDispatchProducts} from "./dispatch-calendar.mjs";
 import {normalizeCustomPlan,resolveCustomPlans} from "./custom-plans.mjs";
 import {CORE_PLAN_CONTRACT,assertCorePlanReservation} from './core360-plan-contract.mjs';
@@ -39,7 +41,7 @@ const localEnvReady = Promise.all([
 ]);
 const MERCADOPAGO_API_URL = "https://api.mercadopago.com";
 const MAX_BODY_BYTES = 64 * 1024;
-const MAX_CART_LINES = 20;
+const MAX_CART_LINES = 100;
 const MAX_ITEM_QUANTITY = 20;
 const PAYMENT_STATUSES = new Set([
   "pending",
@@ -102,11 +104,20 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
 
   const normalizedCart = normalizeCart(cart);
   const env = dependencies.env || process.env;
-  const deliveryQuote = getDeliveryQuote(fulfillment);
+  const supabase = dependencies.supabase || getSupabaseAdmin();
+  const saleEnabled=await saleAuthorityEnabled(supabase);
+  let mixPurchase=saleEnabled&&!normalizedCart.some(i=>i.kind==='custom_plan');
+  // A pre-update checkout key retains its original delivery/pricing model.
+  // This is an exact retry, never a new order or a guess based on a product name.
+  if(mixPurchase&&/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(checkoutKey||'')){
+    const prior=await supabase.from('mealprep_sale_checkouts').select('order_id').eq('checkout_key',checkoutKey).maybeSingle();
+    if(prior.error)throw statusError(503,'No pudimos consultar esta compra. Inténtalo nuevamente.');
+    if(prior.data){const saved=await supabase.from('orders').select('customer_snapshot').eq('id',prior.data.order_id).maybeSingle();if(saved.error||!saved.data)throw statusError(503,'No pudimos consultar esta compra. Inténtalo nuevamente.');mixPurchase=saved.data.customer_snapshot?.purchaseModel==='mix_v1';}
+  }
+  const deliveryQuote = mixPurchase?mixDeliveryQuote(fulfillment):getDeliveryQuote(fulfillment);
   if (!deliveryQuote.canPayOnline) {
     throw statusError(422, deliveryQuote.message);
   }
-  const supabase = dependencies.supabase || getSupabaseAdmin();
   const testSession = cleanText(testSessionToken)
     ? await (dependencies.consumeTestCheckoutSession || consumeTestCheckoutSession)({env, sessionToken: testSessionToken, supabase})
     : null;
@@ -117,8 +128,9 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       : await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "live"});
   const mode = checkoutMode(paymentProfile?.mode);
   const isTestCheckout = mode === "test";
-  if(await saleAuthorityEnabled(supabase)){
-    const result=await createSaleCheckout({cart:normalizedCart,fulfillment,expectedAmount,checkoutKey,supabase,mode,profile:paymentProfile,deliveryQuote,now:checkoutNow,quoteOnly:dependencies.quoteOnly===true,services:{gateway:dependencies.mercadoPagoRequest||mercadoPagoRequest,customerSnapshot:(f,o)=>buildCustomerSnapshot(f,{...o,testSessionId:testSession?.sessionId||null}),productSnapshot:buildProductSnapshot,deliverySnapshot:serializeDeliveryQuote,siteUrl:()=>getCheckoutSiteUrl(request)}});
+  if(saleEnabled){
+    const rewardsUserId=mixPurchase?await verifiedRewardsUser(supabase,request):null;
+    const result=await createSaleCheckout({cart:normalizedCart,fulfillment,expectedAmount,checkoutKey,supabase,mode,profile:paymentProfile,deliveryQuote,mixPurchase,rewardsUserId,now:checkoutNow,quoteOnly:dependencies.quoteOnly===true,services:{gateway:dependencies.mercadoPagoRequest||mercadoPagoRequest,customerSnapshot:(f,o)=>buildCustomerSnapshot(f,{...o,testSessionId:testSession?.sessionId||null}),productSnapshot:buildProductSnapshot,deliverySnapshot:serializeDeliveryQuote,siteUrl:()=>getCheckoutSiteUrl(request)}});
     if(isTestCheckout&&result.orderId)await(dependencies.attachTestSessionOrder||attachTestSessionOrder)({orderId:result.orderId,preferenceId:result.preferenceId,sessionId:testSession?.sessionId,supabase});
     return result;
   }
@@ -399,11 +411,11 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   };
 }
 
-export async function quoteCheckout({cart, fulfillment, checkoutKey, expectedAmount, dependencies = {}}) {
+export async function quoteCheckout({cart, fulfillment, checkoutKey, expectedAmount, request, dependencies = {}}) {
   return createCheckoutPreference({
     cart,
     fulfillment: fulfillment?.name&&fulfillment?.email&&fulfillment?.phone?fulfillment:{mode: fulfillment?.mode, comuna: fulfillment?.comuna, address: "Cotización sin dirección", name: "Cotización web", email: "quote@fullness.invalid", phone: "+56000000000"},
-    checkoutKey,expectedAmount,
+    checkoutKey,expectedAmount,request,
     dependencies: {...dependencies, quoteOnly: true}
   });
 }
@@ -606,6 +618,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     statusDetail: cleanText(payment.status_detail),
     testMode: mode === "test",
     total: Number(order.total_clp),
+    ...(order.customer_snapshot?.purchaseModel==='mix_v1'?{purchaseModel:'mix_v1',fulfillmentMode:order.customer_snapshot.mode}:{}),
     customerConfirmationSent: Boolean(emailDelivery?.customer?.sent),
     operationsNotificationSent: Boolean(emailDelivery?.operations?.sent)
   };
@@ -1051,6 +1064,7 @@ function normalizeCart(cart) {
   }
 
   return cart.map((item) => {
+    if(item?.kind==='mealprep')return normalizeMixItem(item);
     if (item?.kind === 'custom_plan') return normalizeCustomPlan(item);
     const slug = cleanText(item?.slug);
     const quantity = Math.round(Number(item?.quantity ?? item?.qty));

@@ -2,6 +2,12 @@ import { getSupabaseClient, isSupabaseConfigured } from "./supabase.js";
 import { benefitPresets, tagPresets } from "./catalog-parameter-presets.js";
 import {normalizeAvailability, serializeAvailability} from "./product-availability.js";
 import {applyDispatchCalendar, CALENDAR_COLUMNS} from "./dispatch-calendar.js";
+import {MIX_CATEGORIES} from "./mix-commerce.js";
+
+export function normalizeMealprepSaleCategory(value) {
+  const category = typeof value === "string" ? value.trim() : "";
+  return MIX_CATEGORIES.slice(1).includes(category) ? category : null;
+}
 
 const MENU_ITEM_COLUMNS = "*";
 const MONTHLY_PLAN_WEEK_COLUMNS = "monthly_plan_id,weekly_plan_id,week_position";
@@ -578,6 +584,7 @@ export function mapMealLibraryItem(row, context = createCatalogContext()) {
     id: row.id,
     sku: row.sku || createStableDishSku(row.id),
     salePriceClp: row.sale_price_clp ?? null,
+    saleCategory: normalizeMealprepSaleCategory(row.sale_category) || "",
     availableForPlans: row.available_for_plans === true,
     name: row.name || "",
     tag: row.tag || "",
@@ -787,6 +794,9 @@ export function buildMealLibraryPayload(input) {
 
   return {
     sale_price_clp: input.salePriceClp === '' || input.salePriceClp == null ? null : Number(input.salePriceClp),
+    ...((input.saleCategory !== undefined || input.sale_category !== undefined)
+      ? {sale_category: normalizeMealprepSaleCategory(input.saleCategory ?? input.sale_category)}
+      : {}),
     available_for_plans: input.availableForPlans === true,
     name: cleanText(input.name),
     tag: nullableText(input.tag),

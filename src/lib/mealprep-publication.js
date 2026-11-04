@@ -13,7 +13,7 @@ export function mealprepPublicationState(form={},saved=null) {
     liveLabel:published?'Disponible en la tienda':saved?.id?'No disponible en la tienda':'Aún no publicado',
     saveLabel:willPublish?'Guardar y publicar':published?'Guardar y ocultar':'Guardar sin publicar',
     priceError:!priceEmpty&&!priceValid?'Ingresa un precio entre $1 y $1.000.000, sin decimales.':'',
-    nextStep:willPublish?'Al guardar, los clientes podrán elegirlo en Arma tu plan.':published?'Al guardar, dejará de ofrecerse en Arma tu plan.':!priceValid?'Agrega un precio para poder ofrecerlo. Puedes guardar la ficha sin publicarla.':'Al guardar, la ficha se conservará sin ofrecerse en la tienda.'};
+    nextStep:willPublish?'Al guardar, los clientes podrán elegirlo en Arma tu mix.':published?'Al guardar, dejará de ofrecerse en Arma tu mix.':!priceValid?'Agrega un precio para poder ofrecerlo. Puedes guardar la ficha sin publicarla.':'Al guardar, la ficha se conservará sin ofrecerse en la tienda.'};
 }
 
 export function mealprepDraftLabel(status,dirty) {

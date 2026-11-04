@@ -117,6 +117,9 @@ import {LocalMenuPage} from "./components/local-menu-page.jsx";
 import {LocalMenuAdmin,MealprepAvailabilityAdmin} from "./components/local-menu-admin.jsx";
 import {PLAN_CONDITIONS} from "./lib/local-menu.js";
 import {customPlanRequest} from "./lib/custom-plans.js";
+import {ApprovedShop} from './components/approved-shop.jsx';
+import {MemberRegistration} from './components/member-registration.jsx';
+import {mixRequest,mixTotals,mixDeliveryQuote,mixPhotos} from './lib/mix-commerce.js';
 import {applyDispatchCalendar, buildMonthlyDeliveries, MONTHLY_MENU_RULE_TEXT} from "./lib/dispatch-calendar.js";
 import mealPrepBandSrc from "./assets/fullness-mealprep-band-label-fullness.png";
 import heroPlateCutoutSrc from "./assets/fullness-hero-plate-cutout.png";
@@ -335,9 +338,7 @@ const faqGroups = [
       {
         question: "Días de despacho",
         answer: [
-          DISPATCH_RULE_TEXT,
-          MEALPREP_DISPATCH_RULE_TEXT,
-          "Los pedidos deberán realizarse dentro de los plazos informados en la página web para ser considerados en la siguiente fecha de despacho."
+          "Coordinamos contigo la fecha del despacho o retiro de tu pedido. Si solicitas envío, te informaremos su costo para tu aprobación y pago por separado."
         ]
       },
       {
@@ -348,7 +349,7 @@ const faqGroups = [
       },
       {
         question: "Costo de despacho",
-        answer: ["Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. Para otras comunas, el costo y la fecha del despacho se coordinan por WhatsApp antes de pagar."]
+        answer: ["El despacho se cotiza por separado según distancia y volumen. En la web pagas sólo los productos. Te informaremos el valor del envío para tu aprobación antes de coordinar la entrega."]
       },
       {
         question: "Recepción del pedido",
@@ -411,40 +412,38 @@ const faqGroups = [
       },
       {
         question: "Contacto por pedidos o despachos",
-        answer: ["Para cualquier consulta relacionada con pedidos o despachos: contacto@fullnesslab.com · WhatsApp: +56 9 9658 8199."]
+        answer: ["Para cualquier consulta relacionada con pedidos o despachos: cecilia@fullnesslab.com · WhatsApp: +56 9 9658 8199."]
       }
     ]
   },
   {
     id: "meal-prep",
-    eyebrow: "Mealprep semanal",
-    title: "Cómo realizar tu pedido semanal.",
+    eyebrow: "Mealpreps individuales",
+    title: "Tu comida, a tu manera.",
     navLabel: "Mealprep",
     items: [
       {
-        question: "¿Cómo funciona el Mealprep Semanal?",
-        answer: ["Cada semana preparamos una selección de mealpreps elaborados con ingredientes naturales, técnicas de cocina saludables y porciones pensadas para facilitar tu alimentación durante la semana."]
+        question: "¿Cómo funciona Arma tu mix?",
+        answer: ["Elige tus preparaciones favoritas de nuestra carta y pide las cantidades que necesites, desde una unidad. Cada plato tiene su propio precio."]
       },
       {
         question: "¿Qué incluye?",
         answer: [
-          "Cada box contiene:",
-          ["5 mealpreps individuales.", "Proteínas y acompañamientos envasados por separado.", "Productos sellados al vacío.", "Instrucciones de conservación y regeneración."]
+          "Cada preparación incluye su información de ingredientes, alérgenos, conservación y regeneración. Puedes consultarla en la ficha del producto antes de elegir."
         ]
       },
       {
         question: "¿Cuándo debo realizar mi pedido?",
-        answer: [DISPATCH_RULE_TEXT]
+        answer: ["Puedes comprar las preparaciones disponibles cuando lo necesites. Coordinaremos contigo la entrega o el retiro."]
       },
       {
         question: "¿Cuándo se entregan?",
-        answer: [DISPATCH_RULE_TEXT]
+        answer: ["Te contactaremos para coordinar la entrega o el retiro. Si solicitas despacho, su costo se cotiza y paga por separado."]
       },
       {
         question: "¿Puedo elegir los mealpreps?",
         answer: [
-          "Los planes tienen un menú único preestablecido para cada semana de despacho, sin elección de platos.",
-          MEALPREP_DISPATCH_RULE_TEXT
+          "Sí. Combina libremente tus mealpreps favoritos y las cantidades que quieras. También puedes incluir platos familiares en la misma compra."
         ]
       },
       {
@@ -1586,6 +1585,7 @@ function mealLibraryItemToForm(item) {
     id: item.id || "",
     updatedAt: item.updatedAt || "",
     salePriceClp: item.salePriceClp ?? "",
+    saleCategory: item.saleCategory || "",
     availableForPlans: item.availableForPlans === true,
     sku: item.sku || createStableSku("PL", item.id),
     name: item.name || "",
@@ -2689,7 +2689,7 @@ function loadStoredCart() {
     if (!Array.isArray(stored)) return [];
 
     return stored
-      .filter((item) => item?.id && item?.slug && Number(item?.qty) > 0)
+      .filter((item) => item?.id && (item?.slug || item?.kind==='mealprep'&&item?.libraryMealId) && Number(item?.qty) > 0)
       .map((item) => ({...item, qty: Math.max(1, Math.round(Number(item.qty)))}));
   } catch {
     return [];
@@ -5039,11 +5039,12 @@ function FaqAnswer({ blocks }) {
 function FaqPage({ onNavigateToShop,customPlansEnabled=false }) {
   const buyingGroup={id:'comprar',navLabel:'Cómo comprar',eyebrow:'Cómo funciona',title:'TU COMPRA, PASO A PASO.',items:[
     {question:'¿Dónde consulto la carta del local?',answer:['En fullnesslab.com/carta puedes consultar la selección vigente del local. El equipo actualiza los productos, los cinco platos rotativos de Lunch y sus precios. La carta presencial y la tienda online tienen modalidades distintas.']},
-    {question:'¿Cómo elijo y pago mi plan?',answer:[customPlansEnabled?'Arma tu plan con los platos disponibles de la carta vigente.':'Revisa los planes disponibles en la tienda y abre su detalle para conocer su contenido. El armado personalizado sólo estará disponible cuando aparezca habilitado.',...(customPlansEnabled?PLAN_CONDITIONS:[]),'Abre el carrito para revisar contenido, cantidades y total. Ingresa la dirección y comuna o elige retiro. Revisa el total antes de continuar a Mercado Pago.']},
+    {question:'¿Cómo elijo y pago mis platos?',answer:['En Arma tu mix puedes elegir desde un mealprep individual, combinar preparaciones y cantidades y agregar platos familiares a la misma compra. No hay packs obligatorios.','Abre Mi selección para revisar productos, cantidades, descuentos y total. Elige retiro o despacho y completa tus datos antes de continuar a Mercado Pago.']},
     {question:'¿Qué ocurre si cambia la disponibilidad o el precio?',answer:['Si un plato deja de estar disponible o cambia el total, te pediremos revisar la compra. No cobraremos un total distinto al que confirmaste.']},
     {question:'¿Cómo sé si mi pago quedó aprobado?',answer:['Mercado Pago informa el resultado. Volver a la tienda no confirma por sí solo un pago: Fullness Lab verifica su estado con el proveedor. Si está pendiente, no vuelvas a pagar sin consultar el estado de tu pedido.']},
-    {question:'¿Cómo se calcula el despacho?',answer:['Lo Barnechea: $3.990. Las Condes y Vitacura: $5.990. En otras comunas coordinamos disponibilidad, fecha y costo por WhatsApp antes del pago. El retiro no agrega tarifa de despacho.']},
-    {question:'¿Puedo comprar un mealprep individual?',answer:['Los mealpreps normales sólo se asignan a planes. Los platos familiares se compran por separado. Los platos para llevar del local son una modalidad presencial distinta.']}
+    {question:'¿Cómo se calcula el despacho?',answer:['La web cobra únicamente los productos. Si solicitas despacho, te informaremos su valor según distancia y volumen para tu aprobación y pago por separado. También puedes retirar sin costo en Av. La Dehesa 1844, Local 204, previa coordinación.']},
+    {question:'¿Puedo comprar un mealprep individual?',answer:['Sí. Elige desde una unidad y combina las cantidades que necesites. También puedes incluir platos familiares en tu pedido.']},
+    {question:'¿Cómo funciona Fullness Rewards?',answer:['Con 24 o más mealpreps individuales en un mismo pedido recibes un 10% de descuento sobre esos platos.','Crea tu cuenta con nombre, correo y teléfono para acumular tus compras. Al completar un total de 6 mealpreps individuales en cada una de cuatro semanas del mismo mes, recibes un 35% en el pedido que completa la cuarta semana. Puedes sumar los 6 platos en varios pedidos durante cada semana.','Sólo cuentan compras pagadas y no anuladas. Los familiares y el despacho no participan. Los beneficios no se acumulan entre sí: aplicamos el más conveniente.']}
   ]};
   const groups=[buyingGroup,...faqGroups];
   return (
@@ -5117,7 +5118,12 @@ function FaqPage({ onNavigateToShop,customPlansEnabled=false }) {
 function App() {
   const appRef = useRef(null);
   const [cart, setCart] = useState(loadStoredCart);
+  const [mixQuote,setMixQuote]=useState(null);
+  const [mixQuoteBusy,setMixQuoteBusy]=useState(false);
+  const [mixQuoteError,setMixQuoteError]=useState('');
+  const [mixQuoteRetry,setMixQuoteRetry]=useState(0);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [registerAccount,setRegisterAccount]=useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -8479,7 +8485,7 @@ function App() {
   useEffect(() => {
     const closeOnEscape = (event) => {
       if (event.key !== "Escape") return;
-      if(event.defaultPrevented||document.querySelector('dialog[open],.backoffice-result-overlay'))return;
+      if(event.defaultPrevented||document.querySelector('dialog[open],.backoffice-result-overlay')||document.querySelector('[data-testid="approved-shop"]')?.shadowRoot?.querySelector('dialog[open]'))return;
       if(mealLibraryEditorOpen){event.preventDefault();closeMealLibraryEditor();return;}
 
       setAccountOpen(false);
@@ -8511,8 +8517,11 @@ function App() {
   );
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
-  const deliveryQuote = getDeliveryQuote(checkoutForm);
-  const checkoutTotal = deliveryQuote.canPayOnline ? cartTotal + deliveryQuote.feeClp : null;
+  const isMixCart=cart.every(item=>item.kind==='mealprep'||getProductType(item)==='family');
+  const mixCalculation=mixTotals(cart);
+  const mixDiscount=isMixCart?(mixQuote?.discount??mixCalculation.discount):0;
+  const deliveryQuote = isMixCart?mixDeliveryQuote(checkoutForm):getDeliveryQuote(checkoutForm);
+  const checkoutTotal = deliveryQuote.canPayOnline ? cartTotal-mixDiscount + deliveryQuote.feeClp : null;
   const deliveryWhatsappUrl = createWhatsappUrl([
     "Hola Fullness Lab, quiero coordinar el despacho de este pedido.",
     `Comuna: ${deliveryQuote.commune || "Por indicar"}.`,
@@ -8560,6 +8569,30 @@ function App() {
   const isAboutPage = currentPath === aboutPath && !currentProductSlug;
   const isLocalMenuPage = currentPath.replace(/\/$/, '') === '/carta' && !currentProductSlug;
   const isProductPage = Boolean(currentProductSlug);
+  useEffect(()=>{
+    if(stockLetter.loading||stockLetter.error)return;
+    setCart(previous=>{
+      let changed=false;
+      const next=previous.map(item=>{
+        if(item.kind!=='mealprep')return item;
+        const source=stockLetter.items?.find(p=>p.libraryMealId===item.libraryMealId);
+        if(!source){if(item.availableForPlans===false)return item;changed=true;return {...item,availableForPlans:false};}
+        if(item.price===source.priceClp&&item.availableForPlans===source.availableForPlans&&item.revision===source.revision)return item;
+        changed=true;return {...item,...source,name:source.title,price:source.priceClp,kind:'mealprep',productType:'mealprep',qty:item.qty};
+      });return changed?next:previous;
+    });
+  },[stockLetter]);
+  useEffect(()=>{
+    if(!cartOpen||!isMixCart||!cart.length){setMixQuote(null);setMixQuoteError('');setMixQuoteBusy(false);return;}
+    const controller=new AbortController();setMixQuote(null);setMixQuoteBusy(true);setMixQuoteError('');
+    const timer=setTimeout(async()=>{try{
+      const headers=await checkoutHeaders();
+      const response=await fetch('/api/commerce/checkout-quote',{method:'POST',headers,signal:controller.signal,body:JSON.stringify({cart:cart.map(mixRequest),fulfillment:{mode:'pickup'}})});
+      const payload=await response.json();if(!response.ok)throw Error(payload.error?.message||'No pudimos actualizar tu selección. Inténtalo nuevamente.');
+      if(!controller.signal.aborted)setMixQuote(payload.data);
+    }catch(error){if(!controller.signal.aborted)setMixQuoteError(error.message||'No pudimos actualizar tu selección.');}finally{if(!controller.signal.aborted)setMixQuoteBusy(false);}},300);
+    return()=>{controller.abort();clearTimeout(timer);};
+  },[cart,cartOpen,isMixCart,authUser?.id,mixQuoteRetry]);
   const showIntroReplay =
     currentPath === "/" &&
     !currentProductSlug &&
@@ -8607,7 +8640,10 @@ function App() {
   function addToCart(product) {
     if (ECOMMERCE_MAINTENANCE) { openShopPage(); return; }
     if(product?.productType==='mealprep'||product?.product_type==='mealprep'){
-      setCheckoutMessage('Los mealpreps normales sólo se asignan a planes; no se compran individualmente.');
+      const meal=stockLetter?.items?.find(i=>i.menuItemId===product.id||i.libraryMealId===product.libraryMealId);
+      if(!meal?.availableForPlans){setCheckoutMessage('Este plato no está disponible en este momento. Elige otra preparación de nuestra carta.');return;}
+      const found=cart.find(i=>i.id===meal.id);
+      setMixQuantity({...meal,kind:'mealprep',productType:'mealprep',name:meal.title,price:meal.priceClp},(found?.qty||0)+1);setCartOpen(true);
       return;
     }
     if(product?.kind==='custom_plan'){
@@ -8658,6 +8694,26 @@ function App() {
     window.fullnessCartNoticeTimer = window.setTimeout(() => {
       setCartNotice(null);
     }, 2200);
+  }
+
+  function setMixQuantity(product,quantity){
+    if(checkoutSubmitting||!Number.isSafeInteger(quantity)||quantity<0||quantity>1000)return;
+    if(product.kind==='mealprep'&&quantity>(cart.find(i=>i.id===product.id)?.qty||0)&&cart.some(isPlanProduct)){
+      setCheckoutMessage('Tu selección conserva un plan anterior. Puedes terminar ese pedido o quitar el plan para comenzar un mix de platos individuales. No perderás su contenido al cerrar esta ventana.');setCartOpen(true);return;
+    }
+    if(product.kind==='mealprep'&&product.availableForPlans===false&&quantity>(cart.find(i=>i.id===product.id)?.qty||0))return;
+    setCheckoutMessage('');
+    setCart(current=>{
+      if(!quantity)return current.filter(i=>i.id!==product.id);
+      const next={...product,qty:quantity};
+      return current.some(i=>i.id===product.id)?current.map(i=>i.id===product.id?next:i):[...current,next];
+    });
+  }
+
+  async function checkoutHeaders(){
+    const headers={Accept:'application/json','Content-Type':'application/json'};
+    if(isSupabaseConfigured){const client=await getSupabaseClient();const {data}=await client.auth.getSession();if(data?.session?.access_token)headers.Authorization=`Bearer ${data.session.access_token}`;}
+    return headers;
   }
 
   function openMealQuickView(parentProduct, meal, event, { purchaseProduct = null } = {}) {
@@ -8799,11 +8855,13 @@ function App() {
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
     try {
-      const checkoutKey=await checkoutAttemptKey({cart:cart.map(item=>item.kind==='custom_plan'?customPlanRequest(item):({slug:item.slug,quantity:item.qty})),fulfillment:checkoutForm,expectedAmount:checkoutTotal,testMode:Boolean(testCheckoutSessionToken)});
+      const requestCart=cart.map(item=>item.kind==='custom_plan'?customPlanRequest(item):mixRequest(item));
+      const headers=await checkoutHeaders();
+      const checkoutKey=await checkoutAttemptKey({cart:requestCart,fulfillment:checkoutForm,expectedAmount:checkoutTotal,testMode:Boolean(testCheckoutSessionToken)});
       if (!testCheckoutSessionToken) {
         const quoteResponse = await fetch("/api/commerce/checkout-quote", {
-          method: "POST", headers: {Accept: "application/json", "Content-Type": "application/json"},
-          body: JSON.stringify({cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})), fulfillment: checkoutForm,checkoutKey,expectedAmount:checkoutTotal})
+          method: "POST", headers,
+          body: JSON.stringify({cart:requestCart, fulfillment: checkoutForm,checkoutKey,expectedAmount:checkoutTotal})
         });
         const quote = await quoteResponse.json().catch(() => ({}));
         if (!quoteResponse.ok){if(['CHECKOUT_EXPIRED','CHECKOUT_ALREADY_PAID'].includes(quote.error?.code))forgetCheckoutAttemptKey(checkoutKey);throw new Error(checkoutStartError(quote.error));}
@@ -8812,12 +8870,9 @@ function App() {
       }
       const response = await fetch("/api/mercadopago/preferences", {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json"
-        },
+        headers,
         body: JSON.stringify({
-          cart: cart.map((item) => item.kind==='custom_plan'?customPlanRequest(item):({slug: item.slug, quantity: item.qty})),
+          cart: requestCart,
           fulfillment: checkoutForm,
           expectedAmount: checkoutTotal,
           checkoutKey,
@@ -9679,7 +9734,7 @@ function App() {
 
   const navItems = [
     { href: "#programa", label: "Inicio" },
-    { href: shopPath, label: "Planes" },
+    { href: `${shopPath}#mix`, label: "Arma tu mix" },
     { href: "/comunidad", label: "Comunidad" },
     { href: aboutPath, label: "Nosotros" },
     { href: "#contacto", label: "Contacto" },
@@ -9702,8 +9757,9 @@ function App() {
           return;
         }
 
-        if (item.href === shopPath) {
+        if (item.href === `${shopPath}#mix`) {
           openShopPage(event);
+          window.history.replaceState(null,'',`${shopPath}#mix`);
           return;
         }
 
@@ -9900,7 +9956,7 @@ function App() {
         </a>
       )}
 
-      <header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
+      {!isShopPage&&<header className={`site-header ${headerHiddenForHero && !menuOpen ? "site-header-hidden" : ""}`}>
         <a
           className="brand"
           href="#programa"
@@ -9964,7 +10020,7 @@ function App() {
             <Menu size={22} aria-hidden="true" />
           </button>
         </div>
-      </header>
+      </header>}
 
       {menuOpen && (
         <div className="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú principal">
@@ -9987,8 +10043,9 @@ function App() {
                   return;
                 }
 
-                if (item.href === shopPath) {
+                if (item.href === `${shopPath}#mix`) {
                   openShopPage(event);
+                  window.history.replaceState(null,'',`${shopPath}#mix`);
                   return;
                 }
 
@@ -10071,23 +10128,7 @@ function App() {
           {renderSiteFooter()}
         </>
       ) : isShopPage ? (
-        <>
-          <div className="shop-page-shell">
-            <MealPrepCatalog
-              plans={planProducts}
-              stockLetter={stockLetter}
-              familyProducts={familyProducts}
-              shopSettings={shopSettings}
-              loading={productsLoading}
-              catalogError={productsError}
-              onAdd={addToCart}
-              onOpenBenefit={setBenefitPreview}
-              onOpenMeal={openMealQuickView}
-              onOpenProduct={openProductQuickView}
-            />
-          </div>
-          {renderSiteFooter()}
-        </>
+        <ApprovedShop data={stockLetter||{items:[],loading:productsLoading,error:productsError}} families={familyProducts} cart={cart} onQuantity={setMixQuantity} onCart={()=>setCartOpen(true)} onCloseCart={()=>setCartOpen(false)} onMember={()=>{setCartOpen(false);setAccountOpen(true);}} onCommunity={openCommunityPage} onAbout={openAboutPage} cartOpen={cartOpen} checkout={{form:checkoutForm,onChange:updateCheckoutForm,onSubmit:submitCheckout,submitting:checkoutSubmitting,message:checkoutMessage,total:cartTotal-mixDiscount,subtotal:cartTotal,discount:mixDiscount,units:mixCalculation.units,rewards:mixQuote?.rewards,quoteBusy:mixQuoteBusy,quoteError:mixQuoteError,onRetryQuote:()=>{window.dispatchEvent(new Event('fullness:mealprep-published'));setMixQuoteRetry(n=>n+1);},renderNutrition:product=><ProductNutritionFacts product={product}/>}}/>
       ) : (
         <>
           <IntroScrollSequence />
@@ -10347,7 +10388,7 @@ function App() {
                   Cerrar sesión
                 </button>
               </div>
-            ) : (
+            ) : registerAccount ? <MemberRegistration onRegistered={data=>{if(data?.session)setAccountOpen(false);}} onLogin={()=>setRegisterAccount(false)}/> : (
               <form className="account-panel embedded" onSubmit={submitAccount}>
                 <p className="eyebrow">Acceso miembros</p>
                 <h2 id="account-title">Iniciar sesión</h2>
@@ -10366,6 +10407,7 @@ function App() {
                 <button className="account-link-button" type="button" onClick={requestPasswordReset} disabled={authLoading}>
                   Olvidé mi contraseña
                 </button>
+                <button className="account-link-button" type="button" onClick={()=>setRegisterAccount(true)}>Crear mi cuenta</button>
               </form>
             )}
           </section>
@@ -12554,7 +12596,7 @@ function App() {
         </div>
       )}
 
-      {!ECOMMERCE_MAINTENANCE && cartOpen && (
+      {!ECOMMERCE_MAINTENANCE && cartOpen && !isShopPage && (
         <div className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
           <button className="icon-button close" type="button" onClick={() => setCartOpen(false)} aria-label="Cerrar carrito">
             <X size={22} />

@@ -66,6 +66,11 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
   const amount = formatClp(order.total_clp);
   const itemLines = (items || []).map((item) => `${item.quantity}x ${item.product_name}`).join("\n");
   const deliveryMode = order.customer_snapshot?.mode === "pickup" ? "Retiro en local" : "Despacho a domicilio";
+  const mixConfirmation = order.customer_snapshot?.purchaseModel === 'mix_v1'
+    ? order.customer_snapshot?.mode === 'pickup'
+      ? 'Gracias por tu compra. Te contactaremos para coordinar el retiro de tu pedido.'
+      : 'Gracias por tu compra. Te informaremos el valor del despacho para tu aprobación antes de coordinar el envío.'
+    : null;
 
   return sendEmailOnce({
     deliveryKey: `order-confirmation:${order.id}`,
@@ -84,14 +89,14 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
       `Total: ${amount}`,
       `Modalidad: ${deliveryMode}`,
       "",
-      "Te contactaremos con los detalles de entrega o retiro.",
+      mixConfirmation || "Te contactaremos con los detalles de entrega o retiro.",
       "",
       "Fullness Lab"
     ].filter(Boolean).join("\n"),
     html: renderEmail({
       eyebrow: "Pedido confirmado",
       title: "Tu pedido ya está en Fullness.",
-      body: "Tu pago fue aprobado. Te contactaremos con los detalles de entrega o retiro.",
+      body: mixConfirmation || "Tu pago fue aprobado. Te contactaremos con los detalles de entrega o retiro.",
       details: [
         ...((items || []).map((item) => `${item.quantity}x ${item.product_name}`)),
         ...shippingAmountLines(order),
@@ -99,7 +104,7 @@ export async function sendOrderConfirmationEmail({order, items, supabase}) {
         deliveryMode
       ],
       ctaHref: siteUrl("/tienda"),
-      ctaLabel: "Ver planes"
+      ctaLabel: mixConfirmation ? 'Arma tu mix' : "Ver planes"
     })
   });
 }
@@ -198,6 +203,12 @@ export async function sendOrderNotificationEmail({order, items, supabase}) {
 }
 
 function shippingAmountLines(order) {
+  if(order.customer_snapshot?.purchaseModel==='mix_v1')return [
+    `Subtotal de productos: ${formatClp(order.subtotal_clp)}`,
+    ...(Number(order.discount_clp)>0?[`Descuento Fullness Rewards: −${formatClp(order.discount_clp)}`]:[]),
+    order.customer_snapshot?.mode==='pickup'?'Retiro en tienda sin costo, previa coordinación.':'El valor de tu compra no incluye despacho. El envío se cotiza y paga por separado, previa aprobación.',
+    ...(order.customer_snapshot?.mode==='pickup'?[]:['WhatsApp: https://wa.me/56996588199'])
+  ];
   if (order.customer_snapshot?.mode === "pickup") return ["Retiro en local, sin costo de despacho."];
   if (Number(order.delivery_fee_clp) <= 0 || !Number.isFinite(Number(order.delivery_fee_clp))) return [DELIVERY_COORDINATION_MESSAGE, "WhatsApp: https://wa.me/56996588199"];
   return [`Subtotal de productos: ${formatClp(order.subtotal_clp)}`, `Envío: ${formatClp(order.delivery_fee_clp)}`];

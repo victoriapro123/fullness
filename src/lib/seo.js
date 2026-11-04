@@ -34,9 +34,9 @@ const ROUTE_METADATA = {
     pageType: "WebPage"
   },
   "/tienda": {
-    title: "Meal prep saludable y planes semanales | Fullness Lab",
+    title: "COMIDA REAL. A TU MANERA.",
     description:
-      "Conoce los planes de meal prep saludable de Fullness Lab: comida real, equilibrada y lista para calentar durante la semana.",
+      "Preparaciones honestas, listas para disfrutar. Elige tus platos favoritos, combina a tu gusto y pide la cantidad que necesites.",
     pageType: "CollectionPage"
   },
   "/comunidad": {

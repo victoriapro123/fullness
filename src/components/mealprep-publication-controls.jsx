@@ -1,4 +1,5 @@
 import {useEffect,useRef} from 'react';
+import {MIX_CATEGORIES} from '../lib/mix-commerce.js';
 import './mealprep-publication-controls.css';
 
 export function MealprepPublicationControls({state,form,dirty,onChange,priceRef,busy}) {
@@ -9,13 +10,19 @@ export function MealprepPublicationControls({state,form,dirty,onChange,priceRef,
       {dirty&&<p>Estás editando un borrador. La tienda cambiará cuando pulses «{state.saveLabel}».</p>}
     </div>
     <h4 id="mealprep-publication-title">PRECIO Y DISPONIBILIDAD</h4>
+    <label htmlFor="mealprep-sale-category">Categoría en la tienda</label>
+    <select id="mealprep-sale-category" name="saleCategory" value={form.saleCategory||''} onChange={onChange} disabled={busy} aria-describedby="mealprep-category-help">
+      <option value="">Sin definir</option>
+      {MIX_CATEGORIES.slice(1).map(category=><option key={category} value={category}>{category}</option>)}
+    </select>
+    <small id="mealprep-category-help">Ayuda a encontrar este plato en los filtros. No cambia su precio ni lo publica.</small>
     <label htmlFor="mealprep-sale-price">Precio por mealprep (IVA incluido)</label>
     <input ref={priceRef} id="mealprep-sale-price" name="salePriceClp" type="number" min="1" max="1000000" step="1" inputMode="numeric" autoComplete="off" value={form.salePriceClp} onChange={onChange} disabled={busy} aria-invalid={Boolean(state.priceError)} aria-describedby="mealprep-price-help mealprep-price-error" placeholder="Ej.: 9800…"/>
     <small id="mealprep-price-help">Ingresa el valor de una porción en pesos, sin puntos ni decimales.</small>
     <p id="mealprep-price-error" className="mealprep-field-error" role="status">{state.priceError}</p>
     <label className={`mealprep-offer-choice ${!state.priceValid?'is-unavailable':''}`}>
-      <input name="availableForPlans" aria-label="Ofrecerlo en Arma tu plan" type="checkbox" checked={state.willPublish} disabled={!state.priceValid||busy} onChange={onChange} aria-describedby="mealprep-availability-help"/>
-      <span><strong>Ofrecerlo en Arma tu plan</strong><small>{state.priceValid?'Se aplicará al guardar los cambios.':'Primero ingresa un precio válido para habilitar esta opción.'}</small></span>
+      <input name="availableForPlans" aria-label="Ofrecerlo en Arma tu mix" type="checkbox" checked={state.willPublish} disabled={!state.priceValid||busy} onChange={onChange} aria-describedby="mealprep-availability-help"/>
+      <span><strong>Ofrecerlo en Arma tu mix</strong><small>{state.priceValid?'Se aplicará al guardar los cambios.':'Primero ingresa un precio válido para habilitar esta opción.'}</small></span>
     </label>
     <p id="mealprep-availability-help" className="mealprep-next-step" aria-live="polite">{state.nextStep}</p>
   </section>;
