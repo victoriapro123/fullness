@@ -67,3 +67,11 @@
 }
 @media(prefers-reduced-motion:reduce){.custom-plans,.shop-family-independent{scroll-behavior:auto}}
 @media(max-width:360px){.custom-plan-grid{grid-template-columns:minmax(0,1fr)}.custom-plan-card>div{padding:16px}.custom-plan-card h3{font-size:16px}.custom-plan-quantity{gap:16px}}
+
+/* Keep both photos in one stable frame; cards without a second photo stay unchanged. */
+.custom-plan-photo{display:block;position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;flex:none}
+.custom-plan-photo img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .25s ease}
+.custom-plan-photo-secondary{position:absolute;inset:0;opacity:0;pointer-events:none}
+@media(hover:hover){.custom-plan-card:hover .custom-plan-photo-secondary{opacity:1}}
+.custom-plan-card:focus-within .custom-plan-photo-secondary{opacity:1}
+@media(prefers-reduced-motion:reduce){.custom-plan-photo img{transition:none}}
