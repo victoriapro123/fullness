@@ -19,7 +19,8 @@ await assert.rejects(resolveMercadoPagoProfile({env:{...env,MERCADOPAGO_ACCESS_T
 const main=await readFile('src/main.jsx','utf8'),shop=await readFile('src/components/approved-shop.jsx','utf8'),privateUi=await readFile('src/components/private-payment-test.jsx','utf8');
 assert.doesNotMatch(main,/testCheckoutSessionToken|Compra de prueba autorizada|testCheckoutAccessOpen/);
 assert.doesNotMatch(shop,/testSessionToken|Compra de prueba/);
-assert.match(main,/activeBackofficeModule === "site-tools" && activeIsAdmin[\s\S]*?<PrivatePaymentTest/);
+assert.match(main,/activeBackofficeModule === "operations"[\s\S]*?activeIsAdmin && <PrivatePaymentTest/);
+assert.equal((main.match(/<PrivatePaymentTest/g)||[]).length,1);
 assert.doesNotMatch(privateUi,/localStorage\.(setItem|removeItem)|fullness_pending_order|fullness_last_order/);
 assert.match(privateUi,/payload.data\?\.testMode!==true/);
 console.log('PASS private payment access: anonymous denied GET/POST, owner-only issuance, read-only readiness, no LIVE fallback/equal tokens, verified test identity, no public controls.');

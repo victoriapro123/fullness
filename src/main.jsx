@@ -12276,7 +12276,6 @@ function App() {
                             <h3 id="technical-tools-title">Respaldo y conexión</h3>
                           </div>
                         </div>
-                        <PrivatePaymentTest items={stockLetter?.items||[]} families={familyProducts}/>
                         <section className="technical-tool-section" aria-labelledby="technical-data-title">
                           <div className="technical-tool-header">
                             <div>
@@ -12457,6 +12456,7 @@ function App() {
                           </div>
                         </div>
 
+                        {activeIsAdmin && <PrivatePaymentTest items={stockLetter?.items||[]} families={familyProducts}/>}
                         <section className="operations-section" aria-labelledby="operations-export-title">
                           <header className="operations-section-heading">
                             <div>
