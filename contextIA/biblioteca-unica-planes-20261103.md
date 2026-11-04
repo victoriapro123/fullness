@@ -1,0 +1,15 @@
+# Biblioteca original como fuente de Arma tu plan
+
+Carlos confirmó usar sólo las 25 fichas originales, conservando toda su información. No crear variantes desde las otras ofertas. Sólo 8 tienen precio vinculado: conservar esos precios y disponibilidad; las otras 17 quedan sin precio y no disponibles hasta que Cecilia las configure. Prevalece sobre la oferta separada de 15 y sobre los conteos de stock anteriores.
+
+Una sola Biblioteca de mealpreps permite editar fotos/carga, precio IVA incluido, disponibilidad, ingredientes libres, alérgenos, beneficios, preparación y nutrición. Disponibilidad también editable en el listado, sin motivo ni cantidades. No borrar fichas desde el listado. Los antiguos accesos abren la misma biblioteca; los editores de venta/carta separados ya no pueden escribir desde pestañas viejas.
+
+Migración aditiva 20261104001527_library_is_plan_source: sólo añade campos comerciales e identidad de venta. Reutiliza las 8 asociaciones explícitas existentes, sin matching por nombre. Las restantes identidades técnicas se generan automáticamente para las mismas fichas; no son otra biblioteca editable. Proyección transaccional SECURITY INVOKER y RLS administrador vigentes, sin ampliar permisos. La venta lee contenido/precio/disponibilidad de la biblioteca y exige proyección coincidente. No borra ofertas anteriores, fotos, JSON nutricional, cartas, pedidos, reservas históricas ni pagos.
+
+El catálogo ya no vence por fechas de cartas antiguas. Los planes siguen en 6/24, una duplicación por semana y máximo dos del mismo; familiares aparte. El checkout valida la biblioteca y precio dentro de la transacción, conserva snapshots, idempotencia y el cierre de pagos anteriores. No inventario numérico ni dependencia de ingredientes/integración externa. El detalle del selector ofrece la ficha nutricional en diálogo accesible, cierre visible y espacio móvil.
+
+Respaldo completo Before.json y Before-rules.json en R:/Entregables-Codex/Fullness-Biblioteca-Unificada-20261103. Migración aplicada en Fullness allyjctrrtvibwchjouu main Production por sesión Supabase autorizada del navegador; MCP no tiene acceso a ese proyecto. No extracción de tokens ni cambios de permisos.
+
+QA: PGlite real con RLS, conservación campo a campo, identidad existente, alta/precio/activación/desactivación, cotización, pedido y pasarela simulada, replay, respuesta perdida, recuperación y cierre de reserva histórica. Pruebas de accesos/visibilidad/composición y build Vite aprobados; advertencias preexistentes de medios runtime/bundle. Navegador app local con sesión/datos sintéticos: editar/guardar/volver, disponibilidad listado, ficha con nutrición y carrito desglosado a390px sin overflow; capturas en la carpeta del respaldo. Los404 de imágenes locales son limitación del fixture, no evidencia productiva. Ningún pago, correo ni pedido real de QA. Publicación autorizada en main; recibo exacto SHA/Ready/dominio se conserva aparte tras verificar.
+
+Contexto local transitorio. Consulta/importación central sigue pendiente; no se afirmó escritura remota ni se coordinó con Core360. Metadatos CLI, runtime y sesiones excluidos del commit.

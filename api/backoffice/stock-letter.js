@@ -6,6 +6,7 @@ export default async function handler(req,res){
  try{
   const {supabase,user}=await assertOwnerBackofficeRequest(req);
   if(req.method==='GET'){res.statusCode=200;res.end(JSON.stringify({data:await readStockLetter({supabase,admin:true})}));return;}
+  if(await import('../../server/mealprep-sale-capacity.mjs').then(m=>m.saleAuthorityEnabled(supabase)))throw Object.assign(Error('Edita los platos y su disponibilidad desde la biblioteca de mealpreps.'),{statusCode:409});
   if(req.method!=='PUT'){res.setHeader('Allow','GET, PUT');throw Object.assign(Error('Método no permitido.'),{statusCode:405});}
   const body=await readJsonBody(req);
   if(!Number.isSafeInteger(body.revision)||body.revision<0||!Array.isArray(body.document?.items)||body.document.items.length>100)throw Object.assign(Error('Revisa la carta y su revisión.'),{statusCode:422});

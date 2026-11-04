@@ -11,6 +11,20 @@
 
 /* Progressive guidance: quiet conditions, contextual feedback and distinct shopping paths. */
 .custom-plans{scroll-margin-top:130px}
+.custom-plan-view-meal{min-height:44px;align-self:flex-start;border:0;background:transparent;color:#625850;text-decoration:underline;text-underline-offset:4px;padding:8px 0;text-align:left;font:inherit;cursor:pointer}
+.custom-plan-meal-dialog{position:fixed;inset:0;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:clamp(20px,4vw,40px);box-sizing:border-box;border:1px solid #a98880;background:#f6f2e9;color:#292323;overflow:auto;overscroll-behavior:contain}
+.custom-plan-meal-dialog::backdrop{background:#292323aa}
+.custom-plan-meal-dialog h3{font-size:clamp(21px,4vw,32px);line-height:1.35;text-transform:uppercase;margin:16px 0 24px;overflow-wrap:anywhere;padding-right:20px;color:#292323}
+.custom-plan-meal-dialog h4{margin:24px 0 12px;color:#792635;line-height:1.4}
+.custom-plan-meal-dialog p{line-height:1.65;overflow-wrap:anywhere}
+.custom-plan-meal-dialog>img{display:block;width:100%;height:auto;max-height:400px;object-fit:contain;background:#292323}
+.custom-plan-meal-close{position:sticky;top:0;display:flex;justify-content:flex-end;margin:0;z-index:1}
+.custom-plan-meal-close button{width:48px;height:48px;border:1px solid #7c927b;background:#a7bba6;color:#252421;font-size:30px;cursor:pointer}
+.custom-plan-meal-dialog .nutrition-facts-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.custom-plan-meal-dialog .nutrition-facts-grid>span{min-width:0;padding:12px}
+.custom-plan-meal-dialog .nutrition-facts-grid strong{font-size:18px;overflow-wrap:anywhere}
+.custom-plan-preparation{white-space:pre-line}
+@media(max-width:520px){.custom-plan-meal-dialog .nutrition-facts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.custom-plan-meal-dialog .nutrition-facts-grid small{font-size:12px}.custom-plan-view-meal{font-size:13px}}
 .custom-plan-conditions{max-width:640px;margin:16px auto 0;font-size:14px;line-height:1.65;text-align:left}
 .custom-plan-conditions summary{width:fit-content;min-height:44px;display:flex;align-items:center;margin:auto;cursor:pointer;text-decoration:underline;text-underline-offset:4px;color:#625850}
 .custom-plan-conditions summary::after{content:'+';margin-left:12px;font-size:20px;text-decoration:none}

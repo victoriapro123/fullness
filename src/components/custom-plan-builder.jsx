@@ -2,11 +2,13 @@ import {useEffect,useRef,useState} from 'react';
 import {CUSTOM_PLAN_SIZES,customPlanRequest,selectedPlanTotal,planAdditionMessage} from '../lib/custom-plans.js';
 import './custom-plans.css';
 const money=n=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
-export function CustomPlanBuilder({data,onAdd}){
+export function CustomPlanBuilder({data,onAdd,renderNutrition}){
  const {letter,items=[]}=data;
  const draftKey=letter?`fullness_plan_draft_${letter.id}_${letter.revision}`:'';
  const [selection,setSelection]=useState([]),[size,setSize]=useState(letter?.plan_sizes?.[0]||6),[notice,setNotice]=useState(''),[activeWeek,setActiveWeek]=useState(1);
- const [guidance,setGuidance]=useState('');
+ const [guidance,setGuidance]=useState(''),[detailMeal,setDetailMeal]=useState(null);
+ const detailDialog=useRef(null);
+ useEffect(()=>{if(detailMeal&&!detailDialog.current?.open)detailDialog.current?.showModal();},[detailMeal]);
  const guidanceDialog=useRef(null);
  useEffect(()=>{if(guidance&&!guidanceDialog.current?.open)guidanceDialog.current?.showModal();},[guidance]);
  useEffect(()=>{
@@ -44,12 +46,16 @@ export function CustomPlanBuilder({data,onAdd}){
   <div className="custom-plan-grid">{items.map(item=>{const qty=inWeek.find(row=>row.itemId===item.id)?.quantity||0;const total=selection.filter(r=>r.itemId===item.id).reduce((n,r)=>n+r.quantity,0);return <article className="custom-plan-card" key={item.id}>
    {item.photoUrl?<img src={item.photoUrl} alt={item.title} loading="lazy" width="480" height="360"/>:<div className="custom-plan-photo-placeholder" aria-hidden="true"><span>FULLNESS LAB</span><small>MEALPREP</small></div>}<div><h3>{item.title}</h3><p>{item.priceClp?money(item.priceClp):'Precio por confirmar'}</p>
    <small>{item.availableForPlans===false?item.availabilityLabel:'Disponible'}</small>
-   <details><summary>Ver el plato</summary><strong>{item.title}</strong>{item.description&&<p>{item.description}</p>}{item.ingredients?.length>0&&<p>Ingredientes: {item.ingredients.join(', ')}.</p>}{item.allergens?.length>0?<p>Alérgenos: {item.allergens.join(', ')}.</p>:<p>Consulta al equipo por ingredientes y alérgenos antes de comprar.</p>}</details>
+   <button className="custom-plan-view-meal" type="button" onClick={()=>setDetailMeal(item)} aria-label={`Ver el plato: ${item.title}`}>Ver el plato</button>
    <div className="custom-plan-quantity"><button type="button" disabled={!qty} aria-label={`Quitar ${item.title}`} onClick={()=>change(item,-1)}>−</button><output aria-label={`Cantidad de ${item.title}`}>{qty}</output><button type="button" disabled={!item.priceClp||item.availableForPlans===false} aria-label={`Asignar ${item.title} al plan`} onClick={()=>change(item,1)}>+</button></div></div>
   </article>})}</div>
   <aside className="custom-plan-summary" aria-live="polite"><div><strong>{count} de {size} mealpreps</strong><p>{money(total)} · Total del plan</p></div>{size===24&&activeWeek<4&&!complete?<button className="shop-solid-button" type="button" disabled={weekCount!==6||invalid} onClick={()=>{setActiveWeek(w=>w+1);document.getElementById('custom-plan-builder')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}}>SIGUIENTE SEMANA</button>:<button className="shop-solid-button" type="button" disabled={count!==size||!complete||invalid||!total} onClick={add}>AGREGAR MI PLAN</button>}</aside>
   {invalid&&count>0&&<p role="status">Tu selección sigue guardada. Revisa las cantidades y los platos disponibles para continuar.</p>}
   {notice&&<p role="status">{notice}</p>}
+  <dialog ref={detailDialog} className="custom-plan-meal-dialog" aria-labelledby="plan-meal-title" onClose={()=>setDetailMeal(null)}>
+   <form method="dialog" className="custom-plan-meal-close"><button type="submit" aria-label="Cerrar ficha del mealprep">×</button></form>
+   {detailMeal&&<><p className="eyebrow">MEALPREP</p><h3 id="plan-meal-title">{detailMeal.title}</h3>{detailMeal.photoUrl&&<img src={detailMeal.photoUrl} alt={detailMeal.title} width="640" height="480"/>}{detailMeal.description&&<p>{detailMeal.description}</p>}{detailMeal.ingredients?.length>0&&<section><h4>INGREDIENTES</h4><p>{detailMeal.ingredients.join(', ')}.</p></section>}<section><h4>ALÉRGENOS</h4><p>{detailMeal.allergens?.length?detailMeal.allergens.join(', '):'Consulta al equipo por ingredientes y alérgenos antes de comprar.'}</p></section>{detailMeal.nutritionDescription&&<p>{detailMeal.nutritionDescription}</p>}{renderNutrition?.(detailMeal)}{detailMeal.rethermalizationInstructions&&<section><h4>CÓMO PREPARARLO</h4><p className="custom-plan-preparation">{detailMeal.rethermalizationInstructions}</p></section>}</>}
+  </dialog>
   <dialog ref={guidanceDialog} className="custom-plan-guidance" aria-labelledby="plan-guidance-title" aria-describedby="plan-guidance-body" onClose={()=>setGuidance('')}>
    <h3 id="plan-guidance-title">UN POCO MÁS DE VARIEDAD</h3><p id="plan-guidance-body">{guidance}</p><form method="dialog"><button type="submit">SEGUIR ELIGIENDO</button></form>
   </dialog>

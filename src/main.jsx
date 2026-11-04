@@ -72,6 +72,7 @@ import {
   listMealLibraryItems,
   saveBenefitDefinition,
   saveMealLibraryItem,
+  setMealLibraryAvailability,
   saveMenuItem,
   saveShopSettings,
   saveTagDefinition,
@@ -106,8 +107,6 @@ import { FilePickerButton } from "./components/file-picker-button.jsx";
 import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
-import {StockLetterAdmin} from "./components/stock-letter-admin.jsx";
-import {MealprepSaleAdmin} from './components/mealprep-sale-admin.jsx';
 import {ExperienceNotice,TEMP_EXPERIENCE_NOTICE_ENABLED} from './components/experience-notice.jsx';
 import {checkoutAttemptKey,forgetCheckoutAttemptKey} from './lib/checkout-attempt.js';
 const MealprepStockProvider=({children})=>children;
@@ -1583,6 +1582,9 @@ function includedMealToForm(item, index = 0) {
 function mealLibraryItemToForm(item) {
   return {
     id: item.id || "",
+    updatedAt: item.updatedAt || "",
+    salePriceClp: item.salePriceClp ?? "",
+    availableForPlans: item.availableForPlans === true,
     sku: item.sku || createStableSku("PL", item.id),
     name: item.name || "",
     tag: item.tag || "",
@@ -3110,7 +3112,7 @@ function MealPrepCatalog({ catalogError, familyProducts, loading, onAdd, onOpenB
                 <a href="#custom-plan-builder"><strong>Planes a tu gusto</strong><span>6 platos por semana, elegidos por ti</span><ArrowUpRight size={20} aria-hidden="true"/></a>
                 <a href="#family-dishes"><strong>Platos familiares</strong><span>Compra por plato, fuera de los planes</span><ArrowDown size={20} aria-hidden="true"/></a>
               </nav>
-              <CustomPlanBuilder data={stockLetter} onAdd={onAdd}/>
+              <CustomPlanBuilder data={stockLetter} onAdd={onAdd} renderNutrition={(product)=><ProductNutritionFacts product={product}/>}/>
               <section className="shop-catalog-section shop-catalog-section-family shop-family-independent" id="family-dishes" aria-labelledby="custom-family-title">
                 <header className="shop-catalog-section-heading"><div className="shop-catalog-section-rule" aria-hidden="true"/><p className="eyebrow">PARA COMPARTIR</p><h3 id="custom-family-title">PLATOS FAMILIARES</h3><p>Elige un plato para compartir. Se compran individualmente, sin armar un plan.</p><small>Coordinamos contigo la entrega o el retiro.</small></header>
                 <div className="shop-family-grid shop-catalog-grid">{familyProducts.map((product,index)=><ShopFamilyCard key={product.id} product={product} index={index} onAdd={onAdd} onOpenBenefit={onOpenBenefit} onOpenProduct={onOpenProduct}/>)}</div>
@@ -6664,6 +6666,10 @@ function App() {
 
   async function submitMealLibraryItem(event) {
     event.preventDefault();
+    if (!mealLibraryForm.name.trim() || (mealLibraryForm.salePriceClp !== "" && (!Number.isSafeInteger(Number(mealLibraryForm.salePriceClp)) || Number(mealLibraryForm.salePriceClp) < 1 || Number(mealLibraryForm.salePriceClp) > 1000000)) || (mealLibraryForm.availableForPlans && !Number(mealLibraryForm.salePriceClp))) {
+      setMealLibraryError("Indica un nombre y un precio válido para ofrecer este mealprep en los planes.");
+      return;
+    }
     const isNewMealLibraryItem = !mealLibraryForm.id;
     setMealLibrarySaving(true);
     setMealLibraryError("");
@@ -6715,12 +6721,25 @@ function App() {
       setBackofficeFeedback({
         status: "success",
         title: "Mealprep guardado",
-        message: `“${result.data.name}” ya está disponible para incorporarlo a otros planes.`,
+        message: result.data.availableForPlans ? `“${result.data.name}” está disponible en Arma tu plan.` : `“${result.data.name}” se guardó como no disponible.`,
         returnTo: isNewMealLibraryItem ? "meal-library" : undefined,
         confirmLabel: isNewMealLibraryItem ? "Ver mealpreps" : undefined
       });
     }
 
+    setMealLibrarySaving(false);
+  }
+
+  async function toggleMealLibraryAvailability(item) {
+    if (!item.availableForPlans && !item.salePriceClp) {
+      openMealLibraryItemForEditing(item);
+      setMealLibraryError("Indica el precio y marca Disponible para ofrecer este mealprep.");
+      return;
+    }
+    setMealLibrarySaving(true);
+    const result=await setMealLibraryAvailability(item,!item.availableForPlans);
+    if(result.error) setMealLibraryError(getSupabaseErrorMessage(result.error,"No pudimos guardar la disponibilidad. Inténtalo nuevamente."));
+    else {setMealLibraryError("");await refreshMealLibrary({silent:true});}
     setMealLibrarySaving(false);
   }
 
@@ -9712,17 +9731,9 @@ function App() {
             description: `${mealPrepItems.length} configurados · ${activeMealPrepCount} activos`,
             Icon: Utensils
           },
-          {
-            id: "meal-library",
-            label: "Disponibilidad de mealpreps",
-            description: "Platos activos e inactivos",
-            Icon: CookingPot
-          },
-          {id:"meal-library-recipes",label:"Biblioteca de mealpreps",description:"Fichas, fotos, nutrición y beneficios",Icon:Utensils},
+          {id:"meal-library-recipes",label:"Biblioteca de mealpreps",description:"Disponibilidad, precios y fichas de Arma tu plan",Icon:Utensils},
           {id:"dispatch-calendar",label:"Calendario de menús",description:"Menú único por fecha y entregas mensuales",Icon:CalendarDays},
-          {id:"stock-letter",label:"Carta de mealpreps",description:"Platos disponibles para armar planes",Icon:CalendarDays},
           {id:"local-menu",label:"Carta del local",description:"Productos, precios y cinco opciones Lunch · /carta",Icon:Utensils},
-          {id:"mealprep-availability",label:"Disponibilidad",description:"Confirmar mealpreps, agotados y fechas",Icon:CalendarDays},
           {
             id: "parameters",
             label: "Parámetros",
@@ -10406,9 +10417,7 @@ function App() {
 
                   <div className="backoffice-module-content">
                     {activeBackofficeModule === "dispatch-calendar" && <DispatchCalendarAdmin plans={adminItems} draftKey={`fullness_dispatch_calendar_${authUser?.id||""}`} onChanged={async()=>{await refreshAdminItems({silent:true});await refreshPublicProducts();}} />}
-                    {activeBackofficeModule === "stock-letter" && <StockLetterAdmin draftKey={`fullness_stock_letter_${authUser?.id||""}`} />}
                     {activeBackofficeModule === "local-menu" && <LocalMenuAdmin draftKey={`fullness_local_menu_${authUser?.id||""}`} />}
-                    {activeBackofficeModule === "mealprep-availability" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||""}`} onOpenLibrary={openMealprepLibrary} />}
                     {activeBackofficeModule === "meal-preps" && (
                       <div className="backoffice-catalog-view">
                   <section className="backoffice-catalog-panel" aria-label="Planes configurados">
@@ -11192,15 +11201,14 @@ function App() {
                 </div>
                     )}
 
-                    {activeBackofficeModule === "meal-library" && <MealprepSaleAdmin draftKey={`fullness_sale_stock_${authUser?.id||''}`} onOpenLibrary={openMealprepLibrary}/>}
-                    {activeBackofficeModule === "meal-library-recipes" && (
+                    {["meal-library-recipes","meal-library","stock-letter","mealprep-availability"].includes(activeBackofficeModule) && (
                       <div className="backoffice-catalog-view">
                         <section className="backoffice-catalog-panel" aria-label="Mealpreps configurados">
                           <div className="backoffice-catalog-heading">
                             <div>
                               <p className="eyebrow">Catálogo</p>
                               <h3>Biblioteca de mealpreps</h3>
-                              <p>Edita las fotos, ingredientes, alérgenos, información nutricional y beneficios de cada preparación.</p>
+                              <p>Elige qué mealpreps están disponibles para Arma tu plan. Edita aquí su precio, fotos y ficha completa.</p>
                             </div>
                             <button className="primary-button" type="button" onClick={startNewMealLibraryItem}>
                               <Plus size={17} />
@@ -11226,6 +11234,7 @@ function App() {
                             </p>
                           </div>
 
+                          {mealLibraryError&&!mealLibraryEditorOpen&&<p className="backoffice-alert is-error" role="alert">{mealLibraryError}</p>}
                           {mealLibraryLoading ? (
                             <p className="backoffice-muted">Cargando mealpreps…</p>
                           ) : filteredMealLibraryItems.length ? (
@@ -11236,21 +11245,18 @@ function App() {
                                     <img src={item.photoUrl || placeholderProductImage} alt="" aria-hidden="true" />
                                     <span>
                                       <strong>{item.name}</strong>
-                                      <small>{normalizeMealprepCopy(item.tag) || "Sin etiqueta"}</small>
+                                      <small>{item.salePriceClp ? formatPrice(item.salePriceClp) : "Sin precio"}</small>
                                     </span>
                                   </button>
                                   <div className="backoffice-card-meta">
-                                    <span className={`status-pill ${item.isActive ? "is-active" : "is-inactive"}`}>
-                                      {item.isActive ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
-                                      {item.isActive ? "Activo" : "Inactivo"}
-                                    </span>
+                                    <button type="button" className={`status-pill ${item.availableForPlans ? "is-active" : "is-inactive"}`} aria-pressed={item.availableForPlans} aria-label={`Disponibilidad de ${item.name}`} disabled={mealLibrarySaving} onClick={()=>toggleMealLibraryAvailability(item)}>
+                                      {item.availableForPlans ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                      {item.availableForPlans ? "Disponible" : "No disponible"}
+                                    </button>
                                   </div>
                                   <div className="backoffice-card-actions">
                                     <button type="button" onClick={() => openMealLibraryItemForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
                                       <Pencil size={16} />
-                                    </button>
-                                    <button type="button" onClick={() => removeMealLibraryItem(item)} aria-label={`Eliminar ${item.name}`} title="Eliminar" disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
-                                      <Trash2 size={16} />
                                     </button>
                                   </div>
                                 </article>
@@ -11322,8 +11328,8 @@ function App() {
                                     </button>
                                   )}
                                   <label className="backoffice-switch">
-                                    <input name="isActive" type="checkbox" checked={mealLibraryForm.isActive} onChange={updateMealLibraryForm} />
-                                    <span>{mealLibraryForm.isActive ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.isActive ? "Activo" : "Inactivo"}</span>
+                                    <input name="availableForPlans" aria-label="Disponible en Arma tu plan" type="checkbox" checked={mealLibraryForm.availableForPlans} onChange={updateMealLibraryForm} />
+                                    <span>{mealLibraryForm.availableForPlans ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.availableForPlans ? "Disponible" : "No disponible"}</span>
                                   </label>
                                 </div>
                               </div>
@@ -11334,7 +11340,7 @@ function App() {
                                 </p>
                               )}
 
-                              {mealLibraryForm.id&&<section className="backoffice-editor-section"><h4>Disponibilidad en la tienda</h4><MealprepSaleAdmin key={mealLibraryForm.id} libraryMealId={mealLibraryForm.id} embedded draftKey={`fullness_sale_stock_${authUser?.id||''}`}/></section>}
+                              <section className="backoffice-editor-section"><h4>Arma tu plan</h4><label>Precio por mealprep (IVA incluido)<input name="salePriceClp" type="number" min="1" max="1000000" step="1" inputMode="numeric" value={mealLibraryForm.salePriceClp} onChange={updateMealLibraryForm} placeholder="Ej.: 9800" /></label><p>Si está disponible y tiene precio, los clientes podrán agregarlo a sus planes.</p></section>
                               <section className="backoffice-editor-section" aria-labelledby="library-general-title">
                                 <header>
                                   <p className="eyebrow">Mealprep</p>

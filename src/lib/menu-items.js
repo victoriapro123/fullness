@@ -577,6 +577,8 @@ export function mapMealLibraryItem(row, context = createCatalogContext()) {
   return {
     id: row.id,
     sku: row.sku || createStableDishSku(row.id),
+    salePriceClp: row.sale_price_clp ?? null,
+    availableForPlans: row.available_for_plans === true,
     name: row.name || "",
     tag: row.tag || "",
     description: row.description || "",
@@ -784,6 +786,8 @@ export function buildMealLibraryPayload(input) {
   );
 
   return {
+    sale_price_clp: input.salePriceClp === '' || input.salePriceClp == null ? null : Number(input.salePriceClp),
+    available_for_plans: input.availableForPlans === true,
     name: cleanText(input.name),
     tag: nullableText(input.tag),
     description: cleanText(input.description),
@@ -1293,28 +1297,19 @@ export async function saveMealLibraryItem(input) {
     let replacedMissingReference = false;
 
     if (input.id) {
-      const updateResult = await supabase
+      let updateQuery = supabase
         .from("meal_library_items")
         .update(payload)
-        .eq("id", input.id)
-        .select(MEAL_LIBRARY_COLUMNS)
-        .maybeSingle();
+        .eq("id", input.id);
+      if (input.updatedAt) updateQuery = updateQuery.eq("updated_at", input.updatedAt);
+      const updateResult = await updateQuery.select(MEAL_LIBRARY_COLUMNS).maybeSingle();
 
       data = updateResult.data;
       error = updateResult.error;
 
-      // Plans created before the library link was stabilized can point to a
-      // deleted mealprep. Preserve the plan's form data by creating its library item.
+      // A stale editor must never recreate or silently overwrite an original recipe.
       if (!error && !data) {
-        const insertResult = await supabase
-          .from("meal_library_items")
-          .insert(payload)
-          .select(MEAL_LIBRARY_COLUMNS)
-          .single();
-
-        data = insertResult.data;
-        error = insertResult.error;
-        replacedMissingReference = !error && Boolean(data);
+        return {data:null,error:{message:"La ficha cambió. Vuelve al listado y ábrela nuevamente; tu borrador sigue guardado."},configured:true};
       }
     } else {
       const insertResult = await supabase
@@ -1339,6 +1334,17 @@ export async function saveMealLibraryItem(input) {
   } catch (error) {
     return { data: null, error, configured: true };
   }
+}
+
+export async function setMealLibraryAvailability(item, available) {
+  try {
+    const {supabase} = await getAuthenticatedSupabase();
+    if (!supabase) return unavailableResult();
+    let query = supabase.from("meal_library_items").update({available_for_plans:available}).eq("id",item.id);
+    if(item.updatedAt) query=query.eq("updated_at",item.updatedAt);
+    const {data,error}=await query.select("id").maybeSingle();
+    return {data,error:error||(!data?{message:"La ficha cambió. Actualiza la lista antes de guardar."}:null),configured:true};
+  }catch(error){return {data:null,error,configured:true};}
 }
 
 export async function deleteMealLibraryItem(id) {
