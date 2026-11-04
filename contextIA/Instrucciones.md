@@ -2,6 +2,8 @@
 
 Este archivo es el punto de entrada transitorio mientras Cerebro central no disponga de consulta/escritura remota operativa. No acredita una importación central.
 
+- Prevención de errores en biblioteca: `publicacion-mealpreps-poka-yoke-20261104.md`. Estado guardado separado del borrador, precio antes de habilitar oferta, botones publicar/ocultar/guardar ficha y salida protegida. Corregido y probado localmente; no cambia datos de Cecilia ni autoriza push por sí solo.
+
 - Regla vigente: `biblioteca-unica-planes-20261103.md`. Sólo las25fichas originales alimentan Arma tu plan; precio/disponibilidad en la misma biblioteca, sin stock numérico ni otro editor. Carlos confirmó8conprecio disponibles y17sinprecio/no disponibles. Se conservan todas las fotos/nutrición/datos originales y pedidos. Sustituye la oferta separada15y las reglas históricas de stock/carta siguientes. Fullness es autónomo; no coordinar con Core360 sin petición explícita.
 
 - Decisión vigente de inventario web: `mealpreps-inventario-web-20261103.md`. Cecilia gestiona unidades/publicación y precio en Fullness; ingredientes libres. La integración externa no bloquea venta ni exige motivo. Sustituye los requisitos físicos/canónicos anteriores para los nuevos pedidos. Carlos confirmó las cantidades de los 15 platos y autorizó publicarlos y reabrir tienda/compras. Main conserva SQL/release. Ver `reapertura-stock-visible-main-20261103.md`; no mostrar fechas internas de carta/stock en la UI pública ni alterar fechas de despacho.

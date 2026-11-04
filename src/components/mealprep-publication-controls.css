@@ -1,0 +1,50 @@
+.mealprep-publication{min-width:0;display:grid;gap:12px;color:#292323}
+.mealprep-editor-fields{display:contents;border:0;padding:0;margin:0;min-width:0}
+.mealprep-publication h4{margin:12px 0!important;line-height:1.4}
+.mealprep-publication input[type=number]{scroll-margin-block:180px;width:100%;min-height:48px;box-sizing:border-box}
+.mealprep-publication input[aria-invalid=true]{border-color:#8b3445}
+.mealprep-publication :is(p,small){margin:0;line-height:1.6;overflow-wrap:anywhere}
+.mealprep-live-status{display:grid;gap:8px;padding:20px;background:#eee7d9;border:1px solid #c9baaa;min-width:0}
+.mealprep-live-status.is-published{background:#e5ecdf;border-color:#8c9c85}
+.mealprep-live-status .eyebrow{font-size:11px;color:#625850;margin:0}
+.mealprep-live-status strong{font-size:18px;line-height:1.4}
+.mealprep-live-status p{font-size:14px;color:#51473f}
+.mealprep-offer-choice{display:flex!important;align-items:flex-start;gap:12px;padding:16px;border:1px solid #b6c3af;cursor:pointer;background:#f3f3e9}
+.mealprep-offer-choice.is-unavailable{background:#eeeae2;border-color:#c9baaa;cursor:default}
+.mealprep-offer-choice input{width:22px!important;height:22px;min-height:22px!important;flex:0 0 22px;margin:4px 0 0;accent-color:#52664c}
+.mealprep-offer-choice>span{display:grid;gap:6px;min-width:0}
+.mealprep-offer-choice small{font-size:13px;color:#625850}
+.mealprep-next-step{font-size:14px;padding:4px 0}
+.mealprep-field-error{color:#8b3445;font-size:14px}
+.mealprep-field-error:empty{display:none}
+.mealprep-leave-dialog{position:fixed;inset:0;margin:auto;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:clamp(24px,4vw,36px);box-sizing:border-box;border:1px solid #a98880;background:#f6f2e9;color:#292323;overflow:auto;overscroll-behavior:contain}
+.mealprep-leave-dialog::backdrop{background:#292323aa}
+.mealprep-leave-dialog h3{font-size:24px;line-height:1.35;margin:16px 0;color:#292323}
+.mealprep-leave-dialog p{line-height:1.65;margin:0 0 24px}
+.mealprep-leave-actions{display:grid;gap:12px}
+.mealprep-leave-actions button{min-height:48px;white-space:normal;font:inherit}
+.mealprep-leave-actions .primary-button{background:#a7bba6;color:#252421;border:1px solid #7c927b}
+.mealprep-leave-secondary{background:transparent;border:0;text-decoration:underline;color:#625850;padding:12px}
+.mealprep-publication :is(input,button):focus-visible,.mealprep-leave-dialog button:focus-visible{outline:3px solid #792635;outline-offset:3px}
+.backoffice-meal-library-form .backoffice-form-actions .backoffice-action-copy{min-width:0}
+.backoffice-meal-library-form .backoffice-action-copy small{line-height:1.5;overflow-wrap:anywhere}
+.backoffice-meal-library-form .backoffice-draft-status>span{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.5;min-width:0}
+.mealprep-draft-recovery{font-size:13px;max-width:100%;min-width:0}
+.mealprep-draft-recovery summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;color:#625850;text-decoration:underline;text-underline-offset:4px;list-style:none}
+.mealprep-draft-recovery summary::after{content:'+';text-decoration:none}
+.mealprep-draft-recovery[open] summary::after{content:'−'}
+.mealprep-draft-recovery select{max-width:100%;min-height:44px}
+.mealprep-draft-recovery summary:focus-visible{outline:3px solid #792635;outline-offset:3px}
+.backoffice-catalog-panel[aria-label="Mealpreps configurados"] .backoffice-card-actions button:first-child{width:auto;min-width:88px;min-height:44px;padding:8px 12px;font-size:12px;line-height:1.4;white-space:normal}
+.backoffice-catalog-panel[aria-label="Mealpreps configurados"] .backoffice-card-meta{min-width:0;flex-wrap:wrap}
+.backoffice-catalog-panel[aria-label="Mealpreps configurados"] .status-pill{white-space:normal;line-height:1.4}
+@media(max-width:600px){.mealprep-live-status{padding:16px}.backoffice-meal-library-form .backoffice-form-actions{gap:12px}.backoffice-meal-library-form .backoffice-action-copy>span{display:none}.backoffice-meal-library-form .backoffice-draft-status{white-space:normal;max-width:100%;text-align:center}.backoffice-meal-library-form .backoffice-draft-status span{overflow-wrap:anywhere}}
+@media(max-width:600px){
+ .backoffice-meal-library-form .backoffice-form-head-actions{display:grid;grid-template-columns:minmax(0,1fr) 44px!important;align-items:start;width:100%;gap:8px;min-width:0}
+ .backoffice-meal-library-form .backoffice-draft-status{grid-column:1/-1;grid-row:1;box-sizing:border-box;width:100%;min-height:44px;padding:8px 12px;justify-content:flex-start;text-align:left}
+ .backoffice-meal-library-form .backoffice-draft-status svg{flex:0 0 16px}
+ .backoffice-meal-library-form .mealprep-draft-recovery{grid-column:1;grid-row:2;min-width:0}
+ .backoffice-meal-library-form .backoffice-draft-discard{grid-column:2;grid-row:2}
+ .backoffice-meal-library-form .backoffice-draft-picker{width:100%;box-sizing:border-box;min-width:0;padding:8px}
+ .backoffice-meal-library-form .backoffice-draft-picker select{min-width:0;max-width:100%;width:100%}
+}

@@ -107,6 +107,8 @@ import { FilePickerButton } from "./components/file-picker-button.jsx";
 import {OrderOperationsAdmin} from "./components/order-operations.jsx";
 import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
+import {MealprepPublicationControls,MealprepLeaveDialog} from "./components/mealprep-publication-controls.jsx";
+import {validMealprepPrice,mealprepPublicationState,mealprepDraftLabel,mealprepFormChange} from "./lib/mealprep-publication.js";
 import {ExperienceNotice,TEMP_EXPERIENCE_NOTICE_ENABLED} from './components/experience-notice.jsx';
 import {checkoutAttemptKey,forgetCheckoutAttemptKey} from './lib/checkout-attempt.js';
 const MealprepStockProvider=({children})=>children;
@@ -1802,6 +1804,7 @@ function normalizeMealLibraryDraft(rawDraft) {
   const form = {
     ...defaults,
     ...rawDraft.form,
+    availableForPlans: rawDraft.form.availableForPlans===true && validMealprepPrice(rawDraft.form.salePriceClp),
     benefitAssignments: Array.isArray(rawDraft.form.benefitAssignments) ? rawDraft.form.benefitAssignments : defaults.benefitAssignments,
     tagIds: Array.isArray(rawDraft.form.tagIds) ? rawDraft.form.tagIds : defaults.tagIds
   };
@@ -5132,8 +5135,8 @@ function App() {
   const [stockLetter,setStockLetter]=useState({enabled:true,loading:true,letter:null,items:[]});
   useEffect(()=>{let alive=true,sequence=0;const controller=new AbortController();
     const refresh=()=>{const current=++sequence;fetch('/api/commerce/stock-letter',{cache:'no-store',signal:controller.signal}).then(async r=>{const payload=await r.json();if(!r.ok)throw Error(payload.error||'No pudimos consultar la carta.');return payload;}).then(payload=>{if(alive&&current===sequence&&payload?.data)setStockLetter(payload.data);}).catch(error=>{if(alive&&current===sequence&&error.name!=='AbortError')setStockLetter(previous=>({...previous,enabled:true,loading:false,error:'No pudimos actualizar la carta. Vuelve a intentarlo en un momento.'}));});};
-    const visible=()=>{if(document.visibilityState==='visible')refresh();};refresh();const timer=window.setInterval(visible,60000);document.addEventListener('visibilitychange',visible);
-    return()=>{alive=false;controller.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
+    const visible=()=>{if(document.visibilityState==='visible')refresh();};refresh();const timer=window.setInterval(visible,60000);document.addEventListener('visibilitychange',visible);window.addEventListener('fullness:mealprep-published',refresh);
+    return()=>{alive=false;controller.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);window.removeEventListener('fullness:mealprep-published',refresh);};
   },[]);
   const [, refreshAvailability] = useState(0);
   useEffect(() => {
@@ -5264,6 +5267,13 @@ function App() {
   const [mealLibraryPhotoUploadError, setMealLibraryPhotoUploadError] = useState({ target: "", message: "" });
   const [mealLibraryMessage, setMealLibraryMessage] = useState("");
   const [mealLibraryError, setMealLibraryError] = useState("");
+  const [mealLibraryLeaveOpen,setMealLibraryLeaveOpen]=useState(false);
+  const mealLibraryFormRef=useRef(null);
+  const mealLibraryPriceRef=useRef(null);
+  const mealLibraryReturnAfterSaveRef=useRef(false);
+  const mealLibraryPendingExitRef=useRef(null);
+  const mealLibrarySuccessExitRef=useRef(null);
+  const mealLibraryPublication=mealprepPublicationState(mealLibraryForm,mealLibrary.find(item=>item.id===mealLibraryForm.id));
   const [selectedLibraryMealId, setSelectedLibraryMealId] = useState("");
   const [selectedWeeklyPlanId, setSelectedWeeklyPlanId] = useState("");
   const [includedMealSavingIndex, setIncludedMealSavingIndex] = useState(null);
@@ -6074,7 +6084,7 @@ function App() {
     setMealLibraryDraftStatus(draft.isServerCopy ? "synced" : "local");
     setMealLibraryError("");
     setMealLibraryMessage("");
-    if (announce) setAdminMessage(`Borrador recuperado: ${draft.title}.`);
+    if (announce) setAdminMessage(`Borrador recuperado: ${draft.title}. Sus cambios aún no están publicados.`);
   }
 
   function discardCurrentMealLibraryDraft() {
@@ -6295,8 +6305,27 @@ function App() {
   }
 
   function closeMealLibraryEditor() {
+    mealLibraryPendingExitRef.current=null;
+    if(mealLibrarySaving||mealLibraryPhotoUploading)return;
+    if(mealLibraryFormHasUnsavedChanges){setMealLibraryLeaveOpen(true);return;}
     protectCurrentMealLibraryDraft();
     setMealLibraryEditorOpen(false);
+  }
+
+  function leaveMealLibraryWithoutPublishing(){
+    protectCurrentMealLibraryDraft();
+    setMealLibraryLeaveOpen(false);
+    setMealLibraryEditorOpen(false);
+    setMealLibraryMessage("Borrador conservado. No se aplicaron cambios en la tienda.");
+    const navigate=mealLibraryPendingExitRef.current;
+    mealLibraryPendingExitRef.current=null;
+    navigate?.();
+  }
+
+  function saveMealLibraryBeforeLeaving(){
+    setMealLibraryLeaveOpen(false);
+    mealLibraryReturnAfterSaveRef.current=true;
+    mealLibraryFormRef.current?.requestSubmit();
   }
 
   function openMealprepLibrary(libraryId) {
@@ -6323,10 +6352,17 @@ function App() {
     if (returnTo === "meal-library") {
       setMealLibraryEditorOpen(false);
       setActiveBackofficeModule("meal-library-recipes");
+      const navigate=mealLibrarySuccessExitRef.current;
+      mealLibrarySuccessExitRef.current=null;
+      navigate?.();
     }
   }
 
-  function openBackofficeModule(moduleId) {
+  function openBackofficeModule(moduleId,{skipGuard=false}={}) {
+    if(mealLibraryEditorOpen&&mealLibraryFormHasUnsavedChanges&&!skipGuard){
+      mealLibraryPendingExitRef.current=()=>openBackofficeModule(moduleId,{skipGuard:true});
+      setMealLibraryLeaveOpen(true);return;
+    }
     const legacyWebContentTabs = {
       shop: "shop",
       lightbox: "lightbox",
@@ -6647,10 +6683,7 @@ function App() {
   function updateMealLibraryForm(event) {
     const { checked, name, type, value } = event.target;
     markMealLibraryFormChanged();
-    setMealLibraryForm((current) => ({
-      ...current,
-      [name]: type === "checkbox" ? checked : value
-    }));
+    setMealLibraryForm((current) => mealprepFormChange(current,{name,type,value,checked}));
   }
 
   function resetMealLibraryForm({ force = false } = {}) {
@@ -6666,8 +6699,19 @@ function App() {
 
   async function submitMealLibraryItem(event) {
     event.preventDefault();
-    if (!mealLibraryForm.name.trim() || (mealLibraryForm.salePriceClp !== "" && (!Number.isSafeInteger(Number(mealLibraryForm.salePriceClp)) || Number(mealLibraryForm.salePriceClp) < 1 || Number(mealLibraryForm.salePriceClp) > 1000000)) || (mealLibraryForm.availableForPlans && !Number(mealLibraryForm.salePriceClp))) {
-      setMealLibraryError("Indica un nombre y un precio válido para ofrecer este mealprep en los planes.");
+    if(mealLibrarySaving||mealLibraryPhotoUploading)return;
+    const returnAfterSave=mealLibraryReturnAfterSaveRef.current;
+    mealLibraryReturnAfterSaveRef.current=false;
+    const navigateAfterSave=mealLibraryPendingExitRef.current;
+    mealLibraryPendingExitRef.current=null;
+    if (!mealLibraryForm.name.trim()) {
+      setMealLibraryError("Agrega el nombre del mealprep para guardar su ficha.");
+      event.currentTarget.elements.namedItem('name')?.focus();
+      return;
+    }
+    if (!mealLibraryPublication.priceEmpty&&!mealLibraryPublication.priceValid) {
+      setMealLibraryError(mealLibraryPublication.priceError);
+      mealLibraryPriceRef.current?.focus();
       return;
     }
     const isNewMealLibraryItem = !mealLibraryForm.id;
@@ -6696,6 +6740,8 @@ function App() {
 
     const result = await saveMealLibraryItem({
       ...mealLibraryForm,
+      availableForPlans:mealLibraryPublication.willPublish,
+      isActive:mealLibraryPublication.willPublish?true:mealLibraryForm.isActive,
       nutritionFacts,
       tags: tagDefinitions.filter((tag) => mealLibraryForm.tagIds?.includes(tag.id))
     });
@@ -6711,19 +6757,23 @@ function App() {
         message: protectedMessage
       });
     } else {
+      const published=mealprepPublicationState({},result.data).published;
+      mealLibrarySuccessExitRef.current=returnAfterSave?navigateAfterSave:null;
       clearMealLibraryDraft();
+      setMealLibrary(current=>current.some(item=>item.id===result.data.id)?current.map(item=>item.id===result.data.id?result.data:item):[...current,result.data]);
       setMealLibraryForm(mealLibraryItemToForm(result.data));
       setMealLibraryDraftKey(createMealLibraryDraftKey(result.data.id));
       setMealLibraryFormHasUnsavedChanges(false);
       setMealLibraryDraftStatus("idle");
-      setMealLibraryMessage("Mealprep guardado.");
+      setMealLibraryMessage(published?"Publicado: ya se puede elegir en Arma tu plan.":"Ficha guardada. Este mealprep no está disponible en la tienda.");
       await refreshMealLibrary({ silent: true });
+      window.dispatchEvent(new Event('fullness:mealprep-published'));
       setBackofficeFeedback({
         status: "success",
-        title: "Mealprep guardado",
-        message: result.data.availableForPlans ? `“${result.data.name}” está disponible en Arma tu plan.` : `“${result.data.name}” se guardó como no disponible.`,
-        returnTo: isNewMealLibraryItem ? "meal-library" : undefined,
-        confirmLabel: isNewMealLibraryItem ? "Ver mealpreps" : undefined
+        title: published?"Publicado en la tienda":"Ficha guardada sin publicar",
+        message: published ? `Los clientes ya pueden elegir “${result.data.name}” en Arma tu plan.` : `La ficha de “${result.data.name}” está guardada, pero no se ofrece para armar planes.`,
+        returnTo: isNewMealLibraryItem||returnAfterSave ? "meal-library" : undefined,
+        confirmLabel: isNewMealLibraryItem||returnAfterSave ? "Ver biblioteca" : "Seguir editando"
       });
     }
 
@@ -6731,15 +6781,15 @@ function App() {
   }
 
   async function toggleMealLibraryAvailability(item) {
-    if (!item.availableForPlans && !item.salePriceClp) {
+    if (!item.availableForPlans && !validMealprepPrice(item.salePriceClp)) {
       openMealLibraryItemForEditing(item);
-      setMealLibraryError("Indica el precio y marca Disponible para ofrecer este mealprep.");
+      window.requestAnimationFrame(()=>mealLibraryPriceRef.current?.focus());
       return;
     }
     setMealLibrarySaving(true);
     const result=await setMealLibraryAvailability(item,!item.availableForPlans);
     if(result.error) setMealLibraryError(getSupabaseErrorMessage(result.error,"No pudimos guardar la disponibilidad. Inténtalo nuevamente."));
-    else {setMealLibraryError("");await refreshMealLibrary({silent:true});}
+    else {setMealLibraryError("");setMealLibraryMessage(item.availableForPlans?'Mealprep oculto: ya no se ofrece en la tienda.':'Mealprep publicado: ya se puede elegir en Arma tu plan.');await refreshMealLibrary({silent:true});window.dispatchEvent(new Event('fullness:mealprep-published'));}
     setMealLibrarySaving(false);
   }
 
@@ -7491,7 +7541,12 @@ function App() {
     }
   }
 
-  function closeBackoffice() {
+  function closeBackoffice({skipGuard=false}={}) {
+    if(mealLibraryEditorOpen&&(mealLibrarySaving||mealLibraryPhotoUploading))return;
+    if(mealLibraryEditorOpen&&mealLibraryFormHasUnsavedChanges&&!skipGuard){
+      mealLibraryPendingExitRef.current=()=>closeBackoffice({skipGuard:true});
+      setMealLibraryLeaveOpen(true);return;
+    }
     setBackofficeFeedback(null);
     setMealPrepEditorOpen(false);
     setIncludedMealEditorIndex(null);
@@ -8424,6 +8479,8 @@ function App() {
   useEffect(() => {
     const closeOnEscape = (event) => {
       if (event.key !== "Escape") return;
+      if(event.defaultPrevented||document.querySelector('dialog[open],.backoffice-result-overlay'))return;
+      if(mealLibraryEditorOpen){event.preventDefault();closeMealLibraryEditor();return;}
 
       setAccountOpen(false);
       setCartOpen(false);
@@ -8439,7 +8496,14 @@ function App() {
     return () => {
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, []);
+  }, [mealLibraryEditorOpen,mealLibraryFormHasUnsavedChanges,mealLibrarySaving,mealLibraryPhotoUploading]);
+
+  useEffect(()=>{
+    if(!mealLibraryEditorOpen||!mealLibraryFormHasUnsavedChanges)return;
+    const warn=e=>{e.preventDefault();e.returnValue='';};
+    window.addEventListener('beforeunload',warn);
+    return()=>window.removeEventListener('beforeunload',warn);
+  },[mealLibraryEditorOpen,mealLibraryFormHasUnsavedChanges]);
 
   const cartTotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * item.qty, 0),
@@ -11234,7 +11298,7 @@ function App() {
                             </p>
                           </div>
 
-                          {mealLibraryError&&!mealLibraryEditorOpen&&<p className="backoffice-alert is-error" role="alert">{mealLibraryError}</p>}
+                          {!mealLibraryEditorOpen&&(mealLibraryError||mealLibraryMessage)&&<p className={`backoffice-alert ${mealLibraryError?'is-error':'is-success'}`} role="status">{mealLibraryError||mealLibraryMessage}</p>}
                           {mealLibraryLoading ? (
                             <p className="backoffice-muted">Cargando mealpreps…</p>
                           ) : filteredMealLibraryItems.length ? (
@@ -11249,12 +11313,13 @@ function App() {
                                     </span>
                                   </button>
                                   <div className="backoffice-card-meta">
-                                    <button type="button" className={`status-pill ${item.availableForPlans ? "is-active" : "is-inactive"}`} aria-pressed={item.availableForPlans} aria-label={`Disponibilidad de ${item.name}`} disabled={mealLibrarySaving} onClick={()=>toggleMealLibraryAvailability(item)}>
-                                      {item.availableForPlans ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
-                                      {item.availableForPlans ? "Disponible" : "No disponible"}
-                                    </button>
+                                    <span className={`status-pill ${mealprepPublicationState({},item).published ? "is-active" : "is-inactive"}`}>
+                                      {mealprepPublicationState({},item).published ? <CheckCircle2 size={15} /> : <EyeOff size={15} />}
+                                      {mealprepPublicationState({},item).published ? "Disponible en la tienda" : !validMealprepPrice(item.salePriceClp)?"Falta precio":"No disponible"}
+                                    </span>
                                   </div>
                                   <div className="backoffice-card-actions">
+                                    <button type="button" disabled={mealLibrarySaving||mealLibraryPhotoUploading} onClick={()=>toggleMealLibraryAvailability(item)} aria-label={`${item.availableForPlans?'Ocultar':validMealprepPrice(item.salePriceClp)?'Publicar':'Completar precio de'} ${item.name}`}>{item.availableForPlans?'Ocultar':validMealprepPrice(item.salePriceClp)?'Publicar':'Completar precio'}</button>
                                     <button type="button" onClick={() => openMealLibraryItemForEditing(item)} aria-label={`Editar ${item.name}`} title="Editar">
                                       <Pencil size={16} />
                                     </button>
@@ -11272,7 +11337,8 @@ function App() {
 
                         {mealLibraryEditorOpen && (
                           <div className="backoffice-editor-overlay backoffice-meal-library-editor-overlay" role="dialog" aria-modal="true" aria-labelledby="meal-library-editor-title">
-                            <form className="backoffice-form backoffice-workspace-form backoffice-meal-library-form" noValidate onSubmit={submitMealLibraryItem}>
+                            <form ref={mealLibraryFormRef} className="backoffice-form backoffice-workspace-form backoffice-meal-library-form" noValidate onSubmit={submitMealLibraryItem}>
+                              <fieldset className="mealprep-editor-fields" aria-label="Ficha del mealprep" disabled={mealLibrarySaving}>
                               <div className="backoffice-form-head">
                                 <div className="backoffice-workspace-title">
                                   <button className="backoffice-back-button" type="button" onClick={closeMealLibraryEditor} aria-label="Volver al listado de mealpreps">
@@ -11287,17 +11353,11 @@ function App() {
                                   <div className={`backoffice-draft-status is-${mealLibraryDraftStatus}`} aria-live="polite">
                                     {mealLibraryDraftStatus === "saving" ? <RefreshCw size={15} /> : mealLibraryDraftStatus === "local" ? <CloudOff size={15} /> : <Cloud size={15} />}
                                     <span>
-                                      {mealLibraryDraftStatus === "saving"
-                                        ? "Guardando…"
-                                        : mealLibraryDraftStatus === "local"
-                                          ? "Solo en este dispositivo"
-                                          : mealLibraryDraftStatus === "synced"
-                                            ? "Guardado"
-                                            : "Sin cambios"}
+                                      {mealprepDraftLabel(mealLibraryDraftStatus,mealLibraryFormHasUnsavedChanges)}
                                     </span>
                                   </div>
                                   {mealLibraryDrafts.length > 0 && (
-                                    <label className="backoffice-draft-picker">
+                                    <details className="mealprep-draft-recovery"><summary>Recuperar borrador ({mealLibraryDrafts.length})</summary><label className="backoffice-draft-picker">
                                       <History size={16} aria-hidden="true" />
                                       <select
                                         aria-label="Recuperar borrador de mealprep"
@@ -11314,7 +11374,7 @@ function App() {
                                           </option>
                                         ))}
                                       </select>
-                                    </label>
+                                    </label></details>
                                   )}
                                   {mealLibraryFormHasUnsavedChanges && (
                                     <button
@@ -11327,10 +11387,6 @@ function App() {
                                       <Trash2 size={16} />
                                     </button>
                                   )}
-                                  <label className="backoffice-switch">
-                                    <input name="availableForPlans" aria-label="Disponible en Arma tu plan" type="checkbox" checked={mealLibraryForm.availableForPlans} onChange={updateMealLibraryForm} />
-                                    <span>{mealLibraryForm.availableForPlans ? <Eye size={16} /> : <EyeOff size={16} />}{mealLibraryForm.availableForPlans ? "Disponible" : "No disponible"}</span>
-                                  </label>
                                 </div>
                               </div>
 
@@ -11340,7 +11396,7 @@ function App() {
                                 </p>
                               )}
 
-                              <section className="backoffice-editor-section"><h4>Arma tu plan</h4><label>Precio por mealprep (IVA incluido)<input name="salePriceClp" type="number" min="1" max="1000000" step="1" inputMode="numeric" value={mealLibraryForm.salePriceClp} onChange={updateMealLibraryForm} placeholder="Ej.: 9800" /></label><p>Si está disponible y tiene precio, los clientes podrán agregarlo a sus planes.</p></section>
+                              <MealprepPublicationControls state={mealLibraryPublication} form={mealLibraryForm} dirty={mealLibraryFormHasUnsavedChanges} onChange={updateMealLibraryForm} priceRef={mealLibraryPriceRef} busy={mealLibrarySaving||mealLibraryPhotoUploading}/>
                               <section className="backoffice-editor-section" aria-labelledby="library-general-title">
                                 <header>
                                   <p className="eyebrow">Mealprep</p>
@@ -11429,8 +11485,8 @@ function App() {
 
                               <div className="backoffice-form-actions">
                                 <div className="backoffice-action-copy">
-                                  <span>{mealLibraryForm.id ? "Editando un mealprep." : "El mealprep aparecerá en el listado al guardarlo."}</span>
-                                  <small>Podrás incorporarlo luego a planes semanales y mensuales.</small>
+                                  <span>{mealLibraryFormHasUnsavedChanges?"Cambios sin publicar":"Sin cambios pendientes"}</span>
+                                  <small>{mealLibraryPublication.willPublish?"Se ofrecerá en Arma tu plan al guardar.":"Se guardará sin ofrecerse en Arma tu plan."}</small>
                                 </div>
                                 <div className="backoffice-action-buttons">
                                   <button className="google-button" type="button" onClick={closeMealLibraryEditor} disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
@@ -11439,10 +11495,11 @@ function App() {
                                   </button>
                                   <button className="primary-button" type="submit" disabled={mealLibrarySaving || mealLibraryPhotoUploading}>
                                     {mealLibrarySaving ? <RefreshCw size={18} /> : <Save size={18} />}
-                                    {mealLibrarySaving ? "Guardando…" : "Guardar mealprep"}
+                                    {mealLibrarySaving ? "Guardando…" : mealLibraryPublication.saveLabel}
                                   </button>
                                 </div>
                               </div>
+                              </fieldset>
                             </form>
                           </div>
                         )}
@@ -12479,6 +12536,7 @@ function App() {
               </>
             )}
           </section>
+          <MealprepLeaveDialog open={mealLibraryLeaveOpen} saveLabel={mealLibraryPublication.saveLabel} onSave={saveMealLibraryBeforeLeaving} onLeave={leaveMealLibraryWithoutPublishing} onKeepEditing={()=>{setMealLibraryLeaveOpen(false);mealLibraryPendingExitRef.current=null;}}/>
           <BackofficeSaveLightbox feedback={backofficeFeedback} onClose={acknowledgeBackofficeFeedback} />
         </div>
       )}

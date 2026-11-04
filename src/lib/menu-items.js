@@ -1340,7 +1340,7 @@ export async function setMealLibraryAvailability(item, available) {
   try {
     const {supabase} = await getAuthenticatedSupabase();
     if (!supabase) return unavailableResult();
-    let query = supabase.from("meal_library_items").update({available_for_plans:available}).eq("id",item.id);
+    let query = supabase.from("meal_library_items").update({available_for_plans:available,...(available?{is_active:true}:{})}).eq("id",item.id);
     if(item.updatedAt) query=query.eq("updated_at",item.updatedAt);
     const {data,error}=await query.select("id").maybeSingle();
     return {data,error:error||(!data?{message:"La ficha cambió. Actualiza la lista antes de guardar."}:null),configured:true};

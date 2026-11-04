@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {validMealprepPrice,mealprepPublicationState,mealprepDraftLabel,mealprepFormChange} from '../src/lib/mealprep-publication.js';
+for(const value of ['',null,undefined,0,-1,1.5,' ','0','8900.5',NaN,Infinity,1000001,true,{}])assert.equal(validMealprepPrice(value),false,String(value));
+for(const value of [1,9800,'9800',1000000])assert.equal(validMealprepPrice(value),true);
+const original={id:'original',name:'Original',isActive:true,availableForPlans:false,salePriceClp:null,nutritionFacts:{protein_g:20,custom:{original:true}},ingredients:['Zanahoria']};
+let state=mealprepPublicationState({...original,availableForPlans:true},original);
+assert.equal(state.willPublish,false);assert.equal(state.published,false);assert.equal(state.saveLabel,'Guardar sin publicar');assert.match(state.nextStep,/precio/);
+const priced={...original,salePriceClp:9800,availableForPlans:true};
+state=mealprepPublicationState(priced,original);assert.equal(state.willPublish,true);assert.equal(state.published,false);assert.equal(state.saveLabel,'Guardar y publicar');
+state=mealprepPublicationState(priced,priced);assert.equal(state.published,true);
+state=mealprepPublicationState({...priced,availableForPlans:false},priced);assert.equal(state.published,true);assert.equal(state.willPublish,false);assert.equal(state.saveLabel,'Guardar y ocultar');
+let changed=mealprepFormChange(priced,{name:'salePriceClp',value:'',type:'number'});
+assert.equal(changed.availableForPlans,false);assert.deepEqual(changed.nutritionFacts,original.nutritionFacts);assert.deepEqual(changed.ingredients,original.ingredients);
+changed=mealprepFormChange(changed,{name:'salePriceClp',value:'9800',type:'number'});assert.equal(changed.availableForPlans,false,'Price entry alone must never publish');
+changed=mealprepFormChange(changed,{name:'availableForPlans',checked:true,type:'checkbox'});assert.equal(mealprepPublicationState(changed,original).willPublish,true);
+for(const status of ['idle','saving','synced','local']){const label=mealprepDraftLabel(status,true);assert.notEqual(label,'Guardado');assert.match(label,/borrador|Borrador|sin publicar/);}
+assert.equal(mealprepDraftLabel('synced',false),'Sin cambios pendientes');
+const main=await readFile('src/main.jsx','utf8'),controls=await readFile('src/components/mealprep-publication-controls.jsx','utf8');
+assert.match(main,/availableForPlans: rawDraft.form.availableForPlans===true && validMealprepPrice/);
+assert.match(main,/setMealLibraryLeaveOpen\(true\)/);assert.match(main,/beforeunload/);
+assert.match(main,/mealLibraryPriceRef.current\?\.focus\(\)/);
+assert.match(main,/window.addEventListener\('fullness:mealprep-published',refresh\)/);
+assert.match(main,/disabled={mealLibrarySaving}/);
+assert.match(controls,/disabled={!state.priceValid\|\|busy}/);
+assert.match(controls,/Estado actual|ESTADO ACTUAL/);assert.match(controls,/Volver sin aplicar cambios/);
+console.log('PASS publication guard: invalid price cannot publish; price alone never activates; draft/live states distinct; hiding explicit; nutrition unchanged; exit/focus/refresh guards wired.');
