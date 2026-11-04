@@ -4211,6 +4211,7 @@
   }
 
   .plate-hero-visual-stage {
+    display: none !important;
     position: absolute !important;
     inset: auto auto -34px auto !important;
     right: -34vw !important;
