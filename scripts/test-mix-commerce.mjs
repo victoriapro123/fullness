@@ -7,6 +7,7 @@ import {readSaleLetter} from '../server/mealprep-sale-capacity.mjs';
 import {saleDigest,SALE_AUTHORITY} from '../server/mealprep-sale-capacity.mjs';
 import {getDeliveryQuote,serializeDeliveryQuote} from '../src/lib/delivery-rates.js';
 import {reconcileSaleCheckout} from '../server/mealprep-sale-recovery.mjs';
+import {authorizeTestCheckoutSession} from '../server/mercadopago-test-checkout.mjs';
 const modulePath=process.argv[process.argv.indexOf('--pglite-module')+1];
 assert.ok(process.argv.includes('--pglite-module'));
 const {PGlite}=await import(pathToFileURL(modulePath).href),db=new PGlite();
@@ -18,7 +19,8 @@ function query(table){
  if(operation==='select')sql=`select ${cols} from ${table}${where}${order}${limit}`;
  else if(operation==='insert'){const keys=Object.keys(document);sql=`insert into ${table}(${keys.join(',')}) values(${keys.map(k=>param(document[k])).join(',')}) returning ${cols}`;}
  else{const keys=Object.keys(document);sql=`update ${table} set ${keys.map(k=>k+'='+param(document[k])).join(',')}${where} returning ${cols}`;}
- return {data:(await db.query(sql,params)).rows,error:null};}catch(e){return {data:null,error:{message:e.message,code:e.code}};}},async maybeSingle(){const r=await q.execute();return {data:r.data?.[0]||null,error:r.error};},single(){return q.maybeSingle();},then(a,b){return q.execute().then(a,b);}};return q;
+ return {data:(await db.query(sql,params)).rows,error:null};}catch(e){return {data:null,error:{message:e.message,code:e.code}};}},async maybeSingle(){const r=await q.execute();return {data:r.data?.[0]||null,error:r.error};},single(){return q.maybeSingle();},then(a,b){return q.execute().then(a,b);}};
+ q.gt=(k,v)=>{filters.push(k+'>'+param(v));return q;};q.is=(k,v)=>{assert.equal(v,null);filters.push(k+' is null');return q;};return q;
 }
 const supabase={from:query,auth:{async getUser(token){return token==='verified-fixture'?{data:{user:{id:id(90),email_confirmed_at:'2026-01-01T00:00:00Z'}}}:{data:null,error:{message:'Invalid fixture token'}};}},async rpc(name,a){try{
  let sql,args;
@@ -119,5 +121,30 @@ try{
  const oldResumed=await createCheckoutPreference({...base,cart:oldCart,fulfillment:oldFulfillment,checkoutKey:id(401),expectedAmount:oldExpected});assert.equal(oldResumed.orderId,id(402));assert.equal(oldResumed.amount,oldExpected);assert.equal(oldResumed.deliveryFee,3990);
  // Client roles cannot ask private history questions or prepare discounted orders directly.
  await db.exec('set role authenticated');await assert.rejects(db.query('select quote_fullness_mix_rewards($1,6,58800,null)',[id(90)]),/permission denied/);await db.exec('reset role');
+ // Private TEST uses the real mix preparation, original triggers, and settlement.
+ await db.exec('create table checkout_test_sessions(id uuid primary key,authorization_digest text,merchant_id text,verification jsonb,authorized_at timestamptz,expires_at timestamptz,consumed_at timestamptz,order_id uuid,preference_id text,provider_payment_id text)');
+ const testEnv={MERCADOPAGO_TEST_ACCESS_TOKEN:'synthetic-only',MERCADOPAGO_TEST_PUBLIC_KEY:'synthetic-public',MERCADOPAGO_TEST_USER_ID:'synthetic-merchant',MERCADOPAGO_TEST_WEBHOOK_SECRET:'synthetic-secret'};
+ const testSession=await authorizeTestCheckoutSession({ownerUserId:id(90),supabase,env:testEnv,fetchImpl:async()=>new Response(JSON.stringify({id:'synthetic-merchant',site_id:'MLC',tags:['test_user']}))});
+ const sessionId=testSession.testSessionToken.split('.')[0];assert.equal((await db.query('select id from checkout_test_sessions')).rows[0].id,sessionId,'Authorization ID must be the persisted primary key');
+ let testCreates=0,testMails=0;
+ const privateDeps={...deps,env:testEnv,assertOwnerBackofficeRequest:async()=>({user:{id:id(90)}}),resolveMercadoPagoProfile:async()=>({mode:'test',merchantId:'synthetic-merchant',webhookSecret:'synthetic-secret'}),mercadoPagoRequest:async(path,options)=>{
+  assert.equal(options.profile.mode,'test');
+  if(path==='/checkout/preferences'){testCreates++;assert.match(options.body.notification_url,/\/test-webhook$/);assert.equal(options.body.metadata.checkout_mode,'test');assert.equal(options.body.payer.email,base.fulfillment.email);return{...options.body,id:'private-test-'+testCreates,collector_id:'synthetic-merchant',init_point:'https://www.mercadopago.cl/fixture-test'};}
+  return gateway(path,options);
+ },sendApprovedOrderEmails:async()=>{testMails++;throw Error('TEST may not send mail');}};
+ const privateBase={...base,request,cart:[{kind:'mealprep',libraryMealId:id(1),quantity:24},{slug:'familiar-fixture',quantity:1}],testSessionToken:testSession.testSessionToken,checkoutKey:id(800),expectedAmount:230480,dependencies:privateDeps};
+ await assert.rejects(createCheckoutPreference({...privateBase,dependencies:{...privateDeps,assertOwnerBackofficeRequest:async()=>{throw Object.assign(Error('Denied'),{statusCode:403});}}}),/Denied/);
+ const privateOrder=await createCheckoutPreference(privateBase);assert.equal(privateOrder.testMode,true);assert.equal(privateOrder.amount,230480);assert.equal(testCreates,1);
+ const privateSaved=(await db.query('select * from orders where id=$1',[privateOrder.orderId])).rows[0];assert.equal(privateSaved.checkout_mode,'test');assert.equal(privateSaved.rewards_kind,'volume');assert.equal(privateSaved.customer_snapshot.testSessionId,sessionId);
+ assert.equal((await createCheckoutPreference(privateBase)).orderId,privateOrder.orderId);assert.equal(testCreates,1,'TEST retry must not create a second preference');
+ await assert.rejects(createCheckoutPreference({...privateBase,checkoutKey:id(801)}),/ya fue utilizado/);
+ await assert.rejects(createCheckoutPreference({...privateBase,dependencies:{...privateDeps,assertOwnerBackofficeRequest:async()=>({user:{id:id(91)}})}}),/esta cuenta/);
+ payment={id:'123456790',external_reference:privateOrder.orderId,live_mode:false,collector_id:'synthetic-merchant',status:'approved',transaction_amount:230480,currency_id:'CLP',date_approved:new Date().toISOString()};
+ const testSync=await syncMercadoPagoPayment(payment.id,privateOrder.orderId,{...privateDeps,checkoutMode:'test',mercadoPagoRequest:async()=>payment,paymentProfile:{mode:'test',merchantId:'synthetic-merchant'}});
+ assert.equal(testSync.testMode,true);assert.equal(testMails,0);assert.equal((await db.query("select count(*) n from orders where checkout_mode='live' and id=$1",[privateOrder.orderId])).rows[0].n,0);
+ assert.deepEqual((await db.query('select * from mealprep_sale_capacity')).rows,capacityBefore);
+ console.log('PASS private TEST mix/family/24 discount, owner binding, persisted token ID, identical retry, wrong-owner/new-key denial, test payment settlement, no mails and unchanged capacity. Synthetic provider only.');
+ await db.query("update checkout_test_sessions set expires_at=now()-interval '1 minute' where id=$1",[sessionId]);
+ await assert.rejects(createCheckoutPreference(privateBase),e=>e.code==='TEST_SESSION_INVALID');assert.equal(testCreates,1);
  console.log('PASS mix 1/6/23/24/25, mixed family exclusion, separate delivery, authoritative SQL totals, integer MP prices, verified identity, paid weekly accumulation, refunds/month reset, concurrent one-time benefit, replay/recovery/payment and unchanged library/inventory. Synthetic only.');
 }finally{await db.close();}

@@ -118,6 +118,7 @@ import {LocalMenuAdmin,MealprepAvailabilityAdmin} from "./components/local-menu-
 import {PLAN_CONDITIONS} from "./lib/local-menu.js";
 import {customPlanRequest} from "./lib/custom-plans.js";
 import {ApprovedShop} from './components/approved-shop.jsx';
+import {PrivatePaymentTest} from './components/private-payment-test.jsx';
 import {MemberRegistration} from './components/member-registration.jsx';
 import {mixRequest,mixTotals,mixDeliveryQuote,mixPhotos} from './lib/mix-commerce.js';
 import {applyDispatchCalendar, buildMonthlyDeliveries, MONTHLY_MENU_RULE_TEXT} from "./lib/dispatch-calendar.js";
@@ -5166,11 +5167,6 @@ function App() {
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState(readCheckoutReturnState);
-  const [testCheckoutAccessOpen, setTestCheckoutAccessOpen] = useState(false);
-  const [testCheckoutAccessCode, setTestCheckoutAccessCode] = useState("");
-  const [testCheckoutAuthorizing, setTestCheckoutAuthorizing] = useState(false);
-  const [testCheckoutSessionToken, setTestCheckoutSessionToken] = useState("");
-  const [testCheckoutExpiresAt, setTestCheckoutExpiresAt] = useState("");
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [initialAuthRedirect] = useState(() => readAuthRedirectState());
@@ -8801,35 +8797,6 @@ function App() {
     setCheckoutMessage("");
   }
 
-  async function authorizeTestCheckout(event) {
-    event.preventDefault();
-    if (testCheckoutAuthorizing || !testCheckoutAccessCode.trim()) return;
-
-    setTestCheckoutAuthorizing(true);
-    setCheckoutMessage("");
-    try {
-      const response = await fetch("/api/mercadopago/test-session", {
-        method: "POST",
-        headers: {Accept: "application/json", "Content-Type": "application/json"},
-        body: JSON.stringify({accessCode: testCheckoutAccessCode})
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.data?.testSessionToken) {
-        throw new Error(payload.error?.message || "No pudimos habilitar la compra de prueba.");
-      }
-      setTestCheckoutAccessCode("");
-      setTestCheckoutSessionToken(payload.data.testSessionToken);
-      setTestCheckoutExpiresAt(payload.data.expiresAt || "");
-      setCheckoutMessage("Compra TEST habilitada para un único intento. No generará correo, despacho ni una orden operativa.");
-    } catch (error) {
-      setTestCheckoutSessionToken("");
-      setTestCheckoutExpiresAt("");
-      setCheckoutMessage(error.message || "No pudimos habilitar la compra de prueba.");
-    } finally {
-      setTestCheckoutAuthorizing(false);
-    }
-  }
-
   async function submitCheckout(event) {
     event.preventDefault();
     if (ECOMMERCE_MAINTENANCE) { setCheckoutMessage(ECOMMERCE_MAINTENANCE_MESSAGE); return; }
@@ -8857,8 +8824,8 @@ function App() {
     try {
       const requestCart=cart.map(item=>item.kind==='custom_plan'?customPlanRequest(item):mixRequest(item));
       const headers=await checkoutHeaders();
-      const checkoutKey=await checkoutAttemptKey({cart:requestCart,fulfillment:checkoutForm,expectedAmount:checkoutTotal,testMode:Boolean(testCheckoutSessionToken)});
-      if (!testCheckoutSessionToken) {
+      const checkoutKey=await checkoutAttemptKey({cart:requestCart,fulfillment:checkoutForm,expectedAmount:checkoutTotal,testMode:false});
+      {
         const quoteResponse = await fetch("/api/commerce/checkout-quote", {
           method: "POST", headers,
           body: JSON.stringify({cart:requestCart, fulfillment: checkoutForm,checkoutKey,expectedAmount:checkoutTotal})
@@ -8875,8 +8842,7 @@ function App() {
           cart: requestCart,
           fulfillment: checkoutForm,
           expectedAmount: checkoutTotal,
-          checkoutKey,
-          ...(testCheckoutSessionToken ? {testSessionToken: testCheckoutSessionToken} : {})
+          checkoutKey
         })
       });
       const payload = await response.json().catch(() => ({}));
@@ -8904,8 +8870,6 @@ function App() {
       } catch {
         // Checkout can continue when browser storage is unavailable.
       }
-      setTestCheckoutSessionToken("");
-      setTestCheckoutExpiresAt("");
       window.location.assign(payload.data.initPoint);
     } catch (error) {
       setCheckoutMessage(error.message || "No pudimos iniciar el pago. Intenta nuevamente.");
@@ -12312,7 +12276,7 @@ function App() {
                             <h3 id="technical-tools-title">Respaldo y conexión</h3>
                           </div>
                         </div>
-
+                        <PrivatePaymentTest items={stockLetter?.items||[]} families={familyProducts}/>
                         <section className="technical-tool-section" aria-labelledby="technical-data-title">
                           <div className="technical-tool-header">
                             <div>
@@ -12698,46 +12662,6 @@ function App() {
                   <div className="cart-total"><span>{checkoutTotal === null ? "Total con envío" : "Total a pagar"}</span><strong>{checkoutTotal === null ? "Por confirmar" : formatPrice(checkoutTotal)}</strong></div>
                 </div>
 
-                {activeIsAdmin&&!cart.some(item=>item.kind==='custom_plan')&&<section className="checkout-test-access" aria-labelledby="checkout-test-access-title">
-                  <button
-                    className="checkout-test-toggle"
-                    type="button"
-                    aria-expanded={testCheckoutAccessOpen}
-                    aria-controls="checkout-test-access-panel"
-                    onClick={() => setTestCheckoutAccessOpen((open) => !open)}
-                  >
-                    <KeyRound size={16} />
-                    Compra de prueba autorizada
-                  </button>
-                  {testCheckoutAccessOpen && (
-                    <div className="checkout-test-panel" id="checkout-test-access-panel">
-                      <p id="checkout-test-access-title">Sólo para pruebas autorizadas. El código se valida  y habilita un único intento TEST.</p>
-                      <label>
-                        Código de acceso
-                        <input
-                          value={testCheckoutAccessCode}
-                          type="password"
-                          autoComplete="off"
-                          onChange={(event) => setTestCheckoutAccessCode(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") authorizeTestCheckout(event);
-                          }}
-                        />
-                      </label>
-                      <button
-                        className="checkout-test-authorize"
-                        type="button"
-                        disabled={testCheckoutAuthorizing || !testCheckoutAccessCode.trim()}
-                        onClick={authorizeTestCheckout}
-                      >
-                        {testCheckoutAuthorizing ? "Validando código…" : testCheckoutSessionToken ? "Código TEST validado" : "Habilitar intento TEST"}
-                      </button>
-                      {testCheckoutSessionToken && (
-                        <small>Sesión TEST activa{testCheckoutExpiresAt ? ` hasta ${new Date(testCheckoutExpiresAt).toLocaleTimeString("es-CL", {hour: "2-digit", minute: "2-digit"})}` : ""}. No se guardará en este dispositivo.</small>
-                      )}
-                    </div>
-                  )}
-                </section>}
 
                 {cart.some(isPlanProduct) && <p className="checkout-message">{DISPATCH_RULE_TEXT}</p>}
                 {cart.some((item)=>item.kind==='custom_plan') && <p className="checkout-message">Tu plan incluye los platos que elegiste. Despliega el detalle para revisarlos antes de pagar.</p>}
@@ -12756,7 +12680,7 @@ function App() {
                   aria-busy={checkoutSubmitting}
                 >
                   <ShieldCheck size={18} />
-                  {checkoutSubmitting ? "Abriendo Mercado Pago..." : testCheckoutSessionToken ? "Pagar con Mercado Pago TEST" : "Pagar con Mercado Pago"}
+                  {checkoutSubmitting ? "Abriendo Mercado Pago..." : "Pagar con Mercado Pago"}
                 </button>}
               </form>
             </>

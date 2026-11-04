@@ -61,6 +61,7 @@ const checkoutResult = await createCheckoutPreference({
   request: {headers: {host: "fullness.test", "x-forwarded-proto": "https"}},
   testSessionToken: authorization.testSessionToken,
   dependencies: {
+    assertOwnerBackofficeRequest: async () => ({user:{id:'owner-fixture'}}),
       resolveDispatchProducts: async (products) => products, // Calendar is covered separately by test-dispatch-calendar.
     env,
     mercadoPagoRequest: async (path, {body, profile}) => {
@@ -71,7 +72,7 @@ const checkoutResult = await createCheckoutPreference({
       assert.equal(body.notification_url, "https://fullness.test/api/mercadopago/test-webhook");
       return {id: "test-preference-1", init_point: "https://www.mercadopago.cl/checkout/v1/redirect?pref_id=test"};
     },
-    resolveMercadoPagoProfile: async () => ({mode: "test", webhookSecret: env.MERCADOPAGO_TEST_WEBHOOK_SECRET}),
+    resolveMercadoPagoProfile: async () => ({mode: "test", merchantId:env.MERCADOPAGO_TEST_USER_ID, webhookSecret: env.MERCADOPAGO_TEST_WEBHOOK_SECRET}),
     enqueueCore360UnpaidOrder: async () => { checkoutState.coreCalls += 1; throw new Error("TEST nunca debe llegar a Core360"); },
     supabase: checkoutSupabase(checkoutState)
   }
@@ -160,8 +161,13 @@ function createSessionStore() {
       assert.equal(table, "checkout_test_sessions");
       return {
         insert(record) {
-          store.row = {id: "11111111-1111-4111-8111-111111111111", ...record};
+          store.row = {...record};
           return {select: () => ({single: async () => ({data: store.row, error: null})})};
+        },
+        select() {
+          const checks=[];
+          const q={eq(k,v){checks.push(r=>r[k]===v);return q;},gt(k,v){checks.push(r=>r[k]>v);return q;},async maybeSingle(){return{data:store.row&&checks.every(c=>c(store.row))?store.row:null,error:null};}};
+          return q;
         },
         update(patch) {
           if (Object.hasOwn(patch, "consumed_at")) {
@@ -192,6 +198,7 @@ function createSessionStore() {
 function checkoutSupabase(state) {
   return {
     from(table) {
+      if (table === 'custom_plan_settings') return {select:()=>({eq:()=>({maybeSingle:async()=>({data:null,error:null})})})};
       if (table === "checkout_test_sessions") return state.sessions.from(table);
       if (table === "menu_items") return {select: () => ({in: () => ({eq: async () => ({data: [product], error: null})})})};
       if (table === "orders") {

@@ -1,6 +1,7 @@
 import {createHmac, randomUUID, timingSafeEqual} from "node:crypto";
 import {assertShoppingOpen} from "../src/lib/ecommerce-maintenance.js";
 import {createClient} from "@supabase/supabase-js";
+import {assertOwnerBackofficeRequest} from './backoffice-access.mjs';
 import {
   deliverCore360OutboxEvent,
   enqueueCore360PaymentApproved,
@@ -86,10 +87,15 @@ const LEGACY_CHECKOUT_OVERRIDES = new Map([
 
 let supabaseAdmin;
 
-export async function createTestCheckoutSession({accessCode, dependencies = {}} = {}) {
+export async function createTestCheckoutSession({request, inspectOnly=false, dependencies = {}} = {}) {
   await localEnvReady;
+  const owner = await (dependencies.assertOwnerBackofficeRequest || assertOwnerBackofficeRequest)(request);
+  if(inspectOnly){
+    await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env:dependencies.env||process.env,fetchImpl:dependencies.fetchImpl||fetch,mode:'test',verifyTestIdentity:true});
+    return {ready:true,mode:'test',expiresInMinutes:10};
+  }
   return (dependencies.authorizeTestCheckoutSession || authorizeTestCheckoutSession)({
-    accessCode,
+    ownerUserId:owner.user.id,
     env: dependencies.env || process.env,
     fetchImpl: dependencies.fetchImpl || fetch,
     supabase: dependencies.supabase || getSupabaseAdmin()
@@ -103,6 +109,9 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
   const checkoutNow = dependencies.now || new Date();
 
   const normalizedCart = normalizeCart(cart);
+  // TEST never falls back to LIVE and is authorized independently of the UI.
+  const testOwner = cleanText(testSessionToken)
+    ? await (dependencies.assertOwnerBackofficeRequest || assertOwnerBackofficeRequest)(request) : null;
   const env = dependencies.env || process.env;
   const supabase = dependencies.supabase || getSupabaseAdmin();
   const saleEnabled=await saleAuthorityEnabled(supabase);
@@ -119,7 +128,7 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
     throw statusError(422, deliveryQuote.message);
   }
   const testSession = cleanText(testSessionToken)
-    ? await (dependencies.consumeTestCheckoutSession || consumeTestCheckoutSession)({env, sessionToken: testSessionToken, supabase})
+    ? await (dependencies.consumeTestCheckoutSession || consumeTestCheckoutSession)({sessionToken:testSessionToken,ownerUserId:testOwner.user.id,checkoutKey,supabase})
     : null;
   const paymentProfile = testSession
     ? await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "test"})
@@ -127,9 +136,10 @@ export async function createCheckoutPreference({cart, fulfillment, request, expe
       ? {mode: "live"}
       : await (dependencies.resolveMercadoPagoProfile || resolveMercadoPagoProfile)({env, mode: "live"});
   const mode = checkoutMode(paymentProfile?.mode);
+  if(testSession && (mode!=='test'||String(paymentProfile.merchantId)!==String(testSession.merchantId)))throw statusError(409,'El perfil de prueba cambió. Inicia una nueva sesión TEST.');
   const isTestCheckout = mode === "test";
   if(saleEnabled){
-    const rewardsUserId=mixPurchase?await verifiedRewardsUser(supabase,request):null;
+    const rewardsUserId=mixPurchase&&mode==='live'?await verifiedRewardsUser(supabase,request):null;
     const result=await createSaleCheckout({cart:normalizedCart,fulfillment,expectedAmount,checkoutKey,supabase,mode,profile:paymentProfile,deliveryQuote,mixPurchase,rewardsUserId,now:checkoutNow,quoteOnly:dependencies.quoteOnly===true,services:{gateway:dependencies.mercadoPagoRequest||mercadoPagoRequest,customerSnapshot:(f,o)=>buildCustomerSnapshot(f,{...o,testSessionId:testSession?.sessionId||null}),productSnapshot:buildProductSnapshot,deliverySnapshot:serializeDeliveryQuote,siteUrl:()=>getCheckoutSiteUrl(request)}});
     if(isTestCheckout&&result.orderId)await(dependencies.attachTestSessionOrder||attachTestSessionOrder)({orderId:result.orderId,preferenceId:result.preferenceId,sessionId:testSession?.sessionId,supabase});
     return result;

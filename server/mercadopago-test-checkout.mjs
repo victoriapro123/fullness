@@ -9,9 +9,9 @@ const TEST_SESSION_TOKEN_PATTERN = /^([0-9a-f-]{36})\.([A-Za-z0-9_-]{32,128})$/i
  * code. The browser receives an opaque, short-lived, one-time authorization;
  * it never receives a provider credential or a client-controlled mode flag.
  */
-export async function authorizeTestCheckoutSession({accessCode, env = process.env, fetchImpl = fetch, supabase} = {}) {
+export async function authorizeTestCheckoutSession({accessCode, ownerUserId, env = process.env, fetchImpl = fetch, supabase} = {}) {
   if (!supabase?.from) throw checkoutTestError(503, "TEST_SESSION_STORAGE_UNAVAILABLE", "No pudimos habilitar la compra de prueba.");
-  assertTestCheckoutAccessCode(accessCode, env);
+  if (!ownerUserId) assertTestCheckoutAccessCode(accessCode, env);
   const profile = await resolveMercadoPagoProfile({env, fetchImpl, mode: "test", verifyTestIdentity: true});
   const issuedAt = new Date();
   const expiresAt = new Date(issuedAt.getTime() + TEST_SESSION_TTL_MS);
@@ -20,13 +20,15 @@ export async function authorizeTestCheckoutSession({accessCode, env = process.en
     .from(TEST_SESSION_TABLE)
     .insert({
       authorization_digest: digest(token),
+      id: token.split('.')[0],
       authorized_at: issuedAt.toISOString(),
       expires_at: expiresAt.toISOString(),
       merchant_id: profile.merchantId,
       verification: {
         merchantId: profile.merchantId,
         profile: "mercado_pago_test",
-        siteId: profile.siteId
+        siteId: profile.siteId,
+        ownerUserId: ownerUserId || null
       }
     })
     .select("id,expires_at")
@@ -42,13 +44,25 @@ export async function authorizeTestCheckoutSession({accessCode, env = process.en
   };
 }
 
-export async function consumeTestCheckoutSession({env = process.env, sessionToken, supabase} = {}) {
+export async function consumeTestCheckoutSession({sessionToken, ownerUserId, checkoutKey, supabase} = {}) {
   if (!supabase?.from) throw checkoutTestError(503, "TEST_SESSION_STORAGE_UNAVAILABLE", "No pudimos validar la compra de prueba.");
   const parsed = parseSessionToken(sessionToken);
   const now = new Date().toISOString();
+  const stored = await supabase.from(TEST_SESSION_TABLE).select('id,merchant_id,verification,consumed_at,expires_at')
+    .eq('id', parsed.id).eq('authorization_digest', digest(sessionToken)).gt('expires_at', now).maybeSingle();
+  if (stored.error) throw checkoutTestError(502, 'TEST_SESSION_CONSUME_FAILED', 'No pudimos validar la compra de prueba.');
+  const row = stored.data;
+  if (!row || row.verification?.ownerUserId && row.verification.ownerUserId !== ownerUserId) {
+    throw checkoutTestError(403, 'TEST_SESSION_INVALID', 'El acceso de prueba no es válido para esta cuenta.');
+  }
+  // A consumed authorization may only recover the exact checkout attempt.
+  if (row.consumed_at) {
+    if (!checkoutKey || row.verification?.checkoutKey !== checkoutKey) throw checkoutTestError(403, 'TEST_SESSION_INVALID', 'El acceso de prueba ya fue utilizado.');
+    return {checkoutMode:'test',sessionId:row.id,merchantId:cleanText(row.merchant_id)};
+  }
   const {data, error} = await supabase
     .from(TEST_SESSION_TABLE)
-    .update({consumed_at: now})
+    .update({consumed_at: now, verification:{...row.verification,checkoutKey:checkoutKey||null}})
     .eq("id", parsed.id)
     .eq("authorization_digest", digest(sessionToken))
     .is("consumed_at", null)
@@ -97,6 +111,9 @@ export async function resolveMercadoPagoProfile({env = process.env, fetchImpl = 
     const webhookSecret = cleanText(env.MERCADOPAGO_TEST_WEBHOOK_SECRET);
     if (!accessToken || !publicKey || !merchantId || !webhookSecret) {
       throw checkoutTestError(503, "TEST_PROFILE_NOT_CONFIGURED", "La compra de prueba no está configurada completamente.");
+    }
+    if ([env.MERCADOPAGO_PRODUCTION_ACCESS_TOKEN,env.MERCADOPAGO_ACCESS_TOKEN].some(value => cleanText(value) === accessToken)) {
+      throw checkoutTestError(503, 'TEST_PROFILE_NOT_ISOLATED', 'Las credenciales de prueba deben ser distintas de las de producción.');
     }
 
     const profile = {accessToken, merchantId, mode: "test", publicKey, webhookSecret};

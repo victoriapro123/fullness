@@ -1,23 +1,22 @@
-import {createTestCheckoutSession, readJsonBody} from "../../server/mercadopago-checkout.mjs";
+import {createTestCheckoutSession} from "../../server/mercadopago-checkout.mjs";
 
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
-    res.setHeader("Allow", "POST,OPTIONS");
+    res.setHeader("Allow", "GET,POST,OPTIONS");
     res.end();
     return;
   }
-  if (req.method !== "POST") {
+  if (!["POST","GET"].includes(req.method)) {
     res.statusCode = 405;
-    res.setHeader("Allow", "POST,OPTIONS");
+    res.setHeader("Allow", "GET,POST,OPTIONS");
     sendJson(res, 405, {error: {code: "METHOD_NOT_ALLOWED", message: "Método no permitido."}});
     return;
   }
 
   try {
-    const body = await readJsonBody(req);
-    const data = await createTestCheckoutSession({accessCode: body?.accessCode});
-    sendJson(res, 201, {data});
+    const data = await createTestCheckoutSession({request:req,inspectOnly:req.method==='GET'});
+    sendJson(res, req.method==='GET'?200:201, {data});
   } catch (error) {
     sendJson(res, error.statusCode || 500, {
       error: {
