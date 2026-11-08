@@ -12,4 +12,6 @@ supabase
 transcripciones-wsp
 WhatsApp Chat - María Cecilia Salas Vergara
 public/assets
-public/images
+public/images/*
+!public/images/landing-local/
+!public/images/landing-local/**
