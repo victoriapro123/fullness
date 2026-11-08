@@ -1,0 +1,57 @@
+/* One gallery shared by the landing and the backoffice preview. */
+.local-gallery-wrap {
+  width: 100%; max-width: 520px; min-width: 0; justify-self: end;
+  display: grid; grid-template-columns: minmax(0, 1fr) 66px;
+  gap: 16px; color: var(--fullness-dark, #151515);
+}
+.local-gallery-wrap [hidden], .local-gallery-lightbox [hidden] { display: none !important; }
+.local-gallery-wrap.has-single-photo { grid-template-columns: minmax(0, 1fr); }
+.local-gallery-stage { min-width: 0; overflow: hidden; background: color-mix(in srgb, var(--fullness-cream, #f5f0e7) 92%, var(--fullness-plum, #301923)); }
+.local-gallery {
+  display: flex; aspect-ratio: 4 / 5; max-height: 500px; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scroll-behavior: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.local-gallery::-webkit-scrollbar, .gallery-thumbnails::-webkit-scrollbar { display: none; }
+.local-gallery .local-photo { flex: 0 0 100%; min-width: 0; height: 100%; margin: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.local-gallery .local-photo-open { position: relative; width: 100%; height: 100%; border: 0; padding: 0; border-radius: 0; background: transparent; cursor: zoom-in; display: block; }
+.local-gallery .local-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.local-photo-expand { position: absolute; right: 14px; bottom: 14px; width: 40px; height: 40px; display: grid; place-items: center; background: var(--fullness-cream, #f5f0e7); color: var(--fullness-dark, #151515); transition: background 160ms ease; }
+.local-photo-open:hover .local-photo-expand { background: var(--fullness-eucalyptus, #a7bba6); }
+.gallery-thumbnails { position: relative; min-width: 0; height: 0; min-height: 100%; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; scrollbar-width: none; }
+.local-gallery-wrap .gallery-thumbnail { position: relative; flex: 0 0 72px; width: 66px; min-height: 0; padding: 3px; border: 1px solid transparent; border-radius: 0; background: transparent; cursor: pointer; transition: border-color 160ms ease, opacity 160ms ease; opacity: .65; }
+.gallery-thumbnail img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumbnail span { position: absolute; bottom: 4px; right: 4px; padding: 2px 4px; background: var(--fullness-cream, #f5f0e7); color: var(--fullness-dark, #151515); font-size: 9px; line-height: 1.25; letter-spacing: .08em; }
+.local-gallery-wrap .gallery-thumbnail[aria-pressed=true] { border-color: var(--fullness-plum, #301923); opacity: 1; }
+.local-gallery-wrap .gallery-thumbnail:hover { opacity: 1; border-color: var(--fullness-eucalyptus-deep, #627969); }
+.local-gallery-wrap .gallery-controls { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 18px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--fullness-plum, #301923) 22%, transparent); }
+.local-gallery-wrap .gallery-controls .gallery-arrows { order: -1; }
+.local-gallery-wrap .gallery-controls .gallery-caption { flex: 1; }
+.gallery-caption { min-width: 0; display: grid; gap: 8px; }
+.gallery-counter { font-family: var(--font-display, inherit); font-size: 10px; font-weight: 500; letter-spacing: .18em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.gallery-caption p { margin: 0; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.gallery-arrows { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.local-gallery-wrap .gallery-arrows button, .local-gallery-lightbox button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; border: 1px solid var(--fullness-eucalyptus, #a7bba6); border-radius: 0; background: var(--fullness-eucalyptus, #a7bba6); color: var(--fullness-dark, #151515); cursor: pointer; transition: background 160ms ease; }
+.local-gallery-wrap .gallery-arrows button:hover, .local-gallery-lightbox button:hover { background: color-mix(in srgb, var(--fullness-eucalyptus, #a7bba6) 86%, var(--fullness-eucalyptus-deep, #627969)); }
+.local-gallery-wrap :is(button, .local-gallery):focus-visible, .local-gallery-lightbox button:focus-visible { outline: 2px solid var(--fullness-plum, #301923); outline-offset: 3px; }
+.local-gallery .local-photo-open:focus-visible { outline-offset: -5px; }
+.local-gallery-lightbox { box-sizing: border-box; width: min(1200px, calc(100% - 32px)); height: min(940px, calc(100dvh - 32px)); max-width: none; max-height: none; padding: 0; margin: auto; border: 0; background: var(--fullness-plum, #301923); color: var(--fullness-cream, #f5f0e7); }
+.local-gallery-lightbox::backdrop { background: color-mix(in srgb, var(--fullness-dark, #151515) 88%, transparent); }
+.local-lightbox-shell { box-sizing: border-box; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 16px; padding: 20px; }
+.local-lightbox-shell header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.local-lightbox-shell header > span { font-family: var(--font-display, inherit); font-size: 10px; letter-spacing: .16em; line-height: 1.6; }
+.local-lightbox-image { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.local-lightbox-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.local-gallery-lightbox button:focus-visible { outline-color: var(--fullness-cream, #f5f0e7); }
+.local-editor-preview .local-gallery-wrap { margin: 20px auto 0; }
+.local-editor-preview .local-gallery { margin-top: 0; }
+@media (max-width: 860px) {
+  .local-gallery-wrap { max-width: 540px; justify-self: start; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .local-gallery { aspect-ratio: 4 / 5; max-height: 55svh; }
+  .gallery-thumbnails { height: auto; min-height: 0; flex-direction: row; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px; }
+  .local-gallery-wrap .gallery-thumbnail { flex-basis: calc((100% - 40px) / 6); width: auto; min-width: 44px; height: 62px; padding: 2px; }
+  .local-gallery-wrap .gallery-controls { padding-top: 14px; }
+  .gallery-caption p { font-size: 13px; }
+  .local-gallery-lightbox { width: 100%; height: 100dvh; }
+  .local-lightbox-shell { padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom)); gap: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .local-gallery-wrap *, .local-gallery-lightbox * { transition: none !important; scroll-behavior: auto !important; } }

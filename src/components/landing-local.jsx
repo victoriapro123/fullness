@@ -1,33 +1,109 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowUp, ArrowDown, UploadCloud, Trash2, Save } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpRight, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Maximize2, X, UploadCloud, Trash2, Save } from 'lucide-react';
 import { LOCAL_GALLERY_EVENT, localGalleryRepository, validateLocalPhotos } from '../lib/landing-local.js';
 import { uploadMenuPhoto } from '../lib/menu-items.js';
 import './landing-local-editor.css';
+import './landing-local-gallery.css';
 
 export function LocalGallery({ photos }) {
   const track = useRef(null);
-  const [slide, setSlide] = useState(0);
+  const thumbnails = useRef(null);
+  const dialog = useRef(null);
+  const activeId = useRef(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [expanded, setExpanded] = useState(false);
   const [failed, setFailed] = useState([]);
-  const visible = photos.filter(photo => !failed.includes(photo.url));
-  function go(index) {
-    const next = Math.max(0, Math.min(visible.length - 1, index));
-    const element = track.current?.children[next];
-    if (element) track.current.scrollTo({ left: element.offsetLeft - track.current.firstElementChild.offsetLeft, behavior: 'smooth' });
-    setSlide(next);
+  const visible = useMemo(() => photos.filter(photo => !failed.includes(photo.url)), [photos, failed]);
+  const slide = Math.max(0, visible.findIndex(photo => photo.id === selectedId));
+  const current = visible[slide];
+  const counter = `${String(slide + 1).padStart(2, '0')} / ${String(visible.length).padStart(2, '0')}`;
+
+  function select(index) {
+    const photo = visible[index];
+    if (!photo) return;
+    activeId.current = photo.id;
+    setSelectedId(photo.id);
+    const strip = thumbnails.current;
+    const thumb = strip?.children[index];
+    if (thumb) {
+      // Only move the thumbnail strip, never the surrounding landing page.
+      if (thumb.offsetLeft < strip.scrollLeft) strip.scrollLeft = thumb.offsetLeft;
+      else if (thumb.offsetLeft + thumb.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = thumb.offsetLeft + thumb.offsetWidth - strip.clientWidth;
+      if (thumb.offsetTop < strip.scrollTop) strip.scrollTop = thumb.offsetTop;
+      else if (thumb.offsetTop + thumb.offsetHeight > strip.scrollTop + strip.clientHeight) strip.scrollTop = thumb.offsetTop + thumb.offsetHeight - strip.clientHeight;
+    }
   }
+  function go(index) {
+    if (!visible.length) return;
+    const next = (index + visible.length) % visible.length;
+    select(next);
+    track.current?.scrollTo({ left: next * track.current.clientWidth, behavior: expanded || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+  function onKeyDown(event) {
+    const target = { ArrowLeft: slide - 1, ArrowRight: slide + 1, Home: 0, End: visible.length - 1 }[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    event.stopPropagation();
+    go(target);
+  }
+  useEffect(() => {
+    if (!visible.length) setExpanded(false);
+    const index = Math.max(0, visible.findIndex(photo => photo.id === activeId.current));
+    activeId.current = visible[index]?.id ?? null;
+    setSelectedId(activeId.current);
+    const element = track.current;
+    if (!element) return;
+    const align = () => element.scrollTo({ left: Math.max(0, visible.findIndex(photo => photo.id === activeId.current)) * element.clientWidth, behavior: 'auto' });
+    align();
+    const observer = new ResizeObserver(align);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [visible]);
+  useEffect(() => {
+    if (!expanded || !visible.length) return;
+    const element = dialog.current;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    element.showModal();
+    return () => {
+      element.close();
+      document.body.style.overflow = overflow;
+      track.current?.querySelector('.local-photo-open[tabindex="0"]')?.focus({ preventScroll: true });
+    };
+  }, [expanded, visible.length]);
+
   if (!visible.length) return null;
-  return <div className="local-gallery-wrap">
-    <div className="local-gallery" aria-label="Fotografías del local" tabIndex={0} ref={track}
-      onKeyDown={event => { if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); go(slide + (event.key === 'ArrowRight' ? 1 : -1)); } }}
-      onScroll={() => { const width = track.current?.clientWidth; if (width) setSlide(Math.round(track.current.scrollLeft / (width + 14))); }}>
-      {visible.map((photo, index) => <figure key={photo.id} className={`local-photo local-photo-${index + 1}`}>
-        <img src={photo.url} alt={photo.label} loading="lazy" onError={() => setFailed(old => [...old, photo.url])} />
-        <figcaption>{photo.label}</figcaption>
-      </figure>)}
+  return <div className={`local-gallery-wrap${visible.length === 1 ? ' has-single-photo' : ''}`} role="region" aria-label="Galería del local" aria-roledescription="carrusel" onKeyDown={onKeyDown}>
+    <div className="local-gallery-stage">
+      <div className="local-gallery" aria-label="Fotografías del local" tabIndex={0} ref={track}
+        onScroll={() => { const element = track.current; if (element?.clientWidth) select(Math.round(element.scrollLeft / element.clientWidth)); }}>
+        {visible.map((photo, index) => <figure key={photo.id} className="local-photo" role="group" aria-roledescription="diapositiva" aria-label={`${index + 1} de ${visible.length}`} aria-hidden={slide !== index} inert={slide !== index}>
+          <button className="local-photo-open" type="button" tabIndex={slide === index ? 0 : -1} aria-label={`Ampliar fotografía: ${photo.label}`} onClick={() => setExpanded(true)}>
+            <img src={photo.url} alt={photo.label} loading={index === 0 ? 'eager' : 'lazy'} draggable={false} onError={() => setFailed(old => old.includes(photo.url) ? old : [...old, photo.url])} />
+            <span className="local-photo-expand" aria-hidden="true"><Maximize2 size={18} /></span>
+          </button>
+        </figure>)}
+      </div>
     </div>
-    <div className="gallery-controls" aria-label="Navegación de fotografías">
-      {visible.map((photo, index) => <button key={photo.id} type="button" aria-label={`Ver fotografía ${index + 1}`} aria-pressed={slide === index} onClick={() => go(index)}>{index + 1}</button>)}
+    <div className="gallery-thumbnails" ref={thumbnails} aria-label="Elegir fotografía" hidden={visible.length < 2}>
+      {visible.map((photo, index) => <button key={photo.id} className="gallery-thumbnail" type="button" aria-label={`Ver fotografía ${index + 1}: ${photo.label}`} aria-pressed={slide === index} onClick={() => go(index)}>
+        <img src={photo.url} alt="" loading="lazy" draggable={false} /><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+      </button>)}
     </div>
+    <div className="gallery-controls">
+      <div className="gallery-caption" aria-live="polite" aria-atomic="true"><span className="gallery-counter">{counter}</span><p>{current.label}</p></div>
+      <div className="gallery-arrows" aria-label="Navegación de fotografías" hidden={visible.length < 2}>
+        <button type="button" aria-label="Fotografía anterior" onClick={() => go(slide - 1)}><ArrowLeft size={20} aria-hidden="true" /></button>
+        <button type="button" aria-label="Fotografía siguiente" onClick={() => go(slide + 1)}><ArrowRight size={20} aria-hidden="true" /></button>
+      </div>
+    </div>
+    {expanded && <dialog className="local-gallery-lightbox" ref={dialog} aria-label="Fotografías del local ampliadas" onCancel={() => setExpanded(false)} onClose={() => setExpanded(false)} onClick={event => { if (event.target === event.currentTarget) setExpanded(false); }}>
+      <div className="local-lightbox-shell">
+        <header><span>FULLNESS LAB <span aria-hidden="true">·</span> NUESTRO LOCAL</span><button type="button" autoFocus aria-label="Cerrar fotografía ampliada" onClick={() => setExpanded(false)}><X size={22} /></button></header>
+        <img className="local-lightbox-image" src={current.url} alt={current.label} />
+        <div className="local-lightbox-footer"><div className="gallery-caption" aria-live="polite" aria-atomic="true"><span className="gallery-counter">{counter}</span><p>{current.label}</p></div><div className="gallery-arrows" hidden={visible.length < 2}><button type="button" aria-label="Fotografía anterior ampliada" onClick={() => go(slide - 1)}><ArrowLeft size={20} /></button><button type="button" aria-label="Fotografía siguiente ampliada" onClick={() => go(slide + 1)}><ArrowRight size={20} /></button></div></div>
+      </div>
+    </dialog>}
   </div>;
 }
 
@@ -138,7 +214,7 @@ export function LandingLocalEditor({ ownerId, repository = localGalleryRepositor
   }
   if (!ownerId) return null;
   return <form className="landing-local-editor" onSubmit={save} aria-label="Fotos de nuestro local">
-    <p>La primera foto se muestra más grande. Las siguientes completan la galería. Puedes cambiar el orden sin volver a subirlas.</p>
+    <p>La primera foto abre la galería de diapositivas. Las siguientes se muestran en el orden que elijas. Puedes cambiar el orden sin volver a subirlas.</p>
     {message && <p role="status">{message}</p>}
     {error && <div className="local-editor-error" role="alert"><p>{error}</p><button type="button" disabled={busy} onClick={reviewSaved}>Revisar fotos guardadas</button></div>}
     {latest && <aside className="local-editor-conflict"><h4>Fotos guardadas actualmente</h4><div className="local-editor-comparison">{latest.photos.map(p => <img key={p.id} src={p.url} alt={p.label} />)}</div><p>Tu borrador se conserva. Elige qué versión usar antes de guardar.</p><button type="button" onClick={discard}>Usar fotos guardadas</button><button type="button" onClick={() => { if (!window.confirm('¿Guardar después tu selección en lugar de esta versión?')) return; setSaved(latest); setDraft(old => old ? { ...old, revision: latest.revision } : latest); setLatest(null); setMessage('Revisa tu selección y pulsa Guardar fotos.'); }}>Conservar mi selección</button></aside>}

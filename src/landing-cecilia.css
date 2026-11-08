@@ -19,16 +19,6 @@ main.route-landing { padding-top:var(--site-header-space); }
 :where(.route-landing) .local-copy .section-rule { margin-block: 24px; }
 :where(.route-landing) .local-copy address { font-style: normal; margin: 24px 0; line-height: 1.6; }
 :where(.route-landing) .local-copy .editorial-cta { color: var(--fullness-dark) !important; border-color: var(--fullness-rose) !important; }
-:where(.route-landing) .local-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-:where(.route-landing) .local-photo { margin: 0; min-width: 0; }
-:where(.route-landing) .local-photo-1 { grid-column: 1 / -1; }
-:where(.route-landing) .photo-pending { aspect-ratio: 4/3; background: #e5dfd5; border: 1px dashed #9b9287; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 18px; text-align: center; color: #625b51; font-size: 12px; }
-:where(.route-landing) .local-photo-1 .photo-pending { aspect-ratio: 16/9; }
-:where(.route-landing) .photo-number { font-family: var(--font-display); font-size: 28px; font-weight: 400; opacity: .65; }
-:where(.route-landing) .photo-pending strong { font-size: 15px; font-weight: 500; }
-:where(.route-landing) .local-photo figcaption { margin-top: 9px; font-size: 12px; letter-spacing: .04em; overflow-wrap:anywhere; }
-:where(.route-landing) .local-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-:where(.route-landing) .gallery-controls { display: none; }
 :where(.route-landing) .footer-contact span { line-height: 1.55; }
 @media (max-width: 860px) {
   :where(.route-landing) .plate-hero-visual-stage { display: none !important; }
@@ -52,13 +42,6 @@ main.route-landing { padding-top:var(--site-header-space); }
   :where(.route-landing) .local-feature { grid-template-columns: 1fr; padding: 48px 24px; gap: 30px; }
   :where(.route-landing) .local-copy h2 { font-size: clamp(28px,7vw,40px); }
   :where(.route-landing) .local-copy p:not(.eyebrow) { font-size: 16px; }
-  :where(.route-landing) .local-gallery-wrap { min-width: 0; }
-  :where(.route-landing) .local-gallery { display: flex; overflow-x: auto; gap: 14px; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  :where(.route-landing) .local-photo { flex: 0 0 100%; scroll-snap-align: start; }
-  :where(.route-landing) .photo-pending,:where(.route-landing) .local-photo-1 .photo-pending { aspect-ratio: 4/3; }
-  :where(.route-landing) .gallery-controls { display: flex; flex-wrap:wrap; justify-content: center; gap: 8px; margin-top: 12px; }
-  :where(.route-landing) .gallery-controls button { min-width: 44px; min-height: 44px; background: transparent; border: 1px solid var(--fullness-rose); color: var(--fullness-dark); font: inherit; cursor: pointer; }
-  :where(.route-landing) .gallery-controls button[aria-pressed=true] { background: var(--fullness-plum); color: var(--fullness-cream); }
   :where(.route-landing) .membership h2 { font-size: clamp(24px,6.3vw,40px) !important; letter-spacing: .035em !important; line-height: 1.25 !important; text-wrap: initial !important; }
   :where(.route-landing) .whatsapp-float { bottom: max(16px,env(safe-area-inset-bottom)); right: 16px; }
 }
@@ -80,19 +63,8 @@ main.route-landing { padding-top:var(--site-header-space); }
 }
 
 /* Cecilia: ajustes visuales finales. Textos, secciones y fotografías conservados. */
-:where(.route-landing) .local-gallery-wrap[hidden],:where(.route-landing) .gallery-controls[hidden] { display:none !important; }
 :where(.route-landing) .local-feature.has-no-local-photos { grid-template-columns:1fr; }
 :where(.route-landing) .local-feature.has-no-local-photos .local-copy { max-width:760px; }
-:where(.route-landing) .local-photo img { aspect-ratio:4/3; height:auto; object-fit:contain; }
-:where(.route-landing) .local-photo-1 img { aspect-ratio:16/9; }
-@media(min-width:861px) {
-  :where(.route-landing) .local-gallery { grid-template-columns:repeat(6,minmax(0,1fr)); }
-  :where(.route-landing) .local-photo { grid-column:span 3; }
-  :where(.route-landing) .local-photo-1 { grid-column:1 / -1; }
-  :where(.route-landing) .local-photo:nth-child(n+4) { grid-column:span 2; }
-  :where(.route-landing) .local-photo:nth-child(n+4) img { aspect-ratio:16/9; max-height:100px; }
-}
-@media(max-width:860px) { :where(.route-landing) .local-photo-1 img { aspect-ratio:4/3; } }
 :where(.route-landing) :is(.plate-hero .plate-hero-primary,
     .philosophy-story-combo .editorial-cta,
     .philosophy-story-combo .food-story-strip .section-cta,
