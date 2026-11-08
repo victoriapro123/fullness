@@ -1,0 +1,24 @@
+.landing-local-editor { color:var(--ink,#27221f); background:var(--fullness-cream,#f5f0e7); display:grid; gap:20px; padding:24px; min-width:0; }
+.landing-local-editor p { line-height:1.6; margin:0; }
+.local-editor-list { list-style:none; display:grid; gap:18px; padding:0; margin:0; }
+.local-editor-list li { display:grid; grid-template-columns:170px minmax(0,1fr); gap:20px; border:1px solid #d7ccc0; padding:16px; align-items:start; }
+.local-editor-list img { width:100%; height:140px; object-fit:contain; background:#eee7da; }
+.local-editor-fields { min-width:0; display:grid; gap:12px; }
+.local-editor-fields label { display:grid; gap:8px; }
+.local-editor-fields input { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid #b9afa4; background:#fffaf2; color:#27221f; font:inherit; line-height:1.5; }
+.local-editor-buttons,.local-editor-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.local-editor-actions { justify-content:flex-end; position:sticky; bottom:0; padding:16px 0; background:var(--fullness-cream,#f5f0e7); z-index:2; }
+.landing-local-editor button,.local-photo-upload { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border:1px solid #a7bba6; background:#f5f0e7; color:#27221f; font:inherit; cursor:pointer; }
+.landing-local-editor button:disabled { opacity:.5; cursor:not-allowed; }
+.landing-local-editor .primary-button { background:#a7bba6; color:#151515; }
+.local-photo-upload { position:relative; width:fit-content; overflow:hidden; }
+.local-photo-upload input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+.local-photo-upload:focus-within,.landing-local-editor button:focus-visible { outline:2px solid #702436; outline-offset:3px; }
+.local-editor-error,.local-editor-conflict { background:#f5e6df; border:1px solid #b68374; padding:16px; display:grid; gap:12px; }
+.local-editor-comparison { display:flex; flex-wrap:wrap; gap:8px; }
+.local-editor-comparison img { width:100px; height:90px; object-fit:contain; }
+.local-editor-hint { font-size:14px; }
+.local-editor-preview { border:1px solid #d7ccc0; padding:16px; }
+.local-editor-preview summary { cursor:pointer; padding:8px; }
+.local-editor-preview .local-gallery { margin-top:20px; }
+@media(max-width:600px) { .landing-local-editor { padding:16px 4px; } .local-editor-list li { grid-template-columns:minmax(0,1fr); padding:12px; } .local-editor-list img { height:160px; } .local-editor-actions { position:static; } .local-editor-actions button { flex:1 1 150px; } }

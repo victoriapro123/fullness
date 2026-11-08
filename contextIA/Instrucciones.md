@@ -2,6 +2,8 @@
 
 Este archivo es el punto de entrada transitorio mientras Cerebro central no disponga de consulta/escritura remota operativa. No acredita una importación central.
 
+- Landing de Cecilia integrado localmente: `landing-cecilia-integrada-20261108.md`. Diseño aprobado, seis fotos originales y galería editable en Contenido web → Landing. SQL aditivo aplicado en Fullness; aplicación sin publicar por orden expresa. QA local/aislado y lectura remota diferenciados. La compra TEST sigue detenida.
+
 - Compra TEST privada preparada: `mercadopago-test-privado-preparado-20261104.md`. Sólo propietarios administradores, desde Administración técnica, sin control TEST en carritos públicos. Token/registro reparado y reintentos del mix probados; credenciales locales TEST verificadas sin modificarlas. Sin pago remoto ni nueva publicación autorizada todavía. No usar códigos/URLs como sustituto de permisos.
 
 - Implementación local vigente de /tienda: `tienda-maqueta-integrada-20261104.md`. Maquetas exactas de escritorio/móvil del chat Maqueta, compra libre desde1, familiares combinables, Rewards10%/35% con seis unidades acumuladas por semana, cuenta mínima y despacho separado. Sustituye la obligación6/24 de las notas históricas siguientes. SQL aditivo preparado y pruebas locales aprobadas; NO publicado ni aplicado a producción todavía. No editar precios/fotos/visibilidad reales por esta nota.

@@ -1,0 +1,210 @@
+/* Exact existing stylesheet retained above. Only instructed copy-fit/mobile/local additions. */
+main.route-landing { padding-top:var(--site-header-space); }
+.route-landing .viewport-mode-toggle { display:none; }
+:where(.route-landing) .header-actions > a { text-decoration: none; }
+:where(.route-landing) .plate-hero-copy h1 { max-width: 15ch; }
+:where(.route-landing) .plate-hero-copy h1 span { white-space: nowrap; }
+:where(.route-landing) .plate-hero-primary svg,:where(.route-landing) .editorial-cta svg,:where(.route-landing) .section-cta svg,:where(.route-landing) .membership-cta svg { width: 17px; height: 17px; }
+:where(.route-landing) .hero-benefits article { min-width: 0; }
+:where(.route-landing) .hero-benefits h2 { overflow-wrap: normal; hyphens: none; }
+:where(.route-landing) .food-editorial h2 { max-width: 19ch; }
+:where(.route-landing) .philosophy-story-combo { overflow: hidden !important; }
+:where(.route-landing) .meal-prep-copy h2 span { font-size: inherit; letter-spacing: inherit; }
+:where(.route-landing) .community-benefits svg { width: 24px; height: 24px; flex-shrink: 0; }
+:where(.route-landing) .membership h2 { max-width: 20ch; }
+:where(.route-landing) .local-feature { background: var(--fullness-cream); color: var(--fullness-dark); display: grid; grid-template-columns: .82fr 1.18fr; gap: clamp(32px,5vw,80px); align-items: center; padding: clamp(56px,7vw,110px) clamp(24px,6vw,110px); }
+:where(.route-landing) .local-copy .eyebrow { color: var(--fullness-plum); font-size: .76rem; letter-spacing: .2em; margin: 0 0 22px; }
+:where(.route-landing) .local-copy h2 { font-family: var(--font-display); font-size: clamp(30px,3vw,48px); font-weight: 500; line-height: 1.2; letter-spacing: .09em; margin: 0; }
+:where(.route-landing) .local-copy p:not(.eyebrow) { font-size: 17px; line-height: 1.65; max-width: 38ch; }
+:where(.route-landing) .local-copy .section-rule { margin-block: 24px; }
+:where(.route-landing) .local-copy address { font-style: normal; margin: 24px 0; line-height: 1.6; }
+:where(.route-landing) .local-copy .editorial-cta { color: var(--fullness-dark) !important; border-color: var(--fullness-rose) !important; }
+:where(.route-landing) .local-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+:where(.route-landing) .local-photo { margin: 0; min-width: 0; }
+:where(.route-landing) .local-photo-1 { grid-column: 1 / -1; }
+:where(.route-landing) .photo-pending { aspect-ratio: 4/3; background: #e5dfd5; border: 1px dashed #9b9287; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 18px; text-align: center; color: #625b51; font-size: 12px; }
+:where(.route-landing) .local-photo-1 .photo-pending { aspect-ratio: 16/9; }
+:where(.route-landing) .photo-number { font-family: var(--font-display); font-size: 28px; font-weight: 400; opacity: .65; }
+:where(.route-landing) .photo-pending strong { font-size: 15px; font-weight: 500; }
+:where(.route-landing) .local-photo figcaption { margin-top: 9px; font-size: 12px; letter-spacing: .04em; overflow-wrap:anywhere; }
+:where(.route-landing) .local-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+:where(.route-landing) .gallery-controls { display: none; }
+:where(.route-landing) .footer-contact span { line-height: 1.55; }
+@media (max-width: 860px) {
+  :where(.route-landing) .plate-hero-visual-stage { display: none !important; }
+  :where(.route-landing) .plate-hero { min-height: 0 !important; padding-bottom: 52px !important; }
+  :where(.route-landing) .plate-hero-copy h1 { width: 100% !important; max-width: none !important; font-size: clamp(28px,8vw,48px) !important; line-height: 1.15 !important; letter-spacing: .08em !important; }
+  :where(.route-landing) .plate-hero-copy > p:not(.eyebrow) { max-width: 34ch; }
+  :where(.route-landing) .hero-benefits { grid-template-columns: 1fr 1fr !important; }
+  :where(.route-landing) .hero-benefits article { gap: 14px; padding: 22px 16px; }
+  :where(.route-landing) .hero-benefits h2 { font-size: 13px; line-height: 1.5; letter-spacing: .08em; }
+  :where(.route-landing) .hero-benefits p { font-size: 14px; line-height: 1.6; }
+  :where(.route-landing) .food-editorial h2 { font-size: clamp(26px,6.5vw,42px); line-height: 1.24; letter-spacing: .07em; }
+  :where(.route-landing) .food-story-strip strong { font-size: clamp(32px,8vw,52px); }
+  :where(.route-landing) .meal-prep-feature { min-height: 0 !important; height: auto !important; padding: 48px 24px 0 !important; display: flex; flex-direction: column; gap: 24px; }
+  :where(.route-landing) .meal-prep-copy { width: 100%; max-width: 540px; }
+  :where(.route-landing) .meal-prep-copy h2 { max-width: none; font-size: clamp(29px,7.5vw,42px); }
+  :where(.route-landing) .meal-prep-copy h2 span { font-size: inherit; }
+  :where(.route-landing) .meal-prep-copy p:not(.eyebrow) { max-width: 42ch; }
+  :where(.route-landing) .meal-prep-visual-link { position: relative !important; inset: auto !important; display: block !important; width: calc(100% + 48px); aspect-ratio: 1.4; margin-inline: -24px; }
+  :where(.route-landing) .meal-prep-visual-link img { position: absolute; inset: 0; object-fit: cover; object-position: 65% center; height: 100%; }
+  :where(.route-landing) .meal-prep-feature::after { display: none; }
+  :where(.route-landing) .local-feature { grid-template-columns: 1fr; padding: 48px 24px; gap: 30px; }
+  :where(.route-landing) .local-copy h2 { font-size: clamp(28px,7vw,40px); }
+  :where(.route-landing) .local-copy p:not(.eyebrow) { font-size: 16px; }
+  :where(.route-landing) .local-gallery-wrap { min-width: 0; }
+  :where(.route-landing) .local-gallery { display: flex; overflow-x: auto; gap: 14px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  :where(.route-landing) .local-photo { flex: 0 0 100%; scroll-snap-align: start; }
+  :where(.route-landing) .photo-pending,:where(.route-landing) .local-photo-1 .photo-pending { aspect-ratio: 4/3; }
+  :where(.route-landing) .gallery-controls { display: flex; flex-wrap:wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+  :where(.route-landing) .gallery-controls button { min-width: 44px; min-height: 44px; background: transparent; border: 1px solid var(--fullness-rose); color: var(--fullness-dark); font: inherit; cursor: pointer; }
+  :where(.route-landing) .gallery-controls button[aria-pressed=true] { background: var(--fullness-plum); color: var(--fullness-cream); }
+  :where(.route-landing) .membership h2 { font-size: clamp(24px,6.3vw,40px) !important; letter-spacing: .035em !important; line-height: 1.25 !important; text-wrap: initial !important; }
+  :where(.route-landing) .whatsapp-float { bottom: max(16px,env(safe-area-inset-bottom)); right: 16px; }
+}
+@media (max-width: 480px) {
+  :where(.route-landing) .hero-benefits { grid-template-columns: 1fr !important; padding: 10px 24px !important; }
+  :where(.route-landing) .hero-benefits article,:where(.route-landing) .hero-benefits article:nth-child(n) { display: grid !important; grid-template-columns: 34px 1fr !important; align-items: start !important; gap: 18px !important; padding: 24px 0 !important; border-right: 0 !important; border-bottom: 1px solid #a9888038 !important; }
+  :where(.route-landing) .hero-benefits article:last-child { border-bottom: 0 !important; }
+  :where(.route-landing) .hero-benefits article h2 { font-size: 13px !important; line-height: 1.5 !important; letter-spacing: .07em !important; }
+  :where(.route-landing) .hero-benefits article p { font-size: 14px !important; line-height: 1.6 !important; }
+  :where(.route-landing) .hero-benefits article > svg { width: 32px; height: 32px; }
+  :where(.route-landing) .hero-benefits article h2 { margin-top: 0; }
+  :where(.route-landing) footer { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 30px 20px !important; padding: 44px 24px 92px !important; }
+  :where(.route-landing) .footer-brand,:where(.route-landing) .footer-contact,:where(.route-landing) .footer-legal { grid-column: 1 / -1; }
+  :where(.route-landing) .footer-column { min-width: 0; }
+  :where(.route-landing) .footer-column a { padding-block: 8px; font-size: 14px; line-height: 1.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.route-landing) *,:where(.route-landing) *::before,:where(.route-landing) *::after { animation: none !important; transition: none !important; }
+}
+
+/* Cecilia: ajustes visuales finales. Textos, secciones y fotografías conservados. */
+:where(.route-landing) .local-gallery-wrap[hidden],:where(.route-landing) .gallery-controls[hidden] { display:none !important; }
+:where(.route-landing) .local-feature.has-no-local-photos { grid-template-columns:1fr; }
+:where(.route-landing) .local-feature.has-no-local-photos .local-copy { max-width:760px; }
+:where(.route-landing) .local-photo img { aspect-ratio:4/3; height:auto; object-fit:contain; }
+:where(.route-landing) .local-photo-1 img { aspect-ratio:16/9; }
+@media(min-width:861px) {
+  :where(.route-landing) .local-gallery { grid-template-columns:repeat(6,minmax(0,1fr)); }
+  :where(.route-landing) .local-photo { grid-column:span 3; }
+  :where(.route-landing) .local-photo-1 { grid-column:1 / -1; }
+  :where(.route-landing) .local-photo:nth-child(n+4) { grid-column:span 2; }
+  :where(.route-landing) .local-photo:nth-child(n+4) img { aspect-ratio:16/9; max-height:100px; }
+}
+@media(max-width:860px) { :where(.route-landing) .local-photo-1 img { aspect-ratio:4/3; } }
+:where(.route-landing) :is(.plate-hero .plate-hero-primary,
+    .philosophy-story-combo .editorial-cta,
+    .philosophy-story-combo .food-story-strip .section-cta,
+    .meal-prep-feature .meal-prep-copy > a,
+    .local-feature .local-copy .editorial-cta,
+    .membership .membership-cta) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  min-height: 48px !important;
+  padding: 13px 22px !important;
+  border: 1px solid var(--fullness-eucalyptus) !important;
+  border-radius: 0 !important;
+  background: var(--fullness-eucalyptus) !important;
+  color: var(--fullness-dark) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(.66rem,2.9vw,.72rem) !important;
+  font-weight: 600 !important;
+  letter-spacing: .12em !important;
+  line-height: 1.2 !important;
+  text-decoration: none !important;
+  transition: background-color 160ms ease, border-color 160ms ease !important;
+}
+:where(.route-landing) :is(.plate-hero .plate-hero-primary,
+    .philosophy-story-combo .editorial-cta,
+    .philosophy-story-combo .food-story-strip .section-cta,
+    .meal-prep-feature .meal-prep-copy > a,
+    .local-feature .local-copy .editorial-cta,
+    .membership .membership-cta):is(:hover,:focus-visible),
+    :where(.route-landing) .philosophy-story-combo .food-story-strip > a:is(:hover,:focus-visible) .section-cta {
+  background: color-mix(in srgb, var(--fullness-eucalyptus) 86%, var(--fullness-eucalyptus-deep)) !important;
+  border-color: color-mix(in srgb, var(--fullness-eucalyptus) 86%, var(--fullness-eucalyptus-deep)) !important;
+  color: var(--fullness-dark) !important;
+}
+:where(.route-landing) :is(.plate-hero-primary,.editorial-cta,.section-cta,.meal-prep-copy > a,.membership-cta) svg {
+  width: 17px !important;
+  height: 17px !important;
+  color: inherit !important;
+  stroke: currentColor !important;
+  flex: 0 0 17px;
+}
+:where(.route-landing) .plate-hero .plate-hero-copy > p:not(.eyebrow) { margin-bottom: 0 !important; }
+:where(.route-landing) .plate-hero .plate-hero-primary { margin-top: 28px !important; }
+
+/* La ilustración permanece en los márgenes; se atenúa bajo la filosofía. */
+:where(.route-landing) .philosophy-story-combo .philosophy-illustrations { opacity: .6 !important; }
+:where(.route-landing) .philosophy-story-combo .philosophy-illustration--ginger {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 56%, #000 85%);
+  mask-image: linear-gradient(to right, transparent 0%, transparent 56%, #000 85%);
+}
+:where(.route-landing) .philosophy-story-combo .food-editorial .section-rule { margin-block: 20px !important; }
+:where(.route-landing) .philosophy-story-combo .food-editorial p:not(.eyebrow) { margin-bottom: 0 !important; }
+:where(.route-landing) .philosophy-story-combo .food-editorial .editorial-cta { margin-top: 24px !important; }
+:where(.route-landing) .philosophy-story-combo .food-story-strip .story-copy { margin-bottom: 24px !important; }
+
+/* Ajustes de escala y ritmo en el mismo bloque de Meal Preps. */
+:where(.route-landing) .meal-prep-feature { padding-block: clamp(40px,3.5vw,56px) !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy h2 { max-width: none !important; font-size: clamp(25px,2.1vw,32px) !important; letter-spacing: .1em !important; line-height: 1.2 !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy h2 span { font-size: inherit !important; letter-spacing: inherit !important; line-height: inherit !important; white-space: nowrap; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy .eyebrow { margin-bottom: 18px !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy .section-rule { margin-block: 18px !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy p:not(.eyebrow) { margin-bottom: 0 !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy ul { margin-block: 20px !important; gap: 8px 14px !important; }
+:where(.route-landing) .meal-prep-feature .meal-prep-copy li { font-size: .84rem !important; line-height: 1.5 !important; }
+
+:where(.route-landing) footer .footer-column { align-content: start !important; gap: 8px !important; }
+:where(.route-landing) footer .footer-column h3 { margin-bottom: 10px !important; }
+:where(.route-landing) footer .footer-column a { font-size: .9rem !important; line-height: 1.5 !important; margin: 0 !important; }
+@media (max-width: 860px) {
+  :where(.route-landing) .plate-hero .plate-hero-primary { margin-top: 26px !important; }
+  :where(.route-landing) .philosophy-story-combo .philosophy-illustration--ginger {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 92%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 92%, #000 100%);
+  }
+  :where(.route-landing) .philosophy-story-combo .food-editorial { padding-block: 34px 24px !important; }
+  :where(.route-landing) .philosophy-story-combo .food-editorial .editorial-copy { padding-bottom: 28px !important; }
+  :where(.route-landing) .meal-prep-feature { padding: 36px 24px 0 !important; gap: 14px !important; }
+  :where(.route-landing) .meal-prep-feature .meal-prep-copy h2 { font-size: clamp(26px,7.2vw,34px) !important; }
+  :where(.route-landing) .meal-prep-feature .meal-prep-copy ul { margin-block: 18px !important; }
+  :where(.route-landing) .meal-prep-feature .meal-prep-visual-link { margin-top: 0 !important; }
+  :where(.route-landing) footer .footer-column { gap: 4px !important; }
+  :where(.route-landing) footer .footer-column a { min-height: 44px; display: flex; align-items: center; padding: 8px 0 !important; }
+}
+@media (min-width: 360px) and (max-width: 600px) {
+  :where(.route-landing) .hero-benefits { grid-template-columns: repeat(2,minmax(0,1fr)) !important; padding: 8px 18px !important; align-items: stretch !important; }
+  :where(.route-landing) .hero-benefits article,:where(.route-landing) .hero-benefits article:nth-child(n) {
+    grid-template-columns: minmax(0,1fr) !important;
+    grid-template-rows: 28px 1fr !important;
+    align-items: start !important;
+    align-content: start !important;
+    gap: 13px !important;
+    padding: 20px 12px !important;
+    min-height: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(169,136,128,.2) !important;
+  }
+  :where(.route-landing) .hero-benefits article:nth-child(odd) { border-right: 1px solid rgba(169,136,128,.2) !important; }
+  :where(.route-landing) .hero-benefits article:nth-last-child(-n+2) { border-bottom: 0 !important; }
+  :where(.route-landing) .hero-benefits article > svg { width: 28px !important; height: 28px !important; }
+  :where(.route-landing) .hero-benefits article h2 { font-size: 12px !important; line-height: 1.45 !important; letter-spacing: .035em !important; margin: 0 0 10px !important; }
+  :where(.route-landing) .hero-benefits article p { font-size: 13px !important; line-height: 1.5 !important; margin: 0 !important; }
+}
+@media (max-width: 359px) {
+  :where(.route-landing) .hero-benefits { grid-template-columns: 1fr !important; }
+  :where(.route-landing) .hero-benefits article,:where(.route-landing) .hero-benefits article:nth-child(n) { padding-block: 20px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.route-landing) :is(.plate-hero .plate-hero-primary,
+      .philosophy-story-combo .editorial-cta,
+      .philosophy-story-combo .food-story-strip .section-cta,
+      .meal-prep-feature .meal-prep-copy > a,
+      .local-feature .local-copy .editorial-cta,
+      .membership .membership-cta) { transition: none !important; }
+}

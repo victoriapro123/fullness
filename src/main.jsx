@@ -15,6 +15,7 @@ import {
   CookingPot,
   Database,
   Download,
+  Drumstick,
   Eye,
   EyeOff,
   FileDown,
@@ -34,6 +35,8 @@ import {
   Mail,
   MapPin,
   Menu,
+  Milk,
+  MessagesSquare,
   Minus,
   Monitor,
   PackageCheck,
@@ -144,6 +147,7 @@ import {ShopMaintenance} from "./components/shop-maintenance.jsx";
 import {ECOMMERCE_MAINTENANCE,ECOMMERCE_MAINTENANCE_MESSAGE,isEcommercePath} from "./lib/ecommerce-maintenance.js";
 import "./landing.css";
 import "./landing-meal-prep.css";
+import { LandingLocalSection, LandingLocalEditor } from "./components/landing-local.jsx";
 import "./commerce.css";
 import "./community.css";
 import "./account-backoffice.css";
@@ -152,6 +156,7 @@ import "./overlays.css";
 import "./about-nosotros.css";
 import "./faq.css";
 import "./palette.css";
+import "./landing-cecilia.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -1114,24 +1119,24 @@ const introTechSignals = [
 const heroPrinciples = ["No seguimos modas", "Preparaciones honestas", "Bienestar integral"];
 const heroBenefitFeatures = [
   {
-    title: "Ingredientes honestos",
-    text: "Seleccionamos alimentos frescos y funcionales.",
-    icon: Leaf
+    title: "01 — POLLOS NATURALES",
+    text: "Trabajamos con pollos sin marinar ni soluciones añadidas. Elegimos materias primas que conservan su sabor original.",
+    icon: Drumstick
   },
   {
-    title: "Nutrición funcional",
-    text: "Mealpreps balanceados que nutren de verdad.",
+    title: "02 — LECHES VEGETALES HECHAS POR NOSOTRAS",
+    text: "Elaboramos nuestras propias leches vegetales, sin aditivos, a partir de ingredientes cuidadosamente seleccionados.",
+    icon: Milk
+  },
+  {
+    title: "03 — COCINA DESDE CERO",
+    text: "Preparamos nuestras recetas a partir de ingredientes reales, evitando bases y preparaciones ultraprocesadas.",
     icon: CookingPot
   },
   {
-    title: "Sin ultra procesados",
-    text: "Comida real, sin ingredientes que no reconoces.",
+    title: "04 — INGREDIENTES CUIDADOSAMENTE SELECCIONADOS",
+    text: "Nos importa el origen, la calidad y la composición de cada materia prima que utilizamos.",
     icon: Sprout
-  },
-  {
-    title: "Listo para disfrutar",
-    text: "Recibe tu comida donde estés, sin complicaciones.",
-    icon: PackageCheck
   }
 ];
 const communityFeatures = [
@@ -1158,24 +1163,24 @@ const communityFeatures = [
 ];
 const communityLandingFeatures = [
   {
-    title: "Clases de cocina antinflamatoria",
+    title: "Alimentación consciente.",
+    icon: Leaf
+  },
+  {
+    title: "Recetas e inspiración.",
     icon: CookingPot
   },
   {
-    title: "Charlas de nutrición funcional",
+    title: "Conversaciones sobre bienestar.",
+    icon: MessagesSquare
+  },
+  {
+    title: "Experiencias y encuentros.",
+    icon: Users
+  },
+  {
+    title: "Comunidad Fullness.",
     icon: Sprout
-  },
-  {
-    title: "Talleres de bienestar",
-    icon: Sparkles
-  },
-  {
-    title: "Contenido exclusivo",
-    icon: Lock
-  },
-  {
-    title: "Encuentros y comunidad",
-    icon: Heart
   }
 ];
 const defaultCommunityActivities = [
@@ -2185,6 +2190,7 @@ function BackofficeSaveLightbox({ feedback, onClose }) {
 
 function WebsiteContentTabs({ activeTab, onChange }) {
   const tabs = [
+    ["landing", "Landing"],
     ["shop", "Tienda"],
     ["lightbox", "Lightbox"],
     ["community", "Comunidad"]
@@ -2211,6 +2217,11 @@ function WebsiteContentTabs({ activeTab, onChange }) {
 
 function WebsiteContentHeading({ activeTab, onChange }) {
   const tabDetails = {
+    landing: {
+      eyebrow: "Contenido web / Landing",
+      title: "Nuestro local",
+      description: "Elige las fotos y el orden en que se muestran. La primera será la principal."
+    },
     shop: {
       eyebrow: "Contenido web / Tienda",
       title: "Tienda",
@@ -7828,7 +7839,7 @@ function App() {
 
   useEffect(() => {
     if (!adminOpen || !activeIsAdmin || activeBackofficeModule !== "web-content") return;
-    void loadContentVersions(webContentTab);
+    if (webContentTab !== "landing") void loadContentVersions(webContentTab);
   }, [activeBackofficeModule, activeIsAdmin, adminOpen, webContentTab]);
 
   useEffect(() => {
@@ -8589,11 +8600,6 @@ function App() {
     }catch(error){if(!controller.signal.aborted)setMixQuoteError(error.message||'No pudimos actualizar tu selección.');}finally{if(!controller.signal.aborted)setMixQuoteBusy(false);}},300);
     return()=>{controller.abort();clearTimeout(timer);};
   },[cart,cartOpen,isMixCart,authUser?.id,mixQuoteRetry]);
-  const showIntroReplay =
-    currentPath === "/" &&
-    !currentProductSlug &&
-    introConsumed &&
-    !isMobileIntroViewport();
   const desktopViewportForced = document.documentElement.dataset.viewportMode === "desktop";
 
   useEffect(() => {
@@ -9697,7 +9703,6 @@ function App() {
   }
 
   const navItems = [
-    { href: "#programa", label: "Inicio" },
     { href: `${shopPath}#mix`, label: "Arma tu mix" },
     { href: "/comunidad", label: "Comunidad" },
     { href: aboutPath, label: "Nosotros" },
@@ -9870,7 +9875,7 @@ function App() {
     <footer id="contacto">
       <div className="footer-brand">
         <img src={logoHeaderFooterSrc} alt="Fullness Lab" />
-        <p>Nutrición consciente para una vida plena y equilibrada.</p>
+        <p>NUTRIR DESDE LA RAÍZ.<br /><br />Comida real, ingredientes honestos y preparaciones pensadas para tu bienestar.</p>
         <div className="footer-socials" aria-label="Redes Fullness Lab">
           <a href={instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram Fullness Lab">
             <InstagramGlyph />
@@ -9880,7 +9885,7 @@ function App() {
       <nav className="footer-column" aria-label="Navegación de pie de página">
         <h3>Navegación</h3>
         <a href="#programa" onClick={(event) => { event.preventDefault(); navigateToSection("#programa"); }}>Menú</a>
-        <a href={shopPath} onClick={openShopPage}>Planes</a>
+        <a href={`${shopPath}#mix`}>Arma tu mix</a>
         <a href={shopPath} onClick={openShopPage}>Tienda</a>
         <a href="/carta">Carta del local</a>
         <a href="/comunidad" onClick={openCommunityPage}>Comunidad</a>
@@ -9898,15 +9903,16 @@ function App() {
         <h3>Contacto</h3>
         <a href={whatsappUrl} target="_blank" rel="noreferrer">+56 9 9658 8199</a>
         <a href="mailto:cecilia@fullnesslab.com">cecilia@fullnesslab.com</a>
-        <span>Av. La Dehesa 1844, local 204</span>
-        <span>Lo Barnechea, Santiago</span>
+        <span>Fullness Lab</span>
+        <span>Av. La Dehesa 1844, Local 204.</span>
+        <span>Lunes a viernes, 9:00 a 17:00 horas.</span>
       </address>
       <p className="footer-legal">© Fullness Lab 2026 · Todos los derechos reservados • By Prof3sional.com</p>
     </footer>
   );
 
   return (
-    <main ref={appRef} className={isShopPage ? "route-shop" : undefined}>
+    <main ref={appRef} className={isShopPage ? "route-shop" : currentPath === "/" ? "route-landing" : undefined}>
       {!floatingActionsHidden && (
         <a
           className="whatsapp-float"
@@ -9953,17 +9959,6 @@ function App() {
               ? <Tablet size={22} aria-hidden="true" />
               : <Monitor size={22} aria-hidden="true" />}
           </button>
-          {showIntroReplay && (
-            <button
-              className="intro-replay-button"
-              type="button"
-              onClick={replayIntro}
-              aria-label="Volver a ver animación"
-              title="Volver a ver animación"
-            >
-              <Video size={18} aria-hidden="true" />
-            </button>
-          )}
           <button className="member-link" type="button" onClick={() => setAccountOpen(true)}>
             <Sprout size={18} aria-hidden="true" />
             <span>{memberButtonLabel}</span>
@@ -9971,11 +9966,11 @@ function App() {
           <button
             className={`icon-button cart-button ${cartNotice ? "cart-pulse" : ""}`}
             type="button"
-            onClick={() => setCartOpen(true)}
+            onClick={currentPath === "/" ? openShopPage : () => setCartOpen(true)}
             data-testid="open-cart"
             disabled={ECOMMERCE_MAINTENANCE}
             title={ECOMMERCE_MAINTENANCE ? "Tienda en construcción" : undefined}
-            aria-label={cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
+            aria-label={currentPath === "/" ? "Ir a la tienda" : cartCount > 0 ? `Abrir carrito, ${cartCount} productos` : "Abrir carrito"}
           >
             <ShoppingBag size={20} aria-hidden="true" />
             {cartCount > 0 && <span aria-hidden="true">{cartCount}</span>}
@@ -10040,7 +10035,7 @@ function App() {
         </div>
       )}
 
-      <ExperienceNotice eligible={TEMP_EXPERIENCE_NOTICE_ENABLED&&["/","/tienda"].includes(currentPath)&&introConsumed&&!accountOpen&&!cartOpen&&!adminOpen&&!menuOpen&&!passwordSetupOpen&&!checkoutResult&&!productPreview&&!mealPreviewItem&&!benefitPreview&&window.location.hash!=="#backoffice"}/>
+      <ExperienceNotice eligible={TEMP_EXPERIENCE_NOTICE_ENABLED&&currentPath==="/tienda"&&introConsumed&&!accountOpen&&!cartOpen&&!adminOpen&&!menuOpen&&!passwordSetupOpen&&!checkoutResult&&!productPreview&&!mealPreviewItem&&!benefitPreview&&window.location.hash!=="#backoffice"}/>
       {!TEMP_EXPERIENCE_NOTICE_ENABLED && subscriptionPopupOpen && !(ECOMMERCE_MAINTENANCE && isEcommercePath(currentPath)) && (
         <SubscriptionLightbox
           settings={subscriptionPopupSettings}
@@ -10095,8 +10090,6 @@ function App() {
         <ApprovedShop data={stockLetter||{items:[],loading:productsLoading,error:productsError}} families={familyProducts} cart={cart} onQuantity={setMixQuantity} onCart={()=>setCartOpen(true)} onCloseCart={()=>setCartOpen(false)} onMember={()=>{setCartOpen(false);setAccountOpen(true);}} onCommunity={openCommunityPage} onAbout={openAboutPage} cartOpen={cartOpen} checkout={{form:checkoutForm,onChange:updateCheckoutForm,onSubmit:submitCheckout,submitting:checkoutSubmitting,message:checkoutMessage,total:cartTotal-mixDiscount,subtotal:cartTotal,discount:mixDiscount,units:mixCalculation.units,rewards:mixQuote?.rewards,quoteBusy:mixQuoteBusy,quoteError:mixQuoteError,onRetryQuote:()=>{window.dispatchEvent(new Event('fullness:mealprep-published'));setMixQuoteRetry(n=>n+1);},renderNutrition:product=><ProductNutritionFacts product={product}/>}}/>
       ) : (
         <>
-          <IntroScrollSequence />
-
           <section
             className="plate-hero"
             id="programa"
@@ -10107,28 +10100,19 @@ function App() {
           <img className="plate-hero-illustration plate-hero-illustration--right" src={landingHeroCelerySrc} alt="" />
         </div>
         <div className="plate-hero-copy">
-          <p className="eyebrow">Nutrir desde la raíz</p>
-          <h1>Comida consciente para tu bienestar <span>diario.</span></h1>
+          <p className="eyebrow">NUTRIR DESDE LA RAÍZ</p>
+          <h1>COMIDA REAL.<br /><span>A TU MANERA.</span></h1>
           <span className="section-rule" aria-hidden="true" />
           <p>
-            Ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz.
+            Ingredientes honestos, preparaciones cuidadosamente elaboradas y comida real para acompañarte todos los días.
           </p>
-          <strong className="hero-manifesto">No contamos calorías. Creemos en aprender a nutrirse.</strong>
           <a
             className="plate-hero-primary"
-            href={shopPath}
-            onClick={openShopPage}
+            href={`${shopPath}#mix`}
           >
-            Ver planes
+            ARMA TU MIX
             <ArrowUpRight size={17} aria-hidden="true" />
           </a>
-          <aside className="plate-hero-signals" aria-label="Principios Fullness">
-            {heroPrinciples.map((principle) => (
-              <article className="plate-hero-signal" key={principle}>
-                <span className="signal-title">{principle}</span>
-              </article>
-            ))}
-          </aside>
         </div>
         <div className="plate-hero-visual-stage" aria-hidden="true">
           <img
@@ -10139,7 +10123,7 @@ function App() {
         </div>
       </section>
 
-      <section className="hero-benefits" aria-label="Beneficios Fullness Lab">
+      <section className="hero-benefits" aria-label="Lo que nos hace diferentes">
         {heroBenefitFeatures.map(({ title, text, icon: Icon }) => (
           <article key={title}>
             <Icon size={38} aria-hidden="true" />
@@ -10167,12 +10151,13 @@ function App() {
         </div>
         <section className="food-editorial" id="proposito">
           <div className="editorial-copy editorial-reveal-left" data-reveal-delay="0">
-            <p className="eyebrow">Nuestra filosofía</p>
-            <h2>Así como es adentro, es <span>afuera.</span></h2>
+            <p className="eyebrow">NUESTRA FILOSOFÍA</p>
+            <h2>COMO ES ADENTRO,<br />ES AFUERA.</h2>
             <span className="section-rule" aria-hidden="true" />
             <p>
-              Creemos en una alimentación consciente que transforma tu energía, tu salud y tu entorno.
-              Seleccionamos ingredientes honestos, preparaciones funcionales y experiencias que te ayudan a sentirte mejor desde la raíz. Porque nutrirte es mucho más que comer.
+              Creemos que alimentarse bien comienza con elegir conscientemente lo que ponemos en nuestro cuerpo.<br /><br />
+              Por eso cocinamos con ingredientes cuidadosamente seleccionados, sin ultraprocesados y con técnicas que respetan el sabor y la calidad de cada preparación.<br /><br />
+              Porque nutrirse es mucho más que comer.
             </p>
             <a
               className="editorial-cta"
@@ -10182,7 +10167,7 @@ function App() {
                 openAboutPage(event);
               }}
             >
-              Conócenos
+              CONÓCENOS
               <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>
@@ -10190,16 +10175,16 @@ function App() {
 
         <section className="food-story-strip">
           <a
-            href={shopPath}
-            aria-label="Explorar caminos Fullness Lab"
-            onClick={openShopPage}
+            href={aboutPath}
+            aria-label="Explorar Fullness: conoce nuestra historia"
+            onClick={openAboutPage}
           >
-            <span className="eyebrow">Alimentarse es</span>
-            <strong>mucho <em>más</em> que comer.</strong>
+            <span className="eyebrow">ALIMENTARSE ES</span>
+            <strong>MUCHO <em>MÁS</em><br />QUE COMER.</strong>
             <span className="story-rule" aria-hidden="true" />
-            <span className="story-copy">Cada ingrediente, cada preparación y cada elección son una oportunidad para nutrir tu bienestar desde la raíz.</span>
+            <span className="story-copy">Cada ingrediente, cada preparación y cada elección forman parte de una manera más consciente de alimentarnos.</span>
             <span className="section-cta">
-              Explorar Fullness
+              EXPLORAR FULLNESS
               <ArrowUpRight size={16} aria-hidden="true" />
             </span>
           </a>
@@ -10213,34 +10198,35 @@ function App() {
           <img className="meal-prep-illustration meal-prep-illustration--beans" src={landingMealPrepBeansSrc} alt="" />
         </div>
         <div className="meal-prep-copy">
-          <p className="eyebrow">Tu semana resuelta</p>
-          <h2>Mealprep <span>Antinflamatorio</span></h2>
+          <p className="eyebrow">COMIDA REAL PARA CADA DÍA</p>
+          <h2>MEAL PREPS<br /><span>A TU MANERA.</span></h2>
           <span className="section-rule" aria-hidden="true" />
           <p>
-            Preparaciones pensadas para sostener tu bienestar durante la semana: comida real, equilibrada y lista para volver a ti.
+            Preparaciones individuales elaboradas con ingredientes honestos, pensadas para simplificar tus comidas sin renunciar al sabor.<br /><br />
+            Elige tus platos favoritos y combina las cantidades que necesites.
           </p>
           <ul>
-            <li>Cocina antinflamatoria</li>
-            <li>Ingredientes reales</li>
-            <li>Listo para calentar</li>
-            <li>Elaborados por chef y nutricionista</li>
+            <li>INGREDIENTES REALES</li>
+            <li>SIN ULTRAPROCESADOS</li>
+            <li>LISTOS PARA CALENTAR</li>
+            <li>ELIGE A TU GUSTO</li>
           </ul>
           <a
-            href={shopPath}
-            onClick={openShopPage}
+            href={`${shopPath}#mix`}
           >
-            Ver planes
+            ARMA TU MIX <ArrowUpRight size={17} aria-hidden="true" />
           </a>
         </div>
         <a
           className="meal-prep-visual-link"
-          href={shopPath}
-            aria-label="Ir a la tienda"
-          onClick={openShopPage}
+          href={`${shopPath}#mix`}
+          aria-label="Ver los meal preps individuales"
         >
-          <img src={mealPrepBandSrc} alt="" aria-hidden="true" />
+          <img src={mealPrepBandSrc} alt="Preparaciones originales Fullness Lab envasadas al vacío" />
         </a>
       </section>
+
+      <LandingLocalSection />
 
       <section
         className="membership"
@@ -10248,11 +10234,11 @@ function App() {
         style={{ "--community-scene-bg": `url("${communitySceneSrc}")` }}
       >
         <div>
-          <p className="eyebrow">Comunidad Fullness</p>
-          <h2>Un espacio para aprender, compartir y crecer desde la <span>raíz.</span></h2>
+          <p className="eyebrow">COMUNIDAD FULLNESS</p>
+          <h2>UN ESPACIO PARA<br />COMPARTIR Y CRECER.</h2>
           <span className="section-rule" aria-hidden="true" />
           <p>
-            Encuentros, talleres y contenido pensado para acompañar una alimentación consciente más allá de cada mealprep.
+            En Fullness Lab creemos que el bienestar también se construye compartiendo experiencias, conocimientos y nuevas formas de alimentarnos.
           </p>
           <div className="community-benefits" aria-label="Beneficios de comunidad">
             {communityLandingFeatures.map(({ title, icon: Icon }) => (
@@ -10263,7 +10249,7 @@ function App() {
             ))}
           </div>
           <a className="membership-cta" href="/comunidad" onClick={openCommunityPage}>
-            Únete a la comunidad
+            CONOCE LA COMUNIDAD
             <ArrowUpRight size={16} aria-hidden="true" />
           </a>
         </div>
@@ -11939,6 +11925,12 @@ function App() {
                       />
                     )}
 
+                    {activeBackofficeModule === "web-content" && webContentTab === "landing" && activeIsAdmin && (
+                      <section className="backoffice-side-panel backoffice-module-panel" id="web-content-landing" role="tabpanel" aria-labelledby="web-content-title">
+                        <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />
+                        <LandingLocalEditor key={authUser?.id} ownerId={authUser?.id} />
+                      </section>
+                    )}
                     {activeBackofficeModule === "web-content" && webContentTab === "shop" && (
                     <section className="backoffice-side-panel backoffice-module-panel" id="web-content-shop" role="tabpanel" aria-labelledby="web-content-title">
                       <WebsiteContentHeading activeTab={webContentTab} onChange={setWebContentTab} />

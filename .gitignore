@@ -20,6 +20,8 @@ public/assets/brand/*
 !public/assets/brand/apple-touch-icon-180.png
 !public/assets/brand/fullness-lab-og-2026.png
 public/images/*
+!public/images/landing-local/
+!public/images/landing-local/*.jpeg
 !public/images/menu-samples/
 !public/images/menu-samples/*.jpeg
 !public/images/community/
