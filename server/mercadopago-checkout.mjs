@@ -628,6 +628,7 @@ export async function syncMercadoPagoPayment(paymentId, expectedOrderId = "", de
     statusDetail: cleanText(payment.status_detail),
     testMode: mode === "test",
     total: Number(order.total_clp),
+    deliveryFee: Number(order.delivery_fee_clp || 0),
     ...(order.customer_snapshot?.purchaseModel==='mix_v1'?{purchaseModel:'mix_v1',fulfillmentMode:order.customer_snapshot.mode}:{}),
     customerConfirmationSent: Boolean(emailDelivery?.customer?.sent),
     operationsNotificationSent: Boolean(emailDelivery?.operations?.sent)

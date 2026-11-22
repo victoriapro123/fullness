@@ -5,6 +5,7 @@ import './approved-shop-host.css';
 import {MIX_CATEGORIES,mixCategory,mixPhotos,publicAllergens,MIX_DELIVERY_NOTICE} from '../lib/mix-commerce.js';
 import box from '../assets/ecommerce/fullness-hero-box-curated-cutout-v1.png';
 import botanical from '../assets/coliflor-hero-planes.png';
+import {buildAnalyticsItem,trackEvent} from '../lib/analytics.js';
 const money=n=>new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n);
 const assetHtml=s=>s.replaceAll('/src/assets/ecommerce/fullness-hero-box-curated-cutout-v1.png',box).replaceAll('/src/assets/coliflor-hero-planes.png',botanical);
 const intrinsicSizingCss=':host{color-scheme:light}.close{color:var(--text)}.lines,.line-card,.line-copy{min-width:0}.line-card>img{min-width:0;max-width:100%}.gallery>p{font-size:11px;margin-top:12px;color:#756b62}.cart-image-placeholder{width:70px;height:70px;display:grid;place-items:center;background:#e4dfd6;color:var(--plum);font-size:8px;text-align:center}@media(max-width:860px){.lines{grid-template-columns:minmax(0,1fr)}.filter-trigger{font-size:13px;line-height:1.5}.cart-image-placeholder{width:50px;height:50px}}';
@@ -47,7 +48,10 @@ export function ApprovedShop({data,families=[],cart,onQuantity,onCart,onMember,o
  useEffect(()=>modal(detailRef,Boolean(detail)),[detail,surface]);useEffect(()=>modal(filterRef,filtersOpen),[filtersOpen,surface]);useEffect(()=>modal(menuRef,menuOpen),[menuOpen,surface]);useEffect(()=>modal(cartRef,cartOpen),[cartOpen,surface]);
  useEffect(()=>{const label=root?.querySelector('#category-trigger strong');if(label)label.textContent=`${filter} ▾`;},[filter,surface]);
  useEffect(()=>{if(!root)return;const hash=location.hash.slice(1);if(hash==='mix'||hash==='familiares'||hash==='como-funciona')root.getElementById(hash)?.scrollIntoView();},[root]);
- function showProduct(item){lastFocus.current=root.activeElement;setPhoto(0);setDetail(item);}
+ function showProduct(item){
+  if(detail?.id!==item.id){const analyticsItem=buildAnalyticsItem(item);trackEvent('view_item',{currency:'CLP',value:analyticsItem.price,items:[analyticsItem]});}
+  lastFocus.current=root.activeElement;setPhoto(0);setDetail(item);
+ }
  function closeDetail(){setDetail(null);lastFocus.current?.focus?.();}
  function quantity(item){const qty=selected(item.id);return <div className="qty"><button type="button" disabled={!qty||checkout.submitting} aria-label={`Quitar ${item.name}`} onClick={()=>onQuantity(item,Math.max(0,qty-1))}>−</button><output aria-label={`Cantidad de ${item.name}`}>{qty}</output><button type="button" disabled={checkout.submitting||qty>=1000} aria-label={`Agregar ${item.name}`} onClick={()=>onQuantity(item,qty+1)}>+</button></div>;}
  function card(item){const photos=mixPhotos(item);return <article className="card" key={item.id}><button type="button" className="card-photo" onClick={()=>showProduct(item)} aria-label={`Ver fotos de ${item.name}`}>{photos[0]?<img src={photos[0]} alt={`${item.name}, plato montado`} width="640" height="480" loading="lazy"/>:<span className="photo-placeholder">FULLNESS LAB</span>}{photos[1]&&<img className="second" src={photos[1]} alt="" aria-hidden="true" width="640" height="480" loading="lazy"/>}<span className="photo-caption">VER LAS DOS FOTOS ↗</span></button><div className="card-copy"><span className="category">{item.kind==='family'?(item.servingLabel||'Para compartir'):`${item.category} · Individual`}</span><h3>{item.name}</h3><p className="price">{money(item.price)}</p><button type="button" className="card-link" onClick={()=>showProduct(item)}>Ver el plato</button>{quantity(item)}</div></article>;}

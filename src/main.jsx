@@ -95,6 +95,8 @@ import {
   buildAnalyticsItem,
   initializeAnalytics,
   trackEvent,
+  trackApprovedPurchase,
+  trackCheckoutStart,
   trackPageView
 } from "./lib/analytics.js";
 import { updateSeoHead } from "./lib/seo.js";
@@ -5466,26 +5468,17 @@ function App() {
 
         if (approved) {
           setCart([]);
-          window.localStorage.removeItem("fullness_pending_order");
-          if (payload.data?.testMode) return;
-          const transactionId = checkoutReturn.orderId || checkoutReturn.paymentId;
-          let purchaseAlreadyTracked = false;
-
+          let analyticsItems = [];
           try {
-            const purchaseKey = `fullness_analytics_purchase_${transactionId}`;
-            purchaseAlreadyTracked = window.localStorage.getItem(purchaseKey) === "1";
-            if (!purchaseAlreadyTracked) window.localStorage.setItem(purchaseKey, "1");
+            const pendingOrder = JSON.parse(window.localStorage.getItem("fullness_pending_order") || "null");
+            if (pendingOrder?.orderId === payload.data.orderId && Array.isArray(pendingOrder.items)) {
+              analyticsItems = pendingOrder.items.map(item => buildAnalyticsItem(item, item.qty)).filter(Boolean);
+            }
+            window.localStorage.removeItem("fullness_pending_order");
           } catch {
-            // Analytics deduplication is best-effort and never blocks checkout confirmation.
+            // Storage may be blocked; the confirmed total still comes from the server.
           }
-
-          if (!purchaseAlreadyTracked) {
-            trackEvent("purchase", {
-              transaction_id: transactionId,
-              currency: "CLP",
-              value: Number(payload.data?.amount || payload.data?.total || 0)
-            });
-          }
+          trackApprovedPurchase(payload.data, analyticsItems);
         }
       } catch (error) {
         if (error.name === "AbortError") return;
@@ -8699,10 +8692,15 @@ function App() {
 
   function setMixQuantity(product,quantity){
     if(checkoutSubmitting||!Number.isSafeInteger(quantity)||quantity<0||quantity>1000)return;
-    if(product.kind==='mealprep'&&quantity>(cart.find(i=>i.id===product.id)?.qty||0)&&cart.some(isPlanProduct)){
+    const added=quantity-(cart.find(i=>i.id===product.id)?.qty||0);
+    if(product.kind==='mealprep'&&added>0&&cart.some(isPlanProduct)){
       setCheckoutMessage('Tu selección conserva un plan anterior. Puedes terminar ese pedido o quitar el plan para comenzar un mix de platos individuales. No perderás su contenido al cerrar esta ventana.');setCartOpen(true);return;
     }
-    if(product.kind==='mealprep'&&product.availableForPlans===false&&quantity>(cart.find(i=>i.id===product.id)?.qty||0))return;
+    if(product.kind==='mealprep'&&product.availableForPlans===false&&added>0)return;
+    if(added>0){
+      const item=buildAnalyticsItem(product,added);
+      trackEvent("add_to_cart",{currency:"CLP",value:item.price*added,items:[item]});
+    }
     setCheckoutMessage('');
     setCart(current=>{
       if(!quantity)return current.filter(i=>i.id!==product.id);
@@ -8817,12 +8815,6 @@ function App() {
     }
     if (cart.length === 0 || checkoutSubmitting) return;
 
-    trackEvent("begin_checkout", {
-      currency: "CLP",
-      value: checkoutTotal,
-      items: cart.map((item) => buildAnalyticsItem(item, item.qty)).filter(Boolean)
-    });
-
     setCheckoutSubmitting(true);
     setCheckoutMessage("Conectando de forma segura con Mercado Pago...");
 
@@ -8839,6 +8831,7 @@ function App() {
         if (!quoteResponse.ok){if(['CHECKOUT_EXPIRED','CHECKOUT_ALREADY_PAID'].includes(quote.error?.code))forgetCheckoutAttemptKey(checkoutKey);throw new Error(checkoutStartError(quote.error));}
         if (quote.data?.paymentReady === false) throw new Error(quote.data.blockedReason || 'El pago de planes aún no está habilitado.');
         if (quote.data?.amount !== checkoutTotal) throw new Error("El total vigente cambió. Recarga la página y revisa el carrito antes de pagar.");
+        trackCheckoutStart(checkoutKey, cart.map(item => buildAnalyticsItem(item, item.qty)).filter(Boolean), checkoutTotal);
       }
       const response = await fetch("/api/mercadopago/preferences", {
         method: "POST",
