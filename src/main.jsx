@@ -112,7 +112,7 @@ import {DispatchCalendarAdmin} from "./components/dispatch-calendar.jsx";
 import {CustomPlanBuilder,CustomPlanBreakdown} from "./components/custom-plan-builder.jsx";
 import {MealprepPublicationControls,MealprepLeaveDialog} from "./components/mealprep-publication-controls.jsx";
 import {validMealprepPrice,mealprepPublicationState,mealprepDraftLabel,mealprepFormChange} from "./lib/mealprep-publication.js";
-import {ExperienceNotice,TEMP_EXPERIENCE_NOTICE_ENABLED} from './components/experience-notice.jsx';
+import {ExperienceNotice} from './components/experience-notice.jsx';
 import {checkoutAttemptKey,forgetCheckoutAttemptKey} from './lib/checkout-attempt.js';
 const MealprepStockProvider=({children})=>children;
 const MealprepStockStatus=()=>null;
@@ -5510,7 +5510,6 @@ function App() {
   }, [introConsumed, subscriptionPopupOpen]);
 
   useEffect(() => {
-    if (TEMP_EXPERIENCE_NOTICE_ENABLED) return undefined;
     if (!subscriptionPopupSettings.enabled) return undefined;
     if (subscriptionPopupDismissed || subscriptionPopupOpenedRef.current) return undefined;
     if (currentPath !== "/" || currentProductSlug) return undefined;
@@ -10035,8 +10034,10 @@ function App() {
         </div>
       )}
 
-      <ExperienceNotice eligible={TEMP_EXPERIENCE_NOTICE_ENABLED&&currentPath==="/tienda"&&introConsumed&&!accountOpen&&!cartOpen&&!adminOpen&&!menuOpen&&!passwordSetupOpen&&!checkoutResult&&!productPreview&&!mealPreviewItem&&!benefitPreview&&window.location.hash!=="#backoffice"}/>
-      {!TEMP_EXPERIENCE_NOTICE_ENABLED && subscriptionPopupOpen && !(ECOMMERCE_MAINTENANCE && isEcommercePath(currentPath)) && (
+      {isShopPage && !ECOMMERCE_MAINTENANCE && (
+        <ExperienceNotice eligible={introConsumed && !accountOpen && !cartOpen && !adminOpen && !menuOpen && !passwordSetupOpen && !checkoutResult && window.location.hash !== "#backoffice"} />
+      )}
+      {currentPath === "/" && !currentProductSlug && subscriptionPopupOpen && (
         <SubscriptionLightbox
           settings={subscriptionPopupSettings}
           mode={subscriptionPopupMode}
@@ -10090,6 +10091,7 @@ function App() {
         <ApprovedShop data={stockLetter||{items:[],loading:productsLoading,error:productsError}} families={familyProducts} cart={cart} onQuantity={setMixQuantity} onCart={()=>setCartOpen(true)} onCloseCart={()=>setCartOpen(false)} onMember={()=>{setCartOpen(false);setAccountOpen(true);}} onCommunity={openCommunityPage} onAbout={openAboutPage} cartOpen={cartOpen} checkout={{form:checkoutForm,onChange:updateCheckoutForm,onSubmit:submitCheckout,submitting:checkoutSubmitting,message:checkoutMessage,total:cartTotal-mixDiscount,subtotal:cartTotal,discount:mixDiscount,units:mixCalculation.units,rewards:mixQuote?.rewards,quoteBusy:mixQuoteBusy,quoteError:mixQuoteError,onRetryQuote:()=>{window.dispatchEvent(new Event('fullness:mealprep-published'));setMixQuoteRetry(n=>n+1);},renderNutrition:product=><ProductNutritionFacts product={product}/>}}/>
       ) : (
         <>
+          {currentPath === "/" && <IntroScrollSequence />}
           <section
             className="plate-hero"
             id="programa"
