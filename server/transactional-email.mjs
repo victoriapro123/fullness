@@ -160,7 +160,14 @@ export async function sendOrderNotificationEmail({order, items, supabase}) {
   const orderReference = formatOrderReference(order.id);
   const amount = formatClp(order.total_clp);
   const deliveryMode = customer.mode === "pickup" ? "Retiro en local" : "Despacho a domicilio";
-  const orderLines = (items || []).map((item) => `${item.quantity}x ${item.product_name}`);
+  const orderLines = (items || []).map((item) => {
+    const snapshot = item.product_snapshot || {};
+    const isMix = snapshot.purchaseModel === "mix_v1" || customer.purchaseModel === "mix_v1";
+    const label = snapshot.productType === "family" ? "Plato familiar"
+      : snapshot.productType === "mealprep" && isMix ? "Arma tu Mix"
+      : "";
+    return `${item.quantity}x ${item.product_name}${label ? ` — ${label}` : ""}`;
+  });
   const details = [
     `Orden ${orderReference}`,
     ...orderLines,

@@ -47,7 +47,8 @@ try {
   };
   const items = [
     {quantity: 1, product_name: "Plan semanal antinflamatorio"},
-    {quantity: 2, product_name: "Apple golden chicken"}
+    {quantity: 2, product_name: "Apple golden chicken", product_snapshot: {productType: "mealprep", purchaseModel: "mix_v1"}},
+    {quantity: 1, product_name: "Estofado de carne", product_snapshot: {productType: "family", purchaseModel: "mix_v1"}}
   ];
 
   const firstDelivery = await sendApprovedOrderEmails({order, items, supabase});
@@ -58,6 +59,12 @@ try {
   assert.equal(messages[1].to[0], "cecilia@fullnesslab.com");
   assert.match(messages[1].text, /Avenida Prueba 123/);
   assert.match(messages[1].text, /Plan semanal antinflamatorio/);
+  for (const format of ["text", "html"]) {
+    assert.match(messages[1][format], /2x Apple golden chicken — Arma tu Mix/);
+    assert.match(messages[1][format], /1x Estofado de carne — Plato familiar/);
+    assert.doesNotMatch(messages[1][format], /Plan semanal antinflamatorio —/);
+    assert.doesNotMatch(messages[0][format], /Apple golden chicken —|Estofado de carne —/);
+  }
   assert.match(messages[1].text, /Lo Barnechea/);
   for (const message of messages.slice(0, 2)) {
     assert.match(message.text, /Subtotal de productos:.*58.200/);
