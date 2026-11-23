@@ -2,6 +2,8 @@ import {useEffect,useState} from 'react';
 import {backofficeRequest} from '../lib/backoffice-request.js';
 import {AVAILABILITY_STATES,MENU_SECTIONS,EMPTY_LOCAL_MENU,approvedMenuDraft,availabilityStatus} from '../lib/local-menu.js';
 import {LocalMenuContent} from './local-menu-page.jsx';
+import {CartaImageEditor} from './local-menu-images.jsx';
+import {normalizeCartaImages} from '../lib/local-menu-images.js';
 import './local-menu.css';
 const request=(path,method,body)=>backofficeRequest(path,method,body);
 
@@ -31,19 +33,42 @@ function AvailabilityEditor({meal,current,requestImpl,onConflict,draftKey,onSave
 
 export function LocalMenuAdmin({draftKey,requestImpl=request}) {
   const [data,setData]=useState(null),[form,setForm]=useState(null),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[dirty,setDirty]=useState(false),[confirm,setConfirm]=useState(false),[preview,setPreview]=useState(false);
+  const [uploading,setUploading]=useState(false);
   useEffect(()=>{let alive=true;requestImpl('/api/backoffice/local-menu','GET').then(d=>{if(!alive)return;setData(d);let draft;try{draft=JSON.parse(localStorage.getItem(draftKey)||'null');}catch{}setForm(draft||{revision:d.revision,document:d.document||EMPTY_LOCAL_MENU});setDirty(Boolean(draft));}).catch(e=>alive&&setMessage(e.message));return()=>{alive=false;};},[draftKey,requestImpl]);
   useEffect(()=>{if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   function change(document){const next={...form,document};setForm(next);setDirty(true);setConfirm(false);try{localStorage.setItem(draftKey,JSON.stringify(next));}catch{setMessage('Borrador en memoria: el navegador no permitió guardar una copia local.');}}
   const update=(id,patch)=>change({...form.document,items:form.document.items.map(r=>r.id===id?{...r,...patch}:r)});
-  async function save(publish){setBusy(true);setMessage('');try{const saved=await requestImpl('/api/backoffice/local-menu','PUT',{...form,publish});setForm(f=>({...f,revision:saved.revision}));setData(d=>({...d,revision:saved.revision,document:form.document,publishedAt:saved.publishedAt}));setDirty(false);setConfirm(false);localStorage.removeItem(draftKey);setMessage(publish?'Carta publicada para todos en /carta. Sólo se muestran productos disponibles y vigentes.':'Borrador guardado. La carta pública no cambió.');try{const latest=await requestImpl('/api/backoffice/local-menu','GET');setData(latest);}catch{setMessage('Guardado confirmado. No pudimos actualizar el historial; consúltalo nuevamente sin repetir el guardado.');}}catch(e){setMessage(e.message);}finally{setBusy(false);}}
+  async function save(publish){
+    if (busy||uploading||form.revision!==data.revision) return;
+    setBusy(true);setMessage('');
+    try {
+      if(form.document.format==='images') {
+        const images=normalizeCartaImages(form.document.images);
+        if(publish&&!images.length) throw Error('Agrega al menos una lámina para publicar.');
+      }
+      const saved=await requestImpl('/api/backoffice/local-menu','PUT',{...form,publish});
+      setForm(f=>({...f,revision:saved.revision}));
+      setData(d=>({...d,revision:saved.revision,document:form.document,publishedAt:saved.publishedAt}));
+      setDirty(false);setConfirm(false);
+      try{localStorage.removeItem(draftKey);}catch{/* El guardado remoto ya se confirmó. */}
+      setMessage(publish?'Carta publicada en /carta. El QR no cambió.':'Borrador guardado. La carta pública no cambió.');
+      try{const latest=await requestImpl('/api/backoffice/local-menu','GET');setData(latest);}catch{setMessage('Guardado confirmado. No pudimos actualizar el historial; consúltalo nuevamente sin repetir el guardado.');}
+    }catch(e){setMessage(e.message);}finally{setBusy(false);}
+  }
   async function refresh(){setBusy(true);try{const d=await requestImpl('/api/backoffice/local-menu','GET');setData(d);setMessage('Versión guardada consultada; tu borrador no se reemplazó. Puedes cargarla o volver a editar tu borrador.');}catch(e){setMessage(e.message);}finally{setBusy(false);}}
   if(!form)return <section className="local-menu-admin"><h2>CARTA DEL LOCAL</h2><p role="status">{message||'Cargando la carta…'}</p></section>;
   const document=form.document;
+  const imageMode=document.format==='images';
+  const images=document.images||[];
+  const actionsDisabled=busy||uploading||form.revision!==data.revision;
   const previewData={...document,items:document.items.filter(r=>availabilityStatus(r).available&&(!r.libraryMealId||availabilityStatus(data.availability.find(a=>a.libraryMealId===r.libraryMealId)).available)),mealpreps:[]};
-  return <section className="local-menu-admin"><p className="eyebrow">CARTA PRESENCIAL · URL PERMANENTE</p><h2>CARTA DEL LOCAL</h2><p>Administra /carta sin cambiar el QR. Primero guarda un borrador; publica cuando nombres, precios y disponibilidad estén confirmados. La carta del local no modifica precios del compra en línea.</p><a href="/carta" target="_blank" rel="noreferrer">ABRIR CARTA PÚBLICA ↗</a><p>{dirty?'Hay cambios sin guardar.':'Sin cambios locales pendientes.'} Revisión {form.revision}. {data.publishedAt?'Hay una versión publicada.':'Aún no hay una versión publicada.'}</p>
-    <fieldset disabled={busy}><legend>Fullness Lunch</legend><label>Precio del menú completo (CLP, IVA incluido)<input type="number" min="1" max="1000000" step="1" value={document.lunchPrice} onChange={e=>change({...document,lunchPrice:e.target.value===''?'':Number(e.target.value)})}/></label><label>Qué incluye<textarea maxLength={1000} value={document.lunchDescription} onChange={e=>change({...document,lunchDescription:e.target.value})}/></label><p>Asigna las posiciones 1 a 5 a productos “Platos para llevar”, vinculados a recetas reales. Su precio individual es el de llevar, no el del Lunch.</p></fieldset>
-    <div className="local-menu-actions"><button type="button" disabled={busy} onClick={()=>change({...document,items:[...document.items,{id:crypto.randomUUID(),section:'individuales',name:'',description:'',price:0,libraryMealId:'',lunchSlot:null,state:'unconfirmed',startsOn:'',endsOn:''}]})}>AGREGAR PRODUCTO</button>{!document.items.length&&<button type="button" onClick={()=>change(approvedMenuDraft())}>CARGAR BORRADOR DEL HTML APROBADO</button>}</div>
-    {document.items.map((item,index)=><details className="local-menu-edit-card" key={item.id} open={!item.name||undefined}><summary>{item.name||`Nuevo producto ${index+1}`}<span>{item.state==='available'?'Confirmado (sujeto a fechas)':'Sin oferta activa'}</span></summary><fieldset disabled={busy}>
+  return <section className="local-menu-admin"><p className="eyebrow">CARTA PRESENCIAL · URL PERMANENTE</p><h2>CARTA DEL LOCAL</h2><p>Actualiza la carta sin cambiar el QR de las mesas. Este contenido no modifica precios de la tienda online.</p><a href="/carta" target="_blank" rel="noreferrer">ABRIR CARTA PÚBLICA ↗</a><p>{dirty?'Hay cambios sin guardar.':'Sin cambios locales pendientes.'} {data.publishedAt||data.initialImagesPublished?'Hay una versión publicada.':'Aún no hay una versión publicada.'}</p>
+    <CartaImageEditor images={images} disabled={busy||uploading} onUploading={setUploading} onChange={next=>change({...document,format:'images',images:next})}/>
+    <details className="local-menu-edit-card"><summary>EDITOR POR PRODUCTOS · ANTERIOR</summary>
+    {imageMode?<p>Estas filas se conservan en el borrador, pero no se muestran mientras publiques la carta como imágenes.</p>:null}
+    <fieldset disabled={busy||uploading}><legend>Fullness Lunch</legend><label>Precio del menú completo (CLP, IVA incluido)<input type="number" min="1" max="1000000" step="1" value={document.lunchPrice} onChange={e=>change({...document,lunchPrice:e.target.value===''?'':Number(e.target.value)})}/></label><label>Qué incluye<textarea maxLength={1000} value={document.lunchDescription} onChange={e=>change({...document,lunchDescription:e.target.value})}/></label><p>Asigna las posiciones 1 a 5 a productos “Platos para llevar”, vinculados a recetas reales. Su precio individual es el de llevar, no el del Lunch.</p></fieldset>
+    <div className="local-menu-actions"><button type="button" disabled={busy||uploading} onClick={()=>change({...document,items:[...document.items,{id:crypto.randomUUID(),section:'individuales',name:'',description:'',price:0,libraryMealId:'',lunchSlot:null,state:'unconfirmed',startsOn:'',endsOn:''}]})}>AGREGAR PRODUCTO</button>{!imageMode&&!document.items.length&&<button type="button" disabled={busy||uploading} onClick={()=>change(approvedMenuDraft())}>CARGAR BORRADOR ANTERIOR</button>}</div>
+    {document.items.map((item,index)=><details className="local-menu-edit-card" key={item.id} open={!item.name||undefined}><summary>{item.name||`Nuevo producto ${index+1}`}<span>{item.state==='available'?'Confirmado (sujeto a fechas)':'Sin oferta activa'}</span></summary><fieldset disabled={busy||uploading}>
       <legend>Producto {index+1}</legend><label>Sección<select value={item.section} onChange={e=>update(item.id,{section:e.target.value,lunchSlot:null})}>{MENU_SECTIONS.filter(([id])=>!['lunch','mealpreps'].includes(id)).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
       <label>Receta real vinculada (opcional, obligatoria para Lunch)<select value={item.libraryMealId} onChange={e=>{const m=data.library.find(m=>m.id===e.target.value);update(item.id,{libraryMealId:m?.id||'',...(m?{name:m.name,description:m.description||''}:{lunchSlot:null})});}}><option value="">Producto del local sin receta vinculada</option>{data.library.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <label>Nombre<input maxLength={240} value={item.name} onChange={e=>update(item.id,{name:e.target.value})}/></label><label>Descripción<textarea maxLength={2000} value={item.description} onChange={e=>update(item.id,{description:e.target.value})}/></label>
@@ -53,11 +78,13 @@ export function LocalMenuAdmin({draftKey,requestImpl=request}) {
       {item.libraryMealId&&<p>La receta debe estar también confirmada en “Disponibilidad de mealpreps”. Ambos controles y sus fechas deben permitirla.</p>}
       <button type="button" onClick={()=>update(item.id,{state:'paused',lunchSlot:null})}>OCULTAR PRODUCTO (CONSERVAR DATOS)</button>
     </fieldset></details>)}
-    <div className="local-menu-actions"><button className="local-menu-button" type="button" disabled={busy||!dirty} onClick={()=>save(false)}>GUARDAR BORRADOR</button><button type="button" disabled={busy} onClick={()=>{setPreview(!preview);setConfirm(false);}}> {preview?'CERRAR VISTA PREVIA':'VISTA PREVIA'}</button><button type="button" disabled={busy} onClick={()=>setConfirm(true)}>REVISAR PUBLICACIÓN</button><button type="button" disabled={busy} onClick={refresh}>CONSULTAR VERSIÓN GUARDADA</button></div>
+    {!imageMode&&<button type="button" disabled={busy||uploading} onClick={()=>{setPreview(!preview);setConfirm(false);}}>{preview?'Cerrar vista previa por productos':'Vista previa por productos'}</button>}
+    </details>
+    <div className="local-menu-actions"><button type="button" disabled={actionsDisabled||!dirty} onClick={()=>save(false)}>GUARDAR BORRADOR</button><button className="local-menu-button" type="button" disabled={actionsDisabled||(imageMode&&!images.length)} onClick={()=>setConfirm(true)}>PUBLICAR CARTA</button><button type="button" disabled={busy||uploading} onClick={refresh}>CONSULTAR VERSIÓN GUARDADA</button></div>
     {form.revision!==data.revision&&<div className="local-menu-confirm"><p>Tu borrador usa una revisión anterior. No se sobrescribirá la carta actual.</p><button type="button" onClick={()=>{setForm({revision:data.revision,document:data.document});setDirty(false);localStorage.removeItem(draftKey);setConfirm(false);}}>DESCARTAR BORRADOR LOCAL Y CARGAR VERSIÓN CONSULTADA</button></div>}
-    {confirm&&<div className="local-menu-confirm"><h3>PUBLICAR PARA TODOS LOS CLIENTES</h3><p>Se publicarán los productos confirmados dentro de sus fechas. Los ocultos, agotados o por confirmar no aparecerán. La dirección y el QR no cambian.</p><div className="local-menu-actions"><button className="local-menu-button" type="button" disabled={busy} onClick={()=>save(true)}>CONFIRMAR PUBLICACIÓN</button><button type="button" disabled={busy} onClick={()=>setConfirm(false)}>VOLVER A EDITAR</button></div></div>}
+    {confirm&&<div className="local-menu-confirm"><h3>PUBLICAR PARA TODOS LOS CLIENTES</h3><p>{imageMode?'Se publicarán las láminas en el orden de la vista previa. Verifica que los precios y el contenido estén vigentes.':'Se publicarán los productos confirmados dentro de sus fechas.'} La dirección y el QR no cambian.</p><div className="local-menu-actions"><button className="local-menu-button" type="button" disabled={actionsDisabled} onClick={()=>save(true)}>CONFIRMAR PUBLICACIÓN</button><button type="button" disabled={busy} onClick={()=>setConfirm(false)}>VOLVER A EDITAR</button></div></div>}
     <p role="status">{message}</p>
     <details className="local-menu-edit-card"><summary>HISTORIAL Y RECUPERACIÓN DE LA CARTA</summary><p>Recuperar una versión sólo la copia a tu borrador. La carta pública no cambia hasta confirmar una nueva publicación.</p>{(data.versions||[]).length?<ul>{data.versions.map(v=><li key={v.revision}>Revisión {v.revision} · {v.action==='publish'?'Publicada':'Borrador'} · {new Intl.DateTimeFormat('es-CL',{dateStyle:'medium',timeStyle:'short',timeZone:'America/Santiago'}).format(new Date(v.created_at))}<button type="button" disabled={busy} onClick={()=>{if(dirty){setMessage('Guarda tu borrador antes de recuperar otra versión.');return;}change(v.snapshot);setMessage('Versión recuperada como borrador. Revisa antes de guardar o publicar.');}}>USAR COMO BORRADOR</button></li>)}</ul>:<p>El historial aparecerá después del primer guardado.</p>}</details>
-    {preview&&<div className="local-menu-page local-menu-preview"><p className="local-menu-preview-label">VISTA PREVIA · NO PUBLICADA</p><LocalMenuContent data={previewData}/></div>}
+    {preview&&!imageMode&&<div className="local-menu-page local-menu-preview"><p className="local-menu-preview-label">VISTA PREVIA · NO PUBLICADA</p><LocalMenuContent data={previewData}/></div>}
   </section>;
 }

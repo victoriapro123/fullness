@@ -1,0 +1,9 @@
+# Carta del local por imágenes — 23/11/2026
+
+Carlos autorizó adaptar y publicar las dos láminas adjuntas: Fullness Lunch y Bowls. Sólo esas secciones; mismo /carta y QR; no cambiar precios/stock/pedidos de tienda. JPG originales conservados byte a byte; lectura accesible con cinco fondos, tres bowls, los cuatro precios y «carne» en la transcripción. La imagen original conserva literalmente el arte enviado.
+
+Referencia [Fullness Lab en Stitch](https://stitch.withgoogle.com/projects/14591150104259298217), pantalla «Carta del local - Editor de láminas» ff3bab738492460298c6bc1f16c2cf37. Primer plano para carga, orden y reemplazo, vista previa escritorio/móvil, publicación confirmada y editor por productos anterior plegado. Se reutilizan variables del sitio y el endpoint autenticado de carga; sólo JPG, PNG, WebP y AVIF de hasta 3 MB en el directorio carta-local. Al reemplazar una lámina se limpia su transcripción para no conservar precios antiguos por accidente. Guardar borrador no altera la carta publicada.
+
+El lote publica las dos láminas iniciales con el código mientras no exista versión publicada en la base (readback productivo previo: published=false). No se sobrescribe una publicación ni un borrador existente, no se actúa en nombre de Cecilia y no se aplicó SQL. Después de una publicación desde el editor prevalece la versión propia de Supabase, con CAS, historial y permisos existentes.
+
+Checkout separado de publicación, detached en el SHA productivo eee8e2a; no se incluye 75cad67 (menú de paneles anteriores, no relacionado), WIP ni fixture runtime. PASS test-local-menu y build; Playwright a 390 px comprobó ambas imágenes decodificadas, reordenación, vista previa, borrador y confirmación con API simulada, sin desbordamiento. Sin carga R2 ni sesión de Cecilia en producción durante QA. Consulta central de Cerebro pendiente.

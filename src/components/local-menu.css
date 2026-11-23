@@ -36,3 +36,39 @@
 @media(max-width:860px){.local-menu-hero{padding:28px 24px 32px}.local-menu-products{grid-template-columns:1fr}.local-menu-nav{padding-inline:24px}.local-menu-section-heading h2{font-size:28px}}
 @media(max-width:520px){.local-menu-page{padding-bottom:max(40px,env(safe-area-inset-bottom))}.local-menu-hero{padding-inline:24px}.local-menu-hero h1{font-size:42px}.local-menu-sections{padding-inline:24px}.local-menu-section{padding-top:36px}.local-menu-product{gap:16px}.local-menu-product h3{font-size:16px}.local-menu-product p{font-size:15px}.local-menu-price{font-size:16px}.local-menu-help{padding:24px;margin-top:32px}.local-menu-feedback{margin-inline:24px}.local-menu-admin{padding:16px}.local-menu-admin-grid{grid-template-columns:1fr}.local-menu-admin fieldset{padding:16px}.local-menu-actions{flex-direction:column;align-items:stretch}.local-menu-edit-card{padding:12px}.local-menu-hero-meta{flex-direction:column}.local-menu-preview .local-menu-sections{padding-inline:16px}}
 @media(prefers-reduced-motion:reduce){.local-menu-page{scroll-behavior:auto}.local-menu-page *{animation:none!important;transition:none!important}}
+.carta-image-gallery {
+  width: min(100% - 2rem, 1180px);
+  min-width: 0;
+  margin: clamp(1.5rem, 4vw, 3rem) auto;
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+}
+.carta-image-sheet { min-width: 0; }
+.carta-image-sheet h2 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 4vw, 2.1rem);
+  letter-spacing: .065em;
+  text-transform: uppercase;
+  margin: 0 0 .75rem;
+}
+.carta-image-sheet img, .carta-image-thumbnail {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--copper);
+}
+.carta-image-thumbnail { max-width: 20rem; }
+.carta-image-zoom, .carta-image-transcription summary {
+  display: block;
+  color: var(--ink);
+  min-height: 44px;
+  padding: .6rem 0;
+  cursor: pointer;
+  text-underline-offset: .2em;
+}
+.carta-image-transcription { border-block-start: 1px solid var(--editorial-line); }
+.carta-image-transcription p { overflow-wrap: anywhere; }
+.carta-preview-mobile { max-width: 390px; margin-inline: auto; }
+.carta-image-editor, .carta-image-editor fieldset, .carta-image-editor input { min-width: 0; max-width: 100%; }
+.carta-image-editor summary { overflow-wrap: anywhere; }

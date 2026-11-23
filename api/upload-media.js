@@ -6,6 +6,7 @@ import {
   normalizeMediaKey,
   putR2Object
 } from "../server/r2-media.mjs";
+import {CARTA_IMAGE_FOLDER,CARTA_IMAGE_MAX_BYTES,CARTA_IMAGE_TYPES} from "../src/lib/local-menu-images.js";
 
 const localEnvReady = loadEnvFile(new URL("../.env.local", import.meta.url));
 const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -48,6 +49,12 @@ export default async function handler(req, res) {
 
     const folder = sanitizeFolder(body.folder || process.env.MULTIMEDIA_UPLOAD_PREFIX || "images/meal-preps");
     const buffer = Buffer.from(String(body.dataBase64 || ""), "base64");
+    if (folder === CARTA_IMAGE_FOLDER) {
+      if (!CARTA_IMAGE_TYPES.includes(contentType) || !matchesCartaImage(buffer,contentType)) {
+        throw statusError(415, "El archivo de la carta debe ser una imagen JPG, PNG, WebP o AVIF válida.");
+      }
+      if (buffer.byteLength > CARTA_IMAGE_MAX_BYTES) throw statusError(413, "La imagen de la carta supera los 3 MB.");
+    }
     const maxBytes = folder === "images/benefits"
       ? Number(process.env.MULTIMEDIA_MAX_BENEFIT_ICON_BYTES || DEFAULT_MAX_BENEFIT_ICON_BYTES)
       : Number(process.env.MULTIMEDIA_MAX_UPLOAD_BYTES || DEFAULT_MAX_UPLOAD_BYTES);
@@ -94,6 +101,14 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({error: error.message || "No pudimos subir la imagen."}));
   }
+}
+
+function matchesCartaImage(bytes,type) {
+  if (type==="image/jpeg") return bytes.subarray(0,3).equals(Buffer.from([255,216,255]));
+  if (type==="image/png") return bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+  if (type==="image/webp") return bytes.toString("ascii",0,4)==="RIFF" && bytes.toString("ascii",8,12)==="WEBP";
+  if (type==="image/avif") return bytes.toString("ascii",4,8)==="ftyp" && /avi[fs]/.test(bytes.toString("ascii",8,32));
+  return false;
 }
 
 async function assertAdminRequest(req) {

@@ -1,8 +1,10 @@
 import {useEffect,useRef,useState} from 'react';
 import {MENU_SECTIONS,moneyClp} from '../lib/local-menu.js';
+import {CartaImageGallery} from './local-menu-images.jsx';
 import './local-menu.css';
 
 export function LocalMenuContent({data}) {
+  if (data?.format === 'images') return <div id="carta-contenido"><CartaImageGallery images={data.images}/></div>;
   const {items=[],mealpreps=[]}=data||{};
   return <>
     <nav className="local-menu-nav" aria-label="Secciones de la carta">{MENU_SECTIONS.map(([id,title])=><a href={`#carta-${id}`} key={id}>{title}</a>)}</nav>

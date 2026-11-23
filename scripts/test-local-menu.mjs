@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {availabilityStatus,approvedMenuDraft} from '../src/lib/local-menu.js';
 import {normalizeLocalMenu,readLocalMenu} from '../server/local-menu.mjs';
+import {INITIAL_CARTA_IMAGES,moveCartaImage,normalizeCartaImages} from '../src/lib/local-menu-images.js';
+import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 const id='10000000-0000-4000-8000-000000000001';
 const now=new Date('2026-11-02T02:59:00Z'); // Still Nov1 in Santiago.
 assert.equal(availabilityStatus({state:'available',startsOn:'2026-11-01',endsOn:'2026-11-01'},now).available,true);
@@ -17,7 +20,26 @@ const tables={local_menu_settings:[{id:true,revision:1,document,published_docume
 const supabase={from(table){const q={select(){return q},eq(){return q},order(){return q},single(){return Promise.resolve({data:tables[table][0]})},then(r){return Promise.resolve({data:tables[table]}).then(r)}};return q;}};
 let result=await readLocalMenu({supabase,now});assert.equal(result.items.length,1);assert.equal(result.mealpreps.length,1);assert.equal('availability'in result,false);
 tables.mealprep_availability[0].state='sold_out';result=await readLocalMenu({supabase,now});assert.equal(result.items.length,0);assert.equal(result.mealpreps.length,0);
-tables.mealprep_availability[0].state='available';tables.local_menu_settings[0].document.items.push({...item,id:'draft-only',name:'Borrador invisible'});
+tables.mealprep_availability[0].state='available';tables.local_menu_settings[0].document.items.push({...item,id:'draft-only',name:'Borrador invisible',lunchSlot:null});
 tables.local_menu_settings[0].published_document={...document,items:[item]};result=await readLocalMenu({supabase,now});assert.equal(result.items.length,1);
-tables.local_menu_settings[0].published_document=null;assert.equal((await readLocalMenu({supabase,now})).published,false);
-console.log('PASS local menu: real links, no draft leakage, explicit availability, inclusive Santiago dates, typed prices, lunch slots, safe empty state.');
+tables.local_menu_settings[0].published_document=null;
+const initial=await readLocalMenu({supabase,now});
+assert.deepEqual(initial.images.map(image=>image.title),['Fullness Lunch','Bowls']);
+assert.equal(initial.published,true);
+assert.match(initial.images[0].transcript,/\$13\.500/);
+assert.match(initial.images[1].transcript,/\$6\.490[\s\S]*\$11\.900[\s\S]*\$10\.900/);
+const imageDocument=normalizeLocalMenu({...document,format:'images',images:moveCartaImage(initial.images,1,-1)},{publish:true});
+assert.equal(imageDocument.items.length,2);
+assert.deepEqual(imageDocument.images.map(x=>x.id),['bowls','fullness-lunch']);
+tables.local_menu_settings[0].published_document=imageDocument;
+tables.local_menu_settings[0].document={...imageDocument,images:[{...imageDocument.images[0],title:'Borrador privado'}]};
+assert.deepEqual((await readLocalMenu({supabase,now})).images,imageDocument.images);
+assert.throws(()=>normalizeLocalMenu({...imageDocument,images:[]},{publish:true}),/al menos/);
+assert.throws(()=>normalizeCartaImages([{...initial.images[0],url:'https://example.invalid/carta.jpg'}]),/editor/);
+assert.throws(()=>normalizeCartaImages([initial.images[0],initial.images[0]]),/distinto/);
+assert.equal(normalizeCartaImages([{...initial.images[0],url:'/api/media?key=images%2Fcarta-local%2F2026-11%2F10000000-0000-4000-8000-000000000001.jpeg'}]).length,1);
+for(const [i,sha] of ['77560fff2a813cc077f7fd2167d80e99241052f9d2eb78d6a4c144946390b7d5','acd4b985ec2bf7fd955100b0a7d43a2da5a8ffddfb82ff9e9685f94d04bae866'].entries()){
+  const bytes=await readFile(new URL(`../public${INITIAL_CARTA_IMAGES[i].url}`,import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),sha);
+}
+console.log('PASS carta: visibilidad, borrador aislado, orden y URLs de láminas, y bytes originales.');

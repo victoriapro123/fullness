@@ -13,5 +13,7 @@ transcripciones-wsp
 WhatsApp Chat - María Cecilia Salas Vergara
 public/assets
 public/images/*
+!public/images/carta-local/
+!public/images/carta-local/**
 !public/images/landing-local/
 !public/images/landing-local/**
